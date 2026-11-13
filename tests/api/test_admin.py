@@ -884,6 +884,26 @@ def test_admin_config_masks_secrets_and_exposes_manifest(monkeypatch, tmp_path):
         "LOG_RAW_CLI_DIAGNOSTICS",
         "LOG_MESSAGING_ERROR_DETAILS",
     } <= restart_required
+    runtime_fields = {
+        field["key"]: field for field in body["fields"] if field["section"] == "runtime"
+    }
+    assert set(runtime_fields) == {
+        "PROXY_AUTH_ENABLED",
+        "ANTHROPIC_AUTH_TOKEN",
+        "PROVIDER_RATE_LIMIT",
+        "PROVIDER_RATE_WINDOW",
+        "PROVIDER_MAX_CONCURRENCY",
+        "HTTP_READ_TIMEOUT",
+        "HTTP_WRITE_TIMEOUT",
+        "HTTP_CONNECT_TIMEOUT",
+        "HOST",
+        "PORT",
+        "FCC_OPEN_BROWSER",
+    }
+    for key, field in runtime_fields.items():
+        assert field["description"], f"{key} exposes no admin description"
+        if field["restart_required"]:
+            assert "restarts FCC" in field["description"]
 
 
 def test_admin_models_include_configured_and_cached_canonical_slugs():

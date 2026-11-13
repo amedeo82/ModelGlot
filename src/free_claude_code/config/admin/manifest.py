@@ -187,7 +187,10 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "boolean",
         settings_attr="proxy_auth_enabled",
         restart_required=True,
-        description="Require the retained API/CLI token on FCC API routes.",
+        description=(
+            "Require the retained API/CLI token on FCC API routes. "
+            "Changing it restarts FCC."
+        ),
     ),
     ConfigFieldSpec(
         "ANTHROPIC_AUTH_TOKEN",
@@ -199,7 +202,7 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         restart_required=True,
         description=(
             "Retained non-empty token passed to every harness. Authentication can be "
-            "disabled without clearing it."
+            "disabled without clearing it. Changing it restarts FCC."
         ),
     ),
     ConfigFieldSpec(
@@ -208,6 +211,10 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "runtime",
         "number",
         settings_attr="provider_rate_limit",
+        description=(
+            "Maximum provider requests admitted per rate window (sliding "
+            "window, shared across credentials). Must be greater than 0."
+        ),
     ),
     ConfigFieldSpec(
         "PROVIDER_RATE_WINDOW",
@@ -215,6 +222,10 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "runtime",
         "number",
         settings_attr="provider_rate_window",
+        description=(
+            "Length of the sliding rate-limit window in seconds. Must be "
+            "greater than 0."
+        ),
     ),
     ConfigFieldSpec(
         "PROVIDER_MAX_CONCURRENCY",
@@ -222,6 +233,10 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "runtime",
         "number",
         settings_attr="provider_max_concurrency",
+        description=(
+            "Maximum simultaneous in-flight requests per provider. Must be "
+            "greater than 0."
+        ),
     ),
     ConfigFieldSpec(
         "HTTP_READ_TIMEOUT",
@@ -229,6 +244,10 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "runtime",
         "number",
         settings_attr="http_read_timeout",
+        description=(
+            "Seconds to wait between response packets, including streaming. "
+            "Applies without restarting FCC."
+        ),
     ),
     ConfigFieldSpec(
         "HTTP_WRITE_TIMEOUT",
@@ -236,6 +255,10 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "runtime",
         "number",
         settings_attr="http_write_timeout",
+        description=(
+            "Seconds to allow for sending the request body. Applies without "
+            "restarting FCC."
+        ),
     ),
     ConfigFieldSpec(
         "HTTP_CONNECT_TIMEOUT",
@@ -243,6 +266,10 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "runtime",
         "number",
         settings_attr="http_connect_timeout",
+        description=(
+            "Seconds to allow for establishing the TCP/TLS connection. "
+            "Applies without restarting FCC."
+        ),
     ),
     ConfigFieldSpec(
         "HOST",
@@ -250,6 +277,9 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "runtime",
         settings_attr="host",
         restart_required=True,
+        description=(
+            "Network address the FCC server binds to. Changing it restarts FCC."
+        ),
     ),
     ConfigFieldSpec(
         "PORT",
@@ -258,6 +288,7 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "number",
         settings_attr="port",
         restart_required=True,
+        description="TCP port the FCC server listens on. Changing it restarts FCC.",
     ),
     ConfigFieldSpec(
         "FCC_OPEN_BROWSER",

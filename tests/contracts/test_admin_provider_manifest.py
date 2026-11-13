@@ -1,5 +1,7 @@
 """Ensure admin UI manifest exposes every catalog credential/proxy binding."""
 
+import pytest
+
 from free_claude_code.config.admin.manifest import FIELD_BY_KEY, FIELDS
 from free_claude_code.config.admin.state import ConfigValueState
 from free_claude_code.config.provider_catalog import (
@@ -110,6 +112,61 @@ def test_openai_proxy_override_applies_to_catalog_proxy_field() -> None:
     assert entry.settings_attr == "openai_proxy"
     assert entry.restart_required is True
     assert "restarts FCC" in entry.description
+
+
+RUNTIME_DESCRIPTION_EXPECTATIONS: dict[str, tuple[str, ...]] = {
+    "PROXY_AUTH_ENABLED": ("restarts FCC",),
+    "ANTHROPIC_AUTH_TOKEN": ("restarts FCC",),
+    "PROVIDER_RATE_LIMIT": ("rate window", "sliding", "greater than 0"),
+    "PROVIDER_RATE_WINDOW": ("seconds", "greater than 0"),
+    "PROVIDER_MAX_CONCURRENCY": ("simultaneous", "greater than 0"),
+    "HTTP_READ_TIMEOUT": ("Seconds", "streaming"),
+    "HTTP_WRITE_TIMEOUT": ("Seconds", "sending the request body"),
+    "HTTP_CONNECT_TIMEOUT": ("Seconds", "TCP/TLS connection"),
+    "HOST": ("binds", "restarts FCC"),
+    "PORT": ("port", "restarts FCC"),
+    "FCC_OPEN_BROWSER": ("Admin UI",),
+}
+
+_RESTART_EFFECT = "restarts FCC"
+
+
+def test_every_runtime_field_describes_its_effect() -> None:
+    runtime_fields = [field for field in FIELDS if field.section_id == "runtime"]
+
+    assert runtime_fields
+    for field in runtime_fields:
+        assert field.description, f"{field.key} has no admin description"
+
+
+def test_every_restart_required_runtime_field_warns_about_restart() -> None:
+    for field in FIELDS:
+        if field.section_id != "runtime" or not field.restart_required:
+            continue
+        assert _RESTART_EFFECT in field.description, (
+            f"{field.key} requires a restart but its description does not warn"
+        )
+
+
+@pytest.mark.parametrize(("key", "fragments"), RUNTIME_DESCRIPTION_EXPECTATIONS.items())
+def test_runtime_field_description_covers_units_and_restart_effect(
+    key: str, fragments: tuple[str, ...]
+) -> None:
+    entry = FIELD_BY_KEY[key]
+
+    assert entry.section_id == "runtime"
+    for fragment in fragments:
+        assert fragment in entry.description, (
+            f"{key} description is missing {fragment!r}: {entry.description!r}"
+        )
+
+
+@pytest.mark.parametrize(
+    "key",
+    ["HOST", "PORT", "PROXY_AUTH_ENABLED", "ANTHROPIC_AUTH_TOKEN"],
+)
+def test_runtime_restart_fields_keep_their_restart_flag(key: str) -> None:
+    assert FIELD_BY_KEY[key].restart_required is True
 
 
 def test_provider_catalog_display_names_are_admin_status_source() -> None:
