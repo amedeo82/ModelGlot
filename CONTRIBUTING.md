@@ -53,6 +53,15 @@ uv run pytest -v --tb=short
 
 GitHub CI runs Ruff in check-only mode and also bans `# type: ignore`, `# ty: ignore`, and legacy annotation workarounds. Fix underlying typing and import-boundary problems instead of suppressing them.
 
+## Project Documentation
+
+- [`docs/architecture-analysis.md`](docs/architecture-analysis.md) records the architecture map, the evidence behind each quality finding, and the measurement snapshot of the project.
+- [`docs/implementation-plan.md`](docs/implementation-plan.md) converts those findings into ordered implementation steps with acceptance criteria, tests, and a traceability matrix.
+- [`docs/model-display-names-analysis.md`](docs/model-display-names-analysis.md) records why client model pickers show raw provider/model references and which catalog sources can supply descriptive titles.
+- [`docs/model-display-names-implementation-plan.md`](docs/model-display-names-implementation-plan.md) turns that analysis into ordered steps for descriptive model names.
+
+Read both before proposing changes to the request path, the provider layer, or the CI configuration.
+
 ## Project Standards
 
 - Target Python 3.14 and rely on native lazy annotations; do not add `from __future__ import annotations`.
