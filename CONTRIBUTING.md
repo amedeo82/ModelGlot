@@ -61,6 +61,7 @@ GitHub CI runs Ruff in check-only mode and also bans `# type: ignore`, `# ty: ig
 - [`docs/model-display-names-implementation-plan.md`](docs/model-display-names-implementation-plan.md) turns that analysis into ordered steps for descriptive model names.
 - [`docs/claude-terminal-model-display-names-analysis.md`](docs/claude-terminal-model-display-names-analysis.md) records the Claude Code Terminal discovery contract, its client-owned cache, and the remaining compatibility gaps.
 - [`docs/claude-terminal-model-display-names-implementation-plan.md`](docs/claude-terminal-model-display-names-implementation-plan.md) turns that analysis into ordered steps for reliable Terminal discovery and verification.
+- [`docs/windows-launcher-interrupt-cleanup.md`](docs/windows-launcher-interrupt-cleanup.md) records the Windows native-client `Ctrl+C` cleanup bug, its root cause, and the resolved launcher contract.
 
 Read the relevant project documents before proposing changes to the request path, the provider layer, or the CI configuration.
 

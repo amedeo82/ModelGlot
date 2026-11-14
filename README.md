@@ -181,6 +181,10 @@ Antigravity CLI (connect on the Integrations page first):
 fcc-agy
 ```
 
+Pressing `Ctrl+C` while a native client is running exits that client and its FCC launcher
+cleanly, without a Python traceback. The local FCC proxy keeps running and remains available
+for the next client session.
+
 Other Chat Completions clients can use FCC's server URL followed by `/v1` as their
 OpenAI-compatible base URL (default `http://127.0.0.1:8082/v1`). Select an FCC model
 such as `gemini/models/gemini-3.5-flash-lite`. If Proxy Authentication is enabled,

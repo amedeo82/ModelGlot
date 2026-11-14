@@ -79,6 +79,22 @@ def test_process_registry_kill_all_best_effort_windows_noop_when_taskkill_missin
     pr.kill_all_best_effort()
 
 
+def test_process_registry_kill_pid_tree_windows_absorbs_keyboard_interrupt(
+    monkeypatch,
+):
+    from free_claude_code.cli import process_registry as pr
+
+    monkeypatch.setattr(pr.subprocess, "CREATE_NO_WINDOW", 0x08000000, raising=False)
+    monkeypatch.setattr(os, "name", "nt", raising=False)
+
+    def interrupt(*args, **kwargs):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(subprocess, "run", interrupt)
+
+    pr.kill_pid_tree_best_effort(12345)
+
+
 def test_process_registry_kill_pid_tree_windows_uses_taskkill(monkeypatch):
     from free_claude_code.cli import process_registry as pr
 

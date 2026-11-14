@@ -2,6 +2,7 @@
 
 import importlib
 import os
+import signal
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -50,8 +51,9 @@ def test_cleanup_on_process_start_failure(
 
     launch_capture.on_start = fail_start
     if isinstance(failure, KeyboardInterrupt):
-        with pytest.raises(KeyboardInterrupt):
+        with pytest.raises(SystemExit) as exc:
             importlib.import_module(f"free_claude_code.cli.launchers.{name}").launch([])
+        assert exc.value.code == 130
     else:
         launch(name, [], exit_code=1)
     assert list(launcher_temp_dir_path().iterdir()) == []
@@ -127,12 +129,34 @@ def test_interrupt_kills_and_waits_for_registered_child_before_cleanup(
             "unregister_pid",
             side_effect=lambda pid: events.append("unregister"),
         ),
-        pytest.raises(KeyboardInterrupt),
+        pytest.raises(SystemExit) as exc,
     ):
         importlib.import_module("free_claude_code.cli.launchers.codex").launch([])
+    assert exc.value.code == 130
     assert events == ["register", "kill", "unregister"]
     assert process.wait.call_count == 2
     assert list(launcher_temp_dir_path().iterdir()) == []
+
+
+def test_second_interrupt_during_cleanup_is_absorbed(
+    launch_capture: LaunchCapture,
+) -> None:
+    process = Mock(pid=12345)
+    process.wait.side_effect = (KeyboardInterrupt(), KeyboardInterrupt(), 0)
+    previous_handler = signal.getsignal(signal.SIGINT)
+
+    def kill(pid):
+        assert signal.getsignal(signal.SIGINT) == signal.SIG_IGN
+
+    with (
+        patch.object(common.subprocess, "Popen", return_value=process),
+        patch.object(common, "kill_pid_tree_best_effort", side_effect=kill),
+        pytest.raises(SystemExit) as exc,
+    ):
+        importlib.import_module("free_claude_code.cli.launchers.codex").launch([])
+    assert exc.value.code == 130
+    assert signal.getsignal(signal.SIGINT) == previous_handler
+    assert process.wait.call_count == 3
 
 
 @pytest.mark.parametrize("name", ("claude", "pi", "grok", "muse"))

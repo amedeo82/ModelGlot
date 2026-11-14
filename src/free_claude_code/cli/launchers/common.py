@@ -3,12 +3,13 @@
 import errno
 import os
 import shutil
+import signal
 import socket
 import subprocess
 import sys
 import time
 from collections.abc import Mapping
-from contextlib import ExitStack
+from contextlib import ExitStack, suppress
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -32,6 +33,8 @@ PROXY_PREFLIGHT_TIMEOUT_SECONDS = 1.5
 SERVER_STARTUP_TIMEOUT_SECONDS = 30.0
 SERVER_STARTUP_LOCK_TIMEOUT_SECONDS = 30.0
 SERVER_STARTUP_POLL_SECONDS = 0.25
+CLIENT_CLEANUP_TIMEOUT_SECONDS = 5.0
+INTERRUPTED_EXIT_CODE = 130
 
 
 class ProxyState(StrEnum):
@@ -374,6 +377,38 @@ def resolve_client_binary(
     return client_command
 
 
+def _wait_for_client_exit(process: subprocess.Popen[bytes]) -> None:
+    deadline = time.monotonic() + CLIENT_CLEANUP_TIMEOUT_SECONDS
+    while True:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise subprocess.TimeoutExpired(
+                process.args, CLIENT_CLEANUP_TIMEOUT_SECONDS
+            )
+        try:
+            process.wait(timeout=remaining)
+            return
+        except KeyboardInterrupt:
+            continue
+
+
+def _cleanup_interrupted_process(process: subprocess.Popen[bytes]) -> None:
+    previous_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
+    try:
+        kill_pid_tree_best_effort(process.pid)
+        try:
+            _wait_for_client_exit(process)
+        except subprocess.TimeoutExpired:
+            with suppress(OSError):
+                process.kill()
+            with suppress(OSError, subprocess.TimeoutExpired):
+                _wait_for_client_exit(process)
+        except OSError:
+            pass
+    finally:
+        signal.signal(signal.SIGINT, previous_handler)
+
+
 def run_client_process(
     *,
     command: list[str],
@@ -399,9 +434,8 @@ def run_client_process(
         raise SystemExit(127) from None
     except KeyboardInterrupt:
         if process is not None and process.pid:
-            kill_pid_tree_best_effort(process.pid)
-            process.wait()
-        raise
+            _cleanup_interrupted_process(process)
+        raise SystemExit(INTERRUPTED_EXIT_CODE) from None
     finally:
         if process is not None and process.pid:
             unregister_pid(process.pid)
