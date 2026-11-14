@@ -515,6 +515,39 @@ FCC_MODEL_CATALOG_SOURCE=none
 and [`docs/model-display-names-implementation-plan.md`](docs/model-display-names-implementation-plan.md)
 for the implementation contract.
 
+### Claude Code Terminal
+
+Claude Code Terminal and Claude Desktop use the same FCC model catalog and descriptive-title
+resolver. The Terminal discovers them through `GET /v1/models` and uses `display_name` as the
+picker title and `description` as the secondary provider label.
+
+Launch the Terminal through `fcc-claude` to configure the gateway URL, credential, and
+`CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1` automatically. For a manual Claude Code
+launch, configure the same contract explicitly:
+
+```bash
+export ANTHROPIC_BASE_URL="http://127.0.0.1:8082"
+export ANTHROPIC_AUTH_TOKEN="your-fcc-proxy-token"
+export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY="1"
+```
+
+Claude Code owns the discovered-model cache at `~/.claude/cache/gateway-models.json` on
+Unix-like systems and `%USERPROFILE%\.claude\cache\gateway-models.json` on Windows. Set
+`CLAUDE_CONFIG_DIR` to use another location. Claude Code refreshes the cache at startup; a
+session that was already running when FCC titles changed can continue to show the previous
+labels. Restart Claude Code to refresh it. If the cache is still stale and no other Claude
+Code session is using it, remove that cache file and start Claude Code again.
+
+Run `claude --debug` and inspect the `[gatewayDiscovery]` lines under `~/.claude/debug/` to
+confirm whether discovery ran. A user-defined `modelPicker` with
+`replaceBuiltInOptions: true` can hide gateway-discovered rows; FCC does not generate or
+overwrite that setting.
+
+The Terminal discovery analysis and follow-up implementation plan are documented in
+[`docs/claude-terminal-model-display-names-analysis.md`](docs/claude-terminal-model-display-names-analysis.md)
+and
+[`docs/claude-terminal-model-display-names-implementation-plan.md`](docs/claude-terminal-model-display-names-implementation-plan.md).
+
 ## Manage Your Installation
 
 Run `fcc-server --version` to check the installed version without starting FCC.

@@ -293,7 +293,22 @@ The provider attribution always comes from `ProviderDescriptor.display_name`
 
 ---
 
-## 9. Evidence Index
+## 9. Terminal Discovery Follow-up
+
+The shipped title resolver is shared by Claude Code Terminal and Claude Desktop. The
+remaining Terminal work concerns discovery reliability rather than another title
+implementation: Anthropic-compatible discovery credentials, the client-owned model cache,
+real-client verification, and operator guidance.
+
+See
+[`claude-terminal-model-display-names-analysis.md`](claude-terminal-model-display-names-analysis.md)
+for the follow-up analysis and
+[`claude-terminal-model-display-names-implementation-plan.md`](claude-terminal-model-display-names-implementation-plan.md)
+for its execution plan.
+
+---
+
+## 10. Evidence Index
 
 | Claim | Evidence |
 | --- | --- |

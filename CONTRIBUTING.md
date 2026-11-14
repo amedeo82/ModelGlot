@@ -59,8 +59,10 @@ GitHub CI runs Ruff in check-only mode and also bans `# type: ignore`, `# ty: ig
 - [`docs/implementation-plan.md`](docs/implementation-plan.md) converts those findings into ordered implementation steps with acceptance criteria, tests, and a traceability matrix.
 - [`docs/model-display-names-analysis.md`](docs/model-display-names-analysis.md) records why client model pickers show raw provider/model references and which catalog sources can supply descriptive titles.
 - [`docs/model-display-names-implementation-plan.md`](docs/model-display-names-implementation-plan.md) turns that analysis into ordered steps for descriptive model names.
+- [`docs/claude-terminal-model-display-names-analysis.md`](docs/claude-terminal-model-display-names-analysis.md) records the Claude Code Terminal discovery contract, its client-owned cache, and the remaining compatibility gaps.
+- [`docs/claude-terminal-model-display-names-implementation-plan.md`](docs/claude-terminal-model-display-names-implementation-plan.md) turns that analysis into ordered steps for reliable Terminal discovery and verification.
 
-Read both before proposing changes to the request path, the provider layer, or the CI configuration.
+Read the relevant project documents before proposing changes to the request path, the provider layer, or the CI configuration.
 
 ## Project Standards
 

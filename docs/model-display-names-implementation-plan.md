@@ -438,6 +438,18 @@ enforced by a test rather than by review.
 
 ---
 
+## Terminal Discovery Follow-up
+
+The shipped implementation already exposes the same descriptive titles and provider
+descriptions to Claude Code Terminal and Claude Desktop through the shared `claude` model
+projection. Follow-up work for Terminal discovery authentication, the client-owned cache,
+real-client verification, and operator guidance is tracked separately in
+[`claude-terminal-model-display-names-analysis.md`](claude-terminal-model-display-names-analysis.md)
+and
+[`claude-terminal-model-display-names-implementation-plan.md`](claude-terminal-model-display-names-implementation-plan.md).
+
+---
+
 ## Traceability Matrix
 
 | Analysis finding | Plan step |
