@@ -14,6 +14,13 @@ from free_claude_code.cli.commands import (
 )
 from free_claude_code.config.paths import config_dir_path
 from free_claude_code.core.interprocess_lock import InterprocessFileLock
+from free_claude_code.core.version import package_version
+
+
+def version_text() -> str:
+    """Return the user-facing label for the installed package version."""
+
+    return f"Free Claude Code {package_version()}"
 
 
 class DesktopTray(Protocol):

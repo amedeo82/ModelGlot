@@ -93,8 +93,8 @@ fcc-server
 ```
 
 FCC opens the Admin UI after starting. On Windows and macOS, use the tray or
-menu-bar icon to open Admin, restart, or quit. When using `fcc-server`, keep its
-terminal open.
+menu-bar icon to open Admin, check the server status or the installed version,
+restart, or quit. When using `fcc-server`, keep its terminal open.
 
 <a id="nvidia-nim-provider"></a>
 

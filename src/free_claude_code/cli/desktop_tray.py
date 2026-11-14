@@ -6,7 +6,11 @@ from io import BytesIO
 from PIL import Image
 from pystray import Icon, Menu, MenuItem
 
-from free_claude_code.cli.desktop import DesktopController, launch_desktop
+from free_claude_code.cli.desktop import (
+    DesktopController,
+    launch_desktop,
+    version_text,
+)
 from free_claude_code.cli.desktop_assets import app_icon_bytes
 
 
@@ -19,13 +23,17 @@ class PystrayDesktopTray:
             "free-claude-code",
             _create_icon(),
             "Free Claude Code",
-            Menu(
-                MenuItem("Open Admin", self._open_admin, default=True),
-                MenuItem("Check Server Status", self._check_status),
-                MenuItem("Restart Server", self._restart_server),
-                Menu.SEPARATOR,
-                MenuItem("Quit", self._quit),
-            ),
+            self._build_menu(),
+        )
+
+    def _build_menu(self) -> Menu:
+        return Menu(
+            MenuItem("Open Admin", self._open_admin, default=True),
+            MenuItem("Check Server Status", self._check_status),
+            MenuItem("Check Version", self._check_version),
+            MenuItem("Restart Server", self._restart_server),
+            Menu.SEPARATOR,
+            MenuItem("Quit", self._quit),
         )
 
     def run(self, setup: Callable[[], None]) -> None:
@@ -46,6 +54,9 @@ class PystrayDesktopTray:
             f"Server is {self._controller.status}.",
             "Free Claude Code",
         )
+
+    def _check_version(self, _icon: Icon, _item: MenuItem) -> None:
+        self._icon.notify(version_text(), "Free Claude Code")
 
     def _restart_server(self, _icon: Icon, _item: MenuItem) -> None:
         self._controller.restart_server()

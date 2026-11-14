@@ -340,3 +340,11 @@ def test_desktop_lock_failure_closes_tray_without_starting_server():
         desktop.launch_desktop(MagicMock())
     controller.quit.assert_called_once()
     supervisor.return_value.run.assert_not_called()
+
+
+def test_version_text_reports_installed_package_version(monkeypatch) -> None:
+    from free_claude_code.cli import desktop
+
+    monkeypatch.setattr(desktop, "package_version", lambda: "9.8.7")
+
+    assert desktop.version_text() == "Free Claude Code 9.8.7"
