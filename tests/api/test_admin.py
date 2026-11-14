@@ -904,6 +904,13 @@ def test_admin_config_masks_secrets_and_exposes_manifest(monkeypatch, tmp_path):
         assert field["description"], f"{key} exposes no admin description"
         if field["restart_required"]:
             assert "restarts FCC" in field["description"]
+    for section in ("models", "web_tools", "messaging", "voice"):
+        panel_fields = [
+            field for field in body["fields"] if field["section"] == section
+        ]
+        assert panel_fields
+        for field in panel_fields:
+            assert field["description"], f"{field['key']} exposes no admin description"
 
 
 def test_admin_models_include_configured_and_cached_canonical_slugs():

@@ -155,6 +155,9 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "select",
         settings_attr="reasoning_fable",
         options=_reasoning_options(ROUTE_REASONING_PREFERENCES),
+        description=(
+            "Reasoning effort for Fable requests. Inherit uses the Default Effort."
+        ),
     ),
     ConfigFieldSpec(
         "REASONING_OPUS",
@@ -163,6 +166,9 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "select",
         settings_attr="reasoning_opus",
         options=_reasoning_options(ROUTE_REASONING_PREFERENCES),
+        description=(
+            "Reasoning effort for Opus requests. Inherit uses the Default Effort."
+        ),
     ),
     ConfigFieldSpec(
         "REASONING_SONNET",
@@ -171,6 +177,9 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "select",
         settings_attr="reasoning_sonnet",
         options=_reasoning_options(ROUTE_REASONING_PREFERENCES),
+        description=(
+            "Reasoning effort for Sonnet requests. Inherit uses the Default Effort."
+        ),
     ),
     ConfigFieldSpec(
         "REASONING_HAIKU",
@@ -179,6 +188,9 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "select",
         settings_attr="reasoning_haiku",
         options=_reasoning_options(ROUTE_REASONING_PREFERENCES),
+        description=(
+            "Reasoning effort for Haiku requests. Inherit uses the Default Effort."
+        ),
     ),
     ConfigFieldSpec(
         "PROXY_AUTH_ENABLED",
@@ -306,6 +318,10 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         settings_attr="messaging_platform",
         options=("telegram", "discord", "none"),
         session_sensitive=True,
+        description=(
+            "Selects the messaging platform started by FCC. Choose Telegram or "
+            "Discord, or None to disable messaging startup."
+        ),
     ),
     ConfigFieldSpec(
         "MESSAGING_RATE_LIMIT",
@@ -314,6 +330,10 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "number",
         settings_attr="messaging_rate_limit",
         session_sensitive=True,
+        description=(
+            "Maximum outbound messaging tasks dispatched per rate window "
+            "(sliding window). Must be greater than 0."
+        ),
     ),
     ConfigFieldSpec(
         "MESSAGING_RATE_WINDOW",
@@ -322,6 +342,10 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "number",
         settings_attr="messaging_rate_window",
         session_sensitive=True,
+        description=(
+            "Length of the messaging rate-limit window in seconds. Must be "
+            "greater than 0."
+        ),
     ),
     ConfigFieldSpec(
         "TELEGRAM_BOT_TOKEN",
@@ -331,6 +355,9 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         settings_attr="telegram_bot_token",
         secret=True,
         session_sensitive=True,
+        description=(
+            "Bot token issued by BotFather and used to connect FCC to Telegram."
+        ),
     ),
     ConfigFieldSpec(
         "ALLOWED_TELEGRAM_USER_ID",
@@ -338,6 +365,10 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "messaging",
         settings_attr="allowed_telegram_user_id",
         session_sensitive=True,
+        description=(
+            "Restricts Telegram messages to one numeric user ID. Leave blank "
+            "to accept messages from any user."
+        ),
     ),
     ConfigFieldSpec(
         "TELEGRAM_PROXY_URL",
@@ -347,7 +378,10 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         settings_attr="telegram_proxy_url",
         secret=True,
         session_sensitive=True,
-        description="Optional Telegram-only proxy, e.g. socks5://127.0.0.1:1080.",
+        description=(
+            "Optional Telegram-only proxy, e.g. socks5://127.0.0.1:1080. "
+            "Leave blank to connect directly."
+        ),
     ),
     ConfigFieldSpec(
         "DISCORD_BOT_TOKEN",
@@ -357,6 +391,10 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         settings_attr="discord_bot_token",
         secret=True,
         session_sensitive=True,
+        description=(
+            "Bot token issued by the Discord Developer Portal and used to "
+            "connect FCC to Discord."
+        ),
     ),
     ConfigFieldSpec(
         "ALLOWED_DISCORD_CHANNELS",
@@ -364,6 +402,10 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "messaging",
         settings_attr="allowed_discord_channels",
         session_sensitive=True,
+        description=(
+            "Comma-separated Discord channel IDs that may use FCC. Leave blank "
+            "to accept messages from no channels."
+        ),
     ),
     ConfigFieldSpec(
         "ALLOWED_DIR",
@@ -371,6 +413,10 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "messaging",
         settings_attr="allowed_dir",
         session_sensitive=True,
+        description=(
+            "Workspace directory used by messaging-triggered Claude Code "
+            "sessions. Leave blank to use the server's current directory."
+        ),
     ),
     ConfigFieldSpec(
         "MAX_MESSAGE_LOG_ENTRIES_PER_CHAT",
@@ -380,6 +426,10 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         settings_attr="max_message_log_entries_per_chat",
         advanced=True,
         session_sensitive=True,
+        description=(
+            "Maximum number of tracked message entries retained per chat. "
+            "Leave blank to keep all existing entries."
+        ),
     ),
     ConfigFieldSpec(
         "VOICE_NOTE_ENABLED",
@@ -388,6 +438,10 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "boolean",
         settings_attr="voice_note_enabled",
         session_sensitive=True,
+        description=(
+            "Transcribe incoming voice notes into text before sending them to "
+            "Claude Code."
+        ),
     ),
     ConfigFieldSpec(
         "WHISPER_DEVICE",
@@ -397,6 +451,10 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         settings_attr="whisper_device",
         options=("cpu", "cuda", "nvidia_nim"),
         session_sensitive=True,
+        description=(
+            "Transcription backend: local Whisper on CPU or CUDA, or the "
+            "NVIDIA NIM Whisper API."
+        ),
     ),
     ConfigFieldSpec(
         "WHISPER_MODEL",
@@ -404,6 +462,10 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "voice",
         settings_attr="whisper_model",
         session_sensitive=True,
+        description=(
+            "Whisper model name for local transcription or the model ID used "
+            "by NVIDIA NIM."
+        ),
     ),
     ConfigFieldSpec(
         "ENABLE_WEB_SERVER_TOOLS",
@@ -421,6 +483,10 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "Allowed Web Fetch Schemes",
         "web_tools",
         settings_attr="web_fetch_allowed_schemes",
+        description=(
+            "Comma-separated URL schemes that web_fetch may use, for example "
+            "http,https."
+        ),
     ),
     ConfigFieldSpec(
         "WEB_FETCH_ALLOW_PRIVATE_NETWORKS",
@@ -428,6 +494,10 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "web_tools",
         "boolean",
         settings_attr="web_fetch_allow_private_networks",
+        description=(
+            "Allow web_fetch to reach loopback, private, and link-local "
+            "addresses. Leave disabled to prevent access to internal services."
+        ),
     ),
     ConfigFieldSpec(
         "LOG_LEVEL",

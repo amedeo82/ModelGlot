@@ -169,6 +169,55 @@ def test_runtime_restart_fields_keep_their_restart_flag(key: str) -> None:
     assert FIELD_BY_KEY[key].restart_required is True
 
 
+ADMIN_PANEL_SECTIONS = ("models", "web_tools", "messaging", "voice")
+
+
+@pytest.mark.parametrize("section_id", ADMIN_PANEL_SECTIONS)
+def test_every_model_config_and_messaging_field_describes_its_effect(
+    section_id: str,
+) -> None:
+    fields = [field for field in FIELDS if field.section_id == section_id]
+
+    assert fields
+    for field in fields:
+        assert field.description, f"{field.key} has no admin description"
+
+
+ADMIN_DESCRIPTION_EXPECTATIONS: dict[str, tuple[str, ...]] = {
+    "REASONING_FABLE": ("Fable", "Inherit", "Default Effort"),
+    "REASONING_OPUS": ("Opus", "Inherit", "Default Effort"),
+    "REASONING_SONNET": ("Sonnet", "Inherit", "Default Effort"),
+    "REASONING_HAIKU": ("Haiku", "Inherit", "Default Effort"),
+    "WEB_FETCH_ALLOWED_SCHEMES": ("Comma-separated", "http,https"),
+    "WEB_FETCH_ALLOW_PRIVATE_NETWORKS": ("private", "internal services"),
+    "MESSAGING_PLATFORM": ("Telegram", "Discord", "None"),
+    "MESSAGING_RATE_LIMIT": ("outbound", "sliding window", "greater than 0"),
+    "MESSAGING_RATE_WINDOW": ("seconds", "greater than 0"),
+    "TELEGRAM_BOT_TOKEN": ("BotFather", "Telegram"),
+    "ALLOWED_TELEGRAM_USER_ID": ("numeric user ID", "any user"),
+    "TELEGRAM_PROXY_URL": ("Telegram-only", "socks5"),
+    "DISCORD_BOT_TOKEN": ("Discord Developer Portal", "Discord"),
+    "ALLOWED_DISCORD_CHANNELS": ("Comma-separated", "channel IDs"),
+    "ALLOWED_DIR": ("Workspace directory", "current directory"),
+    "MAX_MESSAGE_LOG_ENTRIES_PER_CHAT": ("tracked message entries", "per chat"),
+    "VOICE_NOTE_ENABLED": ("voice notes", "Claude Code"),
+    "WHISPER_DEVICE": ("CPU", "CUDA", "NVIDIA NIM"),
+    "WHISPER_MODEL": ("model name", "NVIDIA NIM"),
+}
+
+
+@pytest.mark.parametrize(("key", "fragments"), ADMIN_DESCRIPTION_EXPECTATIONS.items())
+def test_model_config_and_messaging_descriptions_explain_key_behavior(
+    key: str, fragments: tuple[str, ...]
+) -> None:
+    entry = FIELD_BY_KEY[key]
+
+    for fragment in fragments:
+        assert fragment in entry.description, (
+            f"{key} description is missing {fragment!r}: {entry.description!r}"
+        )
+
+
 def test_provider_catalog_display_names_are_admin_status_source() -> None:
     from free_claude_code.config.admin.status import provider_config_status
     from free_claude_code.config.admin.values import load_value_state
