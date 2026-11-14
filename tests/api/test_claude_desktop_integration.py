@@ -135,7 +135,10 @@ def test_desktop_model_view_preserves_labels_and_query_precedence():
             desktop_model_id(ref),
             desktop_model_id(ref, no_thinking=True),
         ]
-        assert [row["display_name"] for row in models] == [ref, ref + " (no thinking)"]
+        assert [row["display_name"] for row in models] == [
+            "Nemotron 3.5",
+            "Nemotron 3.5 (no thinking)",
+        ]
         regular = client.get("/v1/models").json()
         assert client.get("/v1/models?view=claude", headers=headers).json() == regular
         assert (

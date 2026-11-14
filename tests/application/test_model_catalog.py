@@ -120,6 +120,71 @@ def test_catalog_retains_configured_models_and_enriches_each_reference_once():
     assert catalog.models[1].context_window_tokens == 65536
 
 
+def test_descriptive_titles_preserve_identity_and_carry_provider_description() -> None:
+    ref = "nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b"
+    settings = Settings(model=ref)
+    snapshot = ModelCatalogSnapshot(settings, (ProviderModelInfo(ref),))
+
+    model = read_model_catalog(snapshot).models[0]
+
+    assert model.display_name == "Nemotron 3 Ultra 550B A55B"
+    assert model.description == "NVIDIA NIM"
+    assert model.provider_model_ref == ref
+    assert model.wire_slug == ref
+
+
+def test_catalog_title_is_used_between_curated_and_heuristic_titles() -> None:
+    ref = "open_router/vendor/model"
+    settings = Settings(model=ref)
+    snapshot = ModelCatalogSnapshot(
+        settings,
+        (ProviderModelInfo(ref),),
+        title_catalog={("openrouter", "vendor/model"): ("Vendor Model", "Description")},
+    )
+
+    model = read_model_catalog(snapshot).models[0]
+
+    assert model.display_name == "Vendor Model"
+    assert model.description == "OpenRouter"
+    assert model.provider_model_ref == ref
+
+
+def test_no_thinking_title_keeps_the_routing_suffix() -> None:
+    ref = "open_router/vendor/model"
+    settings = Settings(model=ref)
+    snapshot = ModelCatalogSnapshot(
+        settings,
+        (ProviderModelInfo(ref, supports_thinking=False),),
+    )
+
+    model = read_model_catalog(snapshot).models[0]
+
+    assert model.display_name == "Vendor Model (no thinking)"
+    assert model.wire_slug == f"claude-3-freecc-no-thinking/{ref}"
+
+
+def test_duplicate_provider_titles_are_disambiguated() -> None:
+    settings = Settings(model="open_router/first/shared")
+    snapshot = ModelCatalogSnapshot(
+        settings,
+        (
+            ProviderModelInfo("open_router/first/shared"),
+            ProviderModelInfo("open_router/second/shared"),
+        ),
+        title_catalog={
+            ("openrouter", "first/shared"): ("Shared", ""),
+            ("openrouter", "second/shared"): ("Shared", ""),
+        },
+    )
+
+    models = read_model_catalog(snapshot).models
+
+    assert [model.display_name for model in models] == [
+        "Shared",
+        "Shared (second/shared)",
+    ]
+
+
 def _client_model(wire_slug: str, provider_model_ref: str) -> CatalogModel:
     return CatalogModel(
         wire_slug=wire_slug,

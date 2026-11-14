@@ -1,6 +1,6 @@
 """Pure, validated application settings schema."""
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import (
     BaseModel,
@@ -731,6 +731,13 @@ class Settings(BaseModel):
     )
 
     # ==================== Server ====================
+    model_catalog_source: Literal["models.dev", "none"] = Field(
+        default="models.dev", validation_alias="FCC_MODEL_CATALOG_SOURCE"
+    )
+    model_catalog_url: NonEmptyString = Field(
+        default="https://models.dev/api.json",
+        validation_alias="FCC_MODEL_CATALOG_URL",
+    )
     host: NonEmptyString = Field(default="0.0.0.0", validation_alias="HOST")
     port: int = Field(default=8082, validation_alias="PORT")
     open_admin_browser: bool = Field(default=True, validation_alias="FCC_OPEN_BROWSER")

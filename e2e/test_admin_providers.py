@@ -135,7 +135,7 @@ def test_configured_provider_check_keeps_readiness_and_adds_models(
     expect(page.get_by_role("option", name="None", exact=True)).to_be_visible()
     fable.fill("vendor/model-a")
     expect(
-        page.get_by_role("option", name="open_router/vendor/model-a", exact=True)
+        page.get_by_role("option", name="Vendor Model A", exact=True)
     ).to_be_visible()
 
 

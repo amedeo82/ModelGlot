@@ -9,6 +9,7 @@ from free_claude_code.config.api_keys import normalize_api_keys
 from free_claude_code.config.custom_providers import CustomProviderDefinition
 from free_claude_code.config.model_refs import ModelFallback
 from free_claude_code.config.settings import Settings
+from free_claude_code.core.gateway_model_ids import desktop_model_id
 from free_claude_code.core.model_capabilities import ModelInputModality
 from tests.api.support import create_test_app, provider_manager_for_app
 
@@ -169,13 +170,20 @@ def test_models_list_includes_configured_refs_cached_provider_models_and_aliases
     assert ids.count("anthropic/deepseek/deepseek-chat") == 1
     assert ids.count("anthropic/open_router/anthropic/claude-opus") == 1
     display_names = {item["id"]: item["display_name"] for item in data["data"]}
-    assert (
-        display_names["anthropic/open_router/meta/llama-3.3"]
-        == "open_router/meta/llama-3.3"
-    )
+    assert display_names["anthropic/open_router/meta/llama-3.3"] == "Llama 3.3"
     assert (
         display_names["claude-3-freecc-no-thinking/open_router/meta/llama-3.3"]
-        == "open_router/meta/llama-3.3 (no thinking)"
+        == "Llama 3.3 (no thinking)"
+    )
+    descriptions = {
+        item["id"]: item.get("description")
+        for item in data["data"]
+        if "/" in item["id"]
+    }
+    assert descriptions["anthropic/open_router/meta/llama-3.3"] == "OpenRouter"
+    assert (
+        descriptions["claude-3-freecc-no-thinking/open_router/meta/llama-3.3"]
+        == "OpenRouter (no thinking)"
     )
     assert "claude-sonnet-5-5" in ids
     assert "claude-fable-5-2" in ids
@@ -186,6 +194,29 @@ def test_models_list_includes_configured_refs_cached_provider_models_and_aliases
         "provider_model_ref" not in item and "apiBackend" not in item
         for item in data["data"]
     )
+
+
+def test_desktop_view_keeps_titles_and_provider_descriptions() -> None:
+    ref = "open_router/vendor/model"
+    app = create_test_app(_settings(model=ref, model_opus=None, model_haiku=None))
+    claude = TestClient(app).get("/v1/models?view=claude").json()["data"]
+    desktop = TestClient(app).get("/v1/models?view=claude-desktop").json()["data"]
+    claude_row = next(row for row in claude if row["id"].endswith(ref))
+    desktop_row = next(row for row in desktop if row["id"] == desktop_model_id(ref))
+
+    assert claude_row["display_name"] == desktop_row["display_name"] == "Vendor Model"
+    assert claude_row["description"] == desktop_row["description"] == "OpenRouter"
+
+
+def test_native_anthropic_passthrough_keeps_raw_label_without_description() -> None:
+    ref = "anthropic/claude-sonnet-4-5"
+    app = create_test_app(_settings(model=ref, model_opus=None, model_haiku=None))
+
+    rows = TestClient(app).get("/v1/models?view=claude").json()["data"]
+    native = next(row for row in rows if row["id"].endswith(ref))
+
+    assert native["display_name"] == ref
+    assert "description" not in native
 
 
 def test_claude_models_use_custom_provider_display_name_without_changing_ids():
@@ -345,7 +376,8 @@ def test_direct_model_views_exclude_claude_aliases_and_duplicate_variants():
         "created": 0,
         "owned_by": "free-claude-code",
         "created_at": "1970-01-01T00:00:00Z",
-        "display_name": "deepseek/deepseek-chat",
+        "display_name": "DeepSeek Chat",
+        "description": "DeepSeek",
         "id": "deepseek/deepseek-chat",
         "type": "model",
         "provider_model_ref": "deepseek/deepseek-chat",
@@ -510,19 +542,19 @@ def test_muse_catalog_uses_native_metadata_for_known_limits_and_reasoning():
     }
 
     assert rows["open_router/reasoning-model"] == {
-        "name": "open_router/reasoning-model",
+        "name": "Reasoning Model",
         "is_hidden": False,
         "reasoning": True,
         "limit": {"context": 131072, "output": 8192},
     }
     assert rows["open_router/plain-model"] == {
-        "name": "open_router/plain-model (no thinking)",
+        "name": "Plain Model (no thinking)",
         "is_hidden": False,
         "reasoning": False,
         "limit": {"context": 65536, "output": 65536},
     }
     assert rows["deepseek/deepseek-chat"] == {
-        "name": "deepseek/deepseek-chat",
+        "name": "DeepSeek Chat",
         "is_hidden": False,
         "limit": {"context": 200000, "output": 81920},
     }

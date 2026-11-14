@@ -6,6 +6,7 @@ import platform
 import re
 import shutil
 import subprocess
+import time
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -15,6 +16,7 @@ from free_claude_code.config.loader import ManagedConfigStore
 from free_claude_code.config.paths import (
     claude_desktop_disconnect_path,
     codex_model_catalog_path,
+    model_catalog_cache_path,
 )
 from free_claude_code.config.provider_catalog import PROVIDER_CATALOG, ProviderAuthKind
 from free_claude_code.config.server_urls import local_proxy_root_url
@@ -28,6 +30,10 @@ from free_claude_code.harnesses import (
     vscode_chat_integration,
 )
 from free_claude_code.providers.github_copilot.auth import CopilotAuthManager
+from free_claude_code.providers.model_catalog_source import (
+    MODEL_CATALOG_CACHE_TTL_SECONDS,
+    ModelCatalogSource,
+)
 from free_claude_code.providers.openai_codex.auth import saved_connection_state
 from free_claude_code.providers.runtime.config import has_provider_configuration
 from free_claude_code.providers.runtime.discovery import (
@@ -62,6 +68,8 @@ RUNTIME_FIELDS = (
     "messaging_rate_limit",
     "messaging_rate_window",
     "max_message_log_entries_per_chat",
+    "model_catalog_source",
+    "model_catalog_url",
 )
 ROUTING_FIELDS = (
     "model",
@@ -317,6 +325,35 @@ def model_discovery_report(settings: Settings) -> dict[str, Any]:
     return {"status": "available", "source": "running_server", "providers": providers}
 
 
+def model_titles_report(settings: Settings) -> dict[str, Any]:
+    """Report the descriptive model-title source and local cache state."""
+    source = settings.model_catalog_source
+    if source == "none":
+        return {
+            "source": "none",
+            "cache_path": str(model_catalog_cache_path()),
+            "cache_age_seconds": None,
+            "ttl_seconds": MODEL_CATALOG_CACHE_TTL_SECONDS,
+            "state": "disabled",
+            "last_error": None,
+        }
+    cache = ModelCatalogSource(model_catalog_cache_path()).load()
+    age = None if cache.fetched_at is None else max(0.0, time.time() - cache.fetched_at)
+    state = (
+        "absent" if cache.fetched_at is None else ("stale" if cache.stale else "fresh")
+    )
+    return {
+        "source": source,
+        "url": settings.model_catalog_url,
+        "cache_path": str(model_catalog_cache_path()),
+        "cache_age_seconds": age,
+        "ttl_seconds": MODEL_CATALOG_CACHE_TTL_SECONDS,
+        "entries": len(cache.entries),
+        "state": state,
+        "last_error": cache.last_error,
+    }
+
+
 def collect_report() -> dict[str, Any]:
     report = {
         "version": package_version(),
@@ -339,6 +376,7 @@ def collect_report() -> dict[str, Any]:
         "integrations": None,
         "harnesses": {},
         "model_discovery": {"status": "unavailable", "source": "running_server"},
+        "model_titles": None,
         "errors": [],
     }
     store = ManagedConfigStore()
@@ -360,6 +398,7 @@ def collect_report() -> dict[str, Any]:
         )
         report.update(settings_report(settings, accounts))
         report["model_discovery"] = model_discovery_report(settings)
+        report["model_titles"] = model_titles_report(settings)
         report["integrations"] = integration_report(settings)
         for name, state in accounts.items():
             if state not in {"connected", "disconnected"}:

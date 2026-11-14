@@ -153,7 +153,7 @@ def test_fallback_editor_adds_filters_reorders_and_removes_models(
 
     add_input.fill("model-b")
     expect(
-        editor.get_by_role("option", name="open_router/vendor/model-b", exact=True)
+        editor.get_by_role("option", name="Vendor Model B", exact=True)
     ).to_be_visible()
     add_input.press("ArrowDown")
     add_input.press("Enter")
@@ -302,7 +302,7 @@ def test_fallback_editor_pairs_match_existing_controls_and_save_effort(
     editor.get_by_role("button", name="Add fallback", exact=True).click()
     row_model = editor.get_by_role("combobox", name="Fallback model 1", exact=True)
     row_model.fill("model-b")
-    editor.get_by_role("option", name="open_router/vendor/model-b", exact=True).click()
+    editor.get_by_role("option", name="Vendor Model B", exact=True).click()
     expect(row_model).to_have_value("open_router/vendor/model-b")
     row_effort = editor.get_by_label(
         "Reasoning effort for open_router/vendor/model-b", exact=True

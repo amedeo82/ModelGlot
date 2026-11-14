@@ -12,6 +12,10 @@ from free_claude_code.application.ports import ModelCatalogPort
 from free_claude_code.config.api_keys import normalize_api_keys
 from free_claude_code.config.settings import Settings
 from free_claude_code.providers.base import BaseProvider
+from free_claude_code.providers.model_catalog_source import (
+    ModelCatalogCache,
+    ModelCatalogSource,
+)
 from free_claude_code.providers.nvidia_nim import NvidiaNimProvider
 from free_claude_code.providers.runtime import ProviderRuntime
 from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
@@ -1009,3 +1013,78 @@ async def test_generation_lifecycle_traces_contain_minimal_correlation_fields() 
     assert events[1]["reason"] == "test_replace"
     assert events[2]["active_leases"] == 1
     assert events[3]["forced"] is False
+
+
+@pytest.mark.asyncio
+async def test_model_title_refresh_runs_in_background_without_blocking_reads(
+    tmp_path,
+) -> None:
+    class BlockingSource(ModelCatalogSource):
+        def __init__(self) -> None:
+            super().__init__(tmp_path / "titles.json")
+            self.started = asyncio.Event()
+            self.release = asyncio.Event()
+            self.completed = asyncio.Event()
+
+        def load(self) -> ModelCatalogCache:
+            return ModelCatalogCache()
+
+        async def refresh(self, settings: Settings) -> ModelCatalogCache:
+            self.started.set()
+            await self.release.wait()
+            self.completed.set()
+            return ModelCatalogCache(
+                entries={("openrouter", "model"): ("Descriptive Model", "")},
+                fetched_at=1.0,
+            )
+
+        def write(self, cache: ModelCatalogCache) -> None:
+            return None
+
+    source = BlockingSource()
+    manager = ProviderRuntimeManager(
+        _settings("open_router/model"),
+        runtime_factory=RuntimeFactory(),
+        model_title_source=source,
+    )
+    try:
+        manager.start_model_list_refresh()
+        await source.started.wait()
+
+        assert manager.model_title_catalog() == {}
+
+        source.release.set()
+        await source.completed.wait()
+        await finish_discovery(manager)
+        assert manager.model_title_catalog() == {
+            ("openrouter", "model"): ("Descriptive Model", "")
+        }
+    finally:
+        await manager.close()
+
+
+@pytest.mark.asyncio
+async def test_disabled_model_title_source_never_refreshes(tmp_path) -> None:
+    class ForbiddenSource(ModelCatalogSource):
+        def __init__(self) -> None:
+            super().__init__(tmp_path / "titles.json")
+
+        async def refresh(self, settings: Settings) -> ModelCatalogCache:
+            pytest.fail("disabled model title source must not refresh")
+
+        def write(self, cache: ModelCatalogCache) -> None:
+            pytest.fail("disabled model title source must not write")
+
+    manager = ProviderRuntimeManager(
+        _settings("open_router/model").model_copy(
+            update={"model_catalog_source": "none"}
+        ),
+        runtime_factory=RuntimeFactory(),
+        model_title_source=ForbiddenSource(),
+    )
+    try:
+        manager.start_model_list_refresh()
+        await finish_discovery(manager)
+        assert manager.model_title_catalog() == {}
+    finally:
+        await manager.close()

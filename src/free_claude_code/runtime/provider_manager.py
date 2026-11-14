@@ -1,7 +1,9 @@
 """Single-owner provider generations and progressively available model metadata."""
 
 import asyncio
-from collections.abc import Awaitable, Callable, Iterable
+import contextlib
+import time
+from collections.abc import Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass, field, replace
 from functools import partial
 from typing import Protocol
@@ -26,6 +28,11 @@ from free_claude_code.providers.admission_policy import ProviderAdmissionLimits
 from free_claude_code.providers.admission_registry import ProviderAdmissionRegistry
 from free_claude_code.providers.base import BaseProvider
 from free_claude_code.providers.history_negotiation import HistoryModeCache
+from free_claude_code.providers.model_catalog_source import (
+    MODEL_CATALOG_CACHE_TTL_SECONDS,
+    ModelCatalogCache,
+    ModelCatalogSource,
+)
 from free_claude_code.providers.model_listing import model_infos_from_ids
 from free_claude_code.providers.runtime.discovery import (
     _provider_query_failure_reason,
@@ -170,6 +177,7 @@ class ProviderRuntimeManager:
         runtime_factory: ProviderRuntimeFactory = ProviderRuntime,
         connected_provider_ids: ConnectedProviderIds = tuple,
         model_catalog_publisher: ModelCatalogPublisher | None = None,
+        model_title_source: ModelCatalogSource | None = None,
     ) -> None:
         self._runtime_factory = runtime_factory
         self._history_cache = HistoryModeCache()
@@ -178,6 +186,11 @@ class ProviderRuntimeManager:
         )
         self._connected_provider_ids = connected_provider_ids
         self._model_catalog_publisher = model_catalog_publisher
+        self._model_title_source = model_title_source
+        self._title_catalog: dict[tuple[str, str], tuple[str, str]] = {}
+        self._title_cache = ModelCatalogCache()
+        self._title_refresh_task: asyncio.Task[None] | None = None
+        self._title_last_attempt_at: float | None = None
         self._catalog_changed: Callable[[], None] | None = None
         self._replace_lock = asyncio.Lock()
         self._publication_lock = asyncio.Lock()
@@ -203,6 +216,7 @@ class ProviderRuntimeManager:
                 )
             ),
         )
+        self._load_title_catalog(settings)
         self._trace_published(self._current, previous=None, reason="startup")
 
     @property
@@ -258,7 +272,43 @@ class ProviderRuntimeManager:
     def catalog_snapshot(self) -> ModelCatalogSnapshot:
         self._ensure_open()
         self._synchronize_model_cache_scope()
-        return self._current.snapshot()
+        snapshot = self._current.snapshot()
+        return replace(snapshot, title_catalog=self._title_catalog)
+
+    def model_title_catalog(self) -> Mapping[tuple[str, str], tuple[str, str]]:
+        self._ensure_open()
+        return self._title_catalog
+
+    def model_title_catalog_status(self) -> dict[str, object]:
+        cache = self._title_cache
+        fetched_at = cache.fetched_at
+        source = self._current.settings.model_catalog_source
+        return {
+            "source": source,
+            "state": (
+                "disabled"
+                if source == "none"
+                else "absent"
+                if fetched_at is None
+                else "stale"
+                if cache.stale
+                else "fresh"
+            ),
+            "url": (
+                self._current.settings.model_catalog_url
+                if self._current.settings.model_catalog_source != "none"
+                else None
+            ),
+            "entries": len(self._title_catalog),
+            "cache_path": str(self._model_title_source.path)
+            if self._model_title_source is not None
+            else None,
+            "cache_age_seconds": (
+                None if fetched_at is None else max(0.0, time.time() - fetched_at)
+            ),
+            "stale": cache.stale,
+            "last_error": cache.last_error,
+        }
 
     def cache_model_infos(
         self, provider_id: str, model_infos: Iterable[ProviderModelInfo]
@@ -348,6 +398,7 @@ class ProviderRuntimeManager:
     def _start_pass(
         self, generation: _ProviderGeneration, *, refresh: bool = False
     ) -> asyncio.Task[ProviderModelRefreshResult]:
+        self._schedule_title_catalog_refresh(generation.settings)
         if not generation.catalog_started:
             generation.catalog_started = True
             generation.initial_ids = tuple(
@@ -591,6 +642,61 @@ class ProviderRuntimeManager:
         if self._catalog_changed is not None and not self._closing:
             self._catalog_changed()
 
+    def _load_title_catalog(self, settings: Settings) -> None:
+        if self._model_title_source is None or settings.model_catalog_source == "none":
+            self._title_catalog = {}
+            self._title_cache = ModelCatalogCache()
+            self._title_last_attempt_at = None
+            return
+        cache = self._model_title_source.load()
+        self._title_cache = cache
+        self._title_catalog = dict(cache.entries)
+
+    def _schedule_title_catalog_refresh(self, settings: Settings) -> None:
+        if self._closing or self._model_title_source is None:
+            return
+        if settings.model_catalog_source == "none":
+            self._load_title_catalog(settings)
+            return
+        if not self._title_cache.stale:
+            return
+        if self._title_refresh_task is not None and not self._title_refresh_task.done():
+            return
+        now = time.time()
+        if (
+            self._title_last_attempt_at is not None
+            and now - self._title_last_attempt_at < MODEL_CATALOG_CACHE_TTL_SECONDS
+        ):
+            return
+        self._title_last_attempt_at = now
+        self._title_refresh_task = asyncio.create_task(
+            self._refresh_title_catalog(settings)
+        )
+
+    async def _refresh_title_catalog(self, settings: Settings) -> None:
+        assert self._model_title_source is not None
+        try:
+            cache = await self._model_title_source.refresh(settings)
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            logger.warning(
+                "External model title catalog refresh skipped: source={} exc_type={}",
+                settings.model_catalog_source,
+                type(exc).__name__,
+            )
+            self._title_cache = replace(
+                self._title_cache, last_error=type(exc).__name__
+            )
+            with contextlib.suppress(OSError):
+                self._model_title_source.write(self._title_cache)
+            return
+        if settings.model_catalog_source == "none":
+            return
+        self._title_cache = cache
+        self._title_catalog = dict(cache.entries)
+        self._catalog_updated()
+
     def _request_publication(self) -> asyncio.Task[None]:
         self._current.file_state = "starting"
         if self._publication_task is None or self._publication_task.done():
@@ -707,6 +813,8 @@ class ProviderRuntimeManager:
 
     def begin_shutdown(self) -> None:
         self._closing = True
+        if self._title_refresh_task is not None:
+            self._title_refresh_task.cancel()
         for generation in (self._current, *self._retired.values()):
             if generation.refresh_task is not None:
                 generation.refresh_task.cancel()
@@ -739,6 +847,8 @@ class ProviderRuntimeManager:
             )
             if self._publication_task is not None:
                 await asyncio.gather(self._publication_task, return_exceptions=True)
+            if self._title_refresh_task is not None:
+                await asyncio.gather(self._title_refresh_task, return_exceptions=True)
             if self._encoder_task is not None:
                 self._encoder_task.cancel()
                 await asyncio.gather(self._encoder_task, return_exceptions=True)

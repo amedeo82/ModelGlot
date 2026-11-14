@@ -1,6 +1,6 @@
 # Analysis: Descriptive Model Names in Client Model Pickers
 
-Status: internal engineering document
+Status: implemented
 Scope: `free-claude-code` at commit `56621010` (`patch: Buffer complete tool calls before protocol translation (#2362)`)
 Audience: maintainers and contributors
 

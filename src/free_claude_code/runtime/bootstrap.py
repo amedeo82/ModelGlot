@@ -15,6 +15,7 @@ from free_claude_code.config.paths import (
     code_lock_path,
     fcc_database_path,
     legacy_code_database_path,
+    model_catalog_cache_path,
     server_log_path,
 )
 from free_claude_code.config.settings import Settings
@@ -23,6 +24,7 @@ from free_claude_code.messaging.voice import Transcriber
 from free_claude_code.providers.base import BaseProvider, ProviderConfig
 from free_claude_code.providers.github_copilot.auth import CopilotAuthManager
 from free_claude_code.providers.history_negotiation import HistoryModeCache
+from free_claude_code.providers.model_catalog_source import ModelCatalogSource
 from free_claude_code.providers.openai_codex.auth import OpenAIAuthManager
 from free_claude_code.providers.runtime.runtime import ProviderRuntime, create_provider
 
@@ -75,6 +77,7 @@ def build_asgi_app(
             *copilot_auth.connected_provider_ids(),
         ),
         model_catalog_publisher=CodexModelCatalogPublisher(),
+        model_title_source=ModelCatalogSource(model_catalog_cache_path()),
     )
     database = SQLiteDatabase(
         fcc_database_path(), code_lock_path(), legacy_path=legacy_code_database_path()

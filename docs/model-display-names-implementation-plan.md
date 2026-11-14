@@ -1,8 +1,14 @@
 # Implementation Plan: Descriptive Model Names
 
-Status: proposed
+Status: implemented
 Input: [`model-display-names-analysis.md`](model-display-names-analysis.md)
 Audience: maintainers and contributors
+
+The implementation follows the ordered waves below. The shipped behavior uses a curated
+override layer, a reduced 24-hour models.dev cache refreshed outside the request path, a
+deterministic model-ID heuristic, and the original provider/model reference as the final
+fallback. Model IDs, routing candidates, fallback order, capability facts, and provider
+requests remain unchanged.
 
 This plan turns the analysis of descriptive model names into ordered, reviewable steps. Each
 step is one pull request except where a step states that a single pull request must cover

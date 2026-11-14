@@ -1,8 +1,8 @@
 """Typed capabilities consumed by application use cases."""
 
 from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
-from dataclasses import dataclass, replace
-from typing import Protocol
+from dataclasses import dataclass, field, replace
+from typing import Protocol, runtime_checkable
 
 from free_claude_code.config.settings import Settings
 from free_claude_code.core.anthropic import MessagesRequest
@@ -125,16 +125,29 @@ class ModelCatalogPort(Protocol):
     def cached_prefixed_model_infos(self) -> tuple[ProviderModelInfo, ...]: ...
 
 
+@runtime_checkable
+class ModelTitleCatalogPort(Protocol):
+    """Optional runtime capability exposing cached presentation-only titles."""
+
+    def model_title_catalog(self) -> Mapping[tuple[str, str], tuple[str, str]]: ...
+
+
 @dataclass(frozen=True, slots=True)
 class ModelCatalogSnapshot:
     settings: Settings
     model_infos: tuple[ProviderModelInfo, ...]
+    title_catalog: Mapping[tuple[str, str], tuple[str, str]] = field(
+        default_factory=dict
+    )
 
     def current_settings(self) -> Settings:
         return self.settings
 
     def cached_prefixed_model_infos(self) -> tuple[ProviderModelInfo, ...]:
         return self.model_infos
+
+    def model_title_catalog(self) -> Mapping[tuple[str, str], tuple[str, str]]:
+        return self.title_catalog
 
     def cached_model_info(
         self, provider_id: str, model_id: str

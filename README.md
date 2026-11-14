@@ -489,6 +489,32 @@ After installing local support, restart `fcc-server`. In **Admin UI → Messagin
 
 </details>
 
+## Model Display Names
+
+FCC model discovery shows descriptive titles while keeping every advertised model ID and routing
+reference unchanged. Titles are resolved in this order:
+
+1. Curated FCC titles, such as `Nemotron 3 Ultra 550B A55B` and `MiniMax-M3.1-Flash`.
+2. The shared models.dev catalog, refreshed in the background and cached for 24 hours.
+3. A deterministic title derived from the model ID.
+4. The original provider/model reference when no readable title can be derived.
+
+The provider name is included as secondary description text. The catalog is never required to
+serve a model list: an offline, cold, or stale cache degrades to curated, heuristic, or raw
+labels. The reduced cache is stored at `~/.fcc/models-dev-catalog.json` and `fcc-doctor` reports
+its source, age, and last refresh outcome.
+
+External catalog access can be disabled completely:
+
+```dotenv
+FCC_MODEL_CATALOG_SOURCE=none
+```
+
+`FCC_MODEL_CATALOG_URL` may point to an operator-controlled compatible catalog endpoint. See
+[`docs/model-display-names-analysis.md`](docs/model-display-names-analysis.md) for the design
+and [`docs/model-display-names-implementation-plan.md`](docs/model-display-names-implementation-plan.md)
+for the implementation contract.
+
 ## Manage Your Installation
 
 Run `fcc-server --version` to check the installed version without starting FCC.

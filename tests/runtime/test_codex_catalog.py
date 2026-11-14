@@ -30,9 +30,11 @@ class FakeRequestRuntime(RequestRuntimePort):
         *,
         settings: Settings,
         cached_infos: tuple[ProviderModelInfo, ...] = (),
+        title_catalog: dict[tuple[str, str], tuple[str, str]] | None = None,
     ) -> None:
         self._settings = settings
         self._cached_infos = cached_infos
+        self._title_catalog = title_catalog or {}
 
     async def acquire(
         self, *, include_model_infos: bool = False
@@ -41,7 +43,11 @@ class FakeRequestRuntime(RequestRuntimePort):
         raise AssertionError("Catalog publication must not acquire a provider lease.")
 
     def catalog_snapshot(self) -> ModelCatalogSnapshot:
-        return ModelCatalogSnapshot(self._settings, self._cached_infos)
+        return ModelCatalogSnapshot(
+            self._settings,
+            self._cached_infos,
+            title_catalog=self._title_catalog,
+        )
 
     async def wait_for_model_catalog(self, model: str) -> ModelCatalogSnapshot:
         return self.catalog_snapshot()
@@ -51,6 +57,9 @@ class FakeRequestRuntime(RequestRuntimePort):
 
     def current_settings(self) -> Settings:
         return self._settings
+
+    def model_title_catalog(self) -> dict[tuple[str, str], tuple[str, str]]:
+        return self._title_catalog
 
     def cached_model_info(
         self, provider_id: str, model_id: str
@@ -118,6 +127,23 @@ def test_publisher_projects_the_application_catalog_without_compatibility_ids(
         "nvidia_nim/configured",
         "open_router/discovered",
     ]
+
+
+def test_publisher_projects_descriptive_titles_without_changing_slugs(
+    tmp_path: Path,
+) -> None:
+    catalog_path = tmp_path / "codex-model-catalog.json"
+    runtime = FakeRequestRuntime(
+        settings=Settings().model_copy(update={"model": "open_router/model"}),
+        cached_infos=(ProviderModelInfo("open_router/model"),),
+        title_catalog={("openrouter", "model"): ("Descriptive Model", "Description")},
+    )
+
+    CodexModelCatalogPublisher(catalog_path).publish(runtime)
+
+    payload = json.loads(catalog_path.read_text(encoding="utf-8"))
+    assert payload["models"][0]["slug"] == "open_router/model"
+    assert payload["models"][0]["display_name"] == "Descriptive Model"
 
 
 def test_empty_projection_preserves_existing_catalog(tmp_path: Path) -> None:

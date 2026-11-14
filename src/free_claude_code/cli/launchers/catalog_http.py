@@ -88,6 +88,7 @@ def _catalog_candidates(
                 provider_model_ref=provider_model_ref,
                 display_name=_nonempty_string(item.get("display_name")) or model_id,
                 supports_reasoning=_optional_boolean(item.get("supportsReasoning")),
+                description=_nonempty_string(item.get("description")),
                 input_modalities=_input_modalities(item.get("inputModalities")),
                 context_window_tokens=(
                     None

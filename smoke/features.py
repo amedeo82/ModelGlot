@@ -698,6 +698,26 @@ FEATURE_INVENTORY: tuple[FeatureCoverage, ...] = (
         ("configured provider for provider error scenario",),
         "invalid request path is required; provider error path requires provider",
     ),
+    FeatureCoverage(
+        "descriptive_model_display_names",
+        "Client model discovery shows descriptive titles without changing routing identity",
+        (
+            "tests/application/test_model_titles.py",
+            "tests/application/test_model_catalog.py",
+            "tests/providers/test_model_catalog_source.py",
+            "tests/providers/test_model_catalog_cache.py",
+            "tests/api/test_model_listing.py",
+            "tests/api/test_admin.py",
+            "tests/runtime/test_provider_manager.py",
+            "tests/runtime/test_codex_catalog.py",
+        ),
+        (),
+        (),
+        ("api", "clients"),
+        (),
+        "always runnable with deterministic local catalog fixtures",
+        "presentation-only metadata is fully exercised by deterministic API, runtime, Admin, and Codex contract tests",
+    ),
 )
 
 

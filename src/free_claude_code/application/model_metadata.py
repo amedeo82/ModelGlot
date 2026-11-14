@@ -11,6 +11,8 @@ class ProviderModelInfo:
     """Provider model metadata used to shape the application model catalog."""
 
     model_id: str
+    display_name: str | None = field(default=None, kw_only=True)
+    description: str | None = field(default=None, kw_only=True)
     supports_thinking: bool | None = None
     input_modalities: frozenset[ModelInputModality] | None = None
     context_window_tokens: int | None = None

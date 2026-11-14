@@ -222,6 +222,44 @@ def test_all_settings_have_an_explicit_reporting_policy():
     assert diagnostics.classified_settings() == set(Settings.model_fields)
 
 
+def test_doctor_reports_disabled_model_title_catalog(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        diagnostics,
+        "model_catalog_cache_path",
+        lambda: tmp_path / "models-dev-catalog.json",
+    )
+
+    report = diagnostics.model_titles_report(Settings(FCC_MODEL_CATALOG_SOURCE="none"))
+
+    assert report["source"] == "none"
+    assert report["state"] == "disabled"
+    assert report["cache_age_seconds"] is None
+    assert report["cache_path"] == str(tmp_path / "models-dev-catalog.json")
+
+
+def test_doctor_reports_model_title_cache_age_and_last_error(monkeypatch, tmp_path):
+    cache_path = tmp_path / "models-dev-catalog.json"
+    cache_path.write_text(
+        json.dumps(
+            {
+                "entries": {"deepseek": {"deepseek-chat": {"name": "DeepSeek Chat"}}},
+                "fetched_at": 1.0,
+                "last_error": "TimeoutError",
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(diagnostics, "model_catalog_cache_path", lambda: cache_path)
+
+    report = diagnostics.model_titles_report(Settings())
+
+    assert report["source"] == "models.dev"
+    assert report["state"] == "stale"
+    assert report["entries"] == 1
+    assert report["last_error"] == "TimeoutError"
+    assert report["cache_age_seconds"] > 0
+
+
 def test_collection_does_not_initialize_or_expose_validation_input(monkeypatch):
     store = ManagedConfigStore()
     store.path.parent.mkdir(parents=True)

@@ -934,6 +934,11 @@ def test_admin_models_include_configured_and_cached_canonical_slugs():
         ],
         "failed_providers": [],
     }
+    assert response.json()["model_labels"] == {
+        "nvidia_nim/configured-model": "Configured Model",
+        "open_router/anthropic/configured-opus": "Configured Opus",
+        "open_router/meta/llama-3.3": "Llama 3.3",
+    }
 
 
 def test_admin_model_refresh_returns_the_updated_canonical_catalog():

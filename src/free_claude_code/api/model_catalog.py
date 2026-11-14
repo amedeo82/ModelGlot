@@ -60,6 +60,7 @@ class ModelResponse(BaseModel):
     owned_by: str = "free-claude-code"
     created_at: str
     display_name: str
+    description: str | None = None
     id: str
     type: Literal["model"] = "model"
     provider_model_ref: str | None = None
@@ -181,6 +182,7 @@ def _build_claude_models_response(
                 _discovered_model_response(
                     desktop_model_id(ref) if desktop else gateway_model_id(ref),
                     display_name=ref if native else model.display_name,
+                    description=None if native else model.description,
                 )
             )
         if native:
@@ -192,6 +194,11 @@ def _build_claude_models_response(
                 else no_thinking_gateway_model_id(ref),
                 display_name=(
                     f"{model.display_name.removesuffix(' (no thinking)')} (no thinking)"
+                ),
+                description=(
+                    f"{model.description} (no thinking)"
+                    if model.description is not None
+                    else None
                 ),
             )
         )
@@ -226,6 +233,7 @@ def _build_direct_models_response(
             ModelResponse(
                 id=model_id,
                 display_name=model.provider_model_ref if native else model.display_name,
+                description=None if native else model.description,
                 created_at=DISCOVERED_MODEL_CREATED_AT,
                 provider_model_ref=model.provider_model_ref,
                 api_backend=(
@@ -269,9 +277,15 @@ def _serialize_input_modalities(
     return tuple(modality for modality in ModelInputModality if modality in modalities)
 
 
-def _discovered_model_response(model_id: str, *, display_name: str) -> ModelResponse:
+def _discovered_model_response(
+    model_id: str,
+    *,
+    display_name: str,
+    description: str | None = None,
+) -> ModelResponse:
     return ModelResponse(
         id=model_id,
         display_name=display_name,
+        description=description,
         created_at=DISCOVERED_MODEL_CREATED_AT,
     )

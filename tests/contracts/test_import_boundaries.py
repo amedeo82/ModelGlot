@@ -277,6 +277,37 @@ def test_native_model_catalog_has_no_http_formatter_or_decoder_dependency() -> N
     assert not (_PACKAGE_ROOT / "harnesses/model_catalog.py").exists()
 
 
+def test_model_title_resolver_and_catalog_source_keep_their_ownership_boundaries() -> (
+    None
+):
+    records = _scan_imports(_PACKAGE_ROOT)
+    resolver = f"{_PACKAGE_NAME}.application.model_titles"
+    source = f"{_PACKAGE_NAME}.providers.model_catalog_source"
+    resolver_offenders = [
+        record.describe()
+        for record in records
+        if record.importer == resolver
+        and record.imported.startswith(
+            (f"{_PACKAGE_NAME}.providers.", f"{_PACKAGE_NAME}.api.")
+        )
+    ]
+    source_offenders = [
+        record.describe()
+        for record in records
+        if record.importer == source
+        and record.imported.startswith(
+            (
+                f"{_PACKAGE_NAME}.application.",
+                f"{_PACKAGE_NAME}.api.",
+                f"{_PACKAGE_NAME}.runtime.",
+            )
+        )
+    ]
+
+    assert resolver_offenders == []
+    assert source_offenders == []
+
+
 def test_package_dependencies_follow_declarative_policy() -> None:
     modules = _module_paths(_PACKAGE_ROOT)
     records = _scan_imports(_PACKAGE_ROOT)
