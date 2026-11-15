@@ -2,10 +2,11 @@
 
 import threading
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import pytest
 
+from free_claude_code.cli.commands import ServerStatus
 from free_claude_code.updater.check import UpdateCheckResult, UpdateStatus
 
 if TYPE_CHECKING:
@@ -17,6 +18,7 @@ else:
 class FakeIcon:
     def __init__(self, *_args, **_kwargs) -> None:
         self.notifications: list[tuple[str, str]] = []
+        self.notification_details: list[desktop_tray.DesktopNotification] = []
         self.update_count = 0
         self.stopped = False
         self.notify_error: Exception | None = None
@@ -36,9 +38,28 @@ class FakeIcon:
 @pytest.fixture
 def tray(monkeypatch: pytest.MonkeyPatch):
     icon = FakeIcon()
+
+    class RecordingNotifier:
+        def notify(self, notification: desktop_tray.DesktopNotification) -> None:
+            icon.notification_details.append(notification)
+            if icon.notify_error is not None:
+                raise icon.notify_error
+            icon.notifications.append((notification.message, notification.title))
+
+        def close(self) -> None:
+            return None
+
     monkeypatch.setattr(desktop_tray, "_create_icon", lambda: object())
     monkeypatch.setattr(desktop_tray, "Icon", lambda *_args, **_kwargs: icon)
-    controller = cast(desktop_tray.DesktopController, SimpleNamespace())
+    monkeypatch.setattr(
+        desktop_tray,
+        "create_desktop_notifier",
+        lambda _icon: RecordingNotifier(),
+    )
+    controller = cast(
+        desktop_tray.DesktopController,
+        SimpleNamespace(status=ServerStatus.RUNNING),
+    )
     instance = desktop_tray.PystrayDesktopTray(controller)
     return instance, icon
 
@@ -61,6 +82,41 @@ def test_check_version_remains_available(tray, monkeypatch):
     instance._check_version(None, None)
 
     assert icon.notifications == [("Free Claude Code 1.2.3", "Free Claude Code")]
+
+
+def test_server_status_uses_native_success_style(tray):
+    instance, icon = tray
+    instance._controller = cast(
+        Any,
+        SimpleNamespace(status=ServerStatus.RUNNING),
+    )
+
+    instance._check_status(None, None)
+
+    assert icon.notification_details[0].level is desktop_tray.NotificationLevel.SUCCESS
+
+
+def test_stopped_server_uses_native_warning_style(tray):
+    instance, icon = tray
+    instance._controller = cast(
+        Any,
+        SimpleNamespace(status=ServerStatus.STOPPED),
+    )
+
+    instance._check_status(None, None)
+
+    assert icon.notification_details[0].level is desktop_tray.NotificationLevel.WARNING
+
+
+def test_test_notification_menu_action_uses_success_style(tray):
+    instance, icon = tray
+
+    instance._test_notification(None, None)
+
+    assert icon.notifications == [
+        ("System notifications are ready.", "Free Claude Code")
+    ]
+    assert icon.notification_details[0].level is desktop_tray.NotificationLevel.SUCCESS
 
 
 def test_update_check_exposes_checking_state(tray, monkeypatch):
@@ -141,7 +197,7 @@ def test_stop_during_update_check_suppresses_late_notification(tray, monkeypatch
 
 
 @pytest.mark.parametrize(
-    ("result", "expected_status"),
+    ("result", "expected_status", "expected_level"),
     [
         (
             UpdateCheckResult(
@@ -151,6 +207,7 @@ def test_stop_during_update_check_suppresses_late_notification(tray, monkeypatch
                 message="FCC update available: 1.9.0 -> 1.10.0.",
             ),
             "Update available: 1.9.0 -> 1.10.0",
+            desktop_tray.NotificationLevel.INFO,
         ),
         (
             UpdateCheckResult(
@@ -160,6 +217,7 @@ def test_stop_during_update_check_suppresses_late_notification(tray, monkeypatch
                 message="FCC 1.10.0 is already up to date.",
             ),
             "Up to date: 1.10.0",
+            desktop_tray.NotificationLevel.SUCCESS,
         ),
         (
             UpdateCheckResult(
@@ -169,11 +227,12 @@ def test_stop_during_update_check_suppresses_late_notification(tray, monkeypatch
                 message="FCC 1.11.0 is newer than the published version 1.10.0.",
             ),
             "Installed version is newer: 1.11.0",
+            desktop_tray.NotificationLevel.WARNING,
         ),
     ],
 )
 def test_update_check_publishes_result_in_menu_and_notification(
-    tray, monkeypatch, result, expected_status
+    tray, monkeypatch, result, expected_status, expected_level
 ):
     instance, icon = tray
     monkeypatch.setattr(desktop_tray, "check_for_updates", lambda: result)
@@ -185,6 +244,7 @@ def test_update_check_publishes_result_in_menu_and_notification(
     assert instance._update_status_item.enabled is False
     assert instance._update_check_item.enabled is True
     assert icon.notifications == [(result.message, "Free Claude Code")]
+    assert icon.notification_details[0].level is expected_level
     assert icon.update_count == 2
 
 

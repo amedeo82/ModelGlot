@@ -33,6 +33,8 @@ dependencies = [
     "requests[socks]>=2.34.2",
     "pystray>=0.19.5; sys_platform == 'win32' or sys_platform == 'darwin'",
     "Pillow>=13.0.0; sys_platform == 'win32' or sys_platform == 'darwin'",
+    "winrt-Windows.UI.Notifications>=4!10.0.28000.2957; sys_platform == 'win32'",
+    "winrt-Windows.Data.Xml.Dom>=4!10.0.28000.2957; sys_platform == 'win32'",
     "github-copilot-sdk>=1.0.29",
     "simplejson>=4.2.0",
     "grpcio>=1.85.1",
@@ -177,4 +179,5 @@ allowed-unresolved-imports = [
     "librosa",
     "pystray",
     "PIL",
+    "winrt",
 ]

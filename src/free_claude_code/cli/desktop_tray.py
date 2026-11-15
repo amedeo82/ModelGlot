@@ -10,12 +10,18 @@ from loguru import logger
 from PIL import Image
 from pystray import Icon, Menu, MenuItem
 
+from free_claude_code.cli.commands import ServerStatus
 from free_claude_code.cli.desktop import (
     DesktopController,
     launch_desktop,
     version_text,
 )
 from free_claude_code.cli.desktop_assets import app_icon_bytes
+from free_claude_code.cli.desktop_notifications import (
+    DesktopNotification,
+    NotificationLevel,
+    create_desktop_notifier,
+)
 from free_claude_code.updater.check import (
     UpdateCheckResult,
     UpdateStatus,
@@ -50,12 +56,14 @@ class PystrayDesktopTray:
             "Free Claude Code",
             self._build_menu(),
         )
+        self._notifier = create_desktop_notifier(self._icon)
 
     def _build_menu(self) -> Menu:
         return Menu(
             MenuItem("Open Admin", self._open_admin, default=True),
             MenuItem("Check Server Status", self._check_status),
             MenuItem("Check Version", self._check_version),
+            MenuItem("Test System Notification", self._test_notification),
             self._update_check_item,
             self._update_status_item,
             Menu.SEPARATOR,
@@ -77,15 +85,27 @@ class PystrayDesktopTray:
                 return
             self._closed = True
         self._icon.stop()
+        self._notifier.close()
 
     def _open_admin(self, _icon: Icon, _item: MenuItem) -> None:
         self._controller.open_admin()
 
     def _check_status(self, _icon: Icon, _item: MenuItem) -> None:
-        self._notify(f"Server is {self._controller.status}.")
+        status = self._controller.status
+        level = {
+            ServerStatus.RUNNING: NotificationLevel.SUCCESS,
+            ServerStatus.STOPPED: NotificationLevel.WARNING,
+        }.get(status, NotificationLevel.INFO)
+        self._notify(f"Server is {status}.", level=level)
 
     def _check_version(self, _icon: Icon, _item: MenuItem) -> None:
         self._notify(version_text())
+
+    def _test_notification(self, _icon: Icon, _item: MenuItem) -> None:
+        self._notify(
+            "System notifications are ready.",
+            level=NotificationLevel.SUCCESS,
+        )
 
     def _check_updates(self, _icon: Icon, _item: MenuItem) -> None:
         with self._update_lock:
@@ -147,11 +167,28 @@ class PystrayDesktopTray:
                 "FCC update check failed: {}",
                 result.detail or result.message,
             )
-        self._notify(result.message)
+        level = {
+            UpdateStatus.AVAILABLE: NotificationLevel.INFO,
+            UpdateStatus.UP_TO_DATE: NotificationLevel.SUCCESS,
+            UpdateStatus.LOCAL_NEWER: NotificationLevel.WARNING,
+            UpdateStatus.FAILED: NotificationLevel.ERROR,
+        }[result.status]
+        self._notify(result.message, level=level)
 
-    def _notify(self, message: str) -> None:
+    def _notify(
+        self,
+        message: str,
+        *,
+        level: NotificationLevel = NotificationLevel.INFO,
+    ) -> None:
         try:
-            self._icon.notify(message, "Free Claude Code")
+            self._notifier.notify(
+                DesktopNotification(
+                    title="Free Claude Code",
+                    message=message,
+                    level=level,
+                )
+            )
         except Exception:
             logger.exception("Could not display the FCC desktop notification")
 

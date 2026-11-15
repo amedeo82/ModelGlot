@@ -60,6 +60,7 @@ $script:InstallStageCount = 0
 $script:FccVerified = $false
 $script:DesktopReady = $false
 $script:HeadroomPath = ""
+$FccAppUserModelId = "io.github.alishahryar1.free-claude-code"
 $FccCommands = @(
     # Include retired entry points so updates reject older FCC processes before replacement.
     "fcc-desktop",
@@ -1942,18 +1943,213 @@ function Test-EquivalentPath {
     }
 }
 
+function Set-ShortcutAppUserModelId {
+    param(
+        [string] $ShortcutPath,
+        [string] $AppUserModelId
+    )
+
+    if (-not ("FccShortcutAppUserModelId" -as [type])) {
+        Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+
+public static class FccShortcutAppUserModelId
+{
+    private const uint CLSCTX_INPROC_SERVER = 1;
+    private const ushort VT_LPWSTR = 31;
+
+    private static readonly Guid ClsidShellLink = new Guid("00021401-0000-0000-C000-000000000046");
+    private static readonly Guid IidShellLinkW = new Guid("000214F9-0000-0000-C000-000000000046");
+    private static readonly Guid IidPersistFile = new Guid("0000010B-0000-0000-C000-000000000046");
+    private static readonly Guid IidPropertyStore = new Guid("886D8EEB-8CF2-4446-8D02-CDBA1DBDCF99");
+    private static readonly Guid PkeyAppUserModelIdFormat = new Guid("9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3");
+    private const uint PkeyAppUserModelIdProperty = 5;
+
+    [DllImport("ole32.dll")]
+    private static extern int CoCreateInstance(
+        ref Guid classId,
+        IntPtr outer,
+        uint context,
+        ref Guid interfaceId,
+        out IntPtr instance);
+
+    [ComImport]
+    [Guid("000214F9-0000-0000-C000-000000000046")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    private interface IShellLinkW
+    {
+        [PreserveSig]
+        int QueryInterface(ref Guid interfaceId, out IntPtr instance);
+
+        [PreserveSig]
+        uint AddRef();
+
+        [PreserveSig]
+        uint Release();
+    }
+
+    [ComImport]
+    [Guid("0000010B-0000-0000-C000-000000000046")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    private interface IPersistFile
+    {
+        [PreserveSig]
+        int GetClassID(out Guid classId);
+
+        [PreserveSig]
+        int IsDirty();
+
+        [PreserveSig]
+        int Load([MarshalAs(UnmanagedType.LPWStr)] string fileName, uint mode);
+
+        [PreserveSig]
+        int Save([MarshalAs(UnmanagedType.LPWStr)] string fileName, [MarshalAs(UnmanagedType.Bool)] bool remember);
+
+        [PreserveSig]
+        int SaveCompleted([MarshalAs(UnmanagedType.LPWStr)] string fileName);
+
+        [PreserveSig]
+        int GetCurFile(IntPtr fileName, uint fileNameLength, out uint flags);
+    }
+
+    [ComImport]
+    [Guid("886D8EEB-8CF2-4446-8D02-CDBA1DBDCF99")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    private interface IPropertyStore
+    {
+        [PreserveSig]
+        int GetCount(out uint count);
+
+        [PreserveSig]
+        int GetAt(uint index, out PropertyKey key);
+
+        [PreserveSig]
+        int GetValue(ref PropertyKey key, out PropVariant value);
+
+        [PreserveSig]
+        int SetValue(ref PropertyKey key, ref PropVariant value);
+
+        [PreserveSig]
+        int Commit();
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    private struct PropertyKey
+    {
+        public Guid FormatId;
+        public uint PropertyId;
+    }
+
+    [StructLayout(LayoutKind.Explicit, Size = 24)]
+    private struct PropVariant
+    {
+        [FieldOffset(0)]
+        public ushort ValueType;
+
+        [FieldOffset(8)]
+        public IntPtr Value;
+    }
+
+    public static void SetAppUserModelId(string shortcutPath, string appUserModelId)
+    {
+        if (String.IsNullOrWhiteSpace(shortcutPath))
+        {
+            throw new ArgumentException("A shortcut path is required.", "shortcutPath");
+        }
+        if (String.IsNullOrWhiteSpace(appUserModelId))
+        {
+            throw new ArgumentException("An AppUserModelID is required.", "appUserModelId");
+        }
+
+        IntPtr shellLinkPointer = IntPtr.Zero;
+        try
+        {
+            Guid classId = ClsidShellLink;
+            Guid interfaceId = IidShellLinkW;
+            Check(
+                CoCreateInstance(ref classId, IntPtr.Zero, CLSCTX_INPROC_SERVER, ref interfaceId, out shellLinkPointer),
+                "Could not create the Windows shell link");
+            IShellLinkW shellLink = (IShellLinkW)Marshal.GetObjectForIUnknown(shellLinkPointer);
+            IPersistFile persistFile = QueryInterface<IPersistFile>(shellLink, IidPersistFile);
+            Check(persistFile.Load(shortcutPath, 0x42), "Could not load the shortcut '" + shortcutPath + "'");
+
+            IPropertyStore propertyStore = QueryInterface<IPropertyStore>(shellLink, IidPropertyStore);
+            PropertyKey key = new PropertyKey
+            {
+                FormatId = PkeyAppUserModelIdFormat,
+                PropertyId = PkeyAppUserModelIdProperty
+            };
+            PropVariant value = new PropVariant();
+            value.ValueType = VT_LPWSTR;
+            value.Value = Marshal.StringToCoTaskMemUni(appUserModelId);
+            try
+            {
+                Check(propertyStore.SetValue(ref key, ref value), "Could not set System.AppUserModel.ID on the shortcut '" + shortcutPath + "'");
+                Check(propertyStore.Commit(), "Could not commit System.AppUserModel.ID on the shortcut '" + shortcutPath + "'");
+            }
+            finally
+            {
+                Marshal.FreeCoTaskMem(value.Value);
+            }
+
+            Check(persistFile.Save(shortcutPath, true), "Could not save the shortcut '" + shortcutPath + "'");
+            Check(persistFile.SaveCompleted(shortcutPath), "Could not finish saving the shortcut '" + shortcutPath + "'");
+        }
+        finally
+        {
+            if (shellLinkPointer != IntPtr.Zero)
+            {
+                Marshal.Release(shellLinkPointer);
+            }
+        }
+    }
+
+    private static T QueryInterface<T>(IShellLinkW shellLink, Guid interfaceId)
+    {
+        IntPtr unknown = Marshal.GetIUnknownForObject(shellLink);
+        IntPtr instance = IntPtr.Zero;
+        try
+        {
+            Check(Marshal.QueryInterface(unknown, ref interfaceId, out instance), "The Windows shell link does not support " + interfaceId.ToString());
+            return (T)Marshal.GetObjectForIUnknown(instance);
+        }
+        finally
+        {
+            if (instance != IntPtr.Zero)
+            {
+                Marshal.Release(instance);
+            }
+            Marshal.Release(unknown);
+        }
+    }
+
+    private static void Check(int result, string message)
+    {
+        if (result < 0)
+        {
+            throw new COMException(message + " (HRESULT 0x" + result.ToString("X8") + ").", result);
+        }
+    }
+}
+'@
+    }
+
+    [FccShortcutAppUserModelId]::SetAppUserModelId($ShortcutPath, $AppUserModelId)
+}
+
 function Install-FccDesktopShortcuts {
     param(
         [string] $DesktopCommand,
         [string] $IconPath
     )
 
-    $shortcutPaths = @(
-        (Join-Path $env:USERPROFILE "Desktop\Free Claude Code.lnk"),
-        (Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Free Claude Code.lnk")
-    )
+    $desktopShortcutPath = Join-Path $env:USERPROFILE "Desktop\Free Claude Code.lnk"
+    $startMenuShortcutPath = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Free Claude Code.lnk"
+    $shortcutPaths = @($desktopShortcutPath, $startMenuShortcutPath)
     foreach ($shortcutPath in $shortcutPaths) {
         Write-Host "+ create shortcut $(Format-Argument $shortcutPath) -> $(Format-Argument $DesktopCommand)"
+        Write-Host "+ set System.AppUserModel.ID $(Format-Argument $FccAppUserModelId) on $(Format-Argument $shortcutPath)"
     }
     if ($DryRun) {
         return
@@ -1982,7 +2178,18 @@ function Install-FccDesktopShortcuts {
         $shortcut.IconLocation = "$IconPath,0"
         $shortcut.Description = "Run Free Claude Code in the background"
         $shortcut.Save()
-        if ($shortcutPath -eq $shortcutPaths[0]) { $script:DesktopReady = $true }
+        try {
+            Set-ShortcutAppUserModelId `
+                -ShortcutPath $shortcutPath `
+                -AppUserModelId $FccAppUserModelId
+        }
+        catch {
+            if ($shortcutPath -eq $startMenuShortcutPath) {
+                throw "Failed to set System.AppUserModel.ID on the Start Menu shortcut '$shortcutPath'. $($_.Exception.Message)"
+            }
+            Write-Warning "Could not set System.AppUserModel.ID on the Desktop shortcut '$shortcutPath'. Installation will continue. $($_.Exception.Message)"
+        }
+        if ($shortcutPath -eq $desktopShortcutPath) { $script:DesktopReady = $true }
     }
 }
 
