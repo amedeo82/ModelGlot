@@ -607,6 +607,19 @@ CAPABILITY_CONTRACTS: tuple[CapabilityContract, ...] = (
     ),
     CapabilityContract(
         "cli",
+        "native_update_check",
+        "native_update_check",
+        "free_claude_code.cli.desktop_tray and free_claude_code.updater.check",
+        "Tray activation, installed package version, and published stable release metadata",
+        "Native tray status and notification describing update availability",
+        "Network, metadata, or version validation failure shows a retryable generic error",
+        (
+            "tests/cli/test_desktop_tray.py",
+            "tests/cli/test_update_check.py",
+        ),
+    ),
+    CapabilityContract(
+        "cli",
         "cline_cli_integration",
         "cline_cli_integration",
         "free_claude_code.cli.launchers.cline",

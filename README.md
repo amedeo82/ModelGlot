@@ -93,8 +93,11 @@ fcc-server
 ```
 
 FCC opens the Admin UI after starting. On Windows and macOS, use the tray or
-menu-bar icon to open Admin, check the server status or the installed version,
-restart, or quit. When using `fcc-server`, keep its terminal open.
+menu-bar icon to open Admin, check the server status or installed version, check
+for project updates, restart, or quit. **Check for Updates** runs the release
+check in the background and shows the installed and latest stable versions in a
+native notification and in the tray menu. When using `fcc-server`, keep its
+terminal open.
 
 <a id="nvidia-nim-provider"></a>
 
@@ -558,7 +561,11 @@ Run `fcc-server --version` to check the installed version without starting FCC.
 
 ### Update
 
-Stop all running FCC commands, then run:
+On Windows and macOS, select **Check for Updates** from the FCC tray or
+menu-bar icon to check whether a newer stable release is available. The check
+only reports availability; it does not install the update.
+
+To install the available update, stop all running FCC commands, then run:
 
 ```sh
 fcc-update

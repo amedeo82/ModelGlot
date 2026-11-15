@@ -567,6 +567,20 @@ FEATURE_INVENTORY: tuple[FeatureCoverage, ...] = (
         "skip when local upstream is unavailable",
     ),
     FeatureCoverage(
+        "native_update_check",
+        "The native tray checks and displays stable FCC update availability",
+        (
+            "tests/cli/test_desktop_tray.py",
+            "tests/cli/test_update_check.py",
+        ),
+        (),
+        (),
+        (),
+        (),
+        "deterministic adapter tests cover the native flow; platform notification smoke remains manual",
+        "the native notification is platform-owned and has no deterministic browser E2E",
+    ),
+    FeatureCoverage(
         "package_cli_entrypoints",
         "Installed package scripts report version and start the server",
         ("tests/cli/test_entrypoints.py", "tests/core/test_version.py"),

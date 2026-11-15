@@ -23,6 +23,7 @@ def check(monkeypatch):
         error=None,
         body=None,
         print_version=False,
+        structured=False,
         release_url="https://github.com/Alishahryar1/free-claude-code/releases/tag/v1.10.0",
     ):
         monkeypatch.setattr(update_check, "version", lambda name: installed)
@@ -48,6 +49,8 @@ def check(monkeypatch):
                 transport=httpx.MockTransport(respond), **kwargs
             ),
         )
+        if structured:
+            return update_check.check_for_updates()
         return update_check.main(["--print-version"] if print_version else [])
 
     return run
@@ -68,6 +71,32 @@ def test_version_comparison(check, capsys, installed, expected):
     output = capsys.readouterr()
     assert installed in output.out
     assert not output.err
+
+
+@pytest.mark.parametrize(
+    ("installed", "expected_status", "expected_latest"),
+    [
+        ("1.9.0", update_check.UpdateStatus.AVAILABLE, "1.10.0"),
+        ("1.10.0", update_check.UpdateStatus.UP_TO_DATE, "1.10.0"),
+        ("1.11.0", update_check.UpdateStatus.LOCAL_NEWER, "1.10.0"),
+    ],
+)
+def test_structured_update_result(check, installed, expected_status, expected_latest):
+    result = check(installed, release(), structured=True)
+
+    assert result.status is expected_status
+    assert result.installed == installed
+    assert result.latest == expected_latest
+    assert installed in result.message
+
+
+def test_structured_update_result_contains_failure_detail(check):
+    result = check("1.9.0", release("invalid"), structured=True)
+
+    assert result.status is update_check.UpdateStatus.FAILED
+    assert result.message == "Could not check for FCC updates. Please retry."
+    assert result.detail is not None
+    assert "Could not check for FCC updates" in result.detail
 
 
 @pytest.mark.parametrize(
