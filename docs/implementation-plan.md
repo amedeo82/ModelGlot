@@ -1,12 +1,40 @@
 # Implementation Plan: Architecture Analysis Backlog
 
-Status: proposed
+Status: active backlog; step statuses revalidated on 2026-11-16
 Input: [`architecture-analysis.md`](architecture-analysis.md) (findings F-01 … F-12)
 Audience: maintainers and contributors
 
 This plan converts every finding of the architecture analysis into an ordered, reviewable
 implementation step. Steps are grouped in waves; waves are sequenced, individual steps inside
 a wave are independent and may run in parallel.
+
+## Current Step Status
+
+Status values reflect `custom/main` at commit `12914bd` unless noted otherwise.
+
+| Step | Status | Evidence / remaining work |
+| --- | --- | --- |
+| S0.1 | Open | Coverage and performance baselines are not recorded. |
+| S1.1 | Open | `HOST` still defaults to `0.0.0.0` and proxy authentication still defaults to disabled. |
+| S1.2 | Open | `pytest-cov` is installed, but coverage is neither configured nor gated. |
+| S1.3 | Partially complete | `.github/dependabot.yml` exists; vulnerability scanning, security-focused SAST, dependency review, and release SBOM remain absent. |
+| S1.4 | Open | `requires-python` remains pinned to `==3.14.10`. |
+| S1.5 | Open | `SECURITY.md` and a complete environment reference are absent. |
+| S2.1 | Partially complete | The suite contains contract coverage, including 404 collected contract tests, but the four characterization suites named in this step are not present. |
+| S2.2 | Open | `providers/openai_chat/transport.py` remains a single 1 367-line module. |
+| S2.3 | Open | `providers/admission.py` remains a single 1 157-line module. |
+| S2.4 | Open | `application/code_sessions/service.py` and `core/history_replay.py` remain unsplit. |
+| S2.5 | Open | Provider transports still expose multiple concrete HTTP exception hierarchies. |
+| S2.6 | Open | Broad exception handling remains and Ruff's `BLE` rule is not enabled. |
+| S2.7 | Open | Vendor-specific transport behavior remains imperative. |
+| S3.1 | Open | No metrics route or metrics registry is present. |
+| S3.2 | Open | No OpenTelemetry export is present. |
+| S3.3 | Open | The live smoke and macOS desktop suites remain local-only. |
+| S3.4 | Open | The failure-to-remediation guide is absent. |
+| S3.5 | Open | The dependency cleanup described by this step is not implemented. |
+
+A step marked **Open** has not satisfied this plan's acceptance criteria. **Partially
+complete** means a named part exists but the step still requires further work.
 
 ---
 
@@ -83,8 +111,8 @@ through explicit configuration.
 
 **Changes.**
 
-- `src/free_claude_code/config/settings.py:734` — change the `host` default to `127.0.0.1`.
-- `src/free_claude_code/config/settings.py:737`–`:744` — add a model validator that rejects
+- `src/free_claude_code/config/settings.py:750` — change the `host` default to `127.0.0.1`.
+- `src/free_claude_code/config/settings.py:753`–`:760` — add a model validator that rejects
   the combination "non-loopback host + authentication disabled" unless
   `FCC_ALLOW_UNAUTHENTICATED_BINDING=1` is present; reject a default token (`freecc`) when
   authentication is enabled unless the operator explicitly accepts it
@@ -211,8 +239,8 @@ tripling runtime.
     configuration that matches the project's intentional patterns (FastAPI `Depends`,
     binding to `0.0.0.0` after S1.1, subprocess usage in the CLI layer);
   - optional: GitHub CodeQL for Python on the same workflow.
-- `.github/dependabot.yml` — new file: weekly `pip`/uv ecosystem updates for
-  `uv.lock`, plus `github-actions` updates.
+- `.github/dependabot.yml` — retain and verify the existing daily uv and GitHub Actions
+  update schedules; no new Dependabot file is required.
 - `.github/workflows/post-merge.yml` — generate an SBOM during publish and attach it to the
   GitHub Release (e.g. `uvx cyclonedx-py` or an equivalent pinned tool).
 - `pyproject.toml` — optional `[tool.bandit]` configuration for the accepted exceptions.
@@ -241,7 +269,7 @@ and configure an explicit allowlist with a comment explaining each entry.
 - `pyproject.toml:12` — `requires-python = ">=3.14,<3.15"`.
 - `uv.lock` — regenerate (`uv lock`) so `requires-python` matches;
   `tests/contracts/test_uv_policy.py:88`–`:92` asserts this equality and must stay green.
-- `scripts/install.sh:1773` and `scripts/install.ps1:2090` — verify the parsing of
+- `scripts/install.sh:1861` and `scripts/install.ps1:2369` — verify the parsing of
   `requires-python` still selects a valid interpreter; add a regression test if the parsing
   assumes an exact pin.
 - `.github/workflows/tests.yml` — keep the pinned interpreter for the primary matrix and add
@@ -313,7 +341,7 @@ README alone.
 
 ### S2.2 — Split `providers/openai_chat/transport.py`
 
-**Finding.** F-05. Target: 1 585 lines → modules under 600 lines each.
+**Finding.** F-05. Target: 1 367 lines → modules under 600 lines each.
 
 **Proposed layout.**
 
@@ -326,7 +354,7 @@ README alone.
 
 **Constraints.** No public import path may change; the existing tests import from the
 package, so keep `providers.openai_chat.transport` importable as before. `core/` must not
-import provider internals (`CONTRIBUTING.md:60`).
+import provider internals (`CONTRIBUTING.md:72`).
 
 **Acceptance.** All tests green, module sizes reduced, no new `except Exception`, and the
 import-boundary contract test still passes.
@@ -339,7 +367,7 @@ import-boundary contract test still passes.
 
 ### S2.3 — Split `providers/admission.py`
 
-**Finding.** F-05. Target: 1 149 lines → four modules.
+**Finding.** F-05. Target: 1 157 lines → four modules.
 
 - `providers/admission/controller.py` — `ProviderAdmissionController` orchestration.
 - `providers/admission/episode.py` — recovery episode state and half-open probe election.

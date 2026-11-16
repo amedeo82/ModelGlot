@@ -4,14 +4,14 @@ Status: implemented
 Input: [`model-display-names-analysis.md`](model-display-names-analysis.md)
 Audience: maintainers and contributors
 
-The implementation follows the ordered waves below. The shipped behavior uses a curated
-override layer, a reduced 24-hour models.dev cache refreshed outside the request path, a
-deterministic model-ID heuristic, and the original provider/model reference as the final
-fallback. Model IDs, routing candidates, fallback order, capability facts, and provider
-requests remain unchanged.
+The implementation is complete. The shipped behavior uses a curated override layer, a
+reduced 24-hour models.dev cache refreshed outside the request path, a deterministic
+model-ID heuristic, and the original provider/model reference as the final fallback. Model
+IDs, routing candidates, fallback order, capability facts, and provider requests remain
+unchanged.
 
-This plan turns the analysis of descriptive model names into ordered, reviewable steps. Each
-step is one pull request except where a step states that a single pull request must cover
+The waves below are retained as the implementation record and acceptance contract. Each
+step is one pull request except where a step states that a single pull request covers
 several changes to stay coherent. The plan changes presentation only: no advertised model
 id, routing decision, fallback order, capability fact, or provider request changes.
 
@@ -86,15 +86,14 @@ provider attribution, without touching ids or routing.
 
 **Changes.**
 
-- `src/free_claude_code/application/model_metadata.py:9` — extend `ProviderModelInfo` with an
-  optional `display_name` and an optional `description` field, both metadata only.
-- `src/free_claude_code/application/model_catalog.py:23` — extend `CatalogModel` with an
+- `src/free_claude_code/application/model_metadata.py:10`–`:20` — `ProviderModelInfo`
+  carries optional `display_name` and `description` fields as metadata only.
+- `src/free_claude_code/application/model_catalog.py:31`–`:43` — `CatalogModel` carries an
   optional `description` field next to `display_name`.
-- `src/free_claude_code/application/model_catalog.py:102` — `_catalog_model` resolves the
-  title through the resolver of step S1.3 and keeps `display_name` as the fallback value; the
-  fallback remains the current raw reference, so the no-behavior-change case is byte-identical
-  to today.
-- `src/free_claude_code/application/model_catalog.py:70` — the custom provider branch keeps
+- `src/free_claude_code/application/model_catalog.py:145`–`:164` — `_catalog_model` resolves
+  the title through the resolver of step S1.3 and keeps the raw reference as the final
+  fallback.
+- `src/free_claude_code/application/model_catalog.py:88`–`:102` — the custom provider branch keeps
   its current `<custom display name>/<model id>` shape when no curated title exists and adds
   the provider attribution as description.
 - New module `src/free_claude_code/application/model_titles.py` — the single owner of title
@@ -194,7 +193,7 @@ reproducible across runs and platforms.
   shape, and reduce it to a map of `(models.dev provider id, model key) -> (name,
   description)` for the mapped providers only.
 - New module `src/free_claude_code/config/model_catalog_paths.py` (or an addition to
-  `config/paths.py:107`) — the cache file path under `~/.fcc`, for example
+  `config/paths.py:114`–`:118`) — the cache file path under `~/.fcc`, for example
   `models-dev-catalog.json`.
 - The writer reuses the atomic publish pattern of `runtime/codex_catalog.py:43`–`:62`
   (temporary file plus `replace`).
@@ -247,7 +246,7 @@ title is presentation only, so daily freshness is sufficient.
   `alibaba`, `opencode_zen` and `opencode_go` → `opencode`, plus the direct matches).
 - `src/free_claude_code/application/model_titles.py` — accept an optional catalog snapshot
   and use it between the curated table and the heuristic.
-- `src/free_claude_code/runtime/provider_manager.py:348` — schedule the background catalog
+- `src/free_claude_code/runtime/provider_manager.py:273`–`:313` — schedule the background catalog
   refresh next to the existing model-list refresh pass, so the refresh never runs inside a
   request.
 - `src/free_claude_code/runtime/bootstrap.py:70` — wire the catalog source into the runtime
@@ -310,12 +309,12 @@ the doctor command states whether the descriptive titles are complete, degraded,
 
 - `src/free_claude_code/api/model_catalog.py:57` — add an optional `description` field to
   `ModelResponse`.
-- `src/free_claude_code/api/model_catalog.py:171`–`:203` — populate `description` for the
+- `src/free_claude_code/api/model_catalog.py:172`–`:210` — populate `description` for the
   provider-backed rows in the `claude` and `claude-desktop` views with the provider display
   name, and keep the existing no-thinking wording consistent with the title.
-- `src/free_claude_code/api/model_catalog.py:206`–`:261` — populate `description` in the
+- `src/free_claude_code/api/model_catalog.py:213`–`:269` — populate `description` in the
   `messages` and `responses` views.
-- `src/free_claude_code/api/model_catalog.py:147`–`:168` — keep the Muse envelope consistent
+- `src/free_claude_code/api/model_catalog.py:148`–`:169` — keep the Muse envelope consistent
   with the new description.
 - Native Anthropic passthrough rows keep their current label and description.
 
@@ -369,10 +368,10 @@ the doctor command states whether the descriptive titles are complete, degraded,
 
 **Changes.**
 
-- `src/free_claude_code/api/admin_routes.py:539` — the Admin API already publishes
+- `src/free_claude_code/api/admin_routes.py:517`–`:525` — the Admin API already publishes
   `model_labels` from the application inventory; confirm no change is needed and add a test
   that the labels carry the descriptive titles.
-- `src/free_claude_code/api/admin_static/admin.js:1762` — no change expected; the selector
+- `src/free_claude_code/api/admin_static/admin.js:1792` — no change expected; the selector
   consumes `model_labels` as-is. Adjust only if the longer titles overflow, and only with a
   layout change.
 - `src/free_claude_code/runtime/codex_catalog.py:23` — the Codex catalog inherits the title

@@ -1,7 +1,7 @@
 # Analysis: Claude Code Terminal Model Discovery Improvements
 
-Status: proposed
-Scope: `free-claude-code` at commit `b63c4337` (`patch: Document hot-to-use models guide`)
+Status: partially implemented; remaining discovery improvements proposed
+Scope: `free-claude-code` on branch `custom/main`, aligned on 2026-11-16
 Audience: maintainers and contributors
 
 This document records the current Claude Code Terminal model-discovery behavior, explains why
@@ -30,6 +30,17 @@ request fail before the client reaches the model list.
 
 The proposed work therefore improves discovery reliability, verification, and operator
 guidance. It does not introduce another title source.
+
+Current status on `custom/main`:
+
+| Capability | State |
+| --- | --- |
+| Shared descriptive titles for Terminal and Desktop | Implemented |
+| Launcher-provided gateway URL, token, and discovery opt-in | Implemented |
+| README cache and stale-cache recovery guidance | Implemented |
+| `x-api-key` acceptance on `GET /v1/models` | Proposed; the route still uses bearer-only proxy authentication |
+| Isolated live Claude Code discovery verification | Proposed |
+| Feature-manifest declaration for Terminal discovery | Proposed |
 
 ---
 
@@ -74,7 +85,7 @@ The supported `fcc-claude` launcher prepares the Anthropic-compatible environmen
 
 Claude Code then requests `GET /v1/models?limit=1000`. FCC selects the default `claude`
 view unless an explicit query or `X-FCC-Model-View` header selects another view:
-`src/free_claude_code/api/routes.py:401-419`.
+`src/free_claude_code/api/routes.py:405-423`.
 
 The launcher test verifies the discovery environment at
 `tests/cli/test_claude_launcher.py:23-33`.
@@ -107,7 +118,7 @@ Claude Code 2.1.248 and later can send both `Authorization` and `x-api-key` on t
 request. FCC currently protects `GET /v1/models` with `require_proxy_auth`, which accepts
 only Bearer authorization:
 
-- route dependency: `src/free_claude_code/api/routes.py:401-411`;
+- route dependency: `src/free_claude_code/api/routes.py:405-414`;
 - Bearer-only implementation: `src/free_claude_code/api/dependencies.py:47-70`;
 - existing Anthropic-compatible credential implementation:
   `src/free_claude_code/api/dependencies.py:73-109`.
@@ -300,7 +311,7 @@ the newest release.
 | --- | --- |
 | The launcher enables gateway discovery | `src/free_claude_code/harnesses/claude.py:11-16` |
 | The launcher uses Bearer authentication | `src/free_claude_code/harnesses/claude.py:15` |
-| Terminal is the default model view | `src/free_claude_code/api/routes.py:401-419` |
+| Terminal is the default model view | `src/free_claude_code/api/routes.py:405-423` |
 | Terminal and Desktop share one builder | `src/free_claude_code/api/model_catalog.py:141-145` |
 | Shared builder emits title and description | `src/free_claude_code/api/model_catalog.py:172-203` |
 | Titles use curated, catalog, heuristic, and raw fallbacks | `src/free_claude_code/application/model_titles.py:52-67` |

@@ -73,7 +73,7 @@ Windows PowerShell:
 & ([scriptblock]::Create((irm "https://raw.githubusercontent.com/amedeo82/free-claude-code/custom/main/scripts/install.ps1"))) -Ref custom/main
 ```
 
-These commands install the current commit from this fork's `custom/main` branch, not the upstream release channel. The installed version includes the VCS build identifier; run `fcc-server --version` to display it.
+These commands install the current commit from the `custom/main` branch. The installed version includes the VCS build identifier; run `fcc-server --version` to display it.
 
 When prompted, choose at least one coding agent and optionally enable [RTK](https://github.com/rtk-ai/rtk) + [Headroom](https://github.com/headroomlabs-ai/headroom) token optimization for supported agents.
 
@@ -101,6 +101,12 @@ for project updates, restart, or quit. **Check for Updates** runs the release
 check in the background and shows the installed and latest stable versions in a
 native notification and in the tray menu. When using `fcc-server`, keep its
 terminal open.
+
+> **Network exposure:** the current defaults bind the server to `0.0.0.0` and leave
+> Proxy Authentication disabled, so generation endpoints are reachable from other hosts
+> on the local network. On a shared or untrusted network, set `HOST=127.0.0.1` or enable
+> Proxy Authentication in Admin before using configured provider credentials. The Admin
+> API and UI remain restricted to loopback callers.
 
 <a id="nvidia-nim-provider"></a>
 
@@ -632,7 +638,7 @@ To install the available update, stop all running FCC commands, then run:
 fcc-update
 ```
 
-`fcc-update` reinstalls the current `custom/main` commit from this fork. It does not switch to the upstream release channel.
+`fcc-update` reinstalls the current `custom/main` commit.
 
 If `fcc-update` is unavailable or fails, try running the [install command](#install) again.
 
@@ -691,7 +697,7 @@ fcc-doctor
 ```
 
 - [Report bugs or request features](https://github.com/amedeo82/free-claude-code/issues)
-- [Fork releases](https://github.com/amedeo82/free-claude-code/releases)
+- [Releases](https://github.com/amedeo82/free-claude-code/releases)
 - [Contributing guide](CONTRIBUTING.md)
 
 ## Maintainers

@@ -9,6 +9,28 @@ The descriptive title feature itself is already implemented and shared with Clau
 The plan therefore improves credential compatibility, real-client coverage, diagnostics, and
 operator documentation without creating a second title resolver.
 
+## Current Step Status
+
+Status values reflect `custom/main` at commit `12914bd`.
+
+| Step | Status | Evidence / remaining work |
+| --- | --- | --- |
+| S0.1 | Partially complete | The documented payload and client-cache baseline exists, but the request-by-request baseline is not recorded in this plan. |
+| S1.1 | Open | `GET /v1/models` still uses `require_proxy_auth`, so `x-api-key` discovery is not accepted. |
+| S1.2 | Open | The capability and smoke manifests do not declare the broader discovery credential contract. |
+| S2.1 | Partially complete | Existing tests compare Terminal and Desktop titles and descriptions, but the complete explicit contract is not present. |
+| S2.2 | Partially complete | Launcher discovery-environment assertions exist; the broader managed and direct-launch matrix remains open. |
+| S2.3 | Open | No isolated real-Claude-Code cache test exists. |
+| S2.4 | Open | Terminal discovery is not declared as a focused capability contract. |
+| S3.1 | Partially complete | README already documents discovery enablement and stale-cache recovery; the remaining contract wording should be synchronized after S1–S2. |
+| S3.2 | Complete | `CONTRIBUTING.md` links the Terminal analysis and implementation plan. |
+| S4.1 | Partially complete | The title-to-routing invariant exists, but the cross-credential and cross-catalog matrix does not. |
+| S4.2 | Open | The combined behavior has not yet been validated as a complete Terminal discovery change. |
+| S4.3 | Open | The remaining discovery behavior is not shipped, so the plan remains proposed. |
+
+A step marked **Open** has not satisfied this plan's acceptance criteria. **Partially
+complete** means a named part exists but the step still requires further work.
+
 ---
 
 ## 0. Ground Rules
@@ -88,7 +110,7 @@ supports.
 
 **Changes.**
 
-- `src/free_claude_code/api/routes.py:401-411` — use
+- `src/free_claude_code/api/routes.py:405-414` — use
   `require_anthropic_proxy_auth` for `GET /v1/models`.
 - Keep `require_proxy_auth` on endpoints that are not Anthropic-compatible. Do not broaden
   the authentication contract of unrelated routes.
@@ -276,7 +298,7 @@ knowledge of Claude Code internals.
 
 **Changes.**
 
-- `README.md:492-516` — extend "Model Display Names" with a "Claude Code Terminal"
+- `README.md:560-617` — extend "Model Display Names" with a "Claude Code Terminal"
   subsection that explains:
   - Terminal and Desktop use the same descriptive-title implementation;
   - `fcc-claude` is the supported launcher;

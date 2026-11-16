@@ -55,15 +55,27 @@ GitHub CI runs Ruff in check-only mode and also bans `# type: ignore`, `# ty: ig
 
 ## Project Documentation
 
-- [`docs/architecture-analysis.md`](docs/architecture-analysis.md) records the architecture map, the evidence behind each quality finding, and the measurement snapshot of the project.
-- [`docs/implementation-plan.md`](docs/implementation-plan.md) converts those findings into ordered implementation steps with acceptance criteria, tests, and a traceability matrix.
-- [`docs/model-display-names-analysis.md`](docs/model-display-names-analysis.md) records why client model pickers show raw provider/model references and which catalog sources can supply descriptive titles.
-- [`docs/model-display-names-implementation-plan.md`](docs/model-display-names-implementation-plan.md) turns that analysis into ordered steps for descriptive model names.
-- [`docs/claude-terminal-model-display-names-analysis.md`](docs/claude-terminal-model-display-names-analysis.md) records the Claude Code Terminal discovery contract, its client-owned cache, and the remaining compatibility gaps.
-- [`docs/claude-terminal-model-display-names-implementation-plan.md`](docs/claude-terminal-model-display-names-implementation-plan.md) turns that analysis into ordered steps for reliable Terminal discovery and verification.
-- [`docs/windows-launcher-interrupt-cleanup.md`](docs/windows-launcher-interrupt-cleanup.md) records the Windows native-client `Ctrl+C` cleanup bug, its root cause, and the resolved launcher contract.
+### Architecture and backlog
 
-Read the relevant project documents before proposing changes to the request path, the provider layer, or the CI configuration.
+- [`docs/architecture-analysis.md`](docs/architecture-analysis.md) records the architecture map, quality findings, and the measurement snapshot.
+- [`docs/implementation-plan.md`](docs/implementation-plan.md) converts those findings into ordered implementation steps with current status, acceptance criteria, and traceability.
+
+### Model discovery and pickers
+
+- [`docs/model-display-names-analysis.md`](docs/model-display-names-analysis.md) and [`docs/model-display-names-implementation-plan.md`](docs/model-display-names-implementation-plan.md) document the implemented shared Terminal/Desktop descriptive-title path.
+- [`docs/claude-terminal-model-display-names-analysis.md`](docs/claude-terminal-model-display-names-analysis.md) and [`docs/claude-terminal-model-display-names-implementation-plan.md`](docs/claude-terminal-model-display-names-implementation-plan.md) cover the remaining Terminal discovery compatibility and verification work.
+- [`docs/model-picker-metadata-research.md`](docs/model-picker-metadata-research.md) records the proposed picker metadata enrichment.
+- [`docs/model-picker-info-enrichments.md`](docs/model-picker-info-enrichments.md) summarizes the candidate model information and its presentation constraints.
+- [`docs/admin-model-picker-enrichment-analysis.md`](docs/admin-model-picker-enrichment-analysis.md) records the proposed Admin model-picker enrichment design.
+- [`docs/hot-to-use-models.dev.md`](docs/hot-to-use-models.dev.md) documents the models.dev endpoints and usage.
+
+### Desktop integrations
+
+- [`docs/claude-desktop-gateway-login-analysis.md`](docs/claude-desktop-gateway-login-analysis.md) and [`docs/claude-desktop-gateway-login-implementation-plan.md`](docs/claude-desktop-gateway-login-implementation-plan.md) cover the proposed reversible Claude Desktop gateway/login lifecycle.
+- [`docs/desktop-branded-notifications-analysis.md`](docs/desktop-branded-notifications-analysis.md) records the implemented Windows notification path and the remaining macOS native work.
+- [`docs/windows-launcher-interrupt-cleanup.md`](docs/windows-launcher-interrupt-cleanup.md) records the resolved Windows native-client `Ctrl+C` cleanup contract.
+
+Read the relevant project documents before proposing changes to the request path, provider layer, desktop integrations, model pickers, or CI configuration.
 
 ## Project Standards
 

@@ -1,12 +1,13 @@
 # Architecture Analysis and Improvement Backlog
 
-Status: internal engineering document
-Scope: `free-claude-code` at commit `56621010` (`patch: Buffer complete tool calls before protocol translation (#2362)`)
+Status: internal engineering document; baseline analysis with current-state deltas
+Scope: `free-claude-code` on branch `custom/main`, re-aligned on 2026-11-16
 Audience: maintainers and contributors
 
-This document records a static analysis of the repository, the findings it produced, and the
-evidence behind them. It is the input to [`implementation-plan.md`](implementation-plan.md),
-which turns every finding into an ordered implementation step.
+This document preserves the static analysis that produced the architecture backlog and
+records which findings remain open on `custom/main`. It is the input to
+[`implementation-plan.md`](implementation-plan.md), which turns every open finding into an
+ordered implementation step.
 
 Related: [`../CONTRIBUTING.md`](../CONTRIBUTING.md) for the quality gate that every change in
 this backlog must satisfy.
@@ -39,14 +40,14 @@ both directions.
 
 | Layer | Package | Responsibility | Rough size |
 | --- | --- | --- | --- |
-| HTTP surface | `src/free_claude_code/api/` | FastAPI app, auth, request validation, public SSE framing, Admin API | 22 modules |
-| Use cases | `src/free_claude_code/application/` | Model routing, primary→fallback→recovery loop, web tools, code sessions | 12 modules |
-| Providers | `src/free_claude_code/providers/` | Upstream clients, admission control, retry/cooldown, per-vendor transports | ~80 modules |
-| Protocol core | `src/free_claude_code/core/` | Wire models, protocol translation, tool-call buffering, failure model | ~110 modules |
-| Runtime | `src/free_claude_code/runtime/` | Composition root, resource ownership, SQLite persistence, web-tool egress | 20 modules |
-| Configuration | `src/free_claude_code/config/` | Validated settings, managed `.env`, provider catalog, Admin model | 16 modules |
-| Client integration | `src/free_claude_code/cli/`, `harnesses/` | Server supervisor, launchers, per-client config patching | ~53 modules |
-| Messaging | `src/free_claude_code/messaging/` | Telegram/Discord front ends, transcript rendering, conversation trees | ~47 modules |
+| HTTP surface | `src/free_claude_code/api/` | FastAPI app, auth, request validation, public SSE framing, Admin API | 30 modules |
+| Use cases | `src/free_claude_code/application/` | Model routing, primary→fallback→recovery loop, web tools, code sessions | 27 modules |
+| Providers | `src/free_claude_code/providers/` | Upstream clients, admission control, retry/cooldown, per-vendor transports | 137 modules |
+| Protocol core | `src/free_claude_code/core/` | Wire models, protocol translation, tool-call buffering, failure model | 99 modules |
+| Runtime | `src/free_claude_code/runtime/` | Composition root, resource ownership, SQLite persistence, web-tool egress | 31 modules |
+| Configuration | `src/free_claude_code/config/` | Validated settings, managed `.env`, provider catalog, Admin model | 29 modules |
+| Client integration | `src/free_claude_code/cli/`, `harnesses/` | Server supervisor, launchers, per-client config patching | 60 modules |
+| Messaging | `src/free_claude_code/messaging/` | Telegram/Discord front ends, transcript rendering, conversation trees | 55 modules |
 
 The composition root is single and explicit: `runtime/bootstrap.py:44` (`build_asgi_app`).
 
@@ -126,7 +127,7 @@ Tool calls are buffered until complete and valid: `core/tool_call_buffer.py:67`
 
 These are quality assets; the backlog below must not regress them.
 
-1. **Architecture is tested, not just documented.** `tests/contracts/` (224 tests) asserts
+1. **Architecture is tested, not just documented.** `tests/contracts/` (404 collected tests) asserts
    import boundaries, graph acyclicity, wire-field ownership, and that every feature in the
    manifest has a declared test owner (`tests/contracts/test_feature_manifest.py:28`).
 2. **CI is unusually disciplined.** Multi-OS pytest sharding balanced by measured durations
@@ -156,8 +157,8 @@ maintenance cost or partial blind spots), **Low** (hygiene and documentation).
 
 ### F-01 — Critical — Default configuration exposes an unauthenticated proxy on all interfaces
 
-`config/settings.py:734` sets `host` default `"0.0.0.0"`; `config/settings.py:737` sets
-`proxy_auth_enabled` default `False`; `config/settings.py:741` sets the token default to the
+`config/settings.py:750` sets `host` default `"0.0.0.0"`; `config/settings.py:753` sets
+`proxy_auth_enabled` default `False`; `config/settings.py:758` sets the token default to the
 well-known value `"freecc"`. The binding is applied at `cli/commands.py:332` and the socket is
 reserved at `cli/commands.py:303`.
 
@@ -174,10 +175,10 @@ but never states the default exposure.
 
 ### F-02 — High — Test coverage is never measured
 
-`pytest-cov` is a declared dev dependency (`pyproject.toml:102`) but no invocation of
+`pytest-cov` is a declared dev dependency (`pyproject.toml:104`) but no invocation of
 `--cov` exists, there is no `[tool.coverage]` section, and no CI job uploads or gates a
-coverage report. The repository runs ~3 200 unit/integration tests, 186 Playwright tests, and
-~388 smoke tests, yet a regression that removes coverage from a module is invisible.
+coverage report. The repository collects 11 656 pytest tests, 516 Playwright E2E tests, and
+971 smoke tests, yet a regression that removes coverage from a module is invisible.
 
 Modules with no direct test import (reached only through their consumers) include:
 `api/admin_cache.py`, `api/admin_security.py`, `api/classifier_projection.py`,
@@ -189,34 +190,37 @@ Modules with no direct test import (reached only through their consumers) includ
 `messaging/safe_diagnostics.py` (sanitization before logging) are the two where a silent
 coverage gap could cause data-integrity issues or secret leakage.
 
-### F-03 — High — No static analysis or dependency vulnerability gate
+### F-03 — High — No security-focused static analysis or dependency vulnerability gate
 
-`.github/workflows/tests.yml` runs lint, format, type check, pytest, and Playwright. The only
-supply-chain protection is uv's malware check (`:10`–`:18`). There is no SAST, no
-`pip-audit`/OSV scan, no dependency review, and no SBOM for published artifacts
-(`.github/workflows/post-merge.yml:80` publishes without one).
+`.github/workflows/tests.yml` runs Ruff lint/format checks and `ty` type checking, and
+`.github/dependabot.yml` schedules dependency updates. These checks are valuable but are not
+security-focused analysis. The remaining supply-chain protection is uv's malware check
+(`:10`–`:18`). There is no `pip-audit`/OSV scan, no dependency review, and no SBOM for
+published artifacts (`.github/workflows/post-merge.yml:80` publishes without one).
 
 The runtime dependency set is large (44 direct dependencies), which raises the practical
-value of automated scanning.
+value of automated vulnerability scanning and security-focused static analysis.
 
 ### F-04 — High — `requires-python` pins an exact patch release
 
 `pyproject.toml:12` declares `requires-python = "==3.14.10"`. A user on 3.14.9 or on a future
 3.14.x cannot install the published package even though the code is compatible.
 `tests/contracts/test_uv_policy.py:88` asserts that `uv.lock` mirrors the requirement, so the
-lock file must be regenerated in lockstep. `scripts/install.sh:1773` and
-`scripts/install.ps1:2090` parse `requires-python` and therefore also need verification after
+lock file must be regenerated in lockstep. `scripts/install.sh:1861` and
+`scripts/install.ps1:2369` parse `requires-python` and therefore also need verification after
 the change.
 
-### F-05 — Medium — Five files exceed 1 100 lines in the generation path
+### F-05 — Medium — Four files exceed 1 100 lines in the generation path
 
 | File | Lines | Top-level functions |
 | --- | --- | --- |
-| `providers/openai_chat/transport.py` | 1 585 | 51 |
-| `core/history_replay.py` | 1 325 | 38 |
-| `application/code_sessions/service.py` | 1 194 | 66 |
-| `providers/admission.py` | 1 149 | 62 |
-| `runtime/provider_manager.py` | 885 | — |
+| `providers/openai_chat/transport.py` | 1 367 | — |
+| `core/history_replay.py` | 1 325 | — |
+| `application/code_sessions/service.py` | 1 194 | — |
+| `providers/admission.py` | 1 157 | — |
+
+`runtime/provider_manager.py` is the next largest file at 995 lines and remains below the
+1 100-line threshold.
 
 These files hold most of the request-critical logic: stream creation and retry corrections
 (`openai_chat/transport.py:634`, `:826`), admission and cooldown
@@ -259,7 +263,7 @@ model fallback, per-request attribution is currently only possible by reading lo
 
 ### F-10 — Medium — The fragile suites never run in CI
 
-`pyproject.toml:156` sets `testpaths = ["tests"]`, so `smoke/` (~388 live tests: real
+`pyproject.toml:156` sets `testpaths = ["tests"]`, so `smoke/` (971 live tests: real
 installer downloads, SHA-256 checksum verification, native binary lifecycle) is excluded from
 the default run. The macOS desktop build/test is only reachable with `--only macos-desktop`
 (`scripts/ci.sh:181`–`:185`, `scripts/ci.ps1:196`). Both are the least deterministic parts of
@@ -301,14 +305,14 @@ For completeness, the following areas were examined and produced no actionable f
 
 | Metric | Value |
 | --- | --- |
-| Python modules under `src/` | 515 |
-| Unit/integration tests under `tests/` | ~3 200 |
-| Playwright E2E tests | 186 |
-| Smoke tests (excluded from CI) | ~388 |
-| Contract tests | 224 |
+| Python modules under `src/` | 471 |
+| Pytest tests collected under `tests/` | 11 656 |
+| Playwright E2E tests collected | 516 |
+| Smoke tests collected (excluded from CI) | 971 |
+| Contract tests collected | 404 |
 | `TODO`/`FIXME` in `src/` | 0 |
 | Measured line coverage | not measured |
-| Files > 1 100 lines | 4 (+1 at 885) |
+| Files > 1 100 lines | 4 |
 | Files containing `except Exception` | ~70 |
 | Concurrent HTTP client stacks | 4 |
 | CI operating systems | Linux, Windows, macOS |

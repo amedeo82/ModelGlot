@@ -1,8 +1,8 @@
 # Claude Desktop Gateway and Claude.ai Login Analysis
 
-Status: proposed
-Date: 2026-11-12
-Scope: `free-claude-code` at commit `56621010` (`patch: Buffer complete tool calls before protocol translation (#2362)`)
+Status: current analysis; reversible implementation proposed
+Date: 2026-11-12; revalidated on 2026-11-16
+Scope: `free-claude-code` on branch `custom/main`, commit `12914bd`
 Audience: maintainers and contributors
 
 This document records the current Claude Desktop integration, the behavior of Anthropic's

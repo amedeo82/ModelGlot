@@ -1,30 +1,32 @@
 # Analysis: Descriptive Model Names in Client Model Pickers
 
 Status: implemented
-Scope: `free-claude-code` at commit `56621010` (`patch: Buffer complete tool calls before protocol translation (#2362)`)
+Scope: baseline analyzed at commit `56621010`; revalidated on `custom/main` at `12914bd`
 Audience: maintainers and contributors
 
-This document records why Free Claude Code currently shows raw `provider/model` references in
-client model pickers, which data sources can supply descriptive names, and which protocol
-limits constrain the design. It is the input to
+This document records the original analysis of descriptive model names, the available data
+sources, and the protocol limits that constrained the design. The feature is now
+implemented; sections describing the pre-implementation label flow are retained as the
+baseline used to prove that routing and advertised IDs did not change.
+
+The shipped implementation is documented in
 [`model-display-names-implementation-plan.md`](model-display-names-implementation-plan.md).
+Its current resolution order is curated override → cached models.dev metadata →
+deterministic model-ID heuristic → original provider/model reference.
 
 Related: [`../CONTRIBUTING.md`](../CONTRIBUTING.md) for the quality gate that any change
-described here must satisfy. Per `CONTRIBUTING.md:7`, a standalone documentation pull request
-is reserved for the repository owner: these two documents ship bundled with the first code
-pull request of Wave 1 of the implementation plan.
+described here must satisfy.
 
 ---
 
 ## 1. Problem Statement
 
-Clients that discover models through Free Claude Code (FCC) render one row per advertised
-model. Today every non-native row is labelled with the exact FCC routing reference, for
-example `nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b` or
-`minimax/MiniMax-M3.1-Flash`. The desired presentation is a human-readable title such as
-`Nemotron 3 Ultra 550B A55B` (provider `NVIDIA NIM`) or `MiniMax-M3.1-Flash` (provider
-`MiniMax`), while the routing identity, the advertised id, and the fallback behavior stay
-byte-for-byte unchanged.
+Before the implementation, clients that discovered models through Free Claude Code (FCC)
+rendered one row per advertised model with the exact FCC routing reference, for example
+`nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b` or `minimax/MiniMax-M3.1-Flash`. The shipped
+presentation now uses a human-readable title such as `Nemotron 3 Ultra 550B A55B` (provider
+`NVIDIA NIM`) or `MiniMax-M3.1-Flash` (provider `MiniMax`), while the routing identity,
+the advertised id, and the fallback behavior remain unchanged.
 
 Three requirements follow from that goal:
 
@@ -38,7 +40,7 @@ Three requirements follow from that goal:
 
 ---
 
-## 2. How the Current Label Is Produced
+## 2. How the Baseline Label Was Produced
 
 ### 2.1 Application inventory
 
@@ -46,14 +48,14 @@ Three requirements follow from that goal:
 
 | Element | Location | Behavior |
 | --- | --- | --- |
-| `CatalogModel` | `application/model_catalog.py:23` | Carries `wire_slug`, `provider_model_ref`, `display_name`, and capability facts |
-| `CatalogModel.display_name` | `application/model_catalog.py:29` | The single field that every client projection reads |
-| Default label | `application/model_catalog.py:102`–`:113` | `_catalog_model` sets `display_name` to the full reference `provider/model` (plus the ` (no thinking)` suffix when reasoning is disabled) |
-| Custom provider label | `application/model_catalog.py:70`–`:77` | Custom endpoints become `<custom display name>/<model id>` |
-| Ordering | `application/model_catalog.py:79`–`:89` | Rows are sorted by provider display name, then model id, so provider families already appear as contiguous blocks |
+| `CatalogModel` | `application/model_catalog.py:31`–`:43` | Carries `wire_slug`, `provider_model_ref`, `display_name`, `description`, and capability facts |
+| `CatalogModel.display_name` | `application/model_catalog.py:37` | The single title field that every client projection reads |
+| Title resolution | `application/model_catalog.py:145`–`:164` | `_catalog_model` resolves curated, cached, heuristic, and raw-reference titles and appends the no-thinking suffix |
+| Custom provider label | `application/model_catalog.py:88`–`:102` | Custom endpoints become `<custom display name>/<model id>` |
+| Ordering | `application/model_catalog.py:122`–`:142` | Rows are sorted by provider display name, then model id, so provider families appear as contiguous blocks |
 
-Because `display_name` is the raw reference, there is exactly one place that must change to
-introduce descriptive titles: the value stored in `CatalogModel`.
+In the baseline, `display_name` was the raw reference, so there was exactly one place to
+change to introduce descriptive titles: the value stored in `CatalogModel`.
 
 ### 2.2 Protocol projections
 
@@ -61,14 +63,14 @@ introduce descriptive titles: the value stored in `CatalogModel`.
 
 | View | Location | Label source |
 | --- | --- | --- |
-| `claude` (Claude Code) | `api/model_catalog.py:171`–`:203` | `model.display_name` for provider-backed rows (`:183`), the raw reference for native Anthropic passthrough rows |
-| `claude-desktop` | `api/model_catalog.py:140`–`:143` | Same builder with `desktop_model_id(ref)` instead of `gateway_model_id(ref)` |
-| `messages`, `responses` | `api/model_catalog.py:206`–`:261` | `model.display_name`, or the raw reference for native passthrough (`:228`) |
-| `muse-code` | `api/model_catalog.py:147`–`:168` | Wraps the Responses view and copies `display_name` into `metadata.muse_code.name` |
+| `claude` (Claude Code) | `api/model_catalog.py:172`–`:210` | `model.display_name` for provider-backed rows (`:184`), the raw reference for native Anthropic passthrough rows |
+| `claude-desktop` | `api/model_catalog.py:141`–`:145` | Same builder with `desktop_model_id(ref)` instead of `gateway_model_id(ref)` |
+| `messages`, `responses` | `api/model_catalog.py:213`–`:269` | `model.display_name`, or the raw reference for native passthrough (`:235`) |
+| `muse-code` | `api/model_catalog.py:148`–`:169` | Wraps the Responses view and copies `display_name` into `metadata.muse_code.name` |
 
-`ModelResponse` (`api/model_catalog.py:57`) has no `description` field today, and
-`/v1/models` is served with `response_model_exclude_none=True` (`api/routes.py:401`–`:405`),
-so a new optional field is additive and safe for clients that ignore it.
+`ModelResponse` (`api/model_catalog.py:57`) has an optional `description` field, and
+`/v1/models` is served with `response_model_exclude_none=True` (`api/routes.py:405`–`:423`),
+so the field is additive and safe for clients that ignore it.
 
 ### 2.3 Identity that must not change
 
@@ -80,14 +82,15 @@ so a new optional field is additive and safe for clients that ignore it.
 | Reference parsing | `config/model_refs.py:167` | `split_provider_model_ref` splits on the first `/` |
 | Routing | `application/routing.py` | Resolves the decoded id back to the provider/model candidate list |
 
-The no-thinking suffix is part of the label today (`:108`, `:193`–`:196` in the API layer) and
-is a routing-visible variant, not decoration. A descriptive label must keep it.
+The no-thinking suffix is part of the label today (`application/model_catalog.py:158`,
+`api/model_catalog.py:190`–`:203`) and is a routing-visible variant, not decoration. A
+descriptive label must keep it.
 
 ### 2.4 Other consumers of the same label
 
-- Admin API model options: `api/admin_routes.py:539`–`:554` publishes `model_labels` keyed by
+- Admin API model options: `api/admin_routes.py:517`–`:525` publishes `model_labels` keyed by
   `provider_model_ref`; the Admin UI stores them in `state.modelLabels`
-  (`api/admin_static/admin.js:1762`). Improving the application label improves the Admin UI
+  (`api/admin_static/admin.js:1792`). Improving the application label improves the Admin UI
   selector for free, with no Admin-specific change.
 - Codex catalog: `runtime/codex_catalog.py:23` publishes the same inventory to
   `~/.fcc/codex-model-catalog.json`. It is built from `CatalogModel` and therefore inherits
@@ -213,10 +216,10 @@ Operational facts that shape the design:
   repeat traffic; a local cache with a TTL is required.
 - The payload is large; only the provider entries that FCC actually uses need to be kept.
 
-Licensing is an open item: the models.dev repository ships its own license, and the
-dataset may carry per-provider terms. Vendoring the data into FCC therefore requires an
-explicit license check; consuming it at runtime as a presentation-only source does not
-redistribute it, but the check is still required before the design is finalized.
+The shipped implementation consumes the catalog at runtime as a presentation-only source
+and stores only a reduced cache; it does not vendor or redistribute the dataset. The
+models.dev repository and per-provider terms remain relevant to attribution and future
+distribution decisions.
 
 ---
 
@@ -312,16 +315,16 @@ for its execution plan.
 
 | Claim | Evidence |
 | --- | --- |
-| Label defaults to the raw reference | `application/model_catalog.py:102`–`:113` |
-| Custom providers get `<name>/<model id>` | `application/model_catalog.py:70`–`:77` |
-| Ordering is grouped by provider display name | `application/model_catalog.py:79`–`:89` |
-| Client views copy `display_name` | `api/model_catalog.py:171`–`:261` |
-| `ModelResponse` has no `description` yet | `api/model_catalog.py:57`–`:96` |
-| Model list is served with `exclude_none` | `api/routes.py:401`–`:419` |
+| Title resolution and fallback order | `application/model_catalog.py:145`–`:164`, `application/model_titles.py:52`–`:92` |
+| Custom providers get `<name>/<model id>` | `application/model_catalog.py:88`–`:102` |
+| Ordering is grouped by provider display name | `application/model_catalog.py:122`–`:142` |
+| Client views copy `display_name` | `api/model_catalog.py:172`–`:269` |
+| `ModelResponse` exposes an optional `description` | `api/model_catalog.py:57`–`:96` |
+| Model list is served with `exclude_none` | `api/routes.py:405`–`:423` |
 | Ids are routing-visible and must not change | `core/gateway_model_ids.py:15`–`:73`, `config/model_refs.py:167` |
 | Upstream listings expose only ids today | `providers/model_listing.py:40`–`:219` |
 | Provider display names already exist | `config/provider_catalog.py:115`–`:143`, `:147`, `:557` |
-| Admin UI consumes the application label | `api/admin_routes.py:539`–`:554`, `api/admin_static/admin.js:1762` |
+| Admin UI consumes the application label | `api/admin_routes.py:517`–`:525`, `api/admin_static/admin.js:1792` |
 | Desktop preserves user `inferenceModels` | `harnesses/claude_desktop_integration.py:285`–`:295`, `tests/harnesses/test_claude_desktop_integration.py:247`–`:284` |
 | Codex catalog reuses the same inventory | `runtime/codex_catalog.py:23`–`:41` |
 | Atomic file publish pattern exists | `runtime/codex_catalog.py:43`–`:62`, `config/paths.py:107`–`:110` |

@@ -1,7 +1,7 @@
 # Implementation Plan: Reversible Claude Desktop Gateway Integration
 
-Status: proposed
-Date: 2026-11-12
+Status: proposed; not implemented on `custom/main`
+Date: 2026-11-12; revalidated on 2026-11-16
 Input: [`claude-desktop-gateway-login-analysis.md`](claude-desktop-gateway-login-analysis.md)
 Audience: maintainers and contributors
 
@@ -12,6 +12,33 @@ destroying the native login/bootstrap state.
 
 The plan does not attempt to make standard Claude.ai identity and 3P gateway identity
 simultaneous. Anthropic documents them as alternative deployment modes.
+
+## Current Step Status
+
+Status values reflect `custom/main` at commit `12914bd`.
+
+| Step | Status | Evidence / remaining work |
+| --- | --- | --- |
+| S0.1 | Partially complete | Focused Desktop unit, API, runtime, cleanup, and E2E tests exist, but the recorded baseline is not part of this document. |
+| S0.2 | Open | No live cross-version Claude Desktop compatibility matrix is recorded. |
+| S0.3 | Open | The default deployment policy remains undecided. |
+| S1.1 | Open | No restore journal exists. |
+| S1.2 | Open | Native state capture and restoration helpers do not exist. |
+| S1.3 | Open | Connected state still requires `deploymentMode == "3p"` and absent `hybridPointer`. |
+| S2.1 | Open | Connect still removes `hybridPointer` and forces `deploymentMode: "3p"`. |
+| S2.2 | Open | Disconnect still selects the Default profile and forces `deploymentMode: "1p"`. |
+| S2.3 | Open | A native-profile selection conflict policy is not implemented. |
+| S2.4 | Open | Legacy `3p`-state migration is not implemented. |
+| S3.1 | Open | The integration status does not expose chooser or restoration state. |
+| S3.2 | Open | The Admin integration card does not describe reversible mode selection. |
+| S3.3 | Open | README does not document the target reversible lifecycle. |
+| S4.1 | Partially complete | The existing Desktop E2E test covers the current destructive lifecycle, not the reversible contract. |
+| S4.2 | Open | The reversible implementation does not yet have a quality-gate result. |
+| S4.3 | Open | No manual acceptance matrix for the reversible lifecycle is recorded. |
+| S4.4 | Open | No release note or rollback guidance for the reversible lifecycle exists. |
+
+A step marked **Open** has not satisfied this plan's acceptance criteria. **Partially
+complete** means a named part exists but the step still requires further work.
 
 ---
 
