@@ -1,4 +1,5 @@
 param(
+    [string] $Ref = "",
     [switch] $VoiceLocal,
     [string] $TorchBackend = "",
     [switch] $RtkHeadroom,
@@ -25,7 +26,7 @@ $HermesInstallUrl = "https://hermes-agent.nousresearch.com/install.ps1"
 $DshMinimumVersion = "0.2.0-rc.2"
 $DshPackage = "@deepseek-ai/dsh@latest"
 $GrokInstallUrl = "https://x.ai/cli/install.ps1"
-$MuseInstallUrl = "https://raw.githubusercontent.com/Alishahryar1/free-claude-code/main/scripts/install-muse.ps1"
+$MuseInstallUrl = "https://raw.githubusercontent.com/amedeo82/free-claude-code/custom/main/scripts/install-muse.ps1"
 $AgyInstallUrl = "https://antigravity.google/cli/install.ps1"
 $AgyMinimumVersion = "1.5.9"
 $RtkVersion = "0.44.2"
@@ -34,6 +35,9 @@ $RtkReleaseBaseUrl = "https://github.com/rtk-ai/rtk/releases/download/v$RtkVersi
 $RtkWindowsAssetName = "rtk-x86_64-pc-windows-msvc.zip"
 $RtkWindowsAssetSha256 = "3a1e114edce9080f8a10663e9c87488363a82f14a5ca8aab2ad416817f89d47c"
 $UvInstallUrl = "https://astral.sh/uv/install.ps1"
+$FccRepository = "https://github.com/amedeo82/free-claude-code"
+$FccRawBase = "https://raw.githubusercontent.com/amedeo82/free-claude-code"
+$FccGitBase = "$FccRepository.git"
 $script:InstallClaudeCode = $true
 $script:InstallCodex = $true
 $script:InstallPi = $true
@@ -49,6 +53,19 @@ $script:PiAvailable = $false
 $script:MuseAvailable = $false
 $script:EnableRtkHeadroom = $RtkHeadroom.IsPresent
 $FccInstallVersion = [Environment]::GetEnvironmentVariable("FCC_INSTALL_VERSION")
+$environmentRef = [Environment]::GetEnvironmentVariable("FCC_INSTALL_REF")
+if ($PSBoundParameters.ContainsKey("Ref")) {
+    $FccInstallRef = $Ref
+}
+elseif ($null -ne $environmentRef) {
+    $FccInstallRef = $environmentRef
+}
+elseif ($FccInstallVersion) {
+    $FccInstallRef = ""
+}
+else {
+    $FccInstallRef = "custom/main"
+}
 $FccReleasePattern = '\A(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\z'
 $script:InstallLog = ""
 $script:InstallLogWarning = $false
@@ -90,6 +107,7 @@ Usage: install.ps1 [options]
 Installs or updates Free Claude Code and lets you choose which coding agents to install or verify.
 
 Options:
+  -Ref REF                Install from a Git branch or tag in this fork's repository.
   -VoiceLocal            Install local Whisper voice transcription support.
   -TorchBackend VALUE    Use a uv PyTorch backend, such as cu130. Requires local voice.
   -RtkHeadroom           Install and configure RTK + Headroom token optimization.
@@ -164,8 +182,12 @@ function Start-InstallStep {
 function Get-InstallerRetryCommand {
     $options = @()
     $prefix = ""
-    $installerRef = "main"
-    if ($FccInstallVersion) {
+    $installerRef = "custom/main"
+    if ($FccInstallRef) {
+        $installerRef = $FccInstallRef
+        $options += @("-Ref", $FccInstallRef)
+    }
+    elseif ($FccInstallVersion) {
         $prefix = "`$env:FCC_INSTALL_VERSION = '$FccInstallVersion'; "
         $installerRef = "v$FccInstallVersion"
     }
@@ -175,7 +197,7 @@ function Get-InstallerRetryCommand {
     if ($script:InstallerPath -and (Test-Path -LiteralPath $script:InstallerPath -PathType Leaf)) {
         return $prefix + "& " + (Format-Command $script:InstallerPath $options)
     }
-    return $prefix + "& ([scriptblock]::Create((irm 'https://raw.githubusercontent.com/Alishahryar1/free-claude-code/$installerRef/scripts/install.ps1'))) " + (($options | ForEach-Object { Format-Argument $_ }) -join " ")
+    return $prefix + "& ([scriptblock]::Create((irm '$FccRawBase/$installerRef/scripts/install.ps1'))) " + (($options | ForEach-Object { Format-Argument $_ }) -join " ")
 }
 
 function Show-InstallReport {
@@ -1802,6 +1824,9 @@ function Ensure-Uv {
 
 function Get-PackageSpec {
     $spec = if ($VoiceLocal) { "free-claude-code[voice_local]" } else { "free-claude-code" }
+    if ($FccInstallRef) {
+        return "$spec @ git+$FccGitBase@$FccInstallRef"
+    }
     if ($FccInstallVersion) { $spec += "==$FccInstallVersion" }
     elseif ($DryRun) { $spec += "==<selected-release>" }
     return $spec
@@ -2282,6 +2307,10 @@ function Compare-FccVersions {
 }
 
 function Test-FccUpdateNeeded {
+    if ($FccInstallRef) {
+        Write-Host "Refreshing FCC from $FccInstallRef."
+        return $true
+    }
     $installed = Get-InstalledFccVersion
     if (-not $installed) { return $true }
     $comparison = Compare-FccVersions -Installed $installed -Release $FccInstallVersion
@@ -2304,7 +2333,7 @@ function Invoke-SelectedReleaseInstaller {
 
     try {
         if (-not $FccInstallVersion) {
-            $releaseBase = "https://github.com/Alishahryar1/free-claude-code/releases"
+            $releaseBase = "$FccRepository/releases"
             $response = Invoke-WebRequest -Uri "$releaseBase/latest" -UseBasicParsing -TimeoutSec 10 -MaximumRedirection 5
             $selectedUrl = if ($response.BaseResponse.PSObject.Properties['ResponseUri']) {
                 $response.BaseResponse.ResponseUri.AbsoluteUri
@@ -2314,7 +2343,7 @@ function Invoke-SelectedReleaseInstaller {
             $FccInstallVersion = $selectedUrl.Substring($prefix.Length)
             if ($FccInstallVersion -cnotmatch $FccReleasePattern) { throw "GitHub did not return a canonical FCC release version." }
         }
-        $text = Invoke-RestMethod -Uri "https://raw.githubusercontent.com/Alishahryar1/free-claude-code/v$FccInstallVersion/scripts/install.ps1" -TimeoutSec 10 -MaximumRedirection 5
+        $text = Invoke-RestMethod -Uri "$FccRawBase/v$FccInstallVersion/scripts/install.ps1" -TimeoutSec 10 -MaximumRedirection 5
         if ($text -isnot [string] -or [string]::IsNullOrWhiteSpace($text)) { throw "The installer for FCC $FccInstallVersion was empty or invalid." }
         $installer = [scriptblock]::Create($text)
     } catch {
@@ -2375,9 +2404,10 @@ function Read-ToolchainRequirements {
 }
 
 function Get-ReleaseToolchain {
-    $metadataUrl = "https://raw.githubusercontent.com/Alishahryar1/free-claude-code/v$FccInstallVersion/pyproject.toml"
+    $metadataRef = if ($FccInstallRef) { $FccInstallRef } else { "v$FccInstallVersion" }
+    $metadataUrl = "$FccRawBase/$metadataRef/pyproject.toml"
     $text = Invoke-RestMethod -Uri $metadataUrl -TimeoutSec 10 -MaximumRedirection 5 -ErrorAction Stop
-    if ($text -isnot [string]) { throw "Invalid pyproject.toml response for FCC $FccInstallVersion." }
+    if ($text -isnot [string]) { throw "Invalid pyproject.toml response for FCC $metadataRef." }
     return Read-ToolchainRequirements -Text $text
 }
 
@@ -2389,6 +2419,13 @@ if ($Help) {
 if ($RemainingArgs.Count -gt 0) {
     Show-Usage
     throw "Unknown option: $($RemainingArgs -join ' ')"
+}
+
+if ($FccInstallRef) {
+    if ($FccInstallRef -cnotmatch '\A[A-Za-z0-9._/-]+\z' -or $FccInstallRef.Contains("..") -or $FccInstallRef.Contains("//") -or $FccInstallRef.StartsWith("/") -or $FccInstallRef.EndsWith("/") -or $FccInstallRef.Contains("@{")) {
+        throw "-Ref must be a valid Git branch or tag name."
+    }
+    if ($FccInstallVersion) { throw "-Ref and FCC_INSTALL_VERSION cannot be used together." }
 }
 
 if ($FccInstallVersion -and $FccInstallVersion -cnotmatch $FccReleasePattern) {
@@ -2404,7 +2441,7 @@ if (-not $DryRun) {
     $installerRelease = [Environment]::GetEnvironmentVariable("_FCC_INSTALLER_RELEASE")
     if ($installerRelease -and $installerRelease -cne $FccInstallVersion) { throw "Invalid FCC release handoff." }
     Remove-Item Env:_FCC_INSTALLER_RELEASE -ErrorAction SilentlyContinue
-    if (-not $installerRelease) {
+    if (-not $installerRelease -and -not $FccInstallRef) {
         $installerParameters = @{} + $PSBoundParameters
         Invoke-SelectedReleaseInstaller -InstallerArguments $installerParameters
         return

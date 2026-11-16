@@ -10,7 +10,7 @@ from importlib.metadata import PackageNotFoundError, version
 import httpx
 from packaging.version import Version
 
-RELEASE_URL = "https://github.com/Alishahryar1/free-claude-code/releases/"
+RELEASE_URL = "https://github.com/amedeo82/free-claude-code/releases/"
 PYPI_URL = "https://pypi.org/pypi/free-claude-code/{version}/json"
 UPDATE_AVAILABLE = 10
 

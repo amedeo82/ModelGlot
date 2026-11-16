@@ -13,8 +13,8 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW_URL = "https://raw.githubusercontent.com/Alishahryar1/free-claude-code"
-RELEASES_URL = "https://github.com/Alishahryar1/free-claude-code/releases"
+RAW_URL = "https://raw.githubusercontent.com/amedeo82/free-claude-code"
+RELEASES_URL = "https://github.com/amedeo82/free-claude-code/releases"
 SCRIPTS = ("fcc-update", "fcc-update.cmd")
 INSTALLED = "1.0.0"
 LATEST = {"current": INSTALLED, "newer-installed": "0.9.0"}
@@ -158,13 +158,11 @@ printf 'exit 99\\n' > "$FCC_TEST_LAUNCHER"
             body = body.split("\n", 1)[1]
             body += 'Write-Output "marker:[$env:_FCC_INSTALLER_RELEASE]"\nreturn\n'
             boundary = "\nInitialize-InstallLog\n"
-            expected = "installer:True|True|cu130|yes|2.0.0"
+            expected = "installer:True|True|cu130|yes|"
         else:
             body += 'printf "marker:[%s]\\n" "${_FCC_INSTALLER_RELEASE-}"\nexit 0\n'
             boundary = "\ninitialize_install_log\n"
-            expected = (
-                "installer:--update|--voice-local|--torch-backend|cu130|yes|2.0.0"
-            )
+            expected = "installer:--update|--voice-local|--torch-backend|cu130|yes|"
         assert source.count(boundary) == 1
         body = source.replace(boundary, "\n" + body + boundary)
     latest = LATEST.get(outcome, "2.0.0")
@@ -203,7 +201,7 @@ printf 'exit 99\\n' > "$FCC_TEST_LAUNCHER"
         )
         output = result.stdout + result.stderr
         suffix = "ps1" if os.name == "nt" else "sh"
-        main_installer = [f"/main/scripts/install.{suffix}"]
+        main_installer = [f"/custom/main/scripts/install.{suffix}"]
         if not real_installer:
             assert requests == main_installer, output
             if outcome == "download-error":
@@ -215,32 +213,15 @@ printf 'exit 99\\n' > "$FCC_TEST_LAUNCHER"
                     output
                 )
         else:
-            selected = [
-                "/releases/latest",
-                f"/releases/tag/v{latest}",
-                f"/v{latest}/scripts/install.{suffix}",
-            ]
             assert result.returncode == 0, output
-            if outcome == "real-installer":
-                assert requests == [
-                    *main_installer,
-                    *selected,
-                    "/v2.0.0/pyproject.toml",
-                ], output
-                assert f"FCC update available: {INSTALLED} -> 2.0.0." in output
-                assert "marker:[]" in result.stdout, output
-                assert result.stdout.count(expected) == 1, output
-                assert "Installer log:" not in result.stdout
-            else:
-                assert requests == [*main_installer, *selected], output
-                message = (
-                    f"FCC {INSTALLED} is already up to date."
-                    if outcome == "current"
-                    else f"FCC {INSTALLED} is newer than the published version {latest}. No update needed."
-                )
-                assert message in result.stdout, output
-                assert "installer:" not in result.stdout
-                assert "marker:" not in result.stdout
+            assert requests == [
+                *main_installer,
+                "/custom/main/pyproject.toml",
+            ], output
+            assert "Refreshing FCC from custom/main." in output
+            assert "marker:[]" in result.stdout, output
+            assert result.stdout.count(expected) == 1, output
+            assert "Installer log:" not in result.stdout
         result = subprocess.run(
             [uv, "tool", "uninstall", "free-claude-code"],
             env=env,

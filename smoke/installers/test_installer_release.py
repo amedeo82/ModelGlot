@@ -11,8 +11,8 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-REPOSITORY = "https://github.com/Alishahryar1/free-claude-code"
-RAW = "https://raw.githubusercontent.com/Alishahryar1/free-claude-code"
+REPOSITORY = "https://github.com/amedeo82/free-claude-code"
+RAW = "https://raw.githubusercontent.com/amedeo82/free-claude-code"
 
 
 @contextlib.contextmanager
@@ -76,6 +76,7 @@ def installer_entry(request, tmp_path, powershell_module_paths):
     script = tmp_path / f"install.{suffix}"
     env = os.environ | {
         "FCC_INSTALL_VERSION": "",
+        "FCC_INSTALL_REF": "",
         "_FCC_INSTALLER_RELEASE": "",
         "HOME": str(tmp_path),
         "USERPROFILE": str(tmp_path),

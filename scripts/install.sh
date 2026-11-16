@@ -19,6 +19,9 @@ RTK_VERSION="0.44.2"
 HEADROOM_PACKAGE="headroom-ai[mcp]==0.40.0"
 RTK_RELEASE_BASE_URL="https://github.com/rtk-ai/rtk/releases/download/v$RTK_VERSION"
 UV_INSTALL_URL="https://astral.sh/uv/install.sh"
+FCC_REPOSITORY="https://github.com/amedeo82/free-claude-code"
+FCC_RAW_BASE="https://raw.githubusercontent.com/amedeo82/free-claude-code"
+FCC_GIT_BASE="$FCC_REPOSITORY.git"
 # Include retired entry points so updates reject older FCC processes before replacement.
 FCC_COMMANDS="fcc-desktop fcc-server fcc-claude fcc-codex fcc-pi fcc-opencode fcc-cline fcc-hermes fcc-dsh fcc-grok fcc-muse fcc-aider fcc-agy fcc-doctor fcc-update fcc-init free-claude-code"
 
@@ -26,6 +29,11 @@ dry_run=0
 update_only=0
 voice_local=0
 fcc_install_version=${FCC_INSTALL_VERSION:-}
+if [ -n "$fcc_install_version" ] && [ -z "${FCC_INSTALL_REF+x}" ]; then
+    fcc_install_ref=""
+else
+    fcc_install_ref=${FCC_INSTALL_REF-custom/main}
+fi
 install_claude=1
 install_codex=1
 install_pi=1
@@ -70,6 +78,7 @@ Usage: install.sh [options]
 Installs or updates Free Claude Code and lets you choose which coding agents to install or verify.
 
 Options:
+  --ref REF                Install from a Git branch or tag in this fork's repository.
   --voice-local            Install local Whisper voice transcription support.
   --torch-backend VALUE    Use a uv PyTorch backend, such as cu130. Requires local voice.
   --rtk-headroom           Install and configure RTK + Headroom token optimization.
@@ -150,15 +159,23 @@ print_installer_retry() {
         printf 'sh '
         shell_quote "$installer_path"
     else
-        installer_ref=main
-        [ -z "$fcc_install_version" ] || installer_ref="v$fcc_install_version"
-        printf "curl -fsSL 'https://raw.githubusercontent.com/Alishahryar1/free-claude-code/%s/scripts/install.sh' | " "$installer_ref"
+        installer_source_ref=custom/main
+        if [ -n "$fcc_install_ref" ]; then
+            installer_source_ref=$fcc_install_ref
+        elif [ -n "$fcc_install_version" ]; then
+            installer_source_ref="v$fcc_install_version"
+        fi
+        printf "curl -fsSL '%s/%s/scripts/install.sh' | " "$FCC_RAW_BASE" "$installer_source_ref"
         if [ -n "$fcc_install_version" ]; then
             printf 'FCC_INSTALL_VERSION='
             shell_quote "$fcc_install_version"
             printf ' '
         fi
         printf 'sh -s --'
+    fi
+    if [ -n "$fcc_install_ref" ]; then
+        printf ' --ref '
+        shell_quote "$fcc_install_ref"
     fi
     [ "$voice_local" -eq 0 ] || printf ' --voice-local'
     if [ -n "$torch_backend" ]; then
@@ -1585,6 +1602,16 @@ ensure_uv() {
 parse_args() {
     while [ "$#" -gt 0 ]; do
         case "$1" in
+            --ref)
+                shift
+                [ "$#" -gt 0 ] || fail "--ref requires a value."
+                fcc_install_ref=$1
+                [ -n "$fcc_install_ref" ] || fail "--ref requires a non-empty value."
+                ;;
+            --ref=*)
+                fcc_install_ref=${1#*=}
+                [ -n "$fcc_install_ref" ] || fail "--ref requires a non-empty value."
+                ;;
             --voice-local)
                 voice_local=1
                 ;;
@@ -1621,6 +1648,14 @@ parse_args() {
 }
 
 validate_args() {
+    if [ -n "$fcc_install_ref" ]; then
+        case "$fcc_install_ref" in
+            *[!A-Za-z0-9._/-]*|*..*|*//*|/*|*/|*@\{*) fail "--ref must be a valid Git branch or tag name." ;;
+        esac
+        if [ -n "$fcc_install_version" ]; then
+            fail "--ref and FCC_INSTALL_VERSION cannot be used together."
+        fi
+    fi
     if [ -n "$fcc_install_version" ]; then
         case "$fcc_install_version" in
             *[!0-9.]*) fail "FCC_INSTALL_VERSION must be a canonical major.minor.patch release." ;;
@@ -1634,6 +1669,15 @@ validate_args() {
 }
 
 package_spec() {
+    if [ -n "$fcc_install_ref" ]; then
+        if [ "$voice_local" -eq 1 ]; then
+            printf '%s' 'free-claude-code[voice_local]'
+        else
+            printf '%s' 'free-claude-code'
+        fi
+        printf ' @ git+%s@%s' "$FCC_GIT_BASE" "$fcc_install_ref"
+        return 0
+    fi
     if [ "$voice_local" -eq 1 ]; then
         printf '%s' 'free-claude-code[voice_local]'
     else
@@ -1776,6 +1820,10 @@ compare_fcc_versions() {
 }
 
 fcc_update_is_needed() {
+    if [ -n "$fcc_install_ref" ]; then
+        printf 'Refreshing FCC from %s.\n' "$fcc_install_ref"
+        return 0
+    fi
     installed=$(installed_fcc_version) || return 0
     comparison=$(compare_fcc_versions "$installed" "$fcc_install_version") || return 0
     case "$comparison" in
@@ -1792,7 +1840,7 @@ fcc_update_is_needed() {
 }
 
 dispatch_release() {
-    release_base="https://github.com/Alishahryar1/free-claude-code/releases"
+    release_base="$FCC_REPOSITORY/releases"
     if [ -z "$fcc_install_version" ]; then
         selected_url=$(curl -fsSL --max-time 10 --max-redirs 5 -o /dev/null -w '%{url_effective}' "$release_base/latest") ||
             fail "Could not resolve the latest completed FCC release."
@@ -1802,7 +1850,7 @@ dispatch_release() {
         esac
         validate_args
     fi
-    if ! selected_installer=$(curl -fsSL --max-time 10 --max-redirs 5 "https://raw.githubusercontent.com/Alishahryar1/free-claude-code/v$fcc_install_version/scripts/install.sh") ||
+    if ! selected_installer=$(curl -fsSL --max-time 10 --max-redirs 5 "$FCC_RAW_BASE/v$fcc_install_version/scripts/install.sh") ||
         [ -z "$selected_installer" ] || ! sh -n -c "$selected_installer"; then
         print_installer_retry >&2
         fail "Could not load the installer for FCC $fcc_install_version."
@@ -1849,14 +1897,21 @@ parse_toolchain_requirements() {
 }
 
 load_toolchain() {
-    metadata_url="https://raw.githubusercontent.com/Alishahryar1/free-claude-code/v$fcc_install_version/pyproject.toml"
+    if [ -n "$fcc_install_ref" ]; then
+        metadata_ref=$fcc_install_ref
+        metadata_label=$fcc_install_ref
+    else
+        metadata_ref="v$fcc_install_version"
+        metadata_label=$fcc_install_version
+    fi
+    metadata_url="$FCC_RAW_BASE/$metadata_ref/pyproject.toml"
     if ! toolchain_text=$(curl -fsSL --max-time 10 --max-redirs 5 "$metadata_url"); then
         print_installer_retry >&2
-        fail "Could not fetch toolchain requirements for FCC $fcc_install_version."
+        fail "Could not fetch toolchain requirements for FCC $metadata_label."
     fi
     if ! toolchain_versions=$(printf '%s\n' "$toolchain_text" | parse_toolchain_requirements); then
         print_installer_retry >&2
-        fail "Invalid Python or uv requirement in FCC $fcc_install_version pyproject.toml."
+        fail "Invalid Python or uv requirement in FCC $metadata_label pyproject.toml."
     fi
     PYTHON_VERSION=${toolchain_versions%% *}
     MIN_UV_VERSION=${toolchain_versions#* }
@@ -1869,7 +1924,7 @@ if [ "$dry_run" -eq 0 ]; then
     installer_release=${_FCC_INSTALLER_RELEASE:-}
     [ -z "$installer_release" ] || [ "$installer_release" = "$fcc_install_version" ] || fail "Invalid FCC release handoff."
     unset _FCC_INSTALLER_RELEASE
-    [ -n "$installer_release" ] || dispatch_release "$@"
+    [ -n "$fcc_install_ref" ] || [ -n "$installer_release" ] || dispatch_release "$@"
     if [ "$update_only" -eq 1 ] && ! fcc_update_is_needed; then
         exit 0
     fi

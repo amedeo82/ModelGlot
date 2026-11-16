@@ -24,7 +24,7 @@ def check(monkeypatch):
         body=None,
         print_version=False,
         structured=False,
-        release_url="https://github.com/Alishahryar1/free-claude-code/releases/tag/v1.10.0",
+        release_url="https://github.com/amedeo82/free-claude-code/releases/tag/v1.10.0",
     ):
         monkeypatch.setattr(update_check, "version", lambda name: installed)
 
@@ -178,7 +178,7 @@ def test_invalid_github_release_does_not_authorize_installation(check, suffix):
     assert (
         check(
             payload=release(),
-            release_url="https://github.com/Alishahryar1/free-claude-code/releases/tag/"
+            release_url="https://github.com/amedeo82/free-claude-code/releases/tag/"
             + suffix,
         )
         == 1

@@ -21,7 +21,7 @@ PRs without changes to those paths must not use a release prefix. Do not edit ve
 Install [uv](https://docs.astral.sh/uv/), then run directly from the checkout. uv automatically installs the Python version required by the project.
 
 ```bash
-git clone https://github.com/Alishahryar1/free-claude-code.git
+git clone --branch custom/main https://github.com/amedeo82/free-claude-code.git
 cd free-claude-code
 uv run fcc-server
 ```

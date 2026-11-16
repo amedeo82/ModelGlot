@@ -23,7 +23,7 @@ UV_NEWER = ".".join(
     [*UV_MINIMUM.split(".")[:2], str(int(UV_MINIMUM.split(".")[2]) + 1)]
 )
 RELEASE_VERSION = "2.0.0"
-METADATA_URL = f"https://raw.githubusercontent.com/Alishahryar1/free-claude-code/v{RELEASE_VERSION}/pyproject.toml"
+METADATA_URL = f"https://raw.githubusercontent.com/amedeo82/free-claude-code/v{RELEASE_VERSION}/pyproject.toml"
 
 FCC_COMMANDS = (
     "fcc-desktop",
@@ -165,6 +165,28 @@ def test_install_ps1_pins_selected_fcc_release(powershell_harness, voice):
     assert any(call.endswith(spec) for call in powershell_harness.calls())
     assert "/v2.0.0/scripts/install.ps1" in result.stdout
     assert "$env:FCC_INSTALL_VERSION = '2.0.0'" in result.stdout
+
+
+def test_install_sh_defaults_to_custom_branch_package(posix_harness):
+    posix_harness.env.pop("FCC_INSTALL_VERSION")
+    posix_harness.env.pop("FCC_INSTALL_REF", None)
+    result = posix_harness.run_functions("package_spec")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert (
+        "free-claude-code @ git+https://github.com/amedeo82/free-claude-code.git@custom/main"
+        in result.stdout
+    )
+
+
+def test_install_ps1_defaults_to_custom_branch_package(powershell_harness):
+    powershell_harness.env.pop("FCC_INSTALL_VERSION")
+    powershell_harness.env.pop("FCC_INSTALL_REF", None)
+    result = powershell_harness.run_functions("Get-PackageSpec")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert (
+        "free-claude-code @ git+https://github.com/amedeo82/free-claude-code.git@custom/main"
+        in result.stdout
+    )
 
 
 FCC_UPDATE_DECISIONS = [
@@ -843,7 +865,7 @@ while [ "$#" -gt 0 ]; do
     shift
 done
 echo "download:$url" >> "$CALL_LOG"
-if [ "$url" = "https://raw.githubusercontent.com/Alishahryar1/free-claude-code/v${FCC_INSTALL_VERSION}/pyproject.toml" ]; then
+if [ "$url" = "https://raw.githubusercontent.com/amedeo82/free-claude-code/v${FCC_INSTALL_VERSION}/pyproject.toml" ]; then
     [ "$FAIL_STEP" != "toolchain-download" ] || exit 41
     cat "$FAKE_FIXTURES/pyproject.toml"
     exit 0
@@ -2910,7 +2932,7 @@ function Invoke-RestMethod {
     }
 
     Add-Content -LiteralPath $env:CALL_LOG -Value "download:$Uri"
-    if ($Uri -eq "https://raw.githubusercontent.com/Alishahryar1/free-claude-code/v$env:FCC_INSTALL_VERSION/pyproject.toml") {
+    if ($Uri -eq "https://raw.githubusercontent.com/amedeo82/free-claude-code/v$env:FCC_INSTALL_VERSION/pyproject.toml") {
         if ($env:FAIL_STEP -eq "toolchain-download") { throw "simulated metadata failure" }
         return [IO.File]::ReadAllText((Join-Path $env:FAKE_FIXTURES "pyproject.toml"))
     }
@@ -4266,8 +4288,8 @@ def test_install_ps1_preserves_valid_existing_tools(
     ]
     assert download_calls == [
         f"download:{METADATA_URL}",
-        "download:https://raw.githubusercontent.com/Alishahryar1/"
-        "free-claude-code/main/scripts/install-muse.ps1",
+        "download:https://raw.githubusercontent.com/amedeo82/"
+        "free-claude-code/custom/main/scripts/install-muse.ps1",
     ]
     assert "muse-install:external" in powershell_harness.calls()
     assert "leaving it unchanged" in result.stdout
@@ -4731,7 +4753,7 @@ def test_installers_use_native_clients_and_single_python_selection() -> None:
         assert "git+" not in text
         assert "git --version" not in text
         assert (
-            "https://github.com/Alishahryar1/free-claude-code/archive/refs/heads/main.zip"
+            "https://github.com/amedeo82/free-claude-code/archive/refs/heads/main.zip"
             not in text
         )
         assert "python install" not in text
@@ -4745,8 +4767,8 @@ def test_installers_use_native_clients_and_single_python_selection() -> None:
     assert "https://x.ai/cli/install.ps1" in powershell
     assert "https://dev.meta.ai/install.sh" in shell
     assert (
-        "https://raw.githubusercontent.com/Alishahryar1/free-claude-code/"
-        "main/scripts/install-muse.ps1"
+        "https://raw.githubusercontent.com/amedeo82/free-claude-code/"
+        "custom/main/scripts/install-muse.ps1"
     ) in powershell
 
 
@@ -6117,7 +6139,10 @@ def test_install_ps1_preview_creates_no_log_or_probe(
     assert powershell_harness.calls() == []
     assert not (Path(powershell_harness.env["USERPROFILE"]) / ".fcc/logs").exists()
     if option == "-DryRun":
-        assert "free-claude-code==<selected-release>" in result.stdout
+        assert (
+            "free-claude-code @ git+https://github.com/amedeo82/free-claude-code.git@custom/main"
+            in result.stdout
+        )
 
 
 @pytest.mark.parametrize("option", ["--help", "--dry-run"])
@@ -6131,7 +6156,10 @@ def test_install_sh_preview_creates_no_log_or_probe(
     assert posix_harness.calls() == []
     assert not (Path(posix_harness.env["HOME"]) / ".fcc/logs").exists()
     if option == "--dry-run":
-        assert "free-claude-code==<selected-release>" in result.stdout
+        assert (
+            "free-claude-code @ git+https://github.com/amedeo82/free-claude-code.git@custom/main"
+            in result.stdout
+        )
 
 
 def _assert_pi_supplies_selected_agent_toolchain(
@@ -6211,7 +6239,7 @@ def test_install_sh_piped_failure_retries_downloaded_installer(
         line for line in result.stdout.splitlines() if line.startswith("Retry:")
     )
     assert (
-        f"https://raw.githubusercontent.com/Alishahryar1/free-claude-code/v{RELEASE_VERSION}/scripts/install.sh"
+        f"https://raw.githubusercontent.com/amedeo82/free-claude-code/v{RELEASE_VERSION}/scripts/install.sh"
         in retry
     )
     assert f"| FCC_INSTALL_VERSION='{RELEASE_VERSION}' sh -s --" in retry
