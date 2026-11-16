@@ -339,6 +339,7 @@ def _run_browser_shutdown_probe(mode, outcome, directory, setup_delay="0"):
         host="127.0.0.1", port=0, open_admin_browser=outcome == "automatic"
     )
     patcher.setattr(commands, "load_server_settings", lambda: settings)
+    patcher.setattr(commands, "_BROWSER_HANDOFF_SECONDS", 0.1)
     patcher.setattr(desktop, "load_server_settings", lambda: settings)
     patcher.setattr(desktop, "config_dir_path", lambda: Path(directory))
     patcher.setattr(paths, "config_dir_path", lambda: Path(directory))
@@ -456,10 +457,14 @@ def _run_browser_shutdown_probe(mode, outcome, directory, setup_delay="0"):
 
             lock = InterprocessFileLock(Path(directory) / "desktop.lock")
             original_acquire = InterprocessFileLock.acquire
+            delayed = False
 
             def acquire(instance):
+                nonlocal delayed
                 print("probe: acquiring desktop lock", flush=True)
-                threading.Event().wait(float(setup_delay))
+                if not delayed:
+                    delayed = True
+                    threading.Event().wait(float(setup_delay))
                 return original_acquire(instance)
 
             patcher.setattr(InterprocessFileLock, "acquire", acquire)
@@ -511,7 +516,7 @@ def _assert_browser_probe_exits(tmp_path, mode, outcome, setup_delay="0"):
         ],
         capture_output=True,
         text=True,
-        timeout=12,
+        timeout=60,
         check=False,
     )
     assert completed.returncode == 0, completed.stdout + completed.stderr

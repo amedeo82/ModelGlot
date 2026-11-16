@@ -27,7 +27,7 @@ importlib.import_module({module!r})
 assert not set({forbidden!r}).intersection(sys.modules), sorted(set({forbidden!r}).intersection(sys.modules))
 """
     result = subprocess.run(
-        [sys.executable, "-c", script], capture_output=True, text=True, timeout=15
+        [sys.executable, "-c", script], capture_output=True, text=True, timeout=60
     )
     assert result.returncode == 0, result.stderr
 
@@ -62,7 +62,7 @@ async def main():
 asyncio.run(main())
 """
     result = subprocess.run(
-        [sys.executable, "-c", script], capture_output=True, text=True, timeout=15
+        [sys.executable, "-c", script], capture_output=True, text=True, timeout=60
     )
     assert result.returncode == 0, result.stderr
 
@@ -86,6 +86,6 @@ with tempfile.TemporaryDirectory() as cache:
     assert estimate_text_tokens("abcdefgh") == 1
 """
     result = subprocess.run(
-        [sys.executable, "-c", script], capture_output=True, text=True, timeout=15
+        [sys.executable, "-c", script], capture_output=True, text=True, timeout=60
     )
     assert result.returncode == 0, result.stderr

@@ -10,6 +10,21 @@ import pytest
 from free_claude_code.cli import macos_app
 
 
+def symlink_or_skip(link, target, *, target_is_directory=False):
+    try:
+        link.symlink_to(target, target_is_directory=target_is_directory)
+    except OSError as exc:
+        if getattr(exc, "winerror", None) == 1314:
+            pytest.skip("Windows symlink creation requires Developer Mode or privilege")
+        raise
+
+
+def require_symlink_support(tmp_path):
+    target = tmp_path / "symlink-target"
+    target.mkdir()
+    symlink_or_skip(tmp_path / "symlink-probe", target, target_is_directory=True)
+
+
 @pytest.fixture
 def runtime(tmp_path, monkeypatch):
     base = tmp_path / "managed python"
@@ -48,7 +63,7 @@ def test_runtime_keeps_symlinked_venv_identity(runtime):
     executable, library, _variables = runtime
     base_executable = library.parent / "python"
     executable.rename(base_executable)
-    executable.symlink_to(base_executable)
+    symlink_or_skip(executable, base_executable)
     settings, _architecture = macos_app.runtime_settings()
     assert settings["PythonExecutable"] == str(executable)
     assert Path(settings["PythonExecutable"]).resolve() == base_executable
@@ -104,7 +119,8 @@ def installer(tmp_path, monkeypatch, runtime):
     return home, resources, calls
 
 
-def test_complete_bundle_is_signed_before_publication(installer, runtime):
+def test_complete_bundle_is_signed_before_publication(installer, runtime, tmp_path):
+    require_symlink_support(tmp_path)
     home, _resources, calls = installer
     app = macos_app.install()
     assert app == home / "Applications/Free Claude Code.app"
@@ -134,8 +150,9 @@ def owned_app(home):
 
 
 def test_upgrade_replaces_legacy_owned_bundle_and_updates_runtime(
-    installer, runtime, monkeypatch
+    installer, runtime, monkeypatch, tmp_path
 ):
+    require_symlink_support(tmp_path)
     home, _resources, _calls = installer
     app = owned_app(home)
     macos_app.install()
@@ -209,7 +226,7 @@ def test_app_symlink_is_not_treated_as_owned(installer):
     app = owned_app(home)
     real = app.with_name("Other.app")
     app.rename(real)
-    app.symlink_to(real, target_is_directory=True)
+    symlink_or_skip(app, real, target_is_directory=True)
     with pytest.raises(ValueError, match="not managed"):
         macos_app.install()
     assert (real / "old").read_text() == "preserve on failure"

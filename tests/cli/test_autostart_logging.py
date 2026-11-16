@@ -79,7 +79,7 @@ def test_server_entrypoint_routes_logs_across_restarts(
             ],
             capture_output=True,
             text=True,
-            timeout=15,
+            timeout=60,
             check=False,
         )
     assert result.returncode == 0, result.stderr

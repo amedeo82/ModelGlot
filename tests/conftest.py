@@ -35,6 +35,15 @@ os.environ["PTB_TIMEDELTA"] = "1"
 # Tests keep proxy authentication disabled unless a case enables it explicitly.
 os.environ["ANTHROPIC_AUTH_TOKEN"] = ""
 
+_WINDOWS_MAX_XDIST_WORKERS = 4
+
+
+def pytest_xdist_auto_num_workers(config) -> int | None:
+    """Cap Windows test workers so subprocess-heavy tests keep stable budgets."""
+    if os.name == "nt":
+        return _WINDOWS_MAX_XDIST_WORKERS
+    return None
+
 
 @pytest.fixture(autouse=True)
 def _response_delivery_context(request):
