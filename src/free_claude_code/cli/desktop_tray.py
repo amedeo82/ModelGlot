@@ -3,6 +3,7 @@
 import importlib
 import sys
 import threading
+import time
 from collections.abc import Callable
 from io import BytesIO
 
@@ -22,6 +23,7 @@ from free_claude_code.cli.desktop_notifications import (
     NotificationLevel,
     create_desktop_notifier,
 )
+from free_claude_code.core.version import package_version
 from free_claude_code.updater.check import (
     UpdateCheckResult,
     UpdateStatus,
@@ -38,8 +40,21 @@ class PystrayDesktopTray:
         self._update_check_active = False
         self._update_check_enabled = True
         self._update_status_label = "Update status: not checked"
+        self._server_status_label = "Server status: unknown"
+        self._version_label = f"Installed version: {package_version()}"
         self._closed = False
         self._update_thread: threading.Thread | None = None
+        self._restart_thread: threading.Thread | None = None
+        self._server_status_item = MenuItem(
+            lambda _item: self._server_status_label,
+            lambda _icon, _item: None,
+            enabled=False,
+        )
+        self._version_item = MenuItem(
+            lambda _item: self._version_label,
+            lambda _icon, _item: None,
+            enabled=False,
+        )
         self._update_check_item = MenuItem(
             "Check for Updates",
             self._check_updates,
@@ -62,8 +77,9 @@ class PystrayDesktopTray:
         return Menu(
             MenuItem("Open Admin", self._open_admin, default=True),
             MenuItem("Check Server Status", self._check_status),
+            self._server_status_item,
             MenuItem("Check Version", self._check_version),
-            MenuItem("Test System Notification", self._test_notification),
+            self._version_item,
             self._update_check_item,
             self._update_status_item,
             Menu.SEPARATOR,
@@ -92,6 +108,7 @@ class PystrayDesktopTray:
 
     def _check_status(self, _icon: Icon, _item: MenuItem) -> None:
         status = self._controller.status
+        self._set_server_status(f"Server status: {status}")
         level = {
             ServerStatus.RUNNING: NotificationLevel.SUCCESS,
             ServerStatus.STOPPED: NotificationLevel.WARNING,
@@ -99,13 +116,8 @@ class PystrayDesktopTray:
         self._notify(f"Server is {status}.", level=level)
 
     def _check_version(self, _icon: Icon, _item: MenuItem) -> None:
+        self._set_version(f"Installed version: {package_version()}")
         self._notify(version_text())
-
-    def _test_notification(self, _icon: Icon, _item: MenuItem) -> None:
-        self._notify(
-            "System notifications are ready.",
-            level=NotificationLevel.SUCCESS,
-        )
 
     def _check_updates(self, _icon: Icon, _item: MenuItem) -> None:
         with self._update_lock:
@@ -192,6 +204,20 @@ class PystrayDesktopTray:
         except Exception:
             logger.exception("Could not display the FCC desktop notification")
 
+    def _set_server_status(self, label: str) -> None:
+        with self._update_lock:
+            if self._closed:
+                return
+            self._server_status_label = label
+        self._refresh_menu()
+
+    def _set_version(self, label: str) -> None:
+        with self._update_lock:
+            if self._closed:
+                return
+            self._version_label = label
+        self._refresh_menu()
+
     def _refresh_menu(self) -> None:
         with self._update_lock:
             if self._closed:
@@ -217,7 +243,49 @@ class PystrayDesktopTray:
             logger.exception("Could not refresh the FCC tray menu")
 
     def _restart_server(self, _icon: Icon, _item: MenuItem) -> None:
-        self._controller.restart_server()
+        self._set_server_status("Server status: restarting...")
+        try:
+            self._controller.restart_server()
+        except Exception:
+            logger.exception("Could not restart the FCC server")
+            self._set_server_status("Server status: restart failed")
+            self._notify(
+                "Could not restart the FCC server.",
+                level=NotificationLevel.ERROR,
+            )
+            return
+        thread = threading.Thread(
+            target=self._wait_for_restart,
+            name="fcc-restart-status",
+            daemon=True,
+        )
+        self._restart_thread = thread
+        thread.start()
+
+    def _wait_for_restart(self) -> None:
+        deadline = time.monotonic() + 60.0
+        while time.monotonic() < deadline:
+            with self._update_lock:
+                if self._closed:
+                    return
+            status = self._controller.status
+            if status is ServerStatus.RUNNING:
+                self._set_server_status(f"Server status: {status}")
+                self._notify("Server restarted.", level=NotificationLevel.SUCCESS)
+                return
+            if status is ServerStatus.STOPPED:
+                self._set_server_status("Server status: stopped")
+                self._notify(
+                    "The FCC server stopped during restart.",
+                    level=NotificationLevel.ERROR,
+                )
+                return
+            time.sleep(0.25)
+        self._set_server_status("Server status: restart timed out")
+        self._notify(
+            "The FCC server did not restart in time.",
+            level=NotificationLevel.WARNING,
+        )
 
     def _quit(self, _icon: Icon, _item: MenuItem) -> None:
         self._controller.quit()

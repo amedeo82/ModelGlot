@@ -3,18 +3,18 @@
 import ctypes
 import threading
 from pathlib import Path
-from tempfile import TemporaryDirectory
 from typing import Any
 
 from loguru import logger
 
-from free_claude_code.cli.desktop_assets import app_icon_bytes
+from free_claude_code.cli.desktop_assets import export_app_icon
 from free_claude_code.cli.desktop_notifications import (
     APP_USER_MODEL_ID,
     DesktopNotification,
     NotificationLevel,
     PystrayDesktopNotifier,
 )
+from free_claude_code.config.paths import config_dir_path
 
 _NIM_MODIFY = 0x00000001
 _NIF_INFO = 0x00000010
@@ -48,7 +48,6 @@ class WindowsDesktopNotifier:
         self._lock = threading.Lock()
         self._toast_notifier: Any = None
         self._logo_path: Path | None = None
-        self._temporary_directory: TemporaryDirectory[str] | None = None
         if not enable_toast:
             return
         try:
@@ -63,8 +62,14 @@ class WindowsDesktopNotifier:
         with self._lock:
             if self._toast_notifier is not None:
                 try:
-                    self._notify_toast(notification)
-                    return
+                    if not self._toast_enabled():
+                        logger.warning(
+                            "Windows notifications are disabled for FCC; using a balloon"
+                        )
+                        self._toast_notifier = None
+                    else:
+                        self._notify_toast(notification)
+                        return
                 except Exception:
                     logger.warning(
                         "Could not display the native Windows toast; using a balloon",
@@ -74,19 +79,24 @@ class WindowsDesktopNotifier:
             self._notify_branded(notification)
 
     def close(self) -> None:
-        if self._temporary_directory is not None:
-            self._temporary_directory.cleanup()
-            self._temporary_directory = None
         self._logo_path = None
 
     def _initialize_toast_notifier(self) -> None:
         _set_process_app_user_model_id()
+        self._logo_path = config_dir_path() / "app-icon.png"
+        export_app_icon(self._logo_path)
+        _register_app_user_model_id(self._logo_path)
         self._toast_notifier = _create_toast_notifier()
-        self._temporary_directory = TemporaryDirectory(
-            prefix="fcc-desktop-notifications-"
-        )
-        self._logo_path = Path(self._temporary_directory.name) / "app-icon.png"
-        self._logo_path.write_bytes(app_icon_bytes(".png"))
+
+    def _toast_enabled(self) -> bool:
+        try:
+            from winrt.windows.ui.notifications import NotificationSetting
+        except ImportError:
+            return False
+        try:
+            return self._toast_notifier.setting == NotificationSetting.ENABLED
+        except AttributeError, OSError, RuntimeError:
+            return False
 
     def _notify_toast(self, notification: DesktopNotification) -> None:
         if self._logo_path is None:
@@ -160,4 +170,37 @@ def _set_process_app_user_model_id() -> None:
         raise OSError(
             "Could not set the Windows application identity: "
             f"HRESULT 0x{result & 0xFFFFFFFF:08X}"
+        )
+
+
+def _register_app_user_model_id(icon_path: Path) -> None:
+    import winreg
+
+    key_path = rf"Software\Classes\AppUserModelId\{APP_USER_MODEL_ID}"
+    with winreg.CreateKeyEx(
+        winreg.HKEY_CURRENT_USER,
+        key_path,
+        0,
+        winreg.KEY_WRITE,
+    ) as key:
+        winreg.SetValueEx(
+            key,
+            "DisplayName",
+            0,
+            winreg.REG_SZ,
+            "Free Claude Code",
+        )
+        winreg.SetValueEx(
+            key,
+            "IconUri",
+            0,
+            winreg.REG_SZ,
+            str(icon_path),
+        )
+        winreg.SetValueEx(
+            key,
+            "IconBackgroundColor",
+            0,
+            winreg.REG_SZ,
+            "FF000000",
         )

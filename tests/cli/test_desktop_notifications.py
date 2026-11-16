@@ -1,7 +1,10 @@
 """Native desktop notification adapters."""
 
 import sys
+from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
+from unittest.mock import MagicMock, Mock
 
 import pytest
 
@@ -128,9 +131,12 @@ def test_windows_notifier_falls_back_when_native_balloon_fails() -> None:
 @pytest.mark.skipif(
     sys.platform != "win32", reason="WinRT is available only on Windows"
 )
-def test_windows_notifier_uses_branded_toast(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_windows_notifier_uses_branded_toast(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     class FakeToastNotifier:
         notification: Any = None
+        setting = 0
 
         def show(self, notification) -> None:
             self.notification = notification
@@ -145,6 +151,21 @@ def test_windows_notifier_uses_branded_toast(monkeypatch: pytest.MonkeyPatch) ->
         windows_desktop_notifications,
         "_create_toast_notifier",
         lambda: toast_notifier,
+    )
+    monkeypatch.setattr(
+        windows_desktop_notifications,
+        "_register_app_user_model_id",
+        lambda _icon_path: None,
+    )
+    monkeypatch.setattr(
+        windows_desktop_notifications,
+        "export_app_icon",
+        lambda _icon_path: None,
+    )
+    monkeypatch.setattr(
+        windows_desktop_notifications,
+        "config_dir_path",
+        lambda: tmp_path,
     )
     icon = FakeWindowsIcon()
     notifier = WindowsDesktopNotifier(icon)
@@ -165,3 +186,90 @@ def test_windows_notifier_uses_branded_toast(monkeypatch: pytest.MonkeyPatch) ->
     assert 'placement="appLogoOverride"' in document
     assert "file:///" in document
     notifier.close()
+
+
+@pytest.mark.skipif(
+    sys.platform != "win32", reason="WinRT is available only on Windows"
+)
+def test_windows_notifier_falls_back_when_toast_is_disabled(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    class DisabledToastNotifier:
+        setting = 1
+
+        def show(self, _notification) -> None:
+            raise AssertionError("Disabled toasts must not be shown")
+
+    monkeypatch.setattr(
+        windows_desktop_notifications,
+        "_set_process_app_user_model_id",
+        lambda: None,
+    )
+    monkeypatch.setattr(
+        windows_desktop_notifications,
+        "_create_toast_notifier",
+        lambda: DisabledToastNotifier(),
+    )
+    monkeypatch.setattr(
+        windows_desktop_notifications,
+        "_register_app_user_model_id",
+        lambda _icon_path: None,
+    )
+    monkeypatch.setattr(
+        windows_desktop_notifications,
+        "export_app_icon",
+        lambda _icon_path: None,
+    )
+    monkeypatch.setattr(
+        windows_desktop_notifications,
+        "config_dir_path",
+        lambda: tmp_path,
+    )
+    icon = FakeWindowsIcon()
+    notifier = WindowsDesktopNotifier(icon)
+
+    notifier.notify(
+        DesktopNotification(
+            title="Free Claude Code",
+            message="Fallback.",
+            level=NotificationLevel.INFO,
+        )
+    )
+
+    assert len(icon.messages) == 1
+    assert icon.messages[0][2]["szInfo"] == "Fallback."
+    notifier.close()
+
+
+def test_windows_notifier_registers_app_user_model_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    set_value = Mock()
+    key = MagicMock()
+    key.__enter__.return_value = Mock()
+    create_key = Mock(return_value=key)
+    fake_winreg = SimpleNamespace(
+        HKEY_CURRENT_USER=1,
+        KEY_WRITE=2,
+        REG_SZ=3,
+        CreateKeyEx=create_key,
+        SetValueEx=set_value,
+    )
+    monkeypatch.setitem(sys.modules, "winreg", fake_winreg)
+
+    windows_desktop_notifications._register_app_user_model_id(
+        Path("C:/Users/test/.fcc/app-icon.png")
+    )
+
+    create_key.assert_called_once_with(
+        1,
+        r"Software\Classes\AppUserModelId\io.github.alishahryar1.free-claude-code",
+        0,
+        2,
+    )
+    values = {call.args[1]: call.args[4] for call in set_value.call_args_list}
+    assert values == {
+        "DisplayName": "Free Claude Code",
+        "IconUri": str(Path("C:/Users/test/.fcc/app-icon.png")),
+        "IconBackgroundColor": "FF000000",
+    }

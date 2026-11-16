@@ -3,6 +3,7 @@
 import threading
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, cast
+from unittest.mock import Mock
 
 import pytest
 
@@ -58,7 +59,12 @@ def tray(monkeypatch: pytest.MonkeyPatch):
     )
     controller = cast(
         desktop_tray.DesktopController,
-        SimpleNamespace(status=ServerStatus.RUNNING),
+        SimpleNamespace(
+            status=ServerStatus.RUNNING,
+            open_admin=Mock(),
+            restart_server=Mock(),
+            quit=Mock(),
+        ),
     )
     instance = desktop_tray.PystrayDesktopTray(controller)
     return instance, icon
@@ -78,10 +84,13 @@ def test_check_version_remains_available(tray, monkeypatch):
         "version_text",
         lambda: "Free Claude Code 1.2.3",
     )
+    monkeypatch.setattr(desktop_tray, "package_version", lambda: "1.2.3")
 
     instance._check_version(None, None)
 
     assert icon.notifications == [("Free Claude Code 1.2.3", "Free Claude Code")]
+    assert instance._version_item.text == "Installed version: 1.2.3"
+    assert instance._version_item.enabled is False
 
 
 def test_server_status_uses_native_success_style(tray):
@@ -94,6 +103,8 @@ def test_server_status_uses_native_success_style(tray):
     instance._check_status(None, None)
 
     assert icon.notification_details[0].level is desktop_tray.NotificationLevel.SUCCESS
+    assert instance._server_status_item.text == "Server status: Running"
+    assert instance._server_status_item.enabled is False
 
 
 def test_stopped_server_uses_native_warning_style(tray):
@@ -108,15 +119,50 @@ def test_stopped_server_uses_native_warning_style(tray):
     assert icon.notification_details[0].level is desktop_tray.NotificationLevel.WARNING
 
 
-def test_test_notification_menu_action_uses_success_style(tray):
+def test_open_admin_menu_action_opens_admin(tray):
     instance, icon = tray
+    menu = instance._build_menu()
+    admin_action = next(item for item in menu if item.text == "Open Admin")
 
-    instance._test_notification(None, None)
+    admin_action(icon)
 
-    assert icon.notifications == [
-        ("System notifications are ready.", "Free Claude Code")
-    ]
-    assert icon.notification_details[0].level is desktop_tray.NotificationLevel.SUCCESS
+    instance._controller.open_admin.assert_called_once_with()
+
+
+def test_quit_menu_action_stops_desktop(tray):
+    instance, icon = tray
+    menu = instance._build_menu()
+    quit_action = next(item for item in menu if item.text == "Quit")
+
+    quit_action(icon)
+
+    instance._controller.quit.assert_called_once_with()
+
+
+def test_status_menu_action_updates_visible_status_row(tray):
+    instance, icon = tray
+    menu = instance._build_menu()
+    status_action = next(item for item in menu if item.text == "Check Server Status")
+
+    status_action(icon)
+
+    assert instance._server_status_item.text == "Server status: Running"
+    assert instance._server_status_item.enabled is False
+    assert icon.notifications == [("Server is Running.", "Free Claude Code")]
+
+
+def test_restart_menu_action_updates_visible_status_row(tray):
+    instance, icon = tray
+    menu = instance._build_menu()
+    restart_action = next(item for item in menu if item.text == "Restart Server")
+
+    restart_action(icon)
+    assert instance._restart_thread is not None
+    instance._restart_thread.join(2)
+
+    assert instance._server_status_item.text == "Server status: Running"
+    assert instance._controller.restart_server.call_count == 1
+    assert icon.notifications == [("Server restarted.", "Free Claude Code")]
 
 
 def test_update_check_exposes_checking_state(tray, monkeypatch):
@@ -371,14 +417,20 @@ def test_concurrent_update_clicks_start_only_one_check(tray, monkeypatch):
     assert calls == 1
 
 
-def test_tray_menu_exposes_graphical_update_check(tray):
+def test_tray_menu_exposes_visible_status_and_update_check(tray):
     instance, _icon = tray
 
     labels = [item.text for item in instance._build_menu()]
 
+    assert "Check Server Status" in labels
+    assert "Server status: unknown" in labels
     assert "Check Version" in labels
+    assert sum(label.startswith("Installed version: ") for label in labels) == 1
     assert "Check for Updates" in labels
     assert "Update status: not checked" in labels
+    assert "Test System Notification" not in labels
+    assert instance._server_status_item.enabled is False
+    assert instance._version_item.enabled is False
     assert instance._update_check_item.enabled is True
     assert instance._update_status_item.enabled is False
 
