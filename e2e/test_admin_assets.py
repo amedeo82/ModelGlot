@@ -202,6 +202,9 @@ def test_admin_loads_current_release_assets_before_rendering_dynamic_content(
         "href", "https://github.com/amedeo82/free-claude-code"
     )
     expect(logo_link).to_have_attribute("target", "_blank")
+    expect(page.locator('link[rel="icon"]')).to_have_attribute(
+        "href", f"/admin/assets/{package_version()}/app-icon.svg"
+    )
 
     versioned_root = f"/admin/assets/{package_version()}"
     assert f"{versioned_root}/app-icon.svg" in requested_paths

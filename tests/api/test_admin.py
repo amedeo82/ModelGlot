@@ -246,6 +246,7 @@ def test_admin_page_uses_installed_version(monkeypatch, tmp_path):
     assert 'target="_blank"' in response.text
     assert 'rel="noopener noreferrer"' in response.text
     assert 'aria-label="Open Free Claude Code on GitHub"' in response.text
+    assert 'href="/admin/assets/9.8.7/app-icon.svg"' in response.text
     assert 'src="/admin/assets/9.8.7/app-icon.svg"' in response.text
     assert 'href="/admin/assets/9.8.7/admin.css"' in response.text
     assert 'href="/admin/assets/9.8.7/code_sessions.css"' in response.text
