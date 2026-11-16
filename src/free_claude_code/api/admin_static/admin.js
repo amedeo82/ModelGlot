@@ -26,6 +26,18 @@ const state = {
 
 const MASKED_SECRET = "********";
 const NULL_VALUE = "__FCC_NULL__";
+const MESSAGING_SECTIONS_BY_PLATFORM = {
+  none: [],
+  telegram: ["telegram", "workspace", "voice"],
+  discord: ["discord", "workspace", "voice"],
+};
+const MESSAGING_SECTION_IDS = [
+  "messaging",
+  "telegram",
+  "discord",
+  "workspace",
+  "voice",
+];
 const VIEW_GROUPS = [
   {
     id: "providers",
@@ -45,7 +57,7 @@ const VIEW_GROUPS = [
     id: "messaging",
     label: "Messaging",
     title: "Messaging",
-    sections: ["messaging", "voice"],
+    sections: ["messaging", "telegram", "discord", "workspace", "voice"],
     containerId: "messagingSections",
   },
   {
@@ -69,6 +81,20 @@ function viewFromLocation() {
 }
 
 const byId = (id) => document.getElementById(id);
+
+function updateMessagingSectionVisibility() {
+  const platform = byId("field-MESSAGING_PLATFORM")?.value;
+  if (!platform) return;
+  const visibleSections = new Set(
+    MESSAGING_SECTIONS_BY_PLATFORM[platform] || [],
+  );
+  MESSAGING_SECTION_IDS.forEach((sectionId) => {
+    const section = byId(`section-${sectionId}`);
+    if (!section) return;
+    section.hidden =
+      sectionId !== "messaging" && !visibleSections.has(sectionId);
+  });
+}
 
 function sourceLabel(source) {
   const labels = {
@@ -901,6 +927,12 @@ function renderSections(sections, fields) {
       container.appendChild(sectionEl);
     });
   });
+
+  byId("field-MESSAGING_PLATFORM")?.addEventListener(
+    "change",
+    updateMessagingSectionVisibility,
+  );
+  updateMessagingSectionVisibility();
 }
 
 function renderModelRoutes(grid, fields) {

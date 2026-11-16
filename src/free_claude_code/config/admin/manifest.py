@@ -53,7 +53,22 @@ SECTIONS: tuple[ConfigSectionSpec, ...] = (
     ConfigSectionSpec(
         "messaging",
         "Messaging",
-        "Discord, Telegram, CLI workspace, and session settings.",
+        "Platform selection and shared messaging limits.",
+    ),
+    ConfigSectionSpec(
+        "telegram",
+        "Telegram",
+        "Telegram bot and access settings.",
+    ),
+    ConfigSectionSpec(
+        "discord",
+        "Discord",
+        "Discord bot and channel access settings.",
+    ),
+    ConfigSectionSpec(
+        "workspace",
+        "CLI Workspace",
+        "Directory used by messaging-triggered Claude Code sessions.",
     ),
     ConfigSectionSpec(
         "voice",
@@ -361,7 +376,7 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
     ConfigFieldSpec(
         "TELEGRAM_BOT_TOKEN",
         "Telegram Bot Token",
-        "messaging",
+        "telegram",
         "secret",
         settings_attr="telegram_bot_token",
         secret=True,
@@ -373,7 +388,7 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
     ConfigFieldSpec(
         "ALLOWED_TELEGRAM_USER_ID",
         "Allowed Telegram User ID",
-        "messaging",
+        "telegram",
         settings_attr="allowed_telegram_user_id",
         session_sensitive=True,
         description=(
@@ -384,7 +399,7 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
     ConfigFieldSpec(
         "TELEGRAM_PROXY_URL",
         "Telegram Proxy URL",
-        "messaging",
+        "telegram",
         "secret",
         settings_attr="telegram_proxy_url",
         secret=True,
@@ -397,7 +412,7 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
     ConfigFieldSpec(
         "DISCORD_BOT_TOKEN",
         "Discord Bot Token",
-        "messaging",
+        "discord",
         "secret",
         settings_attr="discord_bot_token",
         secret=True,
@@ -410,7 +425,7 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
     ConfigFieldSpec(
         "ALLOWED_DISCORD_CHANNELS",
         "Allowed Discord Channels",
-        "messaging",
+        "discord",
         settings_attr="allowed_discord_channels",
         session_sensitive=True,
         description=(
@@ -421,7 +436,7 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
     ConfigFieldSpec(
         "ALLOWED_DIR",
         "Allowed Directory",
-        "messaging",
+        "workspace",
         settings_attr="allowed_dir",
         session_sensitive=True,
         description=(

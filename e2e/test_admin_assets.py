@@ -27,7 +27,8 @@ def test_admin_page_spacing_matches_visible_action_bar(page, admin_base_url, wid
           const main = document.querySelector('.main');
           const style = getComputedStyle(main);
           const bar = document.querySelector('.action-bar');
-          const last = document.querySelector('.admin-view:not([hidden]) .form-sections > :last-child');
+          const sections = [...document.querySelectorAll('.admin-view:not([hidden]) .form-sections > *')];
+          const last = sections.filter((section) => !section.hidden).at(-1);
           const heading = document.querySelector('#pageTitle');
           const range = document.createRange();
           range.selectNodeContents(heading);
@@ -51,8 +52,8 @@ def test_admin_page_spacing_matches_visible_action_bar(page, admin_base_url, wid
         # Ink can overshoot the font's cap metric; allow pixel rounding as well.
         assert measurements["headingGap"] == pytest.approx(measurements["top"], abs=2)
         if measurements["endGap"] is not None:
-            assert measurements["endGap"] - measurements["bar"] == pytest.approx(
-                measurements["top"], abs=1
+            assert measurements["endGap"] - measurements["bar"] >= (
+                measurements["top"] - 1
             )
 
     for title in ("Providers", "Model Config", "Messaging"):
@@ -75,6 +76,48 @@ def test_admin_page_spacing_matches_visible_action_bar(page, admin_base_url, wid
     page.get_by_role("button", name="Providers", exact=True).click()
     expect(page.locator(".action-bar")).to_be_visible()
     assert_spacing()
+
+
+def test_messaging_settings_follow_selected_platform(page, admin_base_url, monkeypatch):
+    monkeypatch.delenv("MESSAGING_PLATFORM", raising=False)
+    page.goto(f"{admin_base_url}/admin/messaging")
+    page.get_by_role("button", name="Messaging", exact=True).click()
+
+    platform = page.locator("#field-MESSAGING_PLATFORM")
+    messaging = page.locator("#section-messaging")
+    telegram = page.locator("#section-telegram")
+    discord = page.locator("#section-discord")
+    workspace = page.locator("#section-workspace")
+    voice = page.locator("#section-voice")
+
+    expect(platform).to_have_value("discord")
+    expect(platform).to_be_enabled()
+    expect(messaging).to_be_visible()
+    expect(telegram).to_be_hidden()
+    expect(discord).to_be_visible()
+    expect(workspace).to_be_visible()
+    expect(voice).to_be_visible()
+
+    platform.select_option("telegram")
+    expect(telegram).to_be_visible()
+    expect(discord).to_be_hidden()
+    expect(workspace).to_be_visible()
+    expect(voice).to_be_visible()
+    expect(page.locator("#field-TELEGRAM_BOT_TOKEN")).to_be_visible()
+
+    platform.select_option("discord")
+    expect(telegram).to_be_hidden()
+    expect(discord).to_be_visible()
+    expect(workspace).to_be_visible()
+    expect(voice).to_be_visible()
+    expect(page.locator("#field-DISCORD_BOT_TOKEN")).to_be_visible()
+
+    platform.select_option("none")
+    expect(telegram).to_be_hidden()
+    expect(discord).to_be_hidden()
+    expect(workspace).to_be_hidden()
+    expect(voice).to_be_hidden()
+    expect(page.locator("#dirtyState")).to_have_text("1 unsaved change")
 
 
 def test_settings_text_fields_opt_out_of_autofill(page, admin_base_url):

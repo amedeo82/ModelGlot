@@ -169,7 +169,15 @@ def test_runtime_restart_fields_keep_their_restart_flag(key: str) -> None:
     assert FIELD_BY_KEY[key].restart_required is True
 
 
-ADMIN_PANEL_SECTIONS = ("models", "web_tools", "messaging", "voice")
+ADMIN_PANEL_SECTIONS = (
+    "models",
+    "web_tools",
+    "messaging",
+    "telegram",
+    "discord",
+    "workspace",
+    "voice",
+)
 
 
 @pytest.mark.parametrize("section_id", ADMIN_PANEL_SECTIONS)
@@ -204,6 +212,25 @@ ADMIN_DESCRIPTION_EXPECTATIONS: dict[str, tuple[str, ...]] = {
     "WHISPER_DEVICE": ("CPU", "CUDA", "NVIDIA NIM"),
     "WHISPER_MODEL": ("model name", "NVIDIA NIM"),
 }
+
+
+def test_messaging_fields_are_grouped_by_platform() -> None:
+    expected_sections = {
+        "MESSAGING_PLATFORM": "messaging",
+        "MESSAGING_RATE_LIMIT": "messaging",
+        "MESSAGING_RATE_WINDOW": "messaging",
+        "MAX_MESSAGE_LOG_ENTRIES_PER_CHAT": "messaging",
+        "TELEGRAM_BOT_TOKEN": "telegram",
+        "ALLOWED_TELEGRAM_USER_ID": "telegram",
+        "TELEGRAM_PROXY_URL": "telegram",
+        "DISCORD_BOT_TOKEN": "discord",
+        "ALLOWED_DISCORD_CHANNELS": "discord",
+        "ALLOWED_DIR": "workspace",
+    }
+
+    assert {
+        key: FIELD_BY_KEY[key].section_id for key in expected_sections
+    } == expected_sections
 
 
 @pytest.mark.parametrize(("key", "fragments"), ADMIN_DESCRIPTION_EXPECTATIONS.items())

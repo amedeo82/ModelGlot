@@ -901,7 +901,15 @@ def test_admin_config_masks_secrets_and_exposes_manifest(monkeypatch, tmp_path):
         assert field["description"], f"{key} exposes no admin description"
         if field["restart_required"]:
             assert "restarts FCC" in field["description"]
-    for section in ("models", "web_tools", "messaging", "voice"):
+    for section in (
+        "models",
+        "web_tools",
+        "messaging",
+        "telegram",
+        "discord",
+        "workspace",
+        "voice",
+    ):
         panel_fields = [
             field for field in body["fields"] if field["section"] == section
         ]
