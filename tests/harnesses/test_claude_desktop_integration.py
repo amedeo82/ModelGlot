@@ -192,7 +192,15 @@ def test_fresh_connection_and_disconnect_preserve_native_library(tmp_path):
             "expectedName": "claude-plugins-official",
             "installationPreference": "available",
             "credentialKind": "anonymous",
-        }
+        },
+        {
+            "source": "github",
+            "repo": "anthropics/knowledge-work-plugins",
+            "ref": "main",
+            "expectedName": "knowledge-work-plugins",
+            "installationPreference": "available",
+            "credentialKind": "anonymous",
+        },
     ]
     assert "inferenceModels" not in read(profile(root))
     assert read(profile(root))["coworkEgressAllowedHosts"] == ["*"]
@@ -235,8 +243,14 @@ def test_refresh_preserves_custom_marketplaces_and_restores_owned_defaults(tmp_p
         "ref": "main",
         "installationPreference": "available",
     }
+    custom_knowledge_work = {
+        "source": "github",
+        "repo": "anthropics/knowledge-work-plugins",
+        "ref": "custom-release",
+        "installationPreference": "available",
+    }
     config = read(profile(tmp_path))
-    config["allowedPluginMarketplaces"] = [custom]
+    config["allowedPluginMarketplaces"] = [custom, custom_knowledge_work]
     config["modelPrefer1mContext"] = False
     write(profile(tmp_path), config)
 
@@ -246,6 +260,7 @@ def test_refresh_preserves_custom_marketplaces_and_restores_owned_defaults(tmp_p
     assert refreshed["modelPrefer1mContext"] is True
     assert refreshed["allowedPluginMarketplaces"] == [
         custom,
+        custom_knowledge_work,
         {
             "source": "github",
             "repo": "anthropics/claude-plugins-official",

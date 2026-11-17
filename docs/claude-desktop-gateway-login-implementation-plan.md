@@ -825,7 +825,7 @@ These are intentionally outside the first implementation:
    helper-script flow if per-user attribution or token rotation becomes necessary.
 3. **Managed connector and plugin provisioning.** Provide project-level templates for
    `managedMcpServers`, organization plugin directories, and managed marketplace policies.
-   The per-user FCC profile already registers the official Anthropic marketplace; see
+   The per-user FCC profile already registers the official Anthropic marketplaces; see
    `docs/claude-desktop-1m-context-and-official-marketplace.md`.
 4. **Claude.ai export/import bridge.** Investigate the documented one-time import workflow
    for account skills and plugins; do not present it as continuous synchronization.

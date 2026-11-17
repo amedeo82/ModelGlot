@@ -1,7 +1,7 @@
-# Claude Desktop: contesto 1M e marketplace ufficiale
+# Claude Desktop: contesto 1M e marketplace ufficiali
 
 Status: ricerca e implementazione completate
-Data: 2026-11-16
+Data: 2026-11-17
 Ambito: profilo gateway FCC per Claude Desktop in modalità third-party (3P)
 
 ## Sintesi
@@ -10,8 +10,9 @@ Il profilo gateway FCC creato da Free Claude Code ora abilita:
 
 - `modelPrefer1mContext: true`, così Claude Desktop preferisce la variante da un milione
   di token per i modelli che la supportano;
-- `allowedPluginMarketplaces`, con il marketplace ufficiale Anthropic
-  `anthropics/claude-plugins-official` registrato come disponibile.
+- `allowedPluginMarketplaces`, con i marketplace ufficiali Anthropic
+  `anthropics/claude-plugins-official` e `anthropics/knowledge-work-plugins` registrati come
+  disponibili.
 
 La configurazione è scritta nel profilo FCC in
 `src/free_claude_code/harnesses/claude_desktop_integration.py`. Il refresh del profilo
@@ -60,20 +61,20 @@ Fonti:
 - <https://code.claude.com/docs/en/model-config>
 - <https://code.claude.com/docs/en/llm-gateway-protocol#feature-pass-through>
 
-### Marketplace ufficiale di plugin e skill
+### Marketplace ufficiali di plugin e skill
 
-Il marketplace ufficiale generale di Claude Code è:
+FCC registra due marketplace ufficiali Anthropic:
 
-| Campo | Valore |
-| --- | --- |
-| Repository | `anthropics/claude-plugins-official` |
-| Nome | `claude-plugins-official` |
-| Manifest | `.claude-plugin/marketplace.json` |
-| Accesso | pubblico e anonimo |
+| Repository | Nome manifest | Contenuto |
+| --- | --- | --- |
+| `anthropics/claude-plugins-official` | `claude-plugins-official` | marketplace generale di plugin e skill |
+| `anthropics/knowledge-work-plugins` | `knowledge-work-plugins` | plugin per il lavoro in Cowork |
 
-Claude Code CLI registra automaticamente questo marketplace alla prima sessione terminale
-interattiva, salvo una policy managed. Claude Desktop 3P usa invece la chiave di
-configurazione `allowedPluginMarketplaces`. FCC registra quindi:
+Entrambi i repository sono pubblici, usano `.claude-plugin/marketplace.json` e possono
+essere consultati con accesso anonimo. Claude Code CLI registra automaticamente il primo
+marketplace alla prima sessione terminale interattiva, salvo una policy managed. Claude
+Desktop 3P usa invece la chiave di configurazione `allowedPluginMarketplaces`. FCC registra
+quindi:
 
 ```json
 {
@@ -85,27 +86,37 @@ configurazione `allowedPluginMarketplaces`. FCC registra quindi:
       "expectedName": "claude-plugins-official",
       "installationPreference": "available",
       "credentialKind": "anonymous"
+    },
+    {
+      "source": "github",
+      "repo": "anthropics/knowledge-work-plugins",
+      "ref": "main",
+      "expectedName": "knowledge-work-plugins",
+      "installationPreference": "available",
+      "credentialKind": "anonymous"
     }
   ]
 }
 ```
 
-`installationPreference: "available"` registra il catalogo senza installare automaticamente
-tutti i plugin. L'utente può scegliere i plugin da **Customize → Plugins → Discover →
-Organization**. `available` consente di usare il branch `main`; le preferenze
+`installationPreference: "available"` registra i cataloghi senza installare
+automaticamente tutti i plugin. L'utente può scegliere i plugin da **Customize → Plugins →
+Discover → Organization**. `available` consente di usare il branch `main`; le preferenze
 `auto_install` e `required` richiedono invece un commit SHA completo e una distribuzione
 governata con pin di revisione.
 
-Il marketplace contiene plugin Anthropic che possono includere skill, ad esempio
-`skill-creator`. Il repository `anthropics/skills` è un marketplace Anthropic separato,
-specializzato in esempi e skill; non viene registrato automaticamente da FCC. La directory
-Claude Marketplace su `claude.ai` è a sua volta diversa dai marketplace Git di Claude Code e
-non viene sincronizzata continuamente nell'identità 3P.
+Il marketplace generale contiene plugin Anthropic che possono includere skill, ad esempio
+`skill-creator`. Il marketplace `knowledge-work-plugins` raccoglie plugin dedicati ai
+flussi di lavoro di Cowork come Productività, Vendite, Finanza, Dati, Marketing, Supporto
+clienti e Gestione prodotto. Il repository `anthropics/skills` è un marketplace Anthropic
+separato, specializzato in esempi e skill; non viene registrato automaticamente da FCC. La
+directory Claude Marketplace su `claude.ai` è a sua volta diversa dai marketplace Git di
+Claude Code e non viene sincronizzata continuamente nell'identità 3P.
 
 Desktop 3P sincronizza i plugin il cui contenuto è relativo al repository del marketplace.
-Le voci del manifest ufficiale che puntano a un altro repository non vengono scaricate da
+Le voci dei manifest ufficiali che puntano a un altro repository non vengono scaricate da
 questa configurazione e quindi non compaiono nella scheda Organization. La registrazione
-abilita il marketplace ufficiale senza promettere la sincronizzazione dell'intero catalogo
+abilita i marketplace ufficiali senza promettere la sincronizzazione dell'intero catalogo
 di terze parti.
 
 I plugin possono eseguire hook, script, monitor e server MCP con i permessi dell'utente.
@@ -116,6 +127,7 @@ Fonti:
 
 - <https://code.claude.com/docs/en/plugins/anthropic-marketplaces>
 - <https://code.claude.com/docs/en/plugins/overview>
+- <https://github.com/anthropics/knowledge-work-plugins>
 - <https://claude.com/docs/third-party/claude-desktop/extensions#plugin-marketplaces-admin>
 - <https://claude.com/docs/third-party/claude-desktop/configuration#allowedpluginmarketplaces>
 - <https://code.claude.com/docs/en/plugins/security>
@@ -124,8 +136,8 @@ Fonti:
 
 - Connect e Reconnect creano o aggiornano il profilo FCC con
   `modelPrefer1mContext: true`.
-- Connect e Reconnect garantiscono la presenza del marketplace
-  `anthropics/claude-plugins-official`.
+- Connect e Reconnect garantiscono la presenza dei marketplace
+  `anthropics/claude-plugins-official` e `anthropics/knowledge-work-plugins`.
 - Refresh ripristina `modelPrefer1mContext: true` se il profilo è stato modificato.
 - Refresh conserva marketplace aggiuntivi e una configurazione personalizzata del marketplace
   ufficiale già presente.
