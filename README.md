@@ -407,7 +407,7 @@ For editor and app integrations, install the client, start FCC, then open
 
 - **Claude Code in VS Code**: Install the [Claude Code extension](https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code).
 - **VS Code Chat**: Install the latest [VS Code](https://code.visualstudio.com/), connect, and select an FCC model in its built-in Chat model picker.
-- **Claude Desktop**: Install [Claude Desktop](https://claude.ai/download). Fully quit it before connecting or disconnecting, then reopen it. Disconnect returns to normal Claude sign-in.
+- **Claude Desktop**: Install [Claude Desktop](https://claude.ai/download). Fully quit it before connecting or disconnecting, then reopen it. The dedicated [FCC 3P profile](docs/claude-desktop-fcc-profile.md) adds 1M-context metadata, official Anthropic plugin marketplaces, sealed-key continuity, and preserves custom model overrides. When the FCC profile is active, Disconnect removes it and returns Desktop to the normal Claude sign-in path; it does not restore a previously active native profile.
 - **Codex in VS Code and App**: Install the [Codex extension](https://marketplace.visualstudio.com/items?itemName=openai.chatgpt) or Codex App.
 - **DeepSeek Harness Desktop**: Install and open the app once before connecting. Start a new session to use FCC models.
 - **Claude Code in JetBrains ACP**: Install Claude Agent in JetBrains AI Assistant and start it once, then click **Connect** in FCC. Reopen the IDE, select **Claude Code (FCC)**, and start a new chat. After JetBrains updates the agent, restart FCC before starting a new chat. Requires a local IDE in its standard installation locations.

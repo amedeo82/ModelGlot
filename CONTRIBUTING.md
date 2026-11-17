@@ -71,6 +71,7 @@ GitHub CI runs Ruff in check-only mode and also bans `# type: ignore`, `# ty: ig
 
 ### Desktop integrations
 
+- [`docs/claude-desktop-fcc-profile.md`](docs/claude-desktop-fcc-profile.md) documents the implemented FCC-owned Claude Desktop 3P profile and its user-visible improvements.
 - [`docs/claude-desktop-gateway-login-analysis.md`](docs/claude-desktop-gateway-login-analysis.md) and [`docs/claude-desktop-gateway-login-implementation-plan.md`](docs/claude-desktop-gateway-login-implementation-plan.md) cover the proposed reversible Claude Desktop gateway/login lifecycle.
 - [`docs/claude-desktop-1m-context-and-official-marketplace.md`](docs/claude-desktop-1m-context-and-official-marketplace.md) records the implemented Desktop 3P 1M-context preference and official marketplace configuration.
 - [`docs/desktop-branded-notifications-analysis.md`](docs/desktop-branded-notifications-analysis.md) records the implemented Windows notification path and the remaining macOS native work.

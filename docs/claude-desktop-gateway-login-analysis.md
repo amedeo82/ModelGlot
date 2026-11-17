@@ -1,8 +1,9 @@
 # Claude Desktop Gateway and Claude.ai Login Analysis
 
-Status: current analysis; reversible implementation proposed
+Status: analysis baseline; reversible implementation proposed
 Date: 2026-11-12; revalidated on 2026-11-16
 Scope: `free-claude-code` on branch `custom/main`, commit `12914bd`
+Current profile implementation: [`claude-desktop-fcc-profile.md`](claude-desktop-fcc-profile.md)
 Audience: maintainers and contributors
 
 This document records the current Claude Desktop integration, the behavior of Anthropic's

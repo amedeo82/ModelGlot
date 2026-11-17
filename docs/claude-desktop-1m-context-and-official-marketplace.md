@@ -4,6 +4,9 @@ Status: ricerca e implementazione completate
 Data: 2026-11-17
 Ambito: profilo gateway FCC per Claude Desktop in modalità third-party (3P)
 
+Panoramica del profilo FCC e delle altre migliorie implementate:
+[`claude-desktop-fcc-profile.md`](claude-desktop-fcc-profile.md).
+
 ## Sintesi
 
 Il profilo gateway FCC creato da Free Claude Code ora abilita:
