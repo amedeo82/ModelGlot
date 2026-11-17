@@ -76,6 +76,7 @@ class ModelResponse(BaseModel):
     supports_reasoning: bool | None = Field(
         default=None, serialization_alias="supportsReasoning"
     )
+    supports_1m: bool | None = Field(default=None, serialization_alias="supports_1m")
     input_modalities: tuple[ModelInputModality, ...] | None = Field(
         default=None, serialization_alias="inputModalities"
     )
@@ -183,6 +184,13 @@ def _build_claude_models_response(
                     desktop_model_id(ref) if desktop else gateway_model_id(ref),
                     display_name=ref if native else model.display_name,
                     description=None if native else model.description,
+                    supports_1m=(
+                        True
+                        if desktop
+                        and model.context_window_tokens is not None
+                        and model.context_window_tokens >= 1_000_000
+                        else None
+                    ),
                 )
             )
         if native:
@@ -198,6 +206,13 @@ def _build_claude_models_response(
                 description=(
                     f"{model.description} (no thinking)"
                     if model.description is not None
+                    else None
+                ),
+                supports_1m=(
+                    True
+                    if desktop
+                    and model.context_window_tokens is not None
+                    and model.context_window_tokens >= 1_000_000
                     else None
                 ),
             )
@@ -282,10 +297,12 @@ def _discovered_model_response(
     *,
     display_name: str,
     description: str | None = None,
+    supports_1m: bool | None = None,
 ) -> ModelResponse:
     return ModelResponse(
         id=model_id,
         display_name=display_name,
         description=description,
+        supports_1m=supports_1m,
         created_at=DISCOVERED_MODEL_CREATED_AT,
     )

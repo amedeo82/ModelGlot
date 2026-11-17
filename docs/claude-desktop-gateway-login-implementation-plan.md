@@ -824,7 +824,9 @@ These are intentionally outside the first implementation:
 2. **Gateway credential helper.** Replace the static proxy token with the Desktop-supported
    helper-script flow if per-user attribution or token rotation becomes necessary.
 3. **Managed connector and plugin provisioning.** Provide project-level templates for
-   `managedMcpServers`, `allowedPluginMarketplaces`, and organization plugin directories.
+   `managedMcpServers`, organization plugin directories, and managed marketplace policies.
+   The per-user FCC profile already registers the official Anthropic marketplace; see
+   `docs/claude-desktop-1m-context-and-official-marketplace.md`.
 4. **Claude.ai export/import bridge.** Investigate the documented one-time import workflow
    for account skills and plugins; do not present it as continuous synchronization.
 5. **Cross-platform release matrix.** Expand the manual matrix to every supported macOS and

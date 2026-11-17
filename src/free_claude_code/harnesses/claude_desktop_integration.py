@@ -25,6 +25,15 @@ _VIEW_HEADER = "X-FCC-Model-View"
 _KEY = "inferenceGatewayApiKey"
 # Desktop may encrypt the key in place, so FCC can no longer compare it.
 _SEALED_PREFIX = "__sealed__:"
+_OFFICIAL_MARKETPLACE_REPOSITORY = "anthropics/claude-plugins-official"
+_OFFICIAL_MARKETPLACE: JsonObject = {
+    "source": "github",
+    "repo": _OFFICIAL_MARKETPLACE_REPOSITORY,
+    "ref": "main",
+    "expectedName": "claude-plugins-official",
+    "installationPreference": "available",
+    "credentialKind": "anonymous",
+}
 
 
 class ManagedDesktopError(ValueError):
@@ -265,6 +274,7 @@ def _values(url: str, token: str) -> JsonObject:
         "inferenceGatewayApiKey": token,
         "inferenceGatewayAuthScheme": "bearer",
         "modelDiscoveryEnabled": True,
+        "modelPrefer1mContext": True,
     }
 
 
@@ -306,6 +316,7 @@ def _current(library: _Library, values: JsonObject, token_path: Path) -> bool:
         library.active
         and profile is not None
         and _owned(profile)
+        and _official_marketplace_enabled(profile)
         and all(
             profile.get(key) == value
             for key, value in values.items()
@@ -322,6 +333,37 @@ def _current(library: _Library, values: JsonObject, token_path: Path) -> bool:
     )
 
 
+def _marketplaces(profile: JsonObject) -> list[JsonObject]:
+    value = profile.get("allowedPluginMarketplaces", [])
+    if not isinstance(value, list) or any(
+        not isinstance(entry, dict) for entry in value
+    ):
+        raise ValueError("Invalid Desktop plugin marketplaces")
+    return [cast(JsonObject, entry) for entry in value]
+
+
+def _is_official_marketplace(entry: JsonObject) -> bool:
+    return (
+        entry.get("source") == "github"
+        and entry.get("repo") == _OFFICIAL_MARKETPLACE_REPOSITORY
+    )
+
+
+def _official_marketplace_enabled(profile: JsonObject) -> bool:
+    try:
+        marketplaces = _marketplaces(profile)
+    except ValueError:
+        return False
+    return any(_is_official_marketplace(entry) for entry in marketplaces)
+
+
+def _ensure_official_marketplace(profile: JsonObject) -> None:
+    marketplaces = _marketplaces(profile)
+    if not any(_is_official_marketplace(entry) for entry in marketplaces):
+        marketplaces.append(dict(_OFFICIAL_MARKETPLACE))
+    profile["allowedPluginMarketplaces"] = marketplaces
+
+
 def _update_profile(library: _Library, values: JsonObject, token_path: Path) -> bool:
     profile = dict(library.profile or {})
     token = str(values[_KEY])
@@ -335,6 +377,7 @@ def _update_profile(library: _Library, values: JsonObject, token_path: Path) -> 
         # a sealed copy of it must read as stale, not as the old token.
         token_path.unlink(missing_ok=True)
     profile.update({k: v for k, v in values.items() if not (sealed and k == _KEY)})
+    _ensure_official_marketplace(profile)
     # Desktop otherwise restricts tool network access to the inference gateway.
     profile.setdefault("coworkEgressAllowedHosts", ["*"])
     profile["inferenceCustomHeaders"] = headers

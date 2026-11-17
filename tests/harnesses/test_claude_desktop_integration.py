@@ -183,6 +183,17 @@ def test_fresh_connection_and_disconnect_preserve_native_library(tmp_path):
     assert read(mode(root))["deploymentMode"] == "3p"
     assert read(profile(root))["inferenceGatewayApiKey"] == TOKEN
     assert read(profile(root))["modelDiscoveryEnabled"] is True
+    assert read(profile(root))["modelPrefer1mContext"] is True
+    assert read(profile(root))["allowedPluginMarketplaces"] == [
+        {
+            "source": "github",
+            "repo": "anthropics/claude-plugins-official",
+            "ref": "main",
+            "expectedName": "claude-plugins-official",
+            "installationPreference": "available",
+            "credentialKind": "anonymous",
+        }
+    ]
     assert "inferenceModels" not in read(profile(root))
     assert read(profile(root))["coworkEgressAllowedHosts"] == ["*"]
     before = {p: p.read_bytes() for p in root.rglob("*.json")}
@@ -213,6 +224,37 @@ def test_fresh_connection_and_disconnect_preserve_native_library(tmp_path):
         root, URL, TOKEN, False, disconnect_path=claude_desktop_disconnect_path()
     )
     assert {p: p.read_bytes() for p in root.rglob("*.json")} == after
+
+
+def test_refresh_preserves_custom_marketplaces_and_restores_owned_defaults(tmp_path):
+    record = claude_desktop_disconnect_path()
+    desktop.configure(tmp_path, URL, TOKEN, True, disconnect_path=record)
+    custom = {
+        "source": "github",
+        "repo": "example/team-plugins",
+        "ref": "main",
+        "installationPreference": "available",
+    }
+    config = read(profile(tmp_path))
+    config["allowedPluginMarketplaces"] = [custom]
+    config["modelPrefer1mContext"] = False
+    write(profile(tmp_path), config)
+
+    assert desktop.refresh_connected(tmp_path, URL, TOKEN, disconnect_path=record)
+
+    refreshed = read(profile(tmp_path))
+    assert refreshed["modelPrefer1mContext"] is True
+    assert refreshed["allowedPluginMarketplaces"] == [
+        custom,
+        {
+            "source": "github",
+            "repo": "anthropics/claude-plugins-official",
+            "ref": "main",
+            "expectedName": "claude-plugins-official",
+            "installationPreference": "available",
+            "credentialKind": "anonymous",
+        },
+    ]
 
 
 @pytest.mark.parametrize("reconnect", [False, True])

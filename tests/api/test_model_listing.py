@@ -208,6 +208,43 @@ def test_desktop_view_keeps_titles_and_provider_descriptions() -> None:
     assert claude_row["description"] == desktop_row["description"] == "OpenRouter"
 
 
+def test_desktop_view_marks_only_models_with_a_1m_context_window() -> None:
+    large_ref = "open_router/vendor/large"
+    small_ref = "open_router/vendor/small"
+    app = create_test_app(_settings(model=large_ref, model_opus=None, model_haiku=None))
+    provider_manager_for_app(app).cache_model_infos(
+        "open_router",
+        {
+            ProviderModelInfo(
+                "vendor/large",
+                supports_thinking=True,
+                context_window_tokens=1_000_000,
+            ),
+            ProviderModelInfo(
+                "vendor/small",
+                supports_thinking=True,
+                context_window_tokens=200_000,
+            ),
+        },
+    )
+    client = TestClient(app)
+
+    desktop = {
+        row["id"]: row
+        for row in client.get("/v1/models?view=claude-desktop").json()["data"]
+    }
+    claude = {
+        row["id"]: row for row in client.get("/v1/models?view=claude").json()["data"]
+    }
+
+    assert desktop[desktop_model_id(large_ref)]["supports_1m"] is True
+    assert "supports_1m" not in desktop[desktop_model_id(small_ref)]
+    claude_large_id = next(
+        model_id for model_id in claude if model_id.endswith(large_ref)
+    )
+    assert "supports_1m" not in claude[claude_large_id]
+
+
 def test_native_anthropic_passthrough_keeps_raw_label_without_description() -> None:
     ref = "anthropic/claude-sonnet-4-5"
     app = create_test_app(_settings(model=ref, model_opus=None, model_haiku=None))
@@ -479,6 +516,7 @@ def test_claude_model_view_does_not_expose_capability_fields():
 
     assert all(
         "supportsReasoning" not in row
+        and "supports_1m" not in row
         and "inputModalities" not in row
         and "contextWindow" not in row
         and "maxCompletionTokens" not in row
