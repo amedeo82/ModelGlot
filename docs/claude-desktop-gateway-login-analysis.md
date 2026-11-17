@@ -1,7 +1,7 @@
 # Claude Desktop Gateway and Claude.ai Login Analysis
 
 Status: analysis baseline; reversible implementation proposed
-Date: 2026-11-12; revalidated on 2026-11-16
+Date: 2026-11-12; revalidated on 2026-11-17
 Scope: `free-claude-code` on branch `custom/main`, commit `12914bd`
 Current profile implementation: [`claude-desktop-fcc-profile.md`](claude-desktop-fcc-profile.md)
 Audience: maintainers and contributors
@@ -37,6 +37,9 @@ Anthropic's current documentation establishes three important facts:
 3. Claude Desktop on 3P supports MCP connectors, skills, and plugins, but account-backed
    Claude.ai content is not continuously synchronized into the 3P identity. Connectors hosted
    by Anthropic are available only in standard Claude Desktop.
+4. Claude Desktop supports a one-time Claude.ai import in 3P through `claudeAiImport`, but
+   that import copies chats, projects, and artifacts rather than the user's installed
+   plugins, connectors, desktop extensions, or connector OAuth state.
 
 Therefore:
 
@@ -306,8 +309,12 @@ The behavior is not identical to a Claude.ai-backed standard session:
 - user-added extensions are stored locally and apply to that device;
 - the documented marketplace synchronization concerns administratively managed marketplace
   revisions, not continuous synchronization of a user's Claude.ai account;
-- Claude.ai import is an explicit export/import operation, and imported plugins and skills
-  arrive disabled;
+- direct Claude.ai import is an explicit, one-time export/import operation for chats,
+  projects, and artifacts; it does not transfer the account's installed plugin,
+  connector, desktop-extension, or connector OAuth state;
+- a Claude Desktop device export can contain uploaded plugins and saved skills, which
+  arrive disabled, but it excludes connector sign-ins, desktop extensions, other
+  marketplaces, and plugin settings;
 - connectors labeled "Made by Anthropic" are hosted on Anthropic infrastructure and are
   available only in standard Claude Desktop;
 - other directory connectors can be installed and used in 3P;
@@ -343,6 +350,57 @@ Consequently:
 - if the pointer is absent, the implementation must remain valid;
 - compatibility must be verified against live Desktop releases and diagnostic logs.
 
+### 4.7 One-time Claude.ai import is available, account synchronization is not
+
+Claude Desktop's `claudeAiImport` configuration object enables the
+**Settings → Import & export** wizard in 3P. The minimum documented shape is:
+
+```json
+{
+  "claudeAiImport": {
+    "enabled": true,
+    "bannerBehavior": "detect"
+  }
+}
+```
+
+The key is available from Claude Desktop 1.10628.0. Its fields have distinct roles:
+
+- `enabled` exposes the import wizard;
+- `allowedOrganizationUuids` limits sign-in imports to approved Claude.ai
+  organizations and rejects personal accounts when present;
+- `automatic3pImport` performs a separate, one-time background copy of earlier local
+  third-party state;
+- `exportEnabled` permits device-to-device export;
+- `bannerBehavior` controls the optional import prompt.
+
+The direct account import is explicitly a one-time copy of the user's chats, projects,
+and artifacts. New account activity appears only after another import. Anthropic's
+documentation does not claim that this path transfers installed plugins, connectors,
+desktop extensions, connector sign-ins, or tool permissions.
+
+A Claude Desktop export created on another device is a different artifact. It can carry
+uploaded plugins, saved skills, scheduled tasks, and local MCP server commands, but
+plugins and skills arrive disabled and connector sign-ins, desktop extensions, other
+marketplaces, plugin settings, and local MCP environment values are excluded.
+
+FCC can enable the supported import wizard by writing `claudeAiImport.enabled` into the
+FCC-owned Desktop profile. It should do so only as an explicit user or administrator
+choice, preserve the user's other `claudeAiImport` fields, and leave the OAuth and export
+download inside Claude Desktop. FCC must not read the Claude.ai credential store, reuse
+browser cookies, poll private account endpoints, or transfer connector OAuth tokens.
+
+For continuously refreshed plugins, the supported path is an administrator-controlled
+marketplace delivered through `allowedPluginMarketplaces`. For connectors, it is
+`managedMcpServers`. These reproduce an approved local deployment; they do not mirror the
+personal Claude.ai inventory.
+
+Sources:
+
+- <https://claude.com/docs/third-party/claude-desktop/import>
+- <https://claude.com/docs/third-party/claude-desktop/configuration#claudeaiimport>
+- <https://claude.com/docs/third-party/claude-desktop/data-storage>
+
 ---
 
 ## 5. Feasibility Assessment
@@ -364,7 +422,9 @@ Desktop session without relying on unsupported private behavior.
 
 Claude Desktop on 3P supports connectors, skills, plugins, Chat, Cowork, and Code. FCC may
 therefore use the gateway without disabling those capabilities. Users may need to install or
-provision local equivalents of account-backed extensions.
+provision local equivalents of account-backed extensions. FCC may also expose the
+supported one-time Claude.ai import wizard, but that operation copies history rather than
+synchronizing the account inventory.
 
 ### 5.3 Goal C — Preserve normal login and allow a user-selected gateway
 
@@ -462,7 +522,8 @@ After implementation:
 | --- | --- | --- |
 | `hybridPointer` has undocumented version-specific semantics | Login or 3P selection may fail after upgrade | Preserve rather than synthesize it; test multiple Desktop versions and inspect diagnostic reports |
 | `deploymentMode: "any"` is not recognized by older Desktop releases | Chooser may still be disabled | Detect effective mode from the app or provide a compatibility fallback |
-| Users expect Claude.ai account content to sync into 3P | Missing skills, plugins, or connectors | Document the distinction and offer managed/local provisioning |
+| Users expect Claude.ai account content to sync into 3P | Missing skills, plugins, or connectors | State that the supported import is one-shot and history-only; offer managed marketplaces and connectors for local equivalents |
+| Import is enabled implicitly or with a broad organization scope | Unwanted account export or access to the wrong organization | Require explicit opt-in, preserve an administrator-provided allowlist, and keep OAuth inside Desktop |
 | Disconnect cannot identify the previous profile | Loss of the user's active Desktop configuration | Persist a disconnect journal before mutation and restore the recorded profile atomically |
 | A user changes `_meta.json` while FCC is running | Stale restore state | Revalidate ownership and current metadata before every restore; never overwrite a newer user-owned selection |
 | Existing tests encode the old `3p` contract | Behavioral regression or false failures | Update tests deliberately and add compatibility tests for both `any` and explicit `3p` |

@@ -80,6 +80,35 @@ automaticamente tutti i plugin. Il refresh garantisce la presenza dei due market
 ufficiali, conserva i marketplace aggiuntivi e non sostituisce la configurazione
 personalizzata di un marketplace ufficiale già presente.
 
+La sincronizzazione periodica del marketplace ricalcola il contenuto del repository
+ufficiale. Non trasferisce l'inventario dei plugin installati, delle skill salvate, dei
+connector o degli accessi OAuth dall'account Claude.ai.
+
+### Import Claude.ai — capability verificata, non ancora attivata
+
+Claude Desktop in modalità 3P supporta un import one-shot dall'account Claude.ai
+attraverso la chiave `claudeAiImport`. FCC non imposta ancora questa chiave: il pulsante
+**Import…** in **Settings → Import & export** resta quindi disabilitato quando
+l'import non è abilitato da un'altra fonte di configurazione.
+
+La configurazione minima prevista per un'attivazione esplicita è:
+
+```json
+{
+  "claudeAiImport": {
+    "enabled": true,
+    "bannerBehavior": "detect"
+  }
+}
+```
+
+L'import può copiare chat, progetti e artefatti dell'utente. Ogni import è una copia
+one-shot: nuove attività nell'account non compaiono automaticamente. Non trasferisce
+plugin personali, connector, estensioni desktop o token OAuth. Il piano di
+implementazione FCC, le allowlist per organizzazione, la gestione di
+`automatic3pImport` e i test sono descritti in
+[`claude-desktop-1m-context-and-official-marketplace.md`](claude-desktop-1m-context-and-official-marketplace.md#sincronizzazione-con-laccount-claudeai).
+
 ### Continuità con chiave sigillata
 
 Claude Desktop può crittografare in-place `inferenceGatewayApiKey`, sostituendo il token
@@ -167,6 +196,8 @@ questo richiede ancora il lifecycle reversibile descritto in
   installate dai marketplace configurati.
 - La registrazione dei marketplace non installa plugin automaticamente e non garantisce la
   sincronizzazione continua dell'inventario Claude.ai.
+- L'import Claude.ai supportato da Desktop è una copia one-shot e deve essere abilitato
+  esplicitamente; non trasferisce plugin personali, connector o accessi OAuth.
 - Il contesto da 1M dipende dai limiti reali del provider selezionato.
 - FCC modifica soltanto installazioni Desktop non gestite. Le policy organizationali vengono
   rilevate e l'integrazione viene rifiutata.

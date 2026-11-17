@@ -1,7 +1,7 @@
 # Implementation Plan: Reversible Claude Desktop Gateway Integration
 
 Status: proposed; not implemented on `custom/main`
-Date: 2026-11-12; revalidated on 2026-11-16
+Date: 2026-11-12; revalidated on 2026-11-17
 Input: [`claude-desktop-gateway-login-analysis.md`](claude-desktop-gateway-login-analysis.md)
 Audience: maintainers and contributors
 
@@ -100,6 +100,8 @@ The implementation must not:
 - patch Claude Desktop binaries or private JavaScript bundles;
 - write to the Claude Desktop credential store;
 - guarantee that account-synchronized skills and plugins are present in 3P;
+- poll private Claude.ai endpoints or reuse Anthropic account credentials to emulate
+  continuous synchronization;
 - add gateway-only mode in the first implementation wave.
 
 ---
@@ -608,6 +610,8 @@ exposing secrets.
   - state that Claude Desktop on 3P supports MCP connectors, skills, and plugins;
   - state that user-added and account-backed extensions are different models;
   - state that connectors hosted by Anthropic require standard Claude Desktop;
+  - if the one-time import option is implemented, state that it is history-only and
+    must be explicitly enabled;
   - explain the standard/3P choice on the Claude Desktop sign-in screen;
   - explain that Disconnect restores the previously selected Desktop configuration;
   - retain the instruction to fully quit Desktop before connect or disconnect.
@@ -827,8 +831,14 @@ These are intentionally outside the first implementation:
    `managedMcpServers`, organization plugin directories, and managed marketplace policies.
    The per-user FCC profile already registers the official Anthropic marketplaces; see
    `docs/claude-desktop-1m-context-and-official-marketplace.md`.
-4. **Claude.ai export/import bridge.** Investigate the documented one-time import workflow
-   for account skills and plugins; do not present it as continuous synchronization.
+4. **Claude.ai one-time import.** Research completed on 2026-11-17. The supported path is
+   the Desktop `claudeAiImport.enabled` setting, which exposes a one-time history import
+   and does not synchronize the account's plugin, connector, extension, or OAuth state.
+   The follow-up implementation should make the import an explicit opt-in, preserve an
+   administrator-provided `allowedOrganizationUuids` allowlist, avoid enabling
+   `automatic3pImport` or `exportEnabled` implicitly, and keep OAuth inside Claude
+   Desktop. The detailed design and tests are in
+   `docs/claude-desktop-1m-context-and-official-marketplace.md`.
 5. **Cross-platform release matrix.** Expand the manual matrix to every supported macOS and
    Linux version after the Windows path is stable.
 6. **Telemetry.** Add aggregate, non-content diagnostics for deployment-mode selection and
