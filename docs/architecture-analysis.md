@@ -1,7 +1,7 @@
 # Architecture Analysis and Improvement Backlog
 
 Status: internal engineering document; baseline analysis with current-state deltas
-Scope: `free-claude-code` on branch `custom/main`, re-aligned on 2026-11-16
+Scope: `free-claude-code` on branch `custom/main`, re-aligned on 2026-11-17 at `86d408d5`
 Audience: maintainers and contributors
 
 This document preserves the static analysis that produced the architecture backlog and
@@ -34,7 +34,9 @@ Those are explicitly listed as gaps in §7.
 Free Claude Code is a local ASGI application that exposes the Anthropic Messages, OpenAI
 Chat Completions, OpenAI Responses, and Gemini GenerateContent wire protocols on one port and
 routes each request to a configured upstream provider, translating protocols and tool calls in
-both directions.
+both directions. The same runtime also owns a loopback Admin UI, local web server tools,
+persistent browser-based Code sessions, messaging integrations, and desktop lifecycle
+management.
 
 ### 2.1 Layers
 
@@ -61,7 +63,7 @@ ownership of wire fields across the tree.
    The host/port socket is reserved before the app is built (`cli/commands.py:303`), and
    uvicorn binds `settings.host` / `settings.port` (`cli/commands.py:332`).
 2. **Routing** — `api/routes.py` dispatches per protocol
-   (Gemini `:68`, Chat `:137`, Messages `:168`/`:282`, Responses `:243`/`:303`).
+   (Gemini `:69`, Chat `:139`, Messages `:285`, Responses `:306`).
    `api/dependencies.py` authenticates (Bearer `:47`, Anthropic `x-api-key` `:73`,
    Gemini `:112`) with a constant-time comparison (`:141`).
 3. **Lease** — every generative route acquires a runtime lease so provider configuration stays
@@ -117,9 +119,34 @@ Tool calls are buffered until complete and valid: `core/tool_call_buffer.py:67`
   (`config/settings.py:658`–`:683`).
 - Correlation identifiers and request lifecycle middleware (`api/request_ids.py`,
   `api/request_lifetime.py`).
-- Health, root, models, and stop endpoints (`api/routes.py:374`–`:458`).
+- Health, root, models, token-count, and stop endpoints (`api/routes.py:327`–`:462`).
 - Structured trace events exist (`core/trace.py`), but there are **no metrics and no
   tracing export**: no `/metrics` route, no latency/TTFT/token counters, no OpenTelemetry.
+
+### 2.6 Local web tools and Code sessions
+
+The runtime contains two additional local application flows:
+
+```mermaid
+flowchart LR
+    client[Claude Code] --> messages[/v1/messages]
+    messages --> webtools[Web tool recognizer]
+    webtools --> egress[SSRF-protected egress]
+    egress --> public[(Public web)]
+
+    admin[Loopback Admin UI] --> codeapi[/admin/api/code]
+    codeapi --> code[Code session service]
+    code --> sqlite[(SQLite)]
+    code --> codex[Codex harness]
+    codex --> events[SSE event feed]
+    events --> admin
+```
+
+The web-tool path recognizes only the Anthropic server-tool shapes implemented by FCC and
+enforces scheme, DNS, private-address, redirect, and response-size limits. The Code-session
+path owns session metadata and transcript state in SQLite, delegates execution to the Codex
+harness, and projects live events to the browser over SSE. The user-facing contracts are
+documented in [`code-sessions.md`](code-sessions.md) and [`web-tools.md`](web-tools.md).
 
 ---
 
@@ -177,8 +204,8 @@ but never states the default exposure.
 
 `pytest-cov` is a declared dev dependency (`pyproject.toml:104`) but no invocation of
 `--cov` exists, there is no `[tool.coverage]` section, and no CI job uploads or gates a
-coverage report. The repository collects 11 656 pytest tests, 516 Playwright E2E tests, and
-971 smoke tests, yet a regression that removes coverage from a module is invisible.
+coverage report. The repository collects 11 658 pytest tests, 311 Playwright E2E tests, and
+914 smoke tests, yet a regression that removes coverage from a module is invisible.
 
 Modules with no direct test import (reached only through their consumers) include:
 `api/admin_cache.py`, `api/admin_security.py`, `api/classifier_projection.py`,
@@ -239,7 +266,7 @@ several exception hierarchies, and every consumer must handle all of them. Examp
 
 ### F-07 — Medium — Broad exception handling without a typed mapping
 
-Roughly 70 source files contain `except Exception`. Concentrations:
+Sixty-two source files contain `except Exception`. Concentrations:
 `application/code_sessions/service.py` (13 occurrences), `providers/github_copilot/sdk.py` (11),
 `messaging/workflow.py` (7), `providers/openai_chat/transport.py` (3),
 `runtime/provider_manager.py` (4). The project already has a protocol-neutral failure model
@@ -258,12 +285,12 @@ manual verification against the shared retry, reasoning, and tool-call machinery
 
 Only logs are emitted. There is no way to answer, in production: which provider served a
 request, how many retries/fallbacks occurred, the time-to-first-token, the token spend per
-model, or the distribution of failure kinds. With ~20 providers, multi-attempt retries, and
+model, or the distribution of failure kinds. With 61 providers, multi-attempt retries, and
 model fallback, per-request attribution is currently only possible by reading logs.
 
 ### F-10 — Medium — The fragile suites never run in CI
 
-`pyproject.toml:156` sets `testpaths = ["tests"]`, so `smoke/` (971 live tests: real
+`pyproject.toml:156` sets `testpaths = ["tests"]`, so `smoke/` (914 live tests: real
 installer downloads, SHA-256 checksum verification, native binary lifecycle) is excluded from
 the default run. The macOS desktop build/test is only reachable with `--only macos-desktop`
 (`scripts/ci.sh:181`–`:185`, `scripts/ci.ps1:196`). Both are the least deterministic parts of
@@ -273,8 +300,9 @@ release.
 ### F-11 — Low — Documentation gaps around the security model
 
 There is no `SECURITY.md`, no threat model, and no complete reference of the environment
-contract. The README never states the default bind address or the default authentication
-state, and there is no user-facing mapping from failure messages to remediation steps.
+contract. The README now states the default bind address, authentication state, and the
+principal web-tool egress controls, but there is still no user-facing mapping from failure
+messages to remediation steps.
 
 ### F-12 — Low — Dependency hygiene
 
@@ -306,14 +334,15 @@ For completeness, the following areas were examined and produced no actionable f
 | Metric | Value |
 | --- | --- |
 | Python modules under `src/` | 471 |
-| Pytest tests collected under `tests/` | 11 656 |
-| Playwright E2E tests collected | 516 |
-| Smoke tests collected (excluded from CI) | 971 |
+| Catalog providers | 61 |
+| Pytest tests collected under `tests/` | 11 658 |
+| Playwright E2E tests collected | 311 |
+| Smoke tests collected (excluded from CI) | 914 |
 | Contract tests collected | 404 |
 | `TODO`/`FIXME` in `src/` | 0 |
 | Measured line coverage | not measured |
 | Files > 1 100 lines | 4 |
-| Files containing `except Exception` | ~70 |
+| Files containing `except Exception` | 62 |
 | Concurrent HTTP client stacks | 4 |
 | CI operating systems | Linux, Windows, macOS |
 

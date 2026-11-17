@@ -15,7 +15,7 @@
 [![Formatter: Ruff](https://img.shields.io/badge/Formatter-ruff-bf4b00.svg?style=for-the-badge)](https://github.com/astral-sh/ruff)
 [![Logging: Loguru](https://img.shields.io/badge/logging-loguru-00695c.svg?style=for-the-badge)](https://github.com/Delgan/loguru)
 
-[Quick Start](#quick-start) · [Providers](#choose-a-provider) · [Integrations](#integrations) · [API](#use-the-api-directly) · [Phone](#use-from-your-phone) · [Manage](#manage-your-installation)
+[Quick Start](#quick-start) · [Providers](#choose-a-provider) · [Code sessions](#code-sessions) · [Integrations](#integrations) · [API](#use-the-api-directly) · [Phone](#use-from-your-phone) · [Manage](#manage-your-installation)
 
 </div>
 
@@ -35,13 +35,15 @@
   - FCC follows provider TOS and removes integrations if they stop being allowed.
 - Use through the terminal, desktop apps ([Codex App](https://learn.chatgpt.com/docs/app), [Claude Desktop](https://claude.ai/download), and [DeepSeek Desktop](https://github.com/deepseek-ai/deepseek-harness)), IDE extensions ([VS Code](https://code.visualstudio.com/) and [JetBrains](https://www.jetbrains.com/)), [your phone](#use-from-your-phone) ([Discord](https://discord.com/) and [Telegram](https://telegram.org/)), or your browser through native Code sessions.
   - Voice notes supported for Discord and Telegram using local [Whisper](https://github.com/openai/whisper) or [NVIDIA NIM](https://docs.nvidia.com/nim/speech/latest/asr/deploy-asr-models/whisper.html).
+- Run Claude Code's supported `web_search` and forced `web_fetch` requests through FCC with SSRF-protected local web access.
+- Manage persistent Codex projects in the browser through [Code sessions](#code-sessions).
 - Up to 90% lower token usage using [RTK](https://github.com/rtk-ai/rtk) and [Headroom](https://github.com/headroomlabs-ai/headroom).
 - State-of-the-art reliability features so you can keep coding through provider outages:
   - Automatic retries.
   - Configurable rate limits.
   - Configurable concurrency control.
   - Automatic model/provider fallback.
-  - Automatic multi-API key fallback.
+  - Configurable fallback across numbered API keys.
 
 Free-tier availability and limits are controlled by each provider and may change.
 
@@ -76,6 +78,17 @@ Windows PowerShell:
 These commands install the current commit from the `custom/main` branch. The installed version includes the VCS build identifier; run `fcc-server --version` to display it.
 
 When prompted, choose at least one coding agent and optionally enable [RTK](https://github.com/rtk-ai/rtk) + [Headroom](https://github.com/headroomlabs-ai/headroom) token optimization for supported agents.
+
+The installers also accept these options:
+
+| macOS/Linux | Windows | Effect |
+| --- | --- | --- |
+| `--ref REF` | `-Ref REF` | Install from a branch or tag. The commands above use `custom/main`. |
+| `--rtk-headroom` | `-RtkHeadroom` | Install and configure RTK + Headroom without the interactive prompt. |
+| `--voice-local` | `-VoiceLocal` | Install local Whisper transcription support. |
+| `--torch-backend VALUE` | `-TorchBackend VALUE` | Select a uv PyTorch backend, such as `cu130`. Requires local voice. |
+| `--update` | `-Update` | Skip when the installed FCC version is already current. |
+| `--dry-run` | `-DryRun` | Print the installation commands without changing the system. |
 
 ### 2. Start FCC
 
@@ -206,6 +219,34 @@ Other clients and SDKs can call FCC directly. See [Use The API Directly](#use-th
   <p><em>Select an FCC model from Claude Code's native <code>/model</code> picker.</em></p>
 </div>
 
+<a id="code-sessions"></a>
+
+## Code Sessions
+
+FCC includes a browser workspace for running Codex against a local project folder. Open
+**Admin UI → Code sessions**, select **New code session**, and choose an existing folder or
+enter its absolute path. Each session persists its title, model, reasoning effort, permission
+mode, turns, and transcript in FCC's local SQLite database.
+
+Codex must be installed separately and available on `PATH`:
+
+```bash
+npm install -g @openai/codex
+```
+
+The session controls include the provider, model, reasoning effort, and Codex permission
+mode: **Use config**, **Ask**, **Auto-review**, or **Full access**. The browser receives live
+turn and tool events over Server-Sent Events. Use **Stop** to cancel the active turn and
+**Delete** to remove both the FCC session and its native Codex conversation.
+
+<div align="center">
+  <img src="assets/admin-code-sessions-mockup.svg" alt="Mockup of the Free Claude Code Code sessions interface" width="900">
+  <p><em>Code sessions interface mockup.</em></p>
+</div>
+
+See [`docs/code-sessions.md`](docs/code-sessions.md) for the complete workflow, Admin API, and
+current limitations.
+
 ## Choose A Provider
 
 1. Open a provider link below for its key, models, or setup instructions.
@@ -219,7 +260,7 @@ Optional: add an ordered **Fallback Models** list under **Model Config**. It
 applies to every connected client. A failed request may reach and consume usage
 from more than one provider before succeeding.
 
-Provider modals support numbered API keys. Use **Add key**, remove rows, or drag their handles to reorder them. FCC uses key 1.
+Provider modals support numbered API keys. Use **Add key**, remove rows, or drag their handles to reorder them. The primary route always uses key 1; to try another key, add the same model to **Fallback Models** and select the desired key number.
 
 For another API endpoint, open **Providers → Custom providers → Add provider**. Enter its API base URL, optional keys, and API format. Leave **Model IDs** empty to discover models automatically, or enter one upstream model ID per line. Save, then select a model in **Model Config**.
 
@@ -375,7 +416,7 @@ Provider cards show the checked endpoint and response time, with a useful messag
 
 In **Admin UI → Model Config**, add **Fallback Models** in the order FCC should try them if the selected model fails. Each fallback has its own reasoning effort: **Inherit**, **Off**, **From client**, **Low**, **Medium**, **High**, **X-High**, or **Max**.
 
-Choose a model, effort, and API key number in the bottom row, then click **+**. **Key 1**, **Key 2**, and so on refer to the current numbered keys in that provider's settings. Edit the selections in place, drag the handle to change the order, or click the red trash button to remove a fallback.
+Choose a model, effort, and API key number in the bottom row, then click **+**. **Key 1**, **Key 2**, and so on refer to the current numbered keys in that provider's settings. The primary route always uses key 1, so a fallback row is required to rotate to another key. Edit the selections in place, drag the handle to change the order, or click the red trash button to remove a fallback.
 
 **Inherit** keeps the original request's resolved reasoning setting. **From client** uses the effort or token budget sent by your coding agent, bypassing the global or tier setting. You can select the same model with another key number.
 
@@ -430,10 +471,9 @@ are configuring.
 Any client or SDK for these APIs can call FCC. Set the base URL to
 `http://127.0.0.1:8082/v1` for OpenAI clients and `http://127.0.0.1:8082` for
 Anthropic and Gemini clients.
-Every FCC model works on every endpoint. If Proxy
-Authentication is enabled, use its token as the client's API key, or add
-`-H "Authorization: Bearer <token>"` to each `curl` request.
-List the available models with `curl "http://127.0.0.1:8082/v1/models?view=messages"`.
+Every FCC model works on every endpoint. If Proxy Authentication is enabled, use its token as the client's API key and send it as `Authorization: Bearer <token>`. Anthropic Messages and token-count requests also accept `x-api-key: <token>`. Gemini endpoints accept the token through `Authorization`, `x-goog-api-key`, or the `key` query parameter. The model-list endpoint uses Bearer authentication.
+
+List the available models with `curl "http://127.0.0.1:8082/v1/models?view=messages"`. Check server liveness with `curl "http://127.0.0.1:8082/health"`.
 
 [`POST /v1/messages`](https://platform.claude.com/docs/en/api/messages):
 
@@ -443,6 +483,17 @@ curl http://127.0.0.1:8082/v1/messages \
   -d '{
     "model": "nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b",
     "max_tokens": 1024,
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }'
+```
+
+`POST /v1/messages/count_tokens`:
+
+```bash
+curl http://127.0.0.1:8082/v1/messages/count_tokens \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b",
     "messages": [{"role": "user", "content": "Hello!"}]
   }'
 ```
@@ -480,6 +531,39 @@ curl http://127.0.0.1:8082/v1/models/nvidia_nim/nvidia/nemotron-3-ultra-550b-a55
 Responses replies always stream. To stream Messages or Chat Completions replies, add
 `"stream": true`. For Gemini, call `:streamGenerateContent?alt=sse` instead of
 `:generateContent`.
+
+<a id="web-tools"></a>
+
+## Web Tools
+
+FCC can execute the Anthropic server-tool shapes used by Claude Code:
+
+- `web_search_20250305` for Claude Code's automatic web search;
+- `web_fetch_20250910` when the client explicitly forces a `web_fetch` tool.
+
+The feature is enabled by default and can be managed in **Admin UI → Model Config → Web
+Tools**. Automatic search currently supports Claude Code's server-tool-only request shape;
+mixed tools, automatic `web_fetch`, and other Anthropic server-tool choices are rejected
+with a clear error.
+
+<div align="center">
+  <img src="assets/admin-web-tools.png" alt="Free Claude Code Admin UI showing the Web Tools configuration" width="900">
+  <p><em>Web Tools configuration in the Admin UI.</em></p>
+</div>
+
+`web_fetch` is protected by an SSRF egress policy. By default it allows only `http` and
+`https`, rejects loopback, private, link-local, `.local`, and `localhost` targets, pins DNS
+resolution during redirects, and bounds response size and redirect count. The policy can be
+configured with:
+
+| Variable | Default | Effect |
+| --- | --- | --- |
+| `ENABLE_WEB_SERVER_TOOLS` | `true` | Enables local web server tools. |
+| `WEB_FETCH_ALLOWED_SCHEMES` | `http,https` | Comma-separated URL schemes accepted by `web_fetch`. |
+| `WEB_FETCH_ALLOW_PRIVATE_NETWORKS` | `false` | Allows private and loopback targets. Use only in a trusted lab environment. |
+
+See [`docs/web-tools.md`](docs/web-tools.md) for supported request shapes, search controls,
+failure behavior, and the complete egress policy.
 
 <a id="use-from-your-phone"></a>
 <a id="optional-integrations"></a>

@@ -1,6 +1,6 @@
 # Implementation Plan: Architecture Analysis Backlog
 
-Status: active backlog; step statuses revalidated on 2026-11-16
+Status: active backlog; step statuses revalidated on 2026-11-17
 Input: [`architecture-analysis.md`](architecture-analysis.md) (findings F-01 … F-12)
 Audience: maintainers and contributors
 
@@ -10,7 +10,7 @@ a wave are independent and may run in parallel.
 
 ## Current Step Status
 
-Status values reflect `custom/main` at commit `12914bd` unless noted otherwise.
+Status values reflect `custom/main` at commit `86d408d5` unless noted otherwise.
 
 | Step | Status | Evidence / remaining work |
 | --- | --- | --- |
@@ -19,7 +19,7 @@ Status values reflect `custom/main` at commit `12914bd` unless noted otherwise.
 | S1.2 | Open | `pytest-cov` is installed, but coverage is neither configured nor gated. |
 | S1.3 | Partially complete | `.github/dependabot.yml` exists; vulnerability scanning, security-focused SAST, dependency review, and release SBOM remain absent. |
 | S1.4 | Open | `requires-python` remains pinned to `==3.14.10`. |
-| S1.5 | Open | `SECURITY.md` and a complete environment reference are absent. |
+| S1.5 | Partially complete | The README now documents network exposure, proxy authentication, installer options, web-tool egress controls, and Code sessions. `SECURITY.md` and a complete environment reference are still absent. |
 | S2.1 | Partially complete | The suite contains contract coverage, including 404 collected contract tests, but the four characterization suites named in this step are not present. |
 | S2.2 | Open | `providers/openai_chat/transport.py` remains a single 1 367-line module. |
 | S2.3 | Open | `providers/admission.py` remains a single 1 157-line module. |

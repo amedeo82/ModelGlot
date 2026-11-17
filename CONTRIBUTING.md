@@ -69,6 +69,11 @@ GitHub CI runs Ruff in check-only mode and also bans `# type: ignore`, `# ty: ig
 - [`docs/admin-model-picker-enrichment-analysis.md`](docs/admin-model-picker-enrichment-analysis.md) records the proposed Admin model-picker enrichment design.
 - [`docs/hot-to-use-models.dev.md`](docs/hot-to-use-models.dev.md) documents the models.dev endpoints and usage.
 
+### Code sessions and web tools
+
+- [`docs/code-sessions.md`](docs/code-sessions.md) documents the implemented browser Code-session workflow, Admin API, persistence model, and current limitations.
+- [`docs/web-tools.md`](docs/web-tools.md) documents the implemented web-search/web-fetch contract, Admin controls, and SSRF egress policy.
+
 ### Desktop integrations
 
 - [`docs/claude-desktop-fcc-profile.md`](docs/claude-desktop-fcc-profile.md) documents the implemented FCC-owned Claude Desktop 3P profile and its user-visible improvements.

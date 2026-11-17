@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="780" viewBox="0 0 1200 780" role="img" aria-labelledby="title desc">
+  <title id="title">Mockup della vista Code sessions di Free Claude Code</title>
+  <desc id="desc">Interfaccia Admin con una sessione Codex attiva, selezione del modello, modalità di accesso, trascrizione e compositore del prompt.</desc>
+  <defs>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff7a18"/>
+      <stop offset="1" stop-color="#ff4d6d"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#020617" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="780" fill="#080c12"/>
+  <rect width="184" height="780" fill="#0b1119"/>
+  <path d="M184 0v780" stroke="#1d2938"/>
+  <g font-family="Inter,Segoe UI,Arial,sans-serif">
+    <g transform="translate(18 18)">
+      <path d="M4 7h15l-4 7 8 9H8l-4-9-4 4V7z" fill="url(#brand)"/>
+      <text x="34" y="13" fill="#f8fafc" font-size="14" font-weight="700">Free Claude Code</text>
+      <text x="34" y="30" fill="#64748b" font-size="9">v0.19.36+custom</text>
+    </g>
+    <g fill="#94a3b8" font-size="12">
+      <text x="18" y="92">Providers</text>
+      <text x="18" y="132">Model Config</text>
+      <text x="18" y="172">Messaging</text>
+      <text x="18" y="212">Integrations</text>
+      <text x="18" y="252" fill="#34d399">Code sessions</text>
+    </g>
+    <rect x="10" y="228" width="162" height="36" rx="8" fill="#103c31" stroke="#10b981" stroke-opacity="0.7"/>
+    <text x="212" y="44" fill="#f8fafc" font-size="28" font-weight="700">Code sessions</text>
+    <text x="212" y="68" fill="#94a3b8" font-size="13">Work with Codex in a project folder.</text>
+    <rect x="990" y="30" width="164" height="38" rx="9" fill="#10b981"/>
+    <text x="1072" y="54" fill="#052e20" font-size="13" font-weight="700" text-anchor="middle">New code session</text>
+    <rect x="212" y="88" width="942" height="42" rx="8" fill="#111a25" stroke="#27364a"/>
+    <text x="228" y="114" fill="#64748b" font-size="12">Search titles and folders</text>
+    <rect x="212" y="148" width="942" height="500" rx="14" fill="#0d141d" stroke="#1f2c3d" filter="url(#shadow)"/>
+    <text x="236" y="180" fill="#f8fafc" font-size="15" font-weight="600">Refactor authentication middleware</text>
+    <text x="236" y="201" fill="#64748b" font-size="11">C:\work\example-api</text>
+    <g font-size="11">
+      <rect x="236" y="220" width="132" height="30" rx="7" fill="#141e2b" stroke="#2a3a50"/>
+      <text x="248" y="239" fill="#cbd5e1">Provider</text>
+      <text x="250" y="274" fill="#f8fafc" font-weight="600">NVIDIA NIM</text>
+      <path d="M344 262l6 6 6-6" fill="none" stroke="#64748b" stroke-width="1.5"/>
+      <rect x="382" y="220" width="236" height="30" rx="7" fill="#141e2b" stroke="#2a3a50"/>
+      <text x="394" y="239" fill="#cbd5e1">Model</text>
+      <text x="396" y="274" fill="#f8fafc" font-weight="600">Nemotron 3 Ultra 550B</text>
+      <path d="M590 262l6 6 6-6" fill="none" stroke="#64748b" stroke-width="1.5"/>
+      <rect x="632" y="220" width="170" height="30" rx="7" fill="#141e2b" stroke="#2a3a50"/>
+      <text x="644" y="239" fill="#cbd5e1">Effort</text>
+      <text x="646" y="274" fill="#f8fafc" font-weight="600">From client</text>
+      <path d="M774 262l6 6 6-6" fill="none" stroke="#64748b" stroke-width="1.5"/>
+      <rect x="816" y="220" width="150" height="30" rx="7" fill="#141e2b" stroke="#2a3a50"/>
+      <text x="828" y="239" fill="#cbd5e1">Mode</text>
+      <text x="830" y="274" fill="#f8fafc" font-weight="600">Auto-review</text>
+      <path d="M938 262l6 6 6-6" fill="none" stroke="#64748b" stroke-width="1.5"/>
+    </g>
+    <path d="M236 300h894" stroke="#1f2c3d"/>
+    <circle cx="252" cy="344" r="8" fill="#10b981"/>
+    <text x="274" y="349" fill="#e2e8f0" font-size="13" font-weight="600">You</text>
+    <text x="274" y="376" fill="#cbd5e1" font-size="13">Find the duplicated token parsing and propose a safe refactor.</text>
+    <circle cx="252" cy="424" r="8" fill="#6366f1"/>
+    <text x="274" y="429" fill="#e2e8f0" font-size="13" font-weight="600">Codex</text>
+    <text x="274" y="456" fill="#cbd5e1" font-size="13">I found two request paths that parse the bearer token independently.</text>
+    <rect x="274" y="480" width="724" height="70" rx="8" fill="#111a25" stroke="#26364a"/>
+    <text x="294" y="506" fill="#94a3b8" font-size="11" font-weight="700">READ</text>
+    <text x="294" y="530" fill="#cbd5e1" font-size="12">src/free_claude_code/api/dependencies.py</text>
+    <text x="1016" y="530" fill="#64748b" font-size="11" text-anchor="end">42 lines</text>
+    <rect x="236" y="570" width="894" height="1" fill="#1f2c3d"/>
+    <text x="236" y="596" fill="#64748b" font-size="11">Context 42,180 / 200,000 tokens</text>
+    <rect x="236" y="606" width="894" height="6" rx="3" fill="#1f2c3d"/>
+    <rect x="236" y="606" width="188" height="6" rx="3" fill="#10b981"/>
+    <rect x="212" y="662" width="942" height="74" rx="12" fill="#0f1722" stroke="#2a3a50"/>
+    <text x="232" y="690" fill="#64748b" font-size="12">Ask Codex to work on this folder…</text>
+    <text x="232" y="714" fill="#475569" font-size="10">Shift + Enter for a new line</text>
+    <rect x="1074" y="680" width="60" height="36" rx="8" fill="#10b981"/>
+    <text x="1104" y="703" fill="#052e20" font-size="12" font-weight="700" text-anchor="middle">Send</text>
+    <rect x="212" y="752" width="942" height="1" fill="#1d2938"/>
+    <text x="212" y="772" fill="#64748b" font-size="10">Connected · SQLite persistence · Live events</text>
+  </g>
+</svg>
