@@ -6,6 +6,7 @@ Audience: Admin UI, API, model metadata, and configuration maintainers
 
 Related documents:
 
+- [`admin-model-picker-enrichment-implementation-plan.md`](admin-model-picker-enrichment-implementation-plan.md)
 - [`model-display-names-implementation-plan.md`](model-display-names-implementation-plan.md)
 - [`claude-terminal-model-display-names-implementation-plan.md`](claude-terminal-model-display-names-implementation-plan.md)
 
@@ -384,7 +385,7 @@ Expand the reduced models.dev cache and add explicitly labeled catalog-derived b
 
 Complete contract, accessibility, responsive, E2E, and documentation coverage.
 
-The document is a design proposal; no Admin picker-enrichment implementation plan or shipped API contract exists yet.
+The ordered steps, acceptance criteria, tests, dependencies, and rollback strategy are defined in [`admin-model-picker-enrichment-implementation-plan.md`](admin-model-picker-enrichment-implementation-plan.md). No implementation has shipped yet.
 
 ---
 
@@ -438,6 +439,7 @@ The following decisions are recommended for implementation:
 
 ## Evidence Index
 
+- [`admin-model-picker-enrichment-implementation-plan.md`](admin-model-picker-enrichment-implementation-plan.md)
 - `src/free_claude_code/api/admin_static/admin.js`
 - `src/free_claude_code/api/admin_static/model_combobox.js`
 - `src/free_claude_code/api/admin_static/admin.css`
