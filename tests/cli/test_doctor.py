@@ -234,7 +234,9 @@ def test_doctor_reports_disabled_model_title_catalog(monkeypatch, tmp_path):
     assert report["source"] == "none"
     assert report["state"] == "disabled"
     assert report["cache_age_seconds"] is None
-    assert report["cache_path"] == str(tmp_path / "models-dev-catalog.json")
+    # The cache location is private machine state and must not leak into doctor JSON.
+    assert "cache_path" not in report
+    assert str(tmp_path) not in json.dumps(report)
 
 
 def test_doctor_reports_model_title_cache_age_and_last_error(monkeypatch, tmp_path):
