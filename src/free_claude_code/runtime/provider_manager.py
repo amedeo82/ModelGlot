@@ -40,7 +40,6 @@ from free_claude_code.providers.runtime.discovery import (
     is_optional_local_provider,
     model_cache_provider_ids_for_settings,
     model_list_provider_ids_for_settings,
-    referenced_provider_ids,
 )
 from free_claude_code.providers.runtime.model_cache import ProviderModelCache
 from free_claude_code.providers.runtime.runtime import ProviderRuntime
@@ -401,15 +400,8 @@ class ProviderRuntimeManager:
         self._schedule_title_catalog_refresh(generation.settings)
         if not generation.catalog_started:
             generation.catalog_started = True
-            generation.initial_ids = tuple(
-                dict.fromkeys(
-                    (
-                        *referenced_provider_ids(generation.settings),
-                        *model_list_provider_ids_for_settings(
-                            generation.settings, self._connected_provider_ids()
-                        ),
-                    )
-                )
+            generation.initial_ids = model_list_provider_ids_for_settings(
+                generation.settings, self._connected_provider_ids()
             )
             if generation is self._current:
                 self._catalog_updated()
@@ -508,11 +500,8 @@ class ProviderRuntimeManager:
             except ValueError:
                 return snapshot
             generation = self._current
-            if provider_id not in (
-                *referenced_provider_ids(generation.settings),
-                *model_list_provider_ids_for_settings(
-                    generation.settings, self._connected_provider_ids()
-                ),
+            if provider_id not in model_list_provider_ids_for_settings(
+                generation.settings, self._connected_provider_ids()
             ):
                 return snapshot
             if provider_id not in generation.initialized:

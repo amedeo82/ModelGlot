@@ -92,6 +92,24 @@ def _settings(model: str) -> Settings:
 
 
 @pytest.mark.asyncio
+async def test_unconfigured_referenced_provider_is_not_discovered() -> None:
+    factory = RuntimeFactory()
+    settings = Settings().model_copy(update={"nvidia_nim_api_keys": ()})
+    manager = ProviderRuntimeManager(settings, runtime_factory=factory)
+    try:
+        result = await manager.refresh_model_list_cache()
+        status = manager.catalog_status()
+        providers = cast(dict[str, object], status["providers"])
+        errors = cast(dict[str, object], status["provider_errors"])
+        assert result.failed_provider_ids == ()
+        assert factory.runtimes[0].provider.list_model_infos.await_count == 0
+        assert "nvidia_nim" not in providers
+        assert "nvidia_nim" not in errors
+    finally:
+        await manager.close()
+
+
+@pytest.mark.asyncio
 async def test_discovery_error_follows_attempt_and_generation_without_losing_cache():
     factory = RuntimeFactory()
     settings = _settings("nvidia_nim/one")
