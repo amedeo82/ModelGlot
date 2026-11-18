@@ -281,6 +281,9 @@ def test_update_check_publishes_result_in_menu_and_notification(
     tray, monkeypatch, result, expected_status, expected_level
 ):
     instance, icon = tray
+    # On macOS menu refreshes are dispatched to the AppKit main queue, which does
+    # not run during this test; that path is covered by the dispatch test below.
+    monkeypatch.setattr(desktop_tray.sys, "platform", "linux")
     monkeypatch.setattr(desktop_tray, "check_for_updates", lambda: result)
 
     instance._check_updates(None, None)

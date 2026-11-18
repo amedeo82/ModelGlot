@@ -332,7 +332,6 @@ def model_titles_report(settings: Settings) -> dict[str, Any]:
     if source == "none":
         return {
             "source": "none",
-            "cache_path": str(model_catalog_cache_path()),
             "cache_age_seconds": None,
             "ttl_seconds": MODEL_CATALOG_CACHE_TTL_SECONDS,
             "state": "disabled",
@@ -346,7 +345,6 @@ def model_titles_report(settings: Settings) -> dict[str, Any]:
     return {
         "source": source,
         "url": settings.model_catalog_url,
-        "cache_path": str(model_catalog_cache_path()),
         "cache_age_seconds": age,
         "ttl_seconds": MODEL_CATALOG_CACHE_TTL_SECONDS,
         "entries": len(cache.entries),

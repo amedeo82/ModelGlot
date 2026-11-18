@@ -169,6 +169,9 @@ markers = [
 
 [tool.ty.environment]
 python-version = "3.14"
+# The project ships platform-specific backends (winreg/ctypes.WinDLL on Windows),
+# so type checking must not assume the host operating system.
+python-platform = "all"
 
 [tool.ty.analysis]
 # Optional voice_local extra: torch, transformers, librosa for local whisper transcription
@@ -178,5 +181,6 @@ allowed-unresolved-imports = [
     "librosa",
     "pystray",
     "PIL",
-    "winrt",
+    # Optional Windows toast notifications; the glob also covers winrt.windows.*.
+    "winrt.**",
 ]
