@@ -1,6 +1,6 @@
 # Piano di implementazione: ChatGPT Desktop e Codex Desktop
 
-Status: proposed
+Status: in progress
 Data: 2026-11-17
 Analisi di riferimento: [`chatgpt-desktop-codex-desktop-integration-analysis.md`](chatgpt-desktop-codex-desktop-integration-analysis.md)
 Obiettivo: qualificare e rendere ufficiale l'uso del workspace Codex locale della ChatGPT desktop app e del Codex client legacy attraverso FCC.
@@ -27,17 +27,22 @@ indipendenti. La merge avviene solo dopo il rispetto dei criteri di accettazione
 
 | ID | Step | Priorità | Stato | Dipendenze | Deliverable |
 | --- | --- | --- | --- | --- | --- |
-| S01 | Qualificare la matrice dei client desktop | P0 | proposed | — | Matrice versionata e test report |
-| S02 | Correggere naming, scope e copy Admin | P0 | proposed | S01 | UI e README coerenti |
-| S03 | Aggiungere diagnostica config/catalogo/modello | P0 | proposed | S01 | Status avanzato senza segreti |
-| S04 | Rendere conservative le capability del catalogo | P0 | proposed | S03 | Catalogo senza web search falso |
-| S05 | Verificare il tool loop Responses | P0 | proposed | S03, S04 | Test live e smoke test |
-| S06 | Gestire il riavvio e il refresh del client | P1 | proposed | S02, S05 | Refresh verificato end-to-end |
-| S07 | Introdurre metadata di versione del catalogo | P1 | proposed | S04 | Schema versionato |
-| S08 | Validare il catalogo per versione client | P1 | proposed | S07 | Validator e matrice compatibilità |
-| S09 | Rilevare il Codex CLI bundled | P2 | proposed | S07 | Detection best-effort |
-| S10 | Documentare sicurezza, troubleshooting e rollback | P0 | proposed | S03, S05, S06 | Runbook operativo |
-| S11 | Eseguire la release qualification completa | P0 | proposed | S01–S10 | Report di rilascio |
+| S01 | Qualificare la matrice dei client desktop | P0 | pending manual validation | — | Matrice versionata e test report |
+| S02 | Correggere naming, scope e copy Admin | P0 | completed | S01 | UI e README coerenti |
+| S03 | Aggiungere diagnostica config/catalogo/modello | P0 | completed | S01 | Status avanzato senza segreti |
+| S04 | Rendere conservative le capability del catalogo | P0 | completed | S03 | Catalogo senza web search falso |
+| S05 | Verificare il tool loop Responses | P0 | pending live validation | S03, S04 | Test live e smoke test |
+| S06 | Gestire il riavvio e il refresh del client | P1 | completed | S02, S05 | Refresh verificato end-to-end |
+| S07 | Introdurre metadata di versione del catalogo | P1 | completed | S04 | Schema versionato |
+| S08 | Validare il catalogo per versione client | P1 | pending live validation | S07 | Validator e matrice compatibilità |
+| S09 | Rilevare il Codex CLI bundled | P2 | pending | S07 | Detection best-effort |
+| S10 | Documentare sicurezza, troubleshooting e rollback | P0 | completed | S03, S05, S06 | Runbook operativo |
+| S11 | Eseguire la release qualification completa | P0 | pending | S01–S10 | Report di rilascio |
+
+Gli step S02, S03, S04, S06, S07 e S10 sono implementati nel codice e coperti dai test
+automatici. S01, S05 e S08 richiedono una o più versioni reali della ChatGPT desktop app e
+restano quindi pending fino alla qualificazione manuale. S09 è opzionale e non blocca la
+prima release.
 
 ## 3. Fase 0 — Preparazione e baseline
 

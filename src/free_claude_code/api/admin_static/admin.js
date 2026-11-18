@@ -2021,7 +2021,7 @@ function refreshIntegrationUpdates(previous, current) {
     ["vscode-chat", vscodeChatIntegration, refreshVSCodeChatIntegration, "vscodeChatIntegrationMessage", "Models updated in VS Code."],
     ["claude-vscode", claudeIntegration, refreshClaudeIntegration, "claudeIntegrationMessage", "Settings updated. Reload VS Code."],
     ["jetbrains-acp", jetBrainsIntegration, refreshJetBrainsIntegration, "jetBrainsIntegrationMessage", "Settings updated. Reopen JetBrains and start a new chat."],
-    ["codex", codexIntegration, refreshCodexIntegration, "codexIntegrationMessage", "Settings updated. Restart Codex."],
+    ["codex", codexIntegration, refreshCodexIntegration, "codexIntegrationMessage", "Settings updated. Restart Codex or ChatGPT Desktop."],
     ["claude-desktop", claudeDesktopIntegration, refreshClaudeDesktopIntegration, "claudeDesktopIntegrationMessage", "Settings updated. Reopen Claude Desktop."],
     ["dsh-desktop", dshDesktopIntegration, refreshDshDesktopIntegration, "dshDesktopIntegrationMessage", "DSH Desktop configuration updated."],
   ]) {
@@ -2234,7 +2234,7 @@ vscodeChatIntegrationDialog.addEventListener("click", (event) => {
 });
 
 const codexIntegrationDialog = byId("codexIntegrationDialog");
-const codexIntegration = { connected: null, busy: false, paths: null, update: null };
+const codexIntegration = { connected: null, busy: false, paths: null, update: null, diagnostics: null, notice: null };
 const codexIntegrationPath = "/admin/api/integrations/codex";
 
 function renderCodexIntegration() {
@@ -2243,7 +2243,11 @@ function renderCodexIntegration() {
   const unavailable = connected === false && state.startup?.startup?.catalog_file === "failed";
   const busy = codexIntegration.busy || initializing || integrationUpdating(codexIntegration, "codex");
   const catalogError = "Could not prepare the Codex model catalog. Refresh models to retry.";
+  const warnings = codexIntegration.diagnostics?.warnings ?? [];
+  const failed = codexIntegration.update?.state === "failed";
   if (unavailable) integrationMessage("codexIntegrationMessage", catalogError, true);
+  else if (!failed && codexIntegration.update === null && codexIntegration.notice) integrationMessage("codexIntegrationMessage", codexIntegration.notice);
+  else if (!failed && warnings.length) integrationMessage("codexIntegrationMessage", warnings.join(" "));
   else if (byId("codexIntegrationMessage").textContent === catalogError) integrationMessage("codexIntegrationMessage", "");
   const action = connected ? "Disconnect" : "Connect";
   byId("openCodexIntegration").textContent = busy ? "Loading…" : connected === null ? "Retry" : action;
@@ -2254,8 +2258,8 @@ function renderCodexIntegration() {
   byId("openCodexIntegration").className = connected && !busy ? "danger-button" : "primary-button";
   byId("confirmCodexIntegration").className = connected ? "danger-button" : "primary-button";
   byId("codexIntegrationDescription").textContent = connected
-    ? "Remove FCC's Codex configuration. Other settings stay unchanged."
-    : "Configure Codex to use FCC. Your selected model stays unchanged.";
+    ? "Remove FCC's local Codex configuration from Codex CLI, the VS Code extension, and ChatGPT Desktop. Other settings stay unchanged."
+    : "Configure the local Codex workspace in Codex CLI, the VS Code extension, and ChatGPT Desktop to use FCC. Your selected model stays unchanged. Chat and cloud features stay on OpenAI services.";
   const files = byId("codexIntegrationFiles");
   files.replaceChildren();
   if (paths) {
@@ -2271,7 +2275,10 @@ function renderCodexIntegration() {
 }
 
 async function refreshCodexIntegration(retry = false, { background = false } = {}) {
-  if (!background) integrationMessage("codexIntegrationMessage", "");
+  if (!background) {
+    codexIntegration.notice = null;
+    integrationMessage("codexIntegrationMessage", "");
+  }
   const request = beginIntegrationCheck(codexIntegration);
   if (!request) return;
   renderCodexIntegration();
@@ -2282,12 +2289,15 @@ async function refreshCodexIntegration(retry = false, { background = false } = {
     codexIntegration.connected = result.connected;
     codexIntegration.paths = result.paths;
     codexIntegration.update = result.update;
+    codexIntegration.diagnostics = result;
     if (result.update?.state === "failed") integrationMessage("codexIntegrationMessage", result.update.message, true);
     else if (byId("codexIntegrationMessage").classList.contains("error")) integrationMessage("codexIntegrationMessage", "");
   } catch (error) {
     if (!currentIntegrationCheck(codexIntegration, request)) return;
     codexIntegration.connected = null;
     codexIntegration.update = null;
+    codexIntegration.diagnostics = null;
+    codexIntegration.notice = null;
     integrationMessage("codexIntegrationMessage", error.message, true);
   } finally {
     finishIntegrationCheck(codexIntegration, request, renderCodexIntegration);
@@ -2314,10 +2324,13 @@ byId("confirmCodexIntegration").addEventListener("click", async () => {
     codexIntegration.connected = result.connected;
     codexIntegration.paths = result.paths;
     codexIntegration.update = null;
+    codexIntegration.diagnostics = result;
     codexIntegrationDialog.close();
-    integrationMessage("codexIntegrationMessage", disconnect
-      ? "Settings removed. Restart Codex to disconnect."
-      : "Settings saved. Restart Codex and select an FCC model.");
+    const warnings = result.warnings?.length ? ` ${result.warnings.join(" ")}` : "";
+    codexIntegration.notice = disconnect
+      ? `Settings removed. Restart Codex or ChatGPT Desktop to disconnect.${warnings}`
+      : `Settings saved. Restart Codex or ChatGPT Desktop and select an FCC model.${warnings}`;
+    integrationMessage("codexIntegrationMessage", codexIntegration.notice);
   } catch (error) {
     integrationMessage("codexIntegrationDialogMessage", error.message, true);
     integrationMessage("codexIntegrationMessage", error.message, true);

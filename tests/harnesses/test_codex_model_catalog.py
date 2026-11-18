@@ -1,9 +1,12 @@
 from collections.abc import Mapping
 from typing import Any, cast
 
+import pytest
+
 from free_claude_code.cli.launchers.catalog_http import catalog_models_from_response
 from free_claude_code.harnesses.codex_model_catalog import (
     build_codex_model_catalog,
+    validate_codex_model_catalog,
 )
 
 
@@ -207,3 +210,19 @@ def test_codex_catalog_projects_known_capabilities_and_preserves_unknown_default
     assert unknown["default_reasoning_summary"] == "none"
     assert unknown["context_window"] == 200000
     assert unknown["max_context_window"] == 200000
+    assert all(
+        model["supports_search_tool"] is False for model in (vision, text_only, unknown)
+    )
+    assert all(
+        "web_search_tool_type" not in model for model in (vision, text_only, unknown)
+    )
+
+
+def test_codex_catalog_validation_rejects_incomplete_entries() -> None:
+    catalog = build_codex_model_catalog(
+        catalog_models_from_response(_models_payload("provider/model"))
+    )
+    validate_codex_model_catalog(catalog)
+    incomplete = {"models": [{"slug": "provider/model"}]}
+    with pytest.raises(ValueError, match="missing fields"):
+        validate_codex_model_catalog(incomplete)

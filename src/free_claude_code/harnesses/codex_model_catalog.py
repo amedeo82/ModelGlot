@@ -1,6 +1,6 @@
 """Codex-specific model policy and native catalog serialization."""
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from free_claude_code.application.model_catalog import (
@@ -15,6 +15,7 @@ from free_claude_code.harnesses.model_policy import (
     reasoning_levels,
 )
 
+CODEX_CATALOG_SCHEMA_VERSION = 1
 CODEX_BASE_INSTRUCTIONS = (
     "You are Codex, a coding agent. Help the user understand, modify, test, "
     "and review code in their workspace. Follow the user's instructions, use "
@@ -48,9 +49,35 @@ def project_codex_models(models: Sequence[CatalogModel]) -> tuple[CodexModel, ..
 
 def build_codex_model_catalog(models: Sequence[CatalogModel]) -> JsonObject:
     """Serialize already ordered application records for Codex."""
-    return {
+    catalog: JsonObject = {
         "models": [codex_model_entry(model) for model in project_codex_models(models)]
     }
+    validate_codex_model_catalog(catalog)
+    return catalog
+
+
+def validate_codex_model_catalog(catalog: Mapping[str, object]) -> None:
+    models = catalog.get("models")
+    if not isinstance(models, list) or not models:
+        raise ValueError("Codex model catalog contains no routable models.")
+    required_fields = {
+        "slug",
+        "display_name",
+        "supported_reasoning_levels",
+        "shell_type",
+        "visibility",
+        "supported_in_api",
+        "priority",
+        "input_modalities",
+        "context_window",
+    }
+    for model in models:
+        if not isinstance(model, Mapping):
+            raise ValueError("Codex model catalog contains an invalid model entry.")
+        missing = required_fields.difference(model)
+        if missing:
+            fields = ", ".join(sorted(missing))
+            raise ValueError(f"Codex model catalog entry is missing fields: {fields}.")
 
 
 def codex_model_entry(model: CodexModel) -> JsonObject:
@@ -79,7 +106,6 @@ def codex_model_entry(model: CodexModel) -> JsonObject:
         "support_verbosity": True,
         "default_verbosity": "low",
         "apply_patch_tool_type": "freeform",
-        "web_search_tool_type": "text_and_image",
         "truncation_policy": {"mode": "tokens", "limit": 10000},
         "supports_parallel_tool_calls": True,
         "supports_image_detail_original": True,
@@ -92,7 +118,7 @@ def codex_model_entry(model: CodexModel) -> JsonObject:
             for modality in ModelInputModality
             if modality in input_modalities
         ],
-        "supports_search_tool": True,
+        "supports_search_tool": False,
         "use_responses_lite": False,
     }
     if supports_reasoning:

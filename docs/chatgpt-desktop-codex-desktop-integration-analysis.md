@@ -1,6 +1,6 @@
 # Analisi di fattibilità: ChatGPT Desktop e Codex Desktop
 
-Status: analisi completata; piano di implementazione proposed
+Status: analisi completata; implementazione in corso
 Data: 2026-11-17
 Ambito: integrazione delle superfici desktop OpenAI con Free Claude Code (FCC)
 Piano correlato: [`chatgpt-desktop-codex-desktop-integration-implementation-plan.md`](chatgpt-desktop-codex-desktop-integration-implementation-plan.md)

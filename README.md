@@ -33,7 +33,7 @@
 - 61 supported providers, including free, paid, subscription, and local providers.
   - 1.3B+ free tokens per month.
   - FCC follows provider TOS and removes integrations if they stop being allowed.
-- Use through the terminal, desktop apps ([Codex App](https://learn.chatgpt.com/docs/app), [Claude Desktop](https://claude.ai/download), and [DeepSeek Desktop](https://github.com/deepseek-ai/deepseek-harness)), IDE extensions ([VS Code](https://code.visualstudio.com/) and [JetBrains](https://www.jetbrains.com/)), [your phone](#use-from-your-phone) ([Discord](https://discord.com/) and [Telegram](https://telegram.org/)), or your browser through native Code sessions.
+- Use through the terminal, desktop apps ([ChatGPT Desktop](https://learn.chatgpt.com/docs/app) with local Codex, [Claude Desktop](https://claude.ai/download), and [DeepSeek Desktop](https://github.com/deepseek-ai/deepseek-harness)), IDE extensions ([VS Code](https://code.visualstudio.com/) and [JetBrains](https://www.jetbrains.com/)), [your phone](#use-from-your-phone) ([Discord](https://discord.com/) and [Telegram](https://telegram.org/)), or your browser through native Code sessions.
   - Voice notes supported for Discord and Telegram using local [Whisper](https://github.com/openai/whisper) or [NVIDIA NIM](https://docs.nvidia.com/nim/speech/latest/asr/deploy-asr-models/whisper.html).
 - Run Claude Code's supported `web_search` and forced `web_fetch` requests through FCC with SSRF-protected local web access.
 - Manage persistent Codex projects in the browser through [Code sessions](#code-sessions).
@@ -449,7 +449,7 @@ For editor and app integrations, install the client, start FCC, then open
 - **Claude Code in VS Code**: Install the [Claude Code extension](https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code).
 - **VS Code Chat**: Install the latest [VS Code](https://code.visualstudio.com/), connect, and select an FCC model in its built-in Chat model picker.
 - **Claude Desktop**: Install [Claude Desktop](https://claude.ai/download). Fully quit it before connecting or disconnecting, then reopen it. The dedicated [FCC 3P profile](docs/claude-desktop-fcc-profile.md) adds 1M-context metadata, official Anthropic plugin marketplaces, sealed-key continuity, and preserves custom model overrides. When the FCC profile is active, Disconnect removes it and returns Desktop to the normal Claude sign-in path; it does not restore a previously active native profile.
-- **Codex in VS Code and App**: Install the [Codex extension](https://marketplace.visualstudio.com/items?itemName=openai.chatgpt) or Codex App.
+- **Codex CLI, IDE & ChatGPT Desktop**: Install Codex CLI, the [Codex extension](https://marketplace.visualstudio.com/items?itemName=openai.chatgpt), or [ChatGPT Desktop](https://learn.chatgpt.com/docs/app), then connect. Select an FCC model in the local Codex model picker and restart the client. FCC routes only the local Codex workspace; Chat and cloud features continue to use OpenAI services.
 - **DeepSeek Harness Desktop**: Install and open the app once before connecting. Start a new session to use FCC models.
 - **Claude Code in JetBrains ACP**: Install Claude Agent in JetBrains AI Assistant and start it once, then click **Connect** in FCC. Reopen the IDE, select **Claude Code (FCC)**, and start a new chat. After JetBrains updates the agent, restart FCC before starting a new chat. Requires a local IDE in its standard installation locations.
 

@@ -27,10 +27,22 @@ def integration(tmp_path, monkeypatch):
 def test_routes_inspect_connect_and_disconnect(integration):
     client, path, _ = integration
     response = client.get(ROOT)
-    assert response.json() == {
-        "connected": False,
-        "paths": {"codex_config": str(path.resolve())},
-        "update": {"state": "ready", "changed": False, "message": None},
+    assert response.json()["connected"] is False
+    assert response.json()["paths"] == {"codex_config": str(path.resolve())}
+    assert response.json()["provider"] is None
+    assert response.json()["selected_model"] is None
+    assert isinstance(response.json()["catalog_available"], bool)
+    assert response.json()["selected_model_available"] is None
+    assert response.json()["model_count"] >= 0
+    assert response.json()["supported_surfaces"] == [
+        "codex_cli",
+        "codex_ide_extension",
+        "chatgpt_desktop_codex",
+    ]
+    assert response.json()["update"] == {
+        "state": "ready",
+        "changed": False,
+        "message": None,
     }
     assert response.headers["cache-control"] == "no-store"
     assert not path.exists()
@@ -38,6 +50,13 @@ def test_routes_inspect_connect_and_disconnect(integration):
     response = client.post(f"{ROOT}/connect")
     assert response.status_code == 200
     assert response.json()["connected"] is True
+    assert response.json()["provider"] == "fcc"
+    assert response.json()["selected_model"] == "user-choice"
+    assert response.json()["supported_surfaces"] == [
+        "codex_cli",
+        "codex_ide_extension",
+        "chatgpt_desktop_codex",
+    ]
     assert response.headers["cache-control"] == "no-store"
     assert "integration-secret" not in response.text + path.read_text()
     data = tomllib.loads(path.read_text())

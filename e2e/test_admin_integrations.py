@@ -93,14 +93,17 @@ def test_codex_connect_disconnect_and_modal_paths(
         "element => element.scrollWidth <= window.innerWidth"
     )
     opener = page.locator("#openCodexIntegration")
-    dialog = page.get_by_role("dialog", name="Codex in VS Code and App", exact=True)
+    dialog = page.get_by_role(
+        "dialog", name="Codex CLI, IDE & ChatGPT Desktop", exact=True
+    )
     opener.click()
     expect(dialog).to_be_visible()
     expect(page.locator("#claudeIntegrationDialog")).not_to_be_visible()
     expect(dialog.get_by_role("button", name="Close", exact=True)).to_be_focused()
     expect(dialog).to_contain_text(
-        "Configure Codex to use FCC. Your selected model stays unchanged."
+        "Configure the local Codex workspace in Codex CLI, the VS Code extension, and ChatGPT Desktop to use FCC."
     )
+    expect(dialog).to_contain_text("Chat and cloud features stay on OpenAI services.")
     assert dialog.evaluate("element => element.scrollWidth <= element.clientWidth")
     path = tmp_path / ".codex" / "config.toml"
     expect(dialog.locator("#codexIntegrationFiles li")).to_have_text(
@@ -133,8 +136,8 @@ def test_codex_connect_disconnect_and_modal_paths(
         for _, row in groupby(range(len(bounds)), key=lambda index: bounds[index]["y"]):
             assert len({buttons[index]["y"] for index in row}) == 1
         assert len({button["height"] for button in buttons}) == 1
-    expect(page.locator("#codexIntegrationMessage")).to_have_text(
-        "Settings saved. Restart Codex and select an FCC model."
+    expect(page.locator("#codexIntegrationMessage")).to_contain_text(
+        "Settings saved. Restart Codex or ChatGPT Desktop and select an FCC model."
     )
     assert tomllib.loads(path.read_text())["model"] == "my-choice"
     assert "# Keep this" in path.read_text()
@@ -402,7 +405,7 @@ def test_background_update_spinner_failure_retry_and_completion(
     expect(message).to_have_text(
         "Settings updated. Reload VS Code."
         if prefix == "Claude"
-        else "Settings updated. Restart Codex."
+        else "Settings updated. Restart Codex or ChatGPT Desktop."
     )
 
 

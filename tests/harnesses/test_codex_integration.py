@@ -1,3 +1,4 @@
+import json
 import tomllib
 from pathlib import Path
 
@@ -13,6 +14,20 @@ def operate(path, connected=None):
     return codex_integration.configure(
         path, path.parent / "catalog.json", URL, connected
     )
+
+
+def _catalog_entry(slug, priority=0):
+    return {
+        "slug": slug,
+        "display_name": slug,
+        "supported_reasoning_levels": [],
+        "shell_type": "shell_command",
+        "visibility": "list",
+        "supported_in_api": True,
+        "priority": priority,
+        "input_modalities": ["text"],
+        "context_window": 200000,
+    }
 
 
 def test_connect_disconnect_preserve_model_comments_and_other_providers(tmp_path):
@@ -48,7 +63,20 @@ def test_missing_file_noops_and_unset_model(tmp_path):
     assert operate(path, False)["connected"] is False
     assert not path.parent.exists()
     result = operate(path, True)
-    assert result == {"connected": True, "paths": {"codex_config": str(path.resolve())}}
+    assert result["connected"] is True
+    assert result["paths"] == {"codex_config": str(path.resolve())}
+    assert result["provider"] == "fcc"
+    assert result["selected_model"] is None
+    assert result["catalog_available"] is False
+    assert result["catalog_schema_version"] == 1
+    assert result["selected_model_available"] is None
+    assert result["model_count"] == 0
+    assert result["supported_surfaces"] == [
+        "codex_cli",
+        "codex_ide_extension",
+        "chatgpt_desktop_codex",
+    ]
+    assert result["warnings"]
     assert "model" not in tomllib.loads(path.read_text())
     before = path.stat().st_mtime_ns
     operate(path, True)
@@ -57,6 +85,57 @@ def test_missing_file_noops_and_unset_model(tmp_path):
     before = path.stat().st_mtime_ns
     operate(path, False)
     assert path.stat().st_mtime_ns == before
+
+
+def test_status_reports_catalog_and_selected_model_without_secrets(tmp_path):
+    path = tmp_path / "config.toml"
+    catalog_path = tmp_path / "catalog.json"
+    operate(path, True)
+    path.write_text(
+        path.read_text().replace(
+            'model_provider = "fcc"',
+            'model = "fcc/model"\nmodel_provider = "fcc"',
+        )
+    )
+    catalog_path.write_text(
+        json.dumps(
+            {
+                "models": [
+                    _catalog_entry("fcc/model"),
+                    _catalog_entry("other/model", 1),
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = operate(path)
+
+    assert result["connected"] is True
+    assert result["provider"] == "fcc"
+    assert result["selected_model"] == "fcc/model"
+    assert result["catalog_available"] is True
+    assert result["selected_model_available"] is True
+    assert result["model_count"] == 2
+    assert result["warnings"] == []
+
+
+def test_status_warns_when_selected_model_is_not_in_catalog(tmp_path):
+    path = tmp_path / "config.toml"
+    catalog_path = tmp_path / "catalog.json"
+    operate(path, True)
+    path.write_text(
+        path.read_text().replace(
+            'model_provider = "fcc"',
+            'model = "external/model"\nmodel_provider = "fcc"',
+        )
+    )
+    catalog_path.write_text(json.dumps({"models": [_catalog_entry("fcc/model")]}))
+
+    result = operate(path)
+
+    assert result["selected_model_available"] is False
+    assert any("not in the FCC catalog" in warning for warning in result["warnings"])
 
 
 def test_inline_tables_merge_without_losing_extra_values(tmp_path):

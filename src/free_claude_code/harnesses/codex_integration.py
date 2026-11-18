@@ -1,5 +1,6 @@
 """Connect native Codex clients through their shared TOML configuration."""
 
+import json
 import os
 from pathlib import Path
 
@@ -15,7 +16,17 @@ from free_claude_code.harnesses.codex import (
     PRINT_PROXY_AUTH_TOKEN_FLAG,
     codex_config_values,
 )
+from free_claude_code.harnesses.codex_model_catalog import (
+    CODEX_CATALOG_SCHEMA_VERSION,
+    validate_codex_model_catalog,
+)
 from free_claude_code.harnesses.config_file import atomic_write_text
+
+CODEX_SUPPORTED_SURFACES = (
+    "codex_cli",
+    "codex_ide_extension",
+    "chatgpt_desktop_codex",
+)
 
 
 def config_path() -> Path:
@@ -120,6 +131,72 @@ def refresh_connected(path: Path, catalog_path: Path, proxy_root_url: str) -> bo
     return _connect(path, document, catalog_path.resolve(), proxy_root_url)
 
 
+def _catalog_models(catalog_path: Path) -> tuple[bool, int, frozenset[str]]:
+    try:
+        payload = json.loads(catalog_path.read_text(encoding="utf-8"))
+    except OSError, UnicodeError, json.JSONDecodeError:
+        return False, 0, frozenset()
+    if not isinstance(payload, dict):
+        return False, 0, frozenset()
+    models = payload.get("models")
+    if not isinstance(models, list):
+        return False, 0, frozenset()
+    try:
+        validate_codex_model_catalog(payload)
+    except ValueError:
+        return False, 0, frozenset()
+    slugs = frozenset(
+        model["slug"]
+        for model in models
+        if isinstance(model, dict) and isinstance(model.get("slug"), str)
+    )
+    return True, len(slugs), slugs
+
+
+def _diagnostics(
+    document: TOMLDocument, catalog_path: Path, *, connected: bool
+) -> JsonObject:
+    provider_value = document.get("model_provider")
+    provider = provider_value if isinstance(provider_value, str) else None
+    model_value = document.get("model")
+    selected_model = model_value if isinstance(model_value, str) else None
+    catalog_available, model_count, catalog_slugs = _catalog_models(catalog_path)
+    selected_model_available: bool | None = None
+    if selected_model is not None and catalog_available:
+        selected_model_available = selected_model in catalog_slugs
+
+    warnings: list[str] = []
+    if connected:
+        if not catalog_available:
+            warnings.append(
+                "The FCC model catalog is unavailable. Refresh models, reconnect Codex, then restart Codex or ChatGPT Desktop."
+            )
+        if selected_model is None:
+            warnings.append(
+                "No Codex model is selected. Restart Codex or ChatGPT Desktop and choose an FCC model in the Codex model picker."
+            )
+        elif catalog_available and not selected_model_available:
+            warnings.append(
+                "The selected Codex model is not in the FCC catalog. Restart Codex or ChatGPT Desktop and choose an FCC model in the Codex model picker."
+            )
+        if provider != "fcc":
+            warnings.append(
+                "FCC is not the selected Codex provider. Reconnect Codex to select it."
+            )
+
+    return {
+        "provider": provider,
+        "selected_model": selected_model,
+        "catalog_path": str(catalog_path),
+        "catalog_available": catalog_available,
+        "catalog_schema_version": CODEX_CATALOG_SCHEMA_VERSION,
+        "selected_model_available": selected_model_available,
+        "model_count": model_count,
+        "supported_surfaces": list(CODEX_SUPPORTED_SURFACES),
+        "warnings": warnings,
+    }
+
+
 def configure(
     path: Path, catalog_path: Path, proxy_root_url: str, connected: bool | None = None
 ) -> JsonObject:
@@ -141,7 +218,9 @@ def configure(
             atomic_write_text(path, content)
     if connected is not None:
         document = _read(path)
+    is_connected = _connected(document, catalog_path, proxy_root_url)
     return {
-        "connected": _connected(document, catalog_path, proxy_root_url),
+        "connected": is_connected,
         "paths": {"codex_config": str(path)},
+        **_diagnostics(document, catalog_path, connected=is_connected),
     }
