@@ -231,6 +231,20 @@ def test_admin_page_is_loopback_only(monkeypatch, tmp_path, path):
     assert remote_client.get(path).status_code == 403
 
 
+def test_admin_endpoints_survive_deleted_managed_config(monkeypatch, tmp_path):
+    _set_home(monkeypatch, tmp_path)
+    _clear_process_config(monkeypatch)
+    client = _local_client(create_test_app())
+    env_file = tmp_path / ".fcc" / ".env"
+    assert env_file.is_file()
+
+    env_file.unlink()
+
+    assert client.get("/admin/api/status").status_code == 200
+    assert client.get("/admin/api/config").status_code == 200
+    assert env_file.is_file()
+
+
 def test_admin_page_uses_installed_version(monkeypatch, tmp_path):
     _set_home(monkeypatch, tmp_path)
     monkeypatch.setattr(

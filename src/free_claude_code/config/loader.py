@@ -23,7 +23,7 @@ from .env_migrations import (
     consolidate_managed_config,
     settings_env_keys,
 )
-from .errors import ConfigConflictError
+from .errors import ConfigConflictError, ManagedConfigMissingError
 from .model_refs import normalize_retired_model_settings
 from .paths import config_lock_path, managed_env_path
 from .provider_proxies import invalid_provider_proxy_keys
@@ -82,7 +82,7 @@ class ManagedConfigStore:
 
     def _read_managed(self) -> dict[str, str]:
         if not self.path.is_file():
-            raise ValueError(
+            raise ManagedConfigMissingError(
                 "Managed configuration is missing; initialize it before reading."
             )
         managed = dotenv_values_from_file(self.path)

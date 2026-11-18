@@ -157,6 +157,50 @@ def test_atomic_commit_waits_for_an_open_snapshot_reader(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_admin_reads_recreate_missing_managed_storage():
+    store = ManagedConfigStore()
+    store.initialize()
+    store.path.unlink()
+    service = ConfigurationService(store)
+
+    values = await service.admin_values()
+    config = await service.admin_config()
+
+    assert values
+    assert config["fields"]
+    assert store.path.is_file()
+    assert store.read().managed[FCC_CONFIG_SCHEMA_ENV] == CONFIG_SCHEMA_VERSION
+
+
+@pytest.mark.asyncio
+async def test_admin_reads_fail_closed_on_unsupported_schema():
+    store = ManagedConfigStore()
+    store.initialize()
+    store.path.write_text(f"{FCC_CONFIG_SCHEMA_ENV}=999\n")
+    service = ConfigurationService(store)
+
+    with pytest.raises(ValueError, match="schema"):
+        await service.admin_values()
+
+    assert store.path.read_text() == f"{FCC_CONFIG_SCHEMA_ENV}=999\n"
+
+
+@pytest.mark.asyncio
+async def test_commit_recreates_missing_managed_storage():
+    store = ManagedConfigStore()
+    store.initialize()
+    service = ConfigurationService(store)
+    prepared = await service.prepare({"PORT": "8123"}, store.read().settings)
+    store.path.unlink()
+
+    result = await service.commit(prepared)
+
+    assert result["applied"] is True
+    assert store.path.is_file()
+    assert store.read().managed["PORT"] == "8123"
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "operation", ["initialize", "admin_config", "admin_values", "prepare", "commit"]
 )

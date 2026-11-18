@@ -3,3 +3,7 @@
 
 class ConfigConflictError(ValueError):
     """The saved configuration changed after an editor or transaction read it."""
+
+
+class ManagedConfigMissingError(ValueError):
+    """The managed configuration file does not exist on disk."""
