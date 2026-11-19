@@ -1,6 +1,6 @@
 # Implementation Plan: Token Optimization and Usage in the Admin Dashboard
 
-Status: proposed; no implementation steps completed
+Status: implemented through S4.2 on 2026-11-19; optional S4.3 cost estimation deliberately disabled
 Input: [`token-optimization-admin-analysis.md`](token-optimization-admin-analysis.md)
 Scope: revalidated at commit `4946962c` on 2026-11-17
 Audience: maintainers and contributors
@@ -265,7 +265,7 @@ divergence is introduced.
 - New `tests/application/test_token_optimization.py`: observed RTK/Headroom fixtures; zero vs
   missing values; negative, boolean, non-finite, wrong-type, and extra fields; private-field
   stripping; stable serialization.
-- New `tests/runtime/test_token_optimization.py`: executable absent, direct argv, no shell,
+- New `tests/runtime/test_token_optimization_collector.py`: executable absent, direct argv, no shell,
   telemetry override, non-zero exit, malformed/oversized stdout, timeout, cache TTL,
   single-flight, cancellation, and one tool failing while the other remains available.
 
@@ -411,7 +411,7 @@ requests.
 
 **Tests.**
 
-- `tests/core/test_request_outcomes.py` and `tests/api/test_request_outcomes.py`: success,
+- `tests/core/test_request_outcome_state.py` and `tests/api/test_request_outcomes.py`: success,
   provider failure, HTTP failure, cancellation, fallback, retry-before-success, missing usage,
   multiple terminal observations, and late events.
 - `tests/providers/test_attempt_loop.py` (or its current focused equivalent): provider/model
@@ -437,7 +437,7 @@ successful request counts; provider and gateway/provider model fields are not co
 
 **Tests.**
 
-- New `tests/runtime/test_usage_events.py`: concurrent finalization, bounded memory,
+- New `tests/runtime/test_usage_event_store.py`: concurrent finalization, bounded memory,
   filter/group/order behavior, null sums, and retry semantics.
 - `tests/api/test_admin.py`: valid/invalid filters, range bound, loopback/no-store, empty data,
   and sanitized runtime errors.
@@ -651,7 +651,22 @@ Before completing each wave, verify:
 - **Wave 4:** remove trends/export/cost routes independently; underlying aggregate data and
   earlier read-only cards remain valid.
 
-## 5. Final Acceptance and Verification
+## 5. Implementation and Validation Record — 2026-11-19
+
+S0 through S4.2 are implemented. S4.3 was evaluated and deliberately not enabled: no
+price catalog, routing change, or billing/cost claim was added. Production uses the shared
+SQLite store; the bounded in-memory store remains available for tests and embeddings.
+
+Focused application, provider, runtime, migration, API, manifest, and browser suites pass,
+including 25 Token optimization/Admin asset browser tests. `ty check src` and Ruff checks
+for the feature files pass. The complete local unit run finished with 11,908 passed and
+33 skipped; its three failures are pre-existing/out-of-scope model-discovery assertions
+and the out-of-scope `updater.desktop -> config.paths` import violation. The complete
+browser run finished with 333 passed and one skipped; its one failure is the out-of-scope
+fallback drag-indicator test. These unrelated working-tree failures were preserved rather
+than hidden by changing routing, provider, or model-picker behavior.
+
+## 6. Final Acceptance and Verification
 
 The full feature is accepted when:
 

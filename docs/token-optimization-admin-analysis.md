@@ -80,7 +80,7 @@ The UI must also distinguish these concepts:
    summaries through their JSON commands.
 2. **Wave 2:** Normalize and persist FCC provider usage, then add per-model
    request, token, and context aggregates.
-3. **Wave 3:** Add trends, cost estimates, retention, and export only after the
+3. **Wave 4:** Add trends, optional cost estimates, and export after the
    measurement semantics are stable.
 
 This sequence gives users immediate visibility without presenting estimates or
@@ -529,7 +529,7 @@ The exact policy must be encoded in tests and in the API schema version.
 Add a dedicated view named **Token optimization** with route:
 
 ```text
-/admin/token-optimization
+/admin/token_optimization
 ```
 
 The view should contain:

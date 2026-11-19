@@ -1,0 +1,15 @@
+{
+  "schema_version": 2,
+  "top_model": "unknown",
+  "lifetime": {
+    "tokens_saved": 15,
+    "tokens_before": 100,
+    "calls": 1,
+    "savings_percent": 15.0,
+    "future_metric": 123
+  },
+  "windows": {},
+  "by_model": [],
+  "by_client": [],
+  "future_top_level": "ignored"
+}

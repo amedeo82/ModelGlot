@@ -1345,15 +1345,17 @@ class _ChatAttempt(TransportAttempt):
                 continuing=continuing,
             )
             return
+        raw_usage = getattr(chunk, "usage", None)
+        if hasattr(raw_usage, "model_dump"):
+            usage = raw_usage.model_dump(mode="json", exclude_unset=True)
+        elif isinstance(raw_usage, dict):
+            usage = dict(raw_usage)
+        else:
+            usage = {}
         source.observe(
             "chat",
             {
-                "usage": {
-                    key: value
-                    for key in ("prompt_tokens", "completion_tokens", "total_tokens")
-                    if (value := usage_int(getattr(chunk, "usage", None), key))
-                    is not None
-                },
+                "usage": usage,
                 "choices": [
                     {
                         "delta": {

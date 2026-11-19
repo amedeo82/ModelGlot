@@ -18,6 +18,10 @@ from free_claude_code.core.openai_responses import (
     estimate_responses_input_tokens,
 )
 from free_claude_code.core.reasoning import ReasoningPolicy
+from free_claude_code.core.request_outcomes import (
+    record_estimated_input_tokens,
+    record_request_gateway_model,
+)
 from free_claude_code.core.stream_delivery import current_stream_delivery
 from free_claude_code.core.stream_output import StreamOutput
 from free_claude_code.core.stream_recovery import ContinuationSeed
@@ -141,6 +145,7 @@ class ProviderExecutor:
             routed.request.system,
             routed.request.tools,
         )
+        record_estimated_input_tokens(input_tokens)
 
         async def open_candidate(
             index: int,
@@ -202,6 +207,7 @@ class ProviderExecutor:
         primary_request = routed.request.model_copy(deep=True)
         client_reasoning = client_responses_reasoning_policy(routed.request)
         input_tokens = self._responses_token_counter(routed.request)
+        record_estimated_input_tokens(input_tokens)
 
         async def open_candidate(
             index: int,
@@ -270,6 +276,7 @@ class ProviderExecutor:
     ) -> AsyncIterator[StreamOutput]:
         client_reasoning = routed.request.reasoning_policy()
         input_tokens = estimate_gemini_input_tokens(routed.request)
+        record_estimated_input_tokens(input_tokens)
 
         async def open_candidate(
             index: int,
@@ -334,6 +341,7 @@ class ProviderExecutor:
             estimate_text_tokens(json.dumps(message)[:1_000_000])
             for message in routed.request.messages
         )
+        record_estimated_input_tokens(input_tokens)
 
         async def open_candidate(
             index: int,
@@ -401,6 +409,7 @@ class ProviderExecutor:
         primary = resolved.primary
         candidates = (ProviderModelCandidate(primary), *resolved.fallbacks)
         gateway_model = resolved.original_model
+        record_request_gateway_model(gateway_model)
         route_trace: dict[str, object] = {
             "stage": "routing",
             "event": "free_claude_code.api.route.resolved",

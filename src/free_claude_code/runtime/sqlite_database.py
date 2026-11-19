@@ -8,8 +8,9 @@ import asyncio
 import os
 import sqlite3
 from collections.abc import Callable
-from contextlib import closing
+from contextlib import closing, suppress
 from pathlib import Path
+from time import monotonic
 from typing import cast
 
 from sqlalchemy.engine.interfaces import DBAPIConnection
@@ -38,6 +39,13 @@ _MESSAGING_COLUMNS = {
     "messaging_references": "platform chat_id reference_id node_id kind",
     "messaging_managed_messages": "sequence platform chat_id message_id ts direction kind",
     "messaging_legacy_import": "source outcome trees messages skipped cleanup_pending",
+}
+_USAGE_COLUMNS = {
+    "usage_events": "id request_id execution_id attempt record_kind provider_id "
+    "gateway_model provider_model wire_api outcome status_code duration_ms "
+    "failure_category input_tokens cache_read_tokens cache_creation_tokens "
+    "input_total_tokens output_tokens reasoning_tokens total_tokens "
+    "estimated_input_tokens created_at",
 }
 
 
@@ -72,7 +80,11 @@ def _schema_version(connection: sqlite3.Connection) -> int:
     }
     if version == 0 and not tables:
         return version
-    columns = _BASE_COLUMNS | (_MESSAGING_COLUMNS if version >= 4 else {})
+    columns = (
+        _BASE_COLUMNS
+        | (_MESSAGING_COLUMNS if version >= 4 else {})
+        | (_USAGE_COLUMNS if version >= 6 else {})
+    )
     if tables != columns.keys():
         raise sqlite3.DatabaseError(
             "Unrecognized FCC database schema. Saved data was preserved."
@@ -85,6 +97,8 @@ def _schema_version(connection: sqlite3.Connection) -> int:
             expected.add("native_permission_defaults")
         if version >= 3 and table == "code_sessions":
             expected.add("context_used_tokens")
+        if version >= 6 and table == "code_sessions":
+            expected.update(("context_model", "context_sampled_at"))
         actual = {row[1] for row in connection.execute(f"PRAGMA table_info({table})")}
         if not expected <= actual:
             raise sqlite3.DatabaseError(f"Incomplete FCC database schema in {table}.")
@@ -281,6 +295,7 @@ class SQLiteDatabase:
         operation: Callable[[sqlite3.Connection], T],
         *,
         write: bool,
+        deadline: float | None = None,
     ) -> T:
         if pool is None:
             raise sqlite3.OperationalError("FCC storage is closed")
@@ -301,6 +316,10 @@ class SQLiteDatabase:
             lease.close()
             raise
         try:
+            if deadline is not None:
+                connection.set_progress_handler(
+                    lambda: int(monotonic() >= deadline), 1000
+                )
             connection.execute("BEGIN IMMEDIATE" if write else "BEGIN")
             result = operation(connection)
             connection.execute("COMMIT")
@@ -321,6 +340,9 @@ class SQLiteDatabase:
                 lease.invalidate(exc)
             raise
         finally:
+            if deadline is not None:
+                with suppress(sqlite3.ProgrammingError):
+                    connection.set_progress_handler(None, 0)
             lease.close()
 
     async def run[T](
@@ -331,6 +353,24 @@ class SQLiteDatabase:
             return await self.work(lambda: self.execute(operation))
         return await self._work(
             lambda: self._transaction(self._readers, operation, write=False),
+            self._read_admission,
+        )
+
+    async def run_read[T](
+        self,
+        operation: Callable[[sqlite3.Connection], T],
+        *,
+        timeout_seconds: float,
+    ) -> T:
+        """Run a read with a database-owned SQLite statement deadline."""
+
+        if timeout_seconds <= 0:
+            raise ValueError("read timeout must be positive")
+        deadline = monotonic() + timeout_seconds
+        return await self._work(
+            lambda: self._transaction(
+                self._readers, operation, write=False, deadline=deadline
+            ),
             self._read_admission,
         )
 

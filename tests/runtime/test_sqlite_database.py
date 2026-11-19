@@ -421,6 +421,10 @@ def historical_database(path: Path, version: int) -> None:
                 "ALTER TABLE code_sessions ADD COLUMN context_used_tokens INTEGER "
                 "CHECK(context_used_tokens IS NULL OR context_used_tokens >= 0)"
             )
+        if version >= 4:
+            sqlite_database.MIGRATIONS[3][1](connection)
+        if version >= 5:
+            sqlite_database.MIGRATIONS[4][1](connection)
         connection.execute(f"PRAGMA user_version={version}")
         connection.execute(
             "INSERT INTO code_sessions (id,cwd,model,harness,title,title_search,cwd_search,"
@@ -468,7 +472,7 @@ def snapshot(path: Path) -> dict[str, list[dict]]:
         }
 
 
-@pytest.mark.parametrize("version", [0, 1, 2, 3])
+@pytest.mark.parametrize("version", [0, 1, 2, 3, 4, 5])
 def test_historical_database_moves_and_upgrades_without_losing_records(
     tmp_path, version
 ):
@@ -487,7 +491,7 @@ def test_historical_database_moves_and_upgrades_without_losing_records(
         assert len(after["code_items"]) == 2
         assert after["code_items"][-1]["kind"] == "prompt"
         with closing(sqlite3.connect(target)) as connection:
-            assert connection.execute("PRAGMA user_version").fetchone() == (5,)
+            assert connection.execute("PRAGMA user_version").fetchone() == (6,)
             assert connection.execute("PRAGMA journal_mode").fetchone() == ("wal",)
             assert connection.execute("PRAGMA foreign_key_check").fetchall() == []
 
@@ -498,6 +502,165 @@ def test_fresh_database_uses_only_destination_and_is_repeatable(tmp_path):
     initialize_database(target, old)
     assert not old.exists()
     assert all(not rows for rows in snapshot(target).values())
+
+
+def test_usage_event_identity_indexes_and_context_provenance(tmp_path):
+    target = tmp_path / "fcc.db"
+    historical_database(target, 5)
+    initialize_database(target)
+    token_columns = (
+        "input_tokens",
+        "cache_read_tokens",
+        "cache_creation_tokens",
+        "input_total_tokens",
+        "output_tokens",
+        "reasoning_tokens",
+        "total_tokens",
+        "estimated_input_tokens",
+    )
+    with closing(sqlite3.connect(target)) as connection, connection:
+        columns = {
+            row[1]: row for row in connection.execute("PRAGMA table_info(usage_events)")
+        }
+        assert all(
+            columns[name][3] == 0
+            for name in (
+                "provider_id",
+                "gateway_model",
+                "provider_model",
+                *token_columns,
+            )
+        )
+        indexes = {
+            row[1]: row for row in connection.execute("PRAGMA index_list(usage_events)")
+        }
+        for name in ("usage_events_final_request", "usage_events_attempt_identity"):
+            assert indexes[name][2] == 1 and indexes[name][4] == 1
+
+        def indexed_columns(name):
+            return [row[2] for row in connection.execute(f"PRAGMA index_info({name})")]
+
+        assert indexed_columns("usage_events_final_request") == ["request_id"]
+        assert indexed_columns("usage_events_attempt_identity") == [
+            "execution_id",
+            "attempt",
+            "record_kind",
+        ]
+        assert indexed_columns("usage_events_created_at") == ["created_at", "id"]
+        assert indexed_columns("usage_events_provider_model") == [
+            "provider_id",
+            "provider_model",
+            "created_at",
+            "id",
+        ]
+        assert indexed_columns("usage_events_gateway_model") == [
+            "gateway_model",
+            "created_at",
+            "id",
+        ]
+
+        insert = (
+            "INSERT INTO usage_events (request_id,execution_id,attempt,record_kind,"
+            "wire_api,outcome,created_at) VALUES (?,?,?,?,'messages','success',1000)"
+        )
+        connection.execute(insert, ("request-1", "execution-1", 1, "final"))
+        connection.execute(insert, ("request-1", "execution-1", 1, "attempt"))
+        with pytest.raises(sqlite3.IntegrityError):
+            connection.execute(insert, ("request-1", "execution-2", 1, "final"))
+        with pytest.raises(sqlite3.IntegrityError):
+            connection.execute(insert, ("request-2", "execution-1", 1, "attempt"))
+        connection.execute(insert, ("request-2", "execution-1", 1, "final"))
+        saved = connection.execute(
+            "SELECT provider_id,gateway_model,provider_model,input_tokens,"
+            "cache_read_tokens,cache_creation_tokens,input_total_tokens,output_tokens,"
+            "reasoning_tokens,total_tokens,estimated_input_tokens FROM usage_events "
+            "WHERE request_id='request-1' AND record_kind='final'"
+        ).fetchone()
+        assert saved == (None,) * 11
+        connection.execute(
+            "UPDATE code_sessions SET context_model='provider/model',"
+            "context_sampled_at=1234 WHERE id='s'"
+        )
+        with pytest.raises(sqlite3.IntegrityError):
+            connection.execute(
+                "UPDATE code_sessions SET context_sampled_at=-1 WHERE id='s'"
+            )
+
+    initialize_database(target)
+    with closing(sqlite3.connect(target)) as connection:
+        assert connection.execute(
+            "SELECT context_model,context_sampled_at FROM code_sessions WHERE id='s'"
+        ).fetchone() == ("provider/model", 1234)
+
+
+@pytest.mark.parametrize(
+    "column",
+    [
+        "attempt",
+        "duration_ms",
+        "input_tokens",
+        "cache_read_tokens",
+        "cache_creation_tokens",
+        "input_total_tokens",
+        "output_tokens",
+        "reasoning_tokens",
+        "total_tokens",
+        "estimated_input_tokens",
+        "created_at",
+    ],
+)
+def test_usage_event_counts_and_timestamps_reject_negative_values(tmp_path, column):
+    target = tmp_path / "fcc.db"
+    initialize_database(target)
+    with (
+        closing(sqlite3.connect(target)) as connection,
+        pytest.raises(sqlite3.IntegrityError),
+    ):
+        connection.execute(
+            f"INSERT INTO usage_events "
+            f"(request_id,record_kind,wire_api,outcome,{column}) "
+            "VALUES ('request','final','messages','success',?)",
+            (-1,),
+        )
+
+
+@pytest.mark.parametrize(
+    ("column", "value"),
+    [
+        ("record_kind", "other"),
+        ("wire_api", "other"),
+        ("outcome", "other"),
+        ("status_code", 99),
+        ("status_code", 600),
+        ("attempt", 0),
+    ],
+)
+def test_usage_event_enums_status_and_attempt_are_checked(tmp_path, column, value):
+    target = tmp_path / "fcc.db"
+    initialize_database(target)
+    with closing(sqlite3.connect(target)) as connection:
+        connection.execute(
+            "INSERT INTO usage_events (request_id,record_kind,wire_api,outcome,"
+            "created_at) VALUES ('request','final','messages','success',1000)"
+        )
+        with pytest.raises(sqlite3.IntegrityError):
+            connection.execute(
+                f"UPDATE usage_events SET {column}=? WHERE request_id='request'",
+                (value,),
+            )
+
+
+def test_attempt_events_require_an_execution_identity(tmp_path):
+    target = tmp_path / "fcc.db"
+    initialize_database(target)
+    with (
+        closing(sqlite3.connect(target)) as connection,
+        pytest.raises(sqlite3.IntegrityError),
+    ):
+        connection.execute(
+            "INSERT INTO usage_events (request_id,record_kind,wire_api,outcome,"
+            "created_at) VALUES ('request','attempt','messages','success',1000)"
+        )
 
 
 def test_two_databases_are_preserved_without_choosing_a_winner(tmp_path):
@@ -524,7 +687,7 @@ def test_orphan_journals_are_not_treated_as_a_fresh_database(
     assert not (tmp_path / "fcc.db").exists()
 
 
-@pytest.mark.parametrize("version", [-1, 6])
+@pytest.mark.parametrize("version", [-1, 7])
 def test_unsupported_version_is_not_moved_or_mutated(tmp_path, version):
     old, target = tmp_path / "code/code.db", tmp_path / "fcc.db"
     historical_database(old, 3)
@@ -590,7 +753,10 @@ def test_failed_rename_preserves_source_and_can_retry(tmp_path, monkeypatch):
     assert old.exists() and not target.exists()
     assert snapshot(old) == before
     initialize_database(target, old)
-    assert snapshot(target) == before
+    after = snapshot(target)
+    for table, rows in before.items():
+        for previous, saved in zip(rows, after[table], strict=True):
+            assert {key: saved[key] for key in previous} == previous
 
 
 @pytest.mark.parametrize("failing_version", [1, 2])
@@ -703,7 +869,57 @@ def test_messaging_schema_failure_rolls_back_without_changing_code_history(
             "SELECT name FROM sqlite_schema WHERE name LIKE 'messaging_%'"
         ).fetchall()
     initialize_database(target)
+    after = snapshot(target)
+    for table, rows in before.items():
+        for previous, saved in zip(rows, after[table], strict=True):
+            assert {key: saved[key] for key in previous} == previous
+
+
+def test_usage_schema_failure_rolls_back_without_changing_saved_history(
+    tmp_path, monkeypatch
+):
+    target = tmp_path / "fcc.db"
+    historical_database(target, 5)
+    before = snapshot(target)
+    migrations = sqlite_database.MIGRATIONS
+
+    def fail(connection):
+        migrations[5][1](connection)
+        raise sqlite3.DatabaseError("interrupted usage schema")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(
+            sqlite_database,
+            "MIGRATIONS",
+            tuple(
+                (version, fail if version == 6 else upgrade)
+                for version, upgrade in migrations
+            ),
+        )
+        with pytest.raises(sqlite3.DatabaseError, match="interrupted"):
+            initialize_database(target)
     assert snapshot(target) == before
+    with closing(sqlite3.connect(target)) as connection:
+        assert connection.execute("PRAGMA user_version").fetchone() == (5,)
+        assert not connection.execute(
+            "SELECT name FROM sqlite_schema WHERE name='usage_events'"
+        ).fetchall()
+        columns = {
+            row[1] for row in connection.execute("PRAGMA table_info(code_sessions)")
+        }
+        assert "context_model" not in columns
+        assert "context_sampled_at" not in columns
+
+    initialize_database(target)
+    after = snapshot(target)
+    for table, rows in before.items():
+        for previous, saved in zip(rows, after[table], strict=True):
+            assert {key: saved[key] for key in previous} == previous
+    with closing(sqlite3.connect(target)) as connection:
+        assert connection.execute("PRAGMA user_version").fetchone() == (6,)
+        assert connection.execute(
+            "SELECT context_model,context_sampled_at FROM code_sessions WHERE id='s'"
+        ).fetchone() == (None, None)
 
 
 def test_busy_wal_is_not_renamed_and_retries_after_reader_closes(tmp_path, monkeypatch):

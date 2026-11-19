@@ -2,22 +2,32 @@
 
 import asyncio
 import codecs
+import re
+from datetime import UTC, datetime
 from time import monotonic
 
 from loguru import logger
 from starlette.datastructures import Headers
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
+from free_claude_code.application.usage_events import (
+    CanonicalUsage,
+    RequestUsageRecord,
+    UsageObservation,
+)
 from free_claude_code.core.anthropic.stream_contracts import SSEEvent
 from free_claude_code.core.anthropic.streaming.decoder import AnthropicSSEDecoder
 from free_claude_code.core.request_outcomes import (
     RequestOutcome,
     current_request_outcome,
+    finalize_request_outcome,
     record_request_exception,
     record_request_failure,
 )
 
 from .generation_paths import generation_api
+from .ports import UsageEventSink
+from .request_ids import new_request_id
 
 _FAILURE_EVENTS = frozenset({"error", "response.error", "response.failed"})
 
@@ -41,8 +51,11 @@ def _observe_event(event: SSEEvent) -> None:
 class RequestOutcomeMiddleware:
     """Observe inference delivery without changing its body or control flow."""
 
-    def __init__(self, app: ASGIApp) -> None:
+    def __init__(
+        self, app: ASGIApp, *, usage_sink: UsageEventSink | None = None
+    ) -> None:
         self._app = app
+        self._usage_sink = usage_sink
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if (
@@ -111,7 +124,6 @@ class RequestOutcomeMiddleware:
                     status_code = 500
             raise
         finally:
-            current_request_outcome.reset(token)
             reason = outcome.failure_reason
             if reason is not None or (status_code is not None and status_code >= 400):
                 result = "failure"
@@ -122,6 +134,25 @@ class RequestOutcomeMiddleware:
                 result, reason = "failure", "incomplete_response"
             else:
                 result = "success"
+            duration_ms = round((monotonic() - started) * 1000, 2)
+            observations = finalize_request_outcome(outcome)
+            if self._usage_sink is not None:
+                record, attempts = _final_usage_record(
+                    scope,
+                    outcome,
+                    observations,
+                    result=result,
+                    status_code=status_code,
+                    duration_ms=duration_ms,
+                    failure_reason=reason,
+                )
+                try:
+                    await self._usage_sink.record_usage(record, attempts)
+                except Exception as exc:
+                    logger.debug(
+                        "Usage finalization failed: exc_type={}", type(exc).__name__
+                    )
+            current_request_outcome.reset(token)
             logger.bind(
                 event="request.completed",
                 wire_api=generation_api(scope["path"]),
@@ -129,6 +160,64 @@ class RequestOutcomeMiddleware:
                 model=outcome.model,
                 status_code=status_code,
                 outcome=result,
-                duration_ms=round((monotonic() - started) * 1000, 2),
+                duration_ms=duration_ms,
                 failure_reason=reason,
             ).info("Inference request {}", result)
+
+
+def _final_usage_record(
+    scope: Scope,
+    outcome: RequestOutcome,
+    observations: tuple[object, ...],
+    *,
+    result: str,
+    status_code: int | None,
+    duration_ms: float,
+    failure_reason: str | None,
+) -> tuple[RequestUsageRecord, tuple[UsageObservation, ...]]:
+    attempts = tuple(
+        observation
+        for observation in observations
+        if isinstance(observation, UsageObservation)
+    )
+    winning = next(
+        (
+            observation
+            for observation in reversed(attempts)
+            if observation.outcome == "succeeded"
+        ),
+        None,
+    )
+    route_matches = (
+        winning is not None
+        and winning.provider_id == outcome.provider_id
+        and winning.provider_model == outcome.model
+    )
+    usage = (
+        winning.usage
+        if route_matches
+        else CanonicalUsage(estimated_input_tokens=outcome.estimated_input_tokens)
+    )
+    request_id = scope.get("state", {}).get("fcc_request_id") or new_request_id()
+    failure_category = (
+        re.sub(r"[^A-Za-z0-9_.-]+", "_", failure_reason)[:64] or "unknown"
+        if failure_reason
+        else None
+    )
+    record = RequestUsageRecord(
+        request_id=request_id,
+        wire_api=generation_api(scope["path"]) or "messages",
+        outcome=result,
+        created_at=datetime.now(UTC),
+        execution_id=winning.execution_id if route_matches else None,
+        attempt=winning.attempt if route_matches else None,
+        protocol=winning.protocol if route_matches else None,
+        usage=usage,
+        provider_id=outcome.provider_id,
+        gateway_model=outcome.gateway_model,
+        provider_model=outcome.model,
+        status_code=status_code,
+        duration_ms=duration_ms,
+        failure_category=failure_category,
+    )
+    return record, attempts

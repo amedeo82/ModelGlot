@@ -2,6 +2,7 @@ import asyncio
 import logging
 from collections.abc import AsyncIterator, Mapping
 from dataclasses import replace
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -12,7 +13,13 @@ from free_claude_code.application.connected_accounts import (
     ConnectedAccountStatus,
 )
 from free_claude_code.application.errors import ApplicationUnavailableError
+from free_claude_code.application.model_catalog import CatalogModel, ModelCatalog
 from free_claude_code.application.model_metadata import ProviderModelInfo
+from free_claude_code.application.usage_events import (
+    CanonicalUsage,
+    RequestUsageRecord,
+    UsageFilters,
+)
 from free_claude_code.config.admin.credentials import CredentialSubmission
 from free_claude_code.config.admin.persistence import PreparedAdminUpdate
 from free_claude_code.config.api_keys import normalize_api_keys
@@ -38,6 +45,7 @@ from free_claude_code.providers.runtime import ProviderRuntime
 from free_claude_code.runtime.application import ApplicationRuntime
 from free_claude_code.runtime.configuration import ConfigurationService
 from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
+from free_claude_code.runtime.usage_events import CodeContextSample, UsageQueryResult
 from tests.providers.support import make_provider_config
 
 
@@ -602,6 +610,132 @@ async def test_cancelled_credential_check_never_commits(tmp_path):
     commit.assert_not_called()
     assert manager.current_generation_id == 1
     await manager.close()
+
+
+@pytest.mark.asyncio
+async def test_token_optimization_delegates_and_close_drains_collector() -> None:
+    manager = ProviderRuntimeManager(_settings("nvidia_nim/model"))
+    collector = MagicMock()
+    collector.collect = AsyncMock(return_value={"schema_version": 1})
+    collector.close = AsyncMock()
+    runtime = ApplicationRuntime(
+        manager,
+        configuration=AsyncMock(spec=ConfigurationService),
+        transcriber=None,
+        token_optimization_collector=collector,
+    )
+
+    assert await runtime.token_optimization() == {"schema_version": 1}
+    collector.collect.assert_awaited_once_with()
+    assert await runtime.close() is True
+    collector.close.assert_awaited_once_with()
+
+
+@pytest.mark.asyncio
+async def test_usage_delegates_and_adds_separate_context_populations() -> None:
+    now = datetime(2026, 11, 18, 12, tzinfo=UTC)
+    sample = RequestUsageRecord(
+        request_id="request",
+        wire_api="chat",
+        outcome="success",
+        created_at=now,
+        usage=CanonicalUsage(input_total_tokens=25),
+        provider_id="nvidia_nim",
+        gateway_model="nvidia_nim/model",
+        provider_model="model",
+    )
+    result = UsageQueryResult(
+        payload={
+            "generated_at": "2026-11-18T12:00:00.000Z",
+            "coverage_start": "2026-11-18T00:00:00.000Z",
+            "coverage_end": "2026-11-18T12:00:00.000Z",
+        },
+        request_samples=(sample,),
+        code_samples=(
+            CodeContextSample(
+                context_model="nvidia_nim/model",
+                context_used_tokens=50,
+                context_sampled_at=now - timedelta(minutes=5),
+            ),
+        ),
+    )
+    store = MagicMock()
+    store.usage = AsyncMock(return_value=result)
+    store.record_usage = AsyncMock()
+    manager = ProviderRuntimeManager(_settings("nvidia_nim/model"))
+    runtime = ApplicationRuntime(
+        manager,
+        configuration=AsyncMock(spec=ConfigurationService),
+        transcriber=None,
+        usage_store=store,
+    )
+    catalog = ModelCatalog(
+        models=(
+            CatalogModel(
+                wire_slug="nvidia_nim/model",
+                provider_model_ref="nvidia_nim/model",
+                display_name="Model",
+                supports_reasoning=None,
+                context_window_tokens=100,
+            ),
+        ),
+        default_model_id="nvidia_nim/model",
+    )
+    filters = UsageFilters(start=now - timedelta(days=1), end=now)
+    with patch(
+        "free_claude_code.runtime.application.read_model_catalog",
+        return_value=catalog,
+    ):
+        payload = await runtime.usage(filters)
+        await runtime.record_usage(sample, ())
+
+    request = payload["context"]["request_input"]
+    code = payload["context"]["code_session_current"]
+    assert request["rows"][0]["utilization_percent"] == 25.0
+    assert request["rows"][0]["kind"] == "request_input"
+    assert code["rows"][0]["utilization_percent"] == 50.0
+    assert code["rows"][0]["kind"] == "code_session_current"
+    assert code["rows"][0]["stale"] is False
+    assert request["available_samples"] == 1
+    assert code["available_samples"] == 1
+    store.record_usage.assert_awaited_once_with(sample, ())
+
+
+@pytest.mark.asyncio
+async def test_usage_context_unknown_limit_never_fabricates_percentage() -> None:
+    now = datetime(2026, 11, 18, 12, tzinfo=UTC)
+    sample = RequestUsageRecord(
+        request_id="request",
+        wire_api="chat",
+        outcome="success",
+        created_at=now,
+        usage=CanonicalUsage(input_total_tokens=25),
+        provider_id="nvidia_nim",
+        provider_model="unknown",
+    )
+    result = UsageQueryResult(
+        payload={
+            "generated_at": "2026-11-18T12:00:00.000Z",
+            "coverage_start": None,
+            "coverage_end": None,
+        },
+        request_samples=(sample,),
+    )
+    store = MagicMock()
+    store.usage = AsyncMock(return_value=result)
+    manager = ProviderRuntimeManager(_settings("nvidia_nim/model"))
+    runtime = ApplicationRuntime(
+        manager,
+        configuration=AsyncMock(spec=ConfigurationService),
+        transcriber=None,
+        usage_store=store,
+    )
+    payload = await runtime.usage(UsageFilters(start=now - timedelta(days=1), end=now))
+    context = payload["context"]["request_input"]
+    assert context["rows"][0]["context_window_tokens"] is None
+    assert context["rows"][0]["utilization_percent"] is None
+    assert context["available_samples"] == 0
+    assert context["unavailable_samples"] == 1
 
 
 @pytest.mark.asyncio

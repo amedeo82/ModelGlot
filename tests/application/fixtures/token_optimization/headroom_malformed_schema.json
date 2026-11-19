@@ -1,0 +1,10 @@
+{
+  "schema_version": 2,
+  "top_model": false,
+  "lifetime": {
+    "tokens_saved": true,
+    "tokens_before": -100,
+    "calls": "invalid",
+    "savings_percent": "NaN"
+  }
+}

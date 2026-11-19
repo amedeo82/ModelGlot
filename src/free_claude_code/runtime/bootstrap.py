@@ -40,6 +40,8 @@ from .codex_catalog import CodexModelCatalogPublisher
 from .configuration import ConfigurationService
 from .provider_manager import ProviderRuntimeManager
 from .sqlite_database import SQLiteDatabase
+from .token_optimization import ExternalTokenOptimizationCollector
+from .usage_events_sqlite import SQLiteUsageEventStore
 from .web_tools.client import HTTPWebToolsClient
 
 
@@ -95,6 +97,8 @@ def build_asgi_app(
         transcriber_factory=_create_transcriber,
         restart_callback=restart_callback,
         connected_accounts={"openai": openai_auth, "github_copilot": copilot_auth},
+        token_optimization_collector=ExternalTokenOptimizationCollector(),
+        usage_store=SQLiteUsageEventStore(database),
     )
     services = ApiServices(
         requests=provider_manager,
@@ -102,6 +106,7 @@ def build_asgi_app(
         tasks=runtime,
         web_tools=HTTPWebToolsClient(),
         code=code_service,
+        usage=runtime,
     )
     return RuntimeASGIApp(create_app(services), runtime)
 

@@ -14,6 +14,10 @@ from free_claude_code.core.continuation_request import ContinuationRequest
 from free_claude_code.core.diagnostics import attach_upstream_error_body
 from free_claude_code.core.failures import ExecutionFailure, FailureKind
 from free_claude_code.core.json_types import JsonObject
+from free_claude_code.core.request_outcomes import (
+    RequestOutcome,
+    current_request_outcome,
+)
 from free_claude_code.core.stream_delivery import (
     StreamDeliveryState,
     bind_stream_delivery,
@@ -82,6 +86,7 @@ class Step:
     frames: tuple[str, ...] = ()
     error: Exception | None = None
     normal_stop: bool = False
+    usage: dict[str, Any] | None = None
 
 
 @dataclass
@@ -154,6 +159,8 @@ async def _run(
                     await scope.attempt.accept()
                 yield StreamOutput((frame,))
             self.stopped = self.step.normal_stop
+            if self.step.usage is not None:
+                self.context.source.observe("messages", {"usage": self.step.usage})
             if self.step.error is not None:
                 raise self.step.error
 
@@ -217,6 +224,87 @@ async def test_success_prepares_before_admission_and_traces_its_lifecycle(record
         ("messages", "m")
     ]
     assert len(record.events("provider.response.completed")) == 1
+
+
+@pytest.mark.asyncio
+async def test_terminal_usage_emits_once_with_stable_routing_identity(record):
+    outcome = RequestOutcome()
+    token = current_request_outcome.set(outcome)
+    try:
+        frames, raised = await _run(
+            record,
+            Step(
+                frames=("ok",),
+                usage={
+                    "input_tokens": 8,
+                    "cache_read_input_tokens": 2,
+                    "cache_creation_input_tokens": 0,
+                    "output_tokens": 3,
+                },
+            ),
+        )
+    finally:
+        current_request_outcome.reset(token)
+
+    assert (frames, raised) == (["ok"], None)
+    assert len(outcome.observations) == 1
+    observation = outcome.observations[0]
+    assert observation.request_id == "loop"
+    assert observation.execution_id
+    assert observation.attempt == 1
+    assert observation.provider_id == "TEST"
+    assert observation.gateway_model == "public"
+    assert observation.provider_model == "m"
+    assert observation.outcome == "succeeded"
+    assert observation.usage.input_total_tokens == 10
+    assert observation.usage.total_tokens == 13
+
+
+@pytest.mark.asyncio
+async def test_retry_usage_is_diagnostic_and_winning_attempt_is_distinct(record):
+    outcome = RequestOutcome()
+    token = current_request_outcome.set(outcome)
+    try:
+        await _run(
+            record,
+            Step(error=_failure(503), usage={"output_tokens": 2}),
+            Step(frames=("ok",), usage={"output_tokens": 5}),
+        )
+    finally:
+        current_request_outcome.reset(token)
+
+    assert [(item.attempt, item.outcome) for item in outcome.observations] == [
+        (1, "failed"),
+        (2, "succeeded"),
+    ]
+    assert [item.usage.output_tokens for item in outcome.observations] == [2, 5]
+
+
+@pytest.mark.asyncio
+async def test_winning_attempt_without_usage_emits_unknown_not_previous_usage(record):
+    outcome = RequestOutcome()
+    token = current_request_outcome.set(outcome)
+    try:
+        await _run(
+            record,
+            Step(error=_failure(503), usage={"output_tokens": 2}),
+            Step(frames=("ok",)),
+        )
+    finally:
+        current_request_outcome.reset(token)
+    assert outcome.observations[-1].outcome == "succeeded"
+    assert outcome.observations[-1].usage.output_tokens is None
+
+
+@pytest.mark.asyncio
+async def test_usage_observer_failure_does_not_change_generation(record, monkeypatch):
+    monkeypatch.setattr(
+        loop_module,
+        "record_terminal_usage",
+        lambda **kwargs: (_ for _ in ()).throw(RuntimeError("telemetry failed")),
+    )
+    frames, raised = await _run(record, Step(frames=("ok",)))
+    assert (frames, raised) == (["ok"], None)
 
 
 @pytest.mark.asyncio

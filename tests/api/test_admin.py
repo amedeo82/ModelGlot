@@ -220,7 +220,14 @@ def _catalog_proxy_env_keys() -> tuple[str, ...]:
 
 
 @pytest.mark.parametrize(
-    "path", ["/admin", "/admin/model_config", "/admin/messaging", "/admin/integrations"]
+    "path",
+    [
+        "/admin",
+        "/admin/model_config",
+        "/admin/messaging",
+        "/admin/integrations",
+        "/admin/token_optimization",
+    ],
 )
 def test_admin_page_is_loopback_only(monkeypatch, tmp_path, path):
     _set_home(monkeypatch, tmp_path)
@@ -264,6 +271,8 @@ def test_admin_page_uses_installed_version(monkeypatch, tmp_path):
     assert 'src="/admin/assets/9.8.7/app-icon.svg"' in response.text
     assert 'href="/admin/assets/9.8.7/admin.css"' in response.text
     assert 'href="/admin/assets/9.8.7/code_sessions.css"' in response.text
+    assert 'href="/admin/assets/9.8.7/token_optimization.css"' in response.text
+    assert 'src="/admin/assets/9.8.7/token_optimization.js"' in response.text
     assert 'src="/admin/assets/9.8.7/model_combobox.js"' in response.text
     assert 'src="/admin/assets/9.8.7/form_controls.js"' in response.text
     assert 'src="/admin/assets/9.8.7/code_sessions.js"' in response.text
@@ -282,6 +291,8 @@ def test_admin_page_uses_installed_version(monkeypatch, tmp_path):
         ("form_controls.js", "text/javascript"),
         ("code_sessions.css", "text/css"),
         ("code_sessions.js", "text/javascript"),
+        ("token_optimization.css", "text/css"),
+        ("token_optimization.js", "text/javascript"),
         ("session_ui.js", "text/javascript"),
         ("model_combobox.js", "text/javascript"),
         ("providers/openrouter.svg", "image/svg+xml"),
@@ -341,6 +352,8 @@ def test_admin_versioned_logo_reuses_packaged_app_icon(monkeypatch, tmp_path):
         f"/admin/assets/{package_version()}/admin.js",
         f"/admin/assets/{package_version()}/code_sessions.css",
         f"/admin/assets/{package_version()}/code_sessions.js",
+        f"/admin/assets/{package_version()}/token_optimization.css",
+        f"/admin/assets/{package_version()}/token_optimization.js",
         f"/admin/assets/{package_version()}/model_combobox.js",
         "/admin/api/config",
     ),
@@ -370,6 +383,16 @@ def test_admin_responses_are_never_cached(monkeypatch, tmp_path, path):
         ),
         (
             f"/admin/assets/{package_version()}/admin.js",
+            "203.0.113.10",
+            403,
+        ),
+        (
+            f"/admin/assets/{package_version()}/token_optimization.css",
+            "203.0.113.10",
+            403,
+        ),
+        (
+            f"/admin/assets/{package_version()}/token_optimization.js",
             "203.0.113.10",
             403,
         ),
@@ -2546,3 +2569,221 @@ def test_admin_launch_url_uses_loopback_for_wildcard_host():
     settings = Settings.model_construct(host="0.0.0.0", port=8082)
 
     assert local_admin_url(settings) == "http://127.0.0.1:8082/admin"
+
+
+def _token_optimization_payload(state="available"):
+    return {
+        "schema_version": 1,
+        "generated_at": "2026-11-17T12:00:00.000Z",
+        "optimizations": {
+            "rtk": {
+                "state": state,
+                "version": "0.44.2" if state == "available" else None,
+                "source": "rtk gain --format json",
+                "basis": "tool_reported",
+                "total_commands": 29 if state == "available" else None,
+                "tokens_before": 19009 if state == "available" else None,
+                "tokens_after": 10289 if state == "available" else None,
+                "tokens_saved": 8720 if state == "available" else None,
+                "savings_percent": 45.873 if state == "available" else None,
+                "message": None
+                if state == "available"
+                else "RTK report is unavailable.",
+            },
+            "headroom": {
+                "state": "available",
+                "version": "0.40.0",
+                "source": "headroom savings --json",
+                "basis": "tool_reported",
+                "tokens_saved": 0,
+                "tokens_before": 0,
+                "calls": 0,
+                "savings_percent": 0.0,
+                "model_attribution": "unknown",
+                "message": None,
+            },
+        },
+        "notices": [],
+    }
+
+
+@pytest.mark.parametrize(
+    "state", ["available", "not_installed", "timeout", "invalid_output", "error"]
+)
+def test_admin_token_optimization_route_preserves_typed_states(state):
+    app = create_test_app()
+    runtime = runtime_for_app(app)
+    payload = _token_optimization_payload(state)
+    with patch.object(runtime, "token_optimization", AsyncMock(return_value=payload)):
+        response = _local_client(app).get("/admin/api/token-optimization")
+    assert response.status_code == 200
+    assert response.json() == payload
+    assert response.headers["cache-control"] == "no-store"
+
+
+def test_admin_token_optimization_route_is_loopback_only():
+    app = create_test_app()
+    runtime = runtime_for_app(app)
+    method = AsyncMock(return_value=_token_optimization_payload())
+    with patch.object(runtime, "token_optimization", method):
+        remote = TestClient(app, client=("203.0.113.10", 50000))
+        response = remote.get("/admin/api/token-optimization")
+    assert response.status_code == 403
+    method.assert_not_awaited()
+
+
+def test_admin_token_optimization_unexpected_failure_is_sanitized():
+    app = create_test_app()
+    runtime = runtime_for_app(app)
+    failure = RuntimeError("C:/private/stderr with credential-like detail")
+    with patch.object(runtime, "token_optimization", AsyncMock(side_effect=failure)):
+        response = _local_client(app).get("/admin/api/token-optimization")
+    assert response.status_code == 500
+    assert response.json() == {"detail": "Token optimization report is unavailable."}
+    assert response.headers["cache-control"] == "no-store"
+    assert "private" not in response.text
+    assert "RuntimeError" not in response.text
+
+
+def test_admin_token_optimization_page_is_loopback_only():
+    app = create_test_app()
+    assert _local_client(app).get("/admin/token_optimization").status_code == 200
+    remote = TestClient(app, client=("203.0.113.10", 50000))
+    assert remote.get("/admin/token_optimization").status_code == 403
+
+
+def _usage_payload():
+    return {
+        "schema_version": 1,
+        "generated_at": "2026-11-18T12:00:00.000Z",
+        "coverage_start": "2026-11-01T00:00:00.000Z",
+        "coverage_end": "2026-11-18T12:00:00.000Z",
+        "retention_days": 30,
+        "storage": "memory",
+        "group_by": "day",
+        "rows": [],
+        "context": {
+            "request_input": {"rows": []},
+            "code_session_current": {"rows": []},
+        },
+        "notices": [],
+    }
+
+
+def test_admin_usage_parses_bounded_filters_and_returns_empty_rows():
+    app = create_test_app()
+    runtime = runtime_for_app(app)
+    method = AsyncMock(return_value=_usage_payload())
+    with patch.object(runtime, "usage", method):
+        response = _local_client(app).get(
+            "/admin/api/usage",
+            params={
+                "from": "2026-11-01T00:00:00Z",
+                "to": "2026-11-18T12:00:00Z",
+                "group_by": "day",
+                "provider_id": "open_router",
+            },
+        )
+    assert response.status_code == 200
+    assert response.json() == _usage_payload()
+    assert response.headers["cache-control"] == "no-store"
+    filters = method.await_args.args[0]
+    assert filters.start.isoformat() == "2026-11-01T00:00:00+00:00"
+    assert filters.end.isoformat() == "2026-11-18T12:00:00+00:00"
+    assert filters.group_by.value == "day"
+    assert filters.provider_id == "open_router"
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"from": "not-a-date"},
+        {"from": "2026-11-01T00:00:00"},
+        {"from": "2026-11-02T00:00:00Z", "to": "2026-11-02T00:00:00Z"},
+        {"from": "2026-10-01T00:00:00Z", "to": "2026-11-18T00:00:00Z"},
+        {"group_by": "unsafe"},
+    ],
+)
+def test_admin_usage_rejects_invalid_filters(params):
+    app = create_test_app()
+    runtime = runtime_for_app(app)
+    method = AsyncMock(return_value=_usage_payload())
+    with patch.object(runtime, "usage", method):
+        response = _local_client(app).get("/admin/api/usage", params=params)
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Invalid usage filters."}
+    assert response.headers["cache-control"] == "no-store"
+    method.assert_not_awaited()
+
+
+def test_admin_usage_is_loopback_only_and_sanitizes_runtime_failures():
+    app = create_test_app()
+    runtime = runtime_for_app(app)
+    method = AsyncMock(side_effect=RuntimeError("C:/private/database error"))
+    with patch.object(runtime, "usage", method):
+        remote = TestClient(app, client=("203.0.113.10", 50000))
+        assert remote.get("/admin/api/usage").status_code == 403
+        method.assert_not_awaited()
+        response = _local_client(app).get("/admin/api/usage")
+    assert response.status_code == 500
+    assert response.json() == {"detail": "Usage report is unavailable."}
+    assert response.headers["cache-control"] == "no-store"
+    assert "private" not in response.text
+
+
+def test_admin_usage_export_matches_filtered_json_and_is_loopback_only():
+    app = create_test_app()
+    runtime = runtime_for_app(app)
+    payload = _usage_payload()
+    payload["rows"] = [
+        {
+            "day": "2026-11-18",
+            "provider_id": "=formula",
+            "gateway_model": "provider/model",
+            "provider_model": "model",
+            "request_count": 2,
+            "successful_count": 1,
+            "failed_count": 1,
+            "cancelled_count": 0,
+            "physical_attempt_count": 2,
+            "failed_attempt_count": 1,
+            "input_tokens": None,
+            "cache_read_tokens": 0,
+            "cache_creation_tokens": None,
+            "input_total_tokens": 10,
+            "output_tokens": 5,
+            "reasoning_tokens": None,
+            "total_tokens": 15,
+            "estimated_input_tokens": 12,
+            "reported_counts": {"output_tokens": 1},
+            "duration_ms": {
+                "average": 10.0,
+                "maximum": 15.0,
+                "reported_count": 2,
+            },
+            "token_basis": "provider_reported",
+            "estimated_basis": "estimated",
+        }
+    ]
+    method = AsyncMock(return_value=payload)
+    params = {
+        "from": "2026-11-01T00:00:00Z",
+        "to": "2026-11-18T12:00:00Z",
+        "group_by": "day",
+    }
+    with patch.object(runtime, "usage", method):
+        remote = TestClient(app, client=("203.0.113.10", 50000))
+        assert remote.get("/admin/api/usage/export").status_code == 403
+        response = _local_client(app).get("/admin/api/usage/export", params=params)
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/csv")
+    assert (
+        response.headers["content-disposition"]
+        == 'attachment; filename="fcc-usage.csv"'
+    )
+    assert response.headers["cache-control"] == "no-store"
+    assert "'=formula" in response.text
+    assert "2026-11-18" in response.text
+    assert "provider_reported" in response.text
+    filters = method.await_args.args[0]
+    assert filters.group_by.value == "day"

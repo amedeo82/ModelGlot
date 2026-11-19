@@ -36,6 +36,8 @@ class CodeSession(Record):
     native_permission_defaults: JsonObject | None = None
     native_may_have_input: bool = False
     context_used_tokens: int | None = Field(default=None, ge=0)
+    context_model: str | None = None
+    context_sampled_at: int | None = Field(default=None, ge=0)
     revision: int = 1
     status: Literal["ready", "deleting", "delete_uncertain"] = "ready"
     error: str | None = None

@@ -1,0 +1,33 @@
+{
+  "summary": {
+    "total_commands": 29,
+    "total_input": 19009,
+    "total_output": 10289,
+    "total_saved": 8720,
+    "avg_savings_pct": 45.87300752275238,
+    "total_time_ms": 115223,
+    "avg_time_ms": 3973
+  },
+  "daily": [
+    {
+      "date": "2026-11-12",
+      "commands": 10,
+      "input_tokens": 8059,
+      "output_tokens": 2910,
+      "saved_tokens": 5149,
+      "savings_pct": 63.89130165032883,
+      "total_time_ms": 1720,
+      "avg_time_ms": 172
+    },
+    {
+      "date": "2026-11-13",
+      "commands": 19,
+      "input_tokens": 10950,
+      "output_tokens": 7379,
+      "saved_tokens": 3571,
+      "savings_pct": 32.61187214611872,
+      "total_time_ms": 113503,
+      "avg_time_ms": 5974
+    }
+  ]
+}

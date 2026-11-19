@@ -585,6 +585,9 @@ class _MessagesAttempt(TransportAttempt):
             raise await messages_status_error(response)
         if forwarding is not None and not forwarding.streaming:
             message = await _read_message(response)
+            self.context.source.observe(
+                "messages", message, continuing=self.context.continuing
+            )
             self._stopped = True
             output = _present_message(message, forwarding.public_model)
             history.accepted()

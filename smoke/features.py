@@ -713,6 +713,28 @@ FEATURE_INVENTORY: tuple[FeatureCoverage, ...] = (
         "invalid request path is required; provider error path requires provider",
     ),
     FeatureCoverage(
+        "token_optimization_admin",
+        "Read-only Admin separates tool-reported optimization from provider usage",
+        (
+            "tests/application/test_token_optimization.py",
+            "tests/application/test_usage_events.py",
+            "tests/core/test_request_outcome_state.py",
+            "tests/providers/test_usage_observation.py",
+            "tests/runtime/test_token_optimization_collector.py",
+            "tests/runtime/test_usage_event_store.py",
+            "tests/runtime/test_usage_events_sqlite.py",
+            "tests/api/test_admin.py",
+            "tests/api/test_usage_csv.py",
+            "e2e/test_token_optimization_admin.py",
+        ),
+        (),
+        (),
+        (),
+        (),
+        "always runnable with injected process results and deterministic browser routes",
+        "local-only optional-tool reporting needs no live external-tool smoke; unit, API, and Playwright contracts own the product behavior",
+    ),
+    FeatureCoverage(
         "descriptive_model_display_names",
         "Client model discovery shows descriptive titles without changing routing identity",
         (

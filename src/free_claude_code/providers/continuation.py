@@ -24,6 +24,45 @@ from free_claude_code.core.trace import trace_event
 
 from .admission import ProviderExecution
 
+_USAGE_FIELDS = {
+    "messages": {
+        "input_tokens",
+        "output_tokens",
+        "cache_read_input_tokens",
+        "cache_creation_input_tokens",
+        "reasoning_tokens",
+    },
+    "chat": {
+        "prompt_tokens",
+        "completion_tokens",
+        "total_tokens",
+        "prompt_cache_hit_tokens",
+        "prompt_cache_miss_tokens",
+        "prompt_tokens_details",
+        "completion_tokens_details",
+    },
+    "responses": {
+        "input_tokens",
+        "output_tokens",
+        "total_tokens",
+        "input_tokens_details",
+        "output_tokens_details",
+    },
+    "gemini": {
+        "promptTokenCount",
+        "cachedContentTokenCount",
+        "candidatesTokenCount",
+        "thoughtsTokenCount",
+        "totalTokenCount",
+    },
+}
+_USAGE_DETAIL_FIELDS = {
+    "cached_tokens",
+    "cache_write_tokens",
+    "cache_creation_tokens",
+    "reasoning_tokens",
+}
+
 
 class SourceRecoveryState:
     """Native source evidence cannot be inferred from buffered public events."""
@@ -44,6 +83,8 @@ class SourceRecoveryState:
         self._pending_reasoning: set[int | str] = set()
         self._signed: set[int | str] = set()
         self._handoff_blocked = False
+        self._usage_protocol: UpstreamProtocol | None = None
+        self._usage: dict[str, Any] = {}
 
     @property
     def can_handoff(self) -> bool:
@@ -65,6 +106,28 @@ class SourceRecoveryState:
             can_handoff=self.can_handoff,
         )
 
+    def usage_snapshot(self) -> tuple[UpstreamProtocol, dict[str, Any]] | None:
+        """Return only allow-listed native usage fields collected for this attempt."""
+
+        if self._usage_protocol is None:
+            return None
+        return self._usage_protocol, dict(self._usage)
+
+    def _observe_usage(self, protocol: UpstreamProtocol, usage: dict[str, Any]) -> None:
+        self._usage_protocol = protocol
+        for key in _USAGE_FIELDS[protocol]:
+            if key not in usage:
+                continue
+            value = usage[key]
+            if key.endswith("_details") and isinstance(value, dict):
+                self._usage[key] = {
+                    detail: value[detail]
+                    for detail in _USAGE_DETAIL_FIELDS
+                    if detail in value
+                }
+            else:
+                self._usage[key] = value
+
     def observe(
         self,
         protocol: UpstreamProtocol,
@@ -78,7 +141,10 @@ class SourceRecoveryState:
             usage = payload.get("message", {}).get("usage")
         elif protocol == "responses":
             usage = payload.get("response", {}).get("usage")
+        elif protocol == "gemini":
+            usage = payload.get("usageMetadata")
         if isinstance(usage, dict) and usage:
+            self._observe_usage(protocol, usage)
             trace_event(
                 stage="provider",
                 event="provider.attempt.usage",

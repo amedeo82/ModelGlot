@@ -2006,6 +2006,8 @@ async def test_context_usage_is_an_absolute_deduplicated_session_snapshot(code):
         assert event.event == "session.updated"
         assert event.data["session"]["context_used_tokens"] == 90_000
         assert after.session.context_used_tokens == 90_000
+        assert after.session.context_model == after.session.model
+        assert after.session.context_sampled_at is not None
         assert after.session.revision == before.session.revision
         assert after.session.updated_at == before.session.updated_at
         assert (
@@ -2044,6 +2046,9 @@ async def test_context_usage_is_retained_across_model_changes(code):
         session.id, detail.session.revision, {"model": "provider/other"}
     )
     assert changed.context_used_tokens == 40_000
+    assert changed.model == "provider/other"
+    assert changed.context_model == "provider/model"
+    assert changed.context_sampled_at is not None
     restored = await service.update_settings(
         session.id, changed.revision, {"model": "provider/model"}
     )

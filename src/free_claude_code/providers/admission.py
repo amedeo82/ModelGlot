@@ -133,6 +133,11 @@ class ProviderExecution:
         return self._delivery
 
     @property
+    def provider_id(self) -> str:
+        """Canonical routing id, distinct from a transport display label."""
+        return self._controller._provider_name
+
+    @property
     def execution_id(self) -> str:
         return self._execution_id
 
@@ -338,6 +343,11 @@ class ProviderAttempt:
         self._resolved = False
         self._accepted = False
         self._closed = False
+
+    @property
+    def ordinal(self) -> int:
+        """Stable physical-attempt ordinal captured at admission."""
+        return self._claim.ordinal
 
     @property
     def accepted(self) -> bool:

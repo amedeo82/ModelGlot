@@ -11,6 +11,11 @@ from free_claude_code.application.connected_accounts import (
 )
 from free_claude_code.application.model_metadata import ProviderModelRefreshResult
 from free_claude_code.application.ports import RequestRuntimePort, TaskController
+from free_claude_code.application.usage_events import (
+    RequestUsageRecord,
+    UsageFilters,
+    UsageObservation,
+)
 from free_claude_code.application.web_tools.ports import WebToolsPort
 from free_claude_code.config.admin.custom_providers import CustomProviderMutation
 from free_claude_code.config.admin.state import ConfigInputValue, ValueState
@@ -31,6 +36,10 @@ class AdminRuntimePort(Protocol):
     async def admin_values(self) -> ValueState: ...
 
     async def admin_status(self) -> JsonObject: ...
+
+    async def token_optimization(self) -> JsonObject: ...
+
+    async def usage(self, filters: UsageFilters) -> JsonObject: ...
 
     async def claude_vscode_status(self) -> JsonObject: ...
 
@@ -109,6 +118,16 @@ class AdminRuntimePort(Protocol):
     ) -> ConnectedAccountStatus: ...
 
 
+class UsageEventSink(Protocol):
+    """Best-effort final request telemetry owned by the runtime."""
+
+    async def record_usage(
+        self,
+        record: RequestUsageRecord,
+        attempts: tuple[UsageObservation, ...],
+    ) -> None: ...
+
+
 @dataclass(frozen=True, slots=True)
 class ApiServices:
     """Complete runtime boundary required to construct the API application."""
@@ -118,3 +137,4 @@ class ApiServices:
     tasks: TaskController
     web_tools: WebToolsPort
     code: CodeApplicationPort | None = None
+    usage: UsageEventSink | None = None

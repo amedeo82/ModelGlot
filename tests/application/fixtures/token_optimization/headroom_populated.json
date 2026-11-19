@@ -1,0 +1,22 @@
+{
+  "schema_version": 2,
+  "top_model": "provider/example-model",
+  "lifetime": {
+    "tokens_saved": 4200,
+    "tokens_before": 12000,
+    "cost_usd": 0.42,
+    "cost_effective_usd": 0.21,
+    "basis": "list",
+    "calls": 18,
+    "savings_percent": 35.0,
+    "new_input_tokens": 7800,
+    "new_input_savings_percent": 35.0
+  },
+  "windows": {
+    "today": {},
+    "last_7_days": {},
+    "last_30_days": {}
+  },
+  "by_model": [],
+  "by_client": []
+}

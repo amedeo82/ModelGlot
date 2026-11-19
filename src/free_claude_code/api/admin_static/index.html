@@ -7,6 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="/admin/assets/__FCC_VERSION__/app-icon.svg" />
     <link rel="stylesheet" href="/admin/assets/__FCC_VERSION__/admin.css" />
     <link rel="stylesheet" href="/admin/assets/__FCC_VERSION__/code_sessions.css" />
+    <link rel="stylesheet" href="/admin/assets/__FCC_VERSION__/token_optimization.css" />
     <link rel="stylesheet" href="/admin/assets/__FCC_VERSION__/session_layout.css" />
   </head>
   <body>
@@ -234,6 +235,172 @@
             </dialog>
           </section>
 
+          <section
+            id="view-token_optimization"
+            class="admin-view token-optimization-view"
+            data-view="token_optimization"
+            aria-labelledby="tokenOptimizationHeading"
+            hidden
+          >
+            <div id="tokenOptimizationRoot" class="token-optimization-root">
+              <div class="token-optimization-toolbar">
+                <div>
+                  <h3 id="tokenOptimizationHeading">External tool summaries</h3>
+                  <p>Read-only, aggregate counters reported independently by RTK and Headroom.</p>
+                </div>
+                <div class="token-optimization-actions">
+                  <p id="tokenOptimizationLastRefresh" class="token-optimization-last-refresh">
+                    Last refresh: <time id="tokenOptimizationGeneratedAt">Not available</time>
+                  </p>
+                  <button
+                    id="tokenOptimizationRefresh"
+                    class="secondary-button"
+                    type="button"
+                    aria-controls="tokenOptimizationCards"
+                    aria-busy="false"
+                  >Refresh</button>
+                </div>
+              </div>
+
+              <p
+                id="tokenOptimizationLoading"
+                class="token-optimization-region"
+                role="status"
+                aria-live="polite"
+                hidden
+              >Loading token optimization reports…</p>
+              <p
+                id="tokenOptimizationError"
+                class="token-optimization-region error"
+                role="alert"
+                hidden
+              ></p>
+              <p
+                id="tokenOptimizationEmpty"
+                class="token-optimization-region"
+                role="status"
+                hidden
+              >No available tool-reported savings. Unavailable or zero counters do not prove tool inactivity.</p>
+
+              <div id="tokenOptimizationCards" class="token-optimization-grid" hidden>
+                <article
+                  id="tokenOptimizationRtk"
+                  class="token-optimization-card"
+                  data-token-optimization-card="rtk"
+                  aria-labelledby="tokenOptimizationRtkTitle"
+                >
+                  <div class="token-optimization-card-heading">
+                    <h4 id="tokenOptimizationRtkTitle">RTK</h4>
+                    <span id="tokenOptimizationRtkState" class="token-optimization-state">Not loaded</span>
+                  </div>
+                  <dl class="token-optimization-metadata">
+                    <div><dt>Version</dt><dd data-field="version">Not reported</dd></div>
+                    <div><dt>Source</dt><dd><code data-field="source">rtk gain --format json</code></dd></div>
+                    <div><dt>Basis</dt><dd data-field="basis">tool_reported</dd></div>
+                  </dl>
+                  <dl class="token-optimization-counters">
+                    <div class="token-optimization-primary-counter"><dt>Tokens saved</dt><dd data-counter="tokens_saved">Not reported</dd></div>
+                    <div><dt>Commands</dt><dd data-counter="total_commands">Not reported</dd></div>
+                    <div><dt>Tokens before</dt><dd data-counter="tokens_before">Not reported</dd></div>
+                    <div><dt>Tokens after</dt><dd data-counter="tokens_after">Not reported</dd></div>
+                    <div><dt>Savings</dt><dd data-counter="savings_percent">Not reported</dd></div>
+                  </dl>
+                  <p class="token-optimization-card-message" data-field="message" role="status" hidden></p>
+                </article>
+
+                <article
+                  id="tokenOptimizationHeadroom"
+                  class="token-optimization-card"
+                  data-token-optimization-card="headroom"
+                  aria-labelledby="tokenOptimizationHeadroomTitle"
+                >
+                  <div class="token-optimization-card-heading">
+                    <h4 id="tokenOptimizationHeadroomTitle">Headroom</h4>
+                    <span id="tokenOptimizationHeadroomState" class="token-optimization-state">Not loaded</span>
+                  </div>
+                  <dl class="token-optimization-metadata">
+                    <div><dt>Version</dt><dd data-field="version">Not reported</dd></div>
+                    <div><dt>Source</dt><dd><code data-field="source">headroom savings --json</code></dd></div>
+                    <div><dt>Basis</dt><dd data-field="basis">tool_reported</dd></div>
+                  </dl>
+                  <dl class="token-optimization-counters">
+                    <div class="token-optimization-primary-counter"><dt>Tokens saved</dt><dd data-counter="tokens_saved">Not reported</dd></div>
+                    <div><dt>Calls</dt><dd data-counter="calls">Not reported</dd></div>
+                    <div><dt>Tokens before</dt><dd data-counter="tokens_before">Not reported</dd></div>
+                    <div><dt>Savings</dt><dd data-counter="savings_percent">Not reported</dd></div>
+                  </dl>
+                  <p class="token-optimization-card-message" data-field="message" role="status" hidden></p>
+                </article>
+              </div>
+
+              <aside class="token-optimization-methodology" aria-labelledby="tokenOptimizationMethodologyTitle">
+                <h4 id="tokenOptimizationMethodologyTitle">Methodology</h4>
+                <p>RTK and Headroom maintain separate, potentially overlapping ledgers. Their tool-reported savings must not be added together.</p>
+                <p>A zero or unavailable report does not prove inactivity. These summaries are not a provider billing statement.</p>
+                <p>RTK operates before model selection; its savings are not attributed to a model.</p>
+              </aside>
+
+              <section class="usage-dashboard" aria-labelledby="usageDashboardTitle">
+                <div class="section-heading">
+                  <div>
+                    <h3 id="usageDashboardTitle">FCC provider usage</h3>
+                    <p>Logical requests and provider-reported tokens are separate from external-tool savings.</p>
+                  </div>
+                  <a id="usageExport" class="secondary-button" href="/admin/api/usage/export?group_by=day" download>Export CSV</a>
+                </div>
+                <form id="usageFilters" class="usage-filters" autocomplete="off" data-1p-ignore data-bwignore data-form-type="other">
+                  <label>Group by
+                    <select id="usageGroupBy" name="group_by">
+                      <option value="day" selected>Day (UTC)</option>
+                      <option value="model">Provider and model</option>
+                      <option value="provider">Provider</option>
+                    </select>
+                  </label>
+                  <label>From (UTC)<input id="usageFrom" name="from" type="datetime-local" step="1" autocomplete="off" data-1p-ignore data-bwignore data-form-type="other"></label>
+                  <label>To (UTC)<input id="usageTo" name="to" type="datetime-local" step="1" autocomplete="off" data-1p-ignore data-bwignore data-form-type="other"></label>
+                  <button id="usageRefresh" class="secondary-button" type="submit">Apply filters</button>
+                </form>
+                <p id="usageCoverage" class="usage-coverage">No usage report loaded.</p>
+                <p id="usageLoading" class="token-optimization-region" role="status" hidden>Loading FCC provider usage…</p>
+                <p id="usageError" class="token-optimization-region error" role="alert" hidden></p>
+                <p id="usageEmpty" class="token-optimization-region" role="status" hidden>No logical requests are retained for this time window and filter.</p>
+                <div class="usage-table-wrap">
+                  <table id="usageTable" class="usage-table">
+                    <caption>Visible filtered aggregate rows used by the CSV export</caption>
+                    <thead><tr><th>Day (UTC)</th><th>Provider</th><th>Gateway model</th><th>Provider model</th><th>Requests</th><th>Successful</th><th>Failed</th><th>Cancelled</th><th>Attempts</th><th>Input total</th><th>Output</th><th>Cache read</th><th>Estimated input</th></tr></thead>
+                    <tbody id="usageRows"></tbody>
+                  </table>
+                </div>
+              </section>
+
+              <section class="context-dashboard" aria-labelledby="contextDashboardTitle">
+                <h3 id="contextDashboardTitle">Context utilization</h3>
+                <p>Request input and current Code session occupancy are distinct populations; their percentages are never combined.</p>
+                <div class="context-grid">
+                  <article aria-labelledby="requestContextTitle">
+                    <h4 id="requestContextTitle">Request input</h4>
+                    <p id="requestContextSummary">No samples loaded.</p>
+                    <div class="usage-table-wrap"><table class="usage-table"><thead><tr><th>Provider / model</th><th>Used</th><th>Limit</th><th>Utilization</th><th>Sampled at</th></tr></thead><tbody id="requestContextRows"></tbody></table></div>
+                  </article>
+                  <article aria-labelledby="codeContextTitle">
+                    <h4 id="codeContextTitle">Code session current occupancy</h4>
+                    <p id="codeContextSummary">No samples loaded.</p>
+                    <div class="usage-table-wrap"><table class="usage-table"><thead><tr><th>Provider / model</th><th>Used</th><th>Limit</th><th>Utilization</th><th>State</th></tr></thead><tbody id="codeContextRows"></tbody></table></div>
+                  </article>
+                </div>
+              </section>
+
+              <section class="usage-trends" aria-labelledby="usageTrendsTitle">
+                <h3 id="usageTrendsTitle">Daily trends</h3>
+                <p>Charts use separate bases and are never stacked or added. UTC buckets for the current day are partial.</p>
+                <div class="trend-grid">
+                  <article aria-labelledby="fccTrendTitle"><h4 id="fccTrendTitle">FCC output tokens</h4><p>Basis: provider_reported · Source: logical successful requests</p><div id="fccTrend" class="trend-chart" role="img" aria-label="FCC daily output tokens; values are listed below"></div><ul id="fccTrendValues" class="trend-values"></ul></article>
+                  <article aria-labelledby="rtkTrendTitle"><h4 id="rtkTrendTitle">RTK tokens saved</h4><p>Basis: tool_reported · Source: rtk gain --daily --format json</p><div id="rtkTrend" class="trend-chart" role="img" aria-label="RTK daily saved tokens; values are listed below"></div><ul id="rtkTrendValues" class="trend-values"></ul></article>
+                </div>
+              </section>
+            </div>
+          </section>
+
           <section id="view-code" class="admin-view" data-view="code" hidden>
             <div id="codeRoot" class="code-root session-root" aria-live="off"></div>
           </section>
@@ -273,6 +440,7 @@
     <script src="/admin/assets/__FCC_VERSION__/api_key_editor.js"></script>
     <script src="/admin/assets/__FCC_VERSION__/session_ui.js"></script>
     <script src="/admin/assets/__FCC_VERSION__/code_sessions.js"></script>
+    <script src="/admin/assets/__FCC_VERSION__/token_optimization.js"></script>
     <script src="/admin/assets/__FCC_VERSION__/admin.js"></script>
   </body>
 </html>

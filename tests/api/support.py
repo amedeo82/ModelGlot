@@ -18,6 +18,9 @@ from free_claude_code.providers.runtime import ProviderRuntime
 from free_claude_code.runtime.application import ApplicationRuntime, RestartCallback
 from free_claude_code.runtime.configuration import ConfigurationService
 from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
+from free_claude_code.runtime.token_optimization import (
+    ExternalTokenOptimizationCollector,
+)
 from tests.config.credential_support import credential_edit
 from tests.web_tools_support import StubWebToolsClient
 
@@ -64,6 +67,7 @@ def create_test_app(
     restart_callback: RestartCallback | None = None,
     connected_accounts: Mapping[str, ConnectedAccountPort] | None = None,
     code: CodeApplicationPort | None = None,
+    token_optimization_collector: ExternalTokenOptimizationCollector | None = None,
 ) -> FastAPI:
     """Build an API app with explicit in-memory runtime services."""
     store = ManagedConfigStore()
@@ -105,6 +109,7 @@ def create_test_app(
         transcriber=None,
         restart_callback=restart_callback,
         connected_accounts=connected_accounts,
+        token_optimization_collector=token_optimization_collector,
     )
     return create_app(
         ApiServices(
@@ -113,6 +118,7 @@ def create_test_app(
             tasks=runtime,
             code=code,
             web_tools=StubWebToolsClient(),
+            usage=runtime,
         )
     )
 

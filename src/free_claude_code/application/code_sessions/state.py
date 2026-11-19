@@ -371,7 +371,13 @@ class SessionState:
         if used_tokens is None or used_tokens == self._session.context_used_tokens:
             return None
         return SessionProgress(
-            self._session.model_copy(update={"context_used_tokens": used_tokens})
+            self._session.model_copy(
+                update={
+                    "context_used_tokens": used_tokens,
+                    "context_model": self._session.model,
+                    "context_sampled_at": now_ms(),
+                }
+            )
         )
 
     def match_history(

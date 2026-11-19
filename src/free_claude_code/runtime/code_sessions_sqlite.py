@@ -220,6 +220,8 @@ def _write_session(
             "reasoning_effort",
             "mode",
             "context_used_tokens",
+            "context_model",
+            "context_sampled_at",
             "revision",
             "updated_at",
         }
@@ -229,6 +231,8 @@ def _write_session(
             "native_permission_defaults",
             "native_may_have_input",
             "context_used_tokens",
+            "context_model",
+            "context_sampled_at",
             "revision",
             "updated_at",
             "status",

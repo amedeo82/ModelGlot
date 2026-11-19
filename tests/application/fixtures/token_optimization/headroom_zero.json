@@ -1,0 +1,22 @@
+{
+  "schema_version": 2,
+  "top_model": "unknown",
+  "lifetime": {
+    "tokens_saved": 0,
+    "tokens_before": 0,
+    "cost_usd": 0.0,
+    "cost_effective_usd": 0.0,
+    "basis": "list",
+    "calls": 0,
+    "savings_percent": 0.0,
+    "new_input_tokens": 0,
+    "new_input_savings_percent": 0.0
+  },
+  "windows": {
+    "today": {},
+    "last_7_days": {},
+    "last_30_days": {}
+  },
+  "by_model": [],
+  "by_client": []
+}

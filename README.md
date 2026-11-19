@@ -57,6 +57,18 @@ Free-tier availability and limits are controlled by each provider and may change
   <p><em>A native Codex session in FCC's browser UI.</em></p>
 </div>
 
+## Token optimization and provider usage
+
+Open **Admin UI → Token optimization** for a local-only, read-only dashboard with no Apply action.
+
+- **RTK and Headroom remain separate.** RTK summaries and UTC daily trends come from bounded executions of `rtk gain --format json`, `rtk gain --daily --format json`, and `rtk --version`. Headroom summaries come from `headroom savings --json` and `headroom --version`. Missing tools, timeouts, invalid output, and zero reports have distinct states and do not prove tool inactivity. All values are `tool_reported`; savings are never added across tools or presented as provider usage, billing, or monetary savings.
+- **FCC usage uses provider observations.** A logical client request is finalized once, using its winning terminal attempt; retries, fallback attempts, failed-attempt tokens, and pre-flight input estimates remain separate. Missing provider values stay unknown rather than becoming zero. The dashboard can group retained usage by model, provider, or UTC day over a bounded interval of at most 31 days.
+- **Context populations are not combined.** Provider-reported request input and current Code session occupancy have separate rows, averages, maxima, coverage, and stale/unknown states. Percentages appear only with a positive provider-confirmed context limit and a sample timestamp; the 200k client default is not treated as a confirmed limit.
+- **Retention and export are explicit.** Production usage metadata shares FCC's SQLite database, with 30-day retention and a 50,000-row cap. Coverage and storage provenance are shown in Admin. In-memory embeddings are labeled as resetting on restart. CSV export contains the same filtered aggregate rows visible in the table (up to 5,000 rows), their basis and coverage, and no additional totals or hidden records.
+- **Only minimal metadata is retained.** No prompts, completions, tool arguments, credentials, local ledger paths, or raw subprocess output are stored or returned. Admin pages and APIs remain loopback-only and `Cache-Control: no-store`.
+
+Approximate cost estimation is not enabled. External tool installation and optimization policy are unchanged.
+
 ## Quick Start
 
 <a id="install"></a>

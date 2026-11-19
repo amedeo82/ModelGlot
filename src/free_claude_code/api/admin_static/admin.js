@@ -68,6 +68,13 @@ const VIEW_GROUPS = [
     containerId: "view-integrations",
   },
   {
+    id: "token_optimization",
+    label: "Token optimization",
+    title: "Token optimization",
+    sections: [],
+    containerId: "tokenOptimizationRoot",
+  },
+  {
     id: "code",
     label: "Code sessions",
     title: "Code sessions",
@@ -298,7 +305,7 @@ function setActiveView(viewId, { scroll = false } = {}) {
   document.querySelector(".app-shell").classList.toggle("session-active", sessionActive);
   document.querySelector(".main").classList.toggle("session-main", sessionActive);
   document.querySelector(".topbar").hidden = sessionActive;
-  document.querySelector(".action-bar").hidden = sessionActive || activeView.id === "integrations";
+  document.querySelector(".action-bar").hidden = sessionActive || ["integrations", "token_optimization"].includes(activeView.id);
 
   document.querySelectorAll(".nav-link").forEach((link) => {
     const selected = link.dataset.view === activeView.id;
@@ -321,6 +328,7 @@ function setActiveView(viewId, { scroll = false } = {}) {
   }
   if (activeView.id === "code") window.CodeSessions.activate(window.location.pathname);
   else window.CodeSessions.deactivate();
+  void window.fccTokenOptimization?.setActive(activeView.id === "token_optimization", api);
   if (activeView.id === "integrations") {
     refreshClaudeIntegration();
     refreshClaudeOnboarding();

@@ -6,6 +6,8 @@ import logging
 import uuid
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import replace
+from datetime import datetime, timedelta
+from decimal import ROUND_HALF_UP, Decimal
 
 from loguru import logger
 
@@ -18,8 +20,14 @@ from free_claude_code.application.connected_accounts import (
 from free_claude_code.application.errors import (
     ApplicationUnavailableError,
 )
+from free_claude_code.application.model_catalog import read_model_catalog
 from free_claude_code.application.model_metadata import ProviderModelRefreshResult
 from free_claude_code.application.ports import StopResult
+from free_claude_code.application.usage_events import (
+    RequestUsageRecord,
+    UsageFilters,
+    UsageObservation,
+)
 from free_claude_code.config.admin.custom_providers import CustomProviderMutation
 from free_claude_code.config.admin.persistence import (
     PreparedAdminUpdate,
@@ -48,6 +56,13 @@ from .messaging_service import MessagingService
 from .provider_manager import ProviderRuntimeManager
 from .retired_chat import remove_retired_chat_history
 from .sqlite_database import SQLiteDatabase
+from .token_optimization import ExternalTokenOptimizationCollector
+from .usage_events import (
+    InMemoryUsageEventStore,
+    UsageEventStore,
+    UsageQueryResult,
+    timestamp,
+)
 
 RestartCallback = Callable[[], None]
 
@@ -113,11 +128,17 @@ class ApplicationRuntime:
         | None = None,
         restart_callback: RestartCallback | None = None,
         connected_accounts: Mapping[str, ConnectedAccountPort] | None = None,
+        token_optimization_collector: ExternalTokenOptimizationCollector | None = None,
+        usage_store: UsageEventStore | None = None,
     ) -> None:
         self.provider_manager = provider_manager
         self._configuration = configuration
         self._code_service = code_service
         self._database = database
+        self._token_optimization = token_optimization_collector or (
+            ExternalTokenOptimizationCollector(executable_resolver=lambda _: None)
+        )
+        self._usage_store = usage_store or InMemoryUsageEventStore()
         self._folder_picker = NativeFolderPicker()
         self._restart_callback = restart_callback
         self._connected_accounts = dict(connected_accounts or {})
@@ -199,6 +220,11 @@ class ApplicationRuntime:
                     )
                 )
                 self._messaging.start()
+                self._startup_tasks.append(
+                    asyncio.create_task(
+                        self._start_usage_store(), name="fcc-usage-startup"
+                    )
+                )
                 if self._code_service is not None:
                     self._startup_tasks.append(
                         asyncio.create_task(
@@ -224,6 +250,16 @@ class ApplicationRuntime:
         logging.getLogger("uvicorn.error").info(
             "Admin UI: %s (local-only)", local_admin_url(self.settings)
         )
+
+    async def _start_usage_store(self) -> None:
+        """Usage storage is optional and never blocks HTTP or generation."""
+
+        try:
+            await self._usage_store.start()
+        except Exception as exc:
+            logger.warning(
+                "Usage storage initialization failed: exc_type={}", type(exc).__name__
+            )
 
     def begin_shutdown(self) -> None:
         """Finish indefinite observer responses before the server drains HTTP."""
@@ -483,6 +519,20 @@ class ApplicationRuntime:
             },
         }
 
+    async def token_optimization(self) -> JsonObject:
+        return await self._token_optimization.collect()
+
+    async def record_usage(
+        self,
+        record: RequestUsageRecord,
+        attempts: tuple[UsageObservation, ...],
+    ) -> None:
+        await self._usage_store.record_usage(record, attempts)
+
+    async def usage(self, filters: UsageFilters) -> JsonObject:
+        result = await self._usage_store.usage(filters)
+        return _with_context_utilization(self, result)
+
     async def test_provider(self, provider_id: str) -> JsonObject:
         result = await self.provider_manager.refresh_provider(provider_id)
         if result.failed_provider_ids:
@@ -600,6 +650,12 @@ class ApplicationRuntime:
         return result
 
     async def _close_owned_resources(self) -> bool:
+        if not await best_effort(
+            "token_optimization.close", self._token_optimization.close()
+        ):
+            return False
+        if not await best_effort("usage_store.close", self._usage_store.close()):
+            return False
         if not await best_effort("folder_picker.close", self._folder_picker.close()):
             return False
         if not await self._messaging.close_delivery():
@@ -647,3 +703,149 @@ class ApplicationRuntime:
                 f"Provider {provider_id!r} does not support connected-account login."
             )
         return manager
+
+
+def _with_context_utilization(
+    runtime: ApplicationRuntime, result: UsageQueryResult
+) -> JsonObject:
+    try:
+        limits = {
+            model.provider_model_ref: model.context_window_tokens
+            for model in read_model_catalog(runtime.provider_manager).models
+        }
+    except Exception as exc:
+        logger.debug("Context limits unavailable: exc_type={}", type(exc).__name__)
+        limits = {}
+    generated_at = datetime.fromisoformat(
+        str(result.payload["generated_at"]).replace("Z", "+00:00")
+    )
+    request_rows = []
+    for sample in result.request_samples:
+        reference = (
+            f"{sample.provider_id}/{sample.provider_model}"
+            if sample.provider_id and sample.provider_model
+            else None
+        )
+        request_rows.append(
+            _context_row(
+                kind="request_input",
+                provider_id=sample.provider_id,
+                gateway_model=sample.gateway_model,
+                provider_model=sample.provider_model,
+                used=sample.usage.input_total_tokens,
+                limit=limits.get(reference) if reference else None,
+                sampled_at=sample.created_at,
+                stale=False,
+            )
+        )
+    code_rows = []
+    for sample in result.code_samples:
+        provider_id, separator, provider_model = (sample.context_model or "").partition(
+            "/"
+        )
+        code_rows.append(
+            _context_row(
+                kind="code_session_current",
+                provider_id=provider_id if separator else None,
+                gateway_model=sample.context_model,
+                provider_model=provider_model if separator else None,
+                used=sample.context_used_tokens,
+                limit=limits.get(sample.context_model)
+                if sample.context_model
+                else None,
+                sampled_at=sample.context_sampled_at,
+                stale=(
+                    sample.context_sampled_at is None
+                    or generated_at - sample.context_sampled_at > timedelta(minutes=15)
+                ),
+            )
+        )
+    result.payload["context"] = {
+        "request_input": _context_summary(
+            request_rows,
+            population="successful provider-reported request inputs",
+            coverage_start=result.payload["coverage_start"],
+            coverage_end=result.payload["coverage_end"],
+        ),
+        "code_session_current": _context_summary(
+            code_rows,
+            population="current Code session context snapshots",
+            coverage_start=result.payload["coverage_start"],
+            coverage_end=result.payload["coverage_end"],
+        ),
+    }
+    return result.payload
+
+
+def _context_row(
+    *,
+    kind: str,
+    provider_id: str | None,
+    gateway_model: str | None,
+    provider_model: str | None,
+    used: int | None,
+    limit: int | None,
+    sampled_at,
+    stale: bool,
+) -> JsonObject:
+    confirmed_limit = (
+        limit
+        if isinstance(limit, int) and not isinstance(limit, bool) and limit > 0
+        else None
+    )
+    percentage = None
+    if (
+        used is not None
+        and used >= 0
+        and confirmed_limit is not None
+        and sampled_at is not None
+    ):
+        percentage = float(
+            (Decimal(used * 100) / Decimal(confirmed_limit)).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
+        )
+    return {
+        "kind": kind,
+        "basis": "provider_reported",
+        "provider_id": provider_id,
+        "gateway_model": gateway_model,
+        "provider_model": provider_model,
+        "context_used_tokens": used,
+        "context_window_tokens": confirmed_limit,
+        "utilization_percent": percentage,
+        "limit_source": "provider_catalog" if confirmed_limit else "unknown",
+        "sampled_at": timestamp(sampled_at) if sampled_at else None,
+        "stale": stale,
+        "exceeds_limit": (
+            used > confirmed_limit
+            if used is not None and confirmed_limit is not None
+            else None
+        ),
+    }
+
+
+def _context_summary(
+    rows: list[JsonObject],
+    *,
+    population: str,
+    coverage_start,
+    coverage_end,
+) -> JsonObject:
+    percentages: list[float] = []
+    for row in rows:
+        value = row["utilization_percent"]
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            percentages.append(float(value))
+    return {
+        "rows": rows,
+        "available_samples": len(percentages),
+        "unavailable_samples": len(rows) - len(percentages),
+        "stale_samples": sum(bool(row["stale"]) for row in rows),
+        "average_utilization_percent": (
+            round(sum(percentages) / len(percentages), 2) if percentages else None
+        ),
+        "maximum_utilization_percent": max(percentages) if percentages else None,
+        "population": population,
+        "window": {"start": coverage_start, "end": coverage_end, "timezone": "UTC"},
+    }

@@ -54,7 +54,7 @@ def create_app(services: ApiServices) -> FastAPI:
     app.state.services = services
     app.add_middleware(AdminNoStoreMiddleware)
     app.add_middleware(ClientRequestLifetimeMiddleware)
-    app.add_middleware(RequestOutcomeMiddleware)
+    app.add_middleware(RequestOutcomeMiddleware, usage_sink=services.usage)
     app.add_middleware(RequestCorrelationMiddleware)
 
     app.include_router(admin_router)

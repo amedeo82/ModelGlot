@@ -1,6 +1,7 @@
 """Local admin UI routes and APIs."""
 
 from collections.abc import Awaitable, Callable, Mapping
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from time import perf_counter
 
@@ -22,6 +23,7 @@ from free_claude_code.application.connected_accounts import (
 from free_claude_code.application.errors import ApplicationError
 from free_claude_code.application.model_catalog import read_model_catalog
 from free_claude_code.application.model_metadata import ProviderModelRefreshResult
+from free_claude_code.application.usage_events import UsageFilters, UsageGroupBy
 from free_claude_code.config.admin.custom_providers import CustomProviderMutation
 from free_claude_code.config.admin.manifest import FIELD_BY_KEY
 from free_claude_code.config.errors import ConfigConflictError
@@ -35,6 +37,7 @@ from free_claude_code.core.version import package_version
 from .admin_security import require_loopback_admin
 from .dependencies import get_services
 from .ports import ApiServices
+from .usage_csv import usage_csv
 
 router = APIRouter()
 
@@ -57,6 +60,8 @@ _ADMIN_ASSET_FILENAMES = frozenset(
         "code_sessions.js",
         "session_layout.css",
         "session_ui.js",
+        "token_optimization.css",
+        "token_optimization.js",
         "model_combobox.js",
         "api_key_editor.js",
         *(
@@ -112,6 +117,7 @@ def admin_page_response() -> HTMLResponse:
 @router.get("/admin/model_config", include_in_schema=False)
 @router.get("/admin/messaging", include_in_schema=False)
 @router.get("/admin/integrations", include_in_schema=False)
+@router.get("/admin/token_optimization", include_in_schema=False)
 def admin_page(request: Request):
     require_loopback_admin(request)
     return admin_page_response()
@@ -163,6 +169,92 @@ async def admin_status(
         response.headers["Access-Control-Allow-Origin"] = origin
         response.headers["Vary"] = "Origin"
     return await services.admin.admin_status()
+
+
+@router.get("/admin/api/token-optimization")
+async def admin_token_optimization(
+    request: Request,
+    services: ApiServices = Depends(get_services),
+):
+    require_loopback_admin(request)
+    try:
+        return await services.admin.token_optimization()
+    except Exception as exc:
+        logger.warning(
+            "Token optimization collection failed: exc_type={}", type(exc).__name__
+        )
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Token optimization report is unavailable."},
+        )
+
+
+def _usage_filters(request: Request) -> UsageFilters:
+    params = request.query_params
+    end = _rfc3339(params.get("to")) if params.get("to") else datetime.now(UTC)
+    start = (
+        _rfc3339(params.get("from")) if params.get("from") else end - timedelta(days=30)
+    )
+    return UsageFilters(
+        start=start,
+        end=end,
+        group_by=UsageGroupBy(params.get("group_by", "model")),
+        provider_id=params.get("provider_id") or None,
+        gateway_model=params.get("gateway_model") or None,
+        provider_model=params.get("provider_model") or None,
+    )
+
+
+def _rfc3339(value: str | None) -> datetime:
+    if not value:
+        raise ValueError("timestamp is required")
+    return datetime.fromisoformat(
+        value.removesuffix("Z") + ("+00:00" if value.endswith("Z") else "")
+    )
+
+
+@router.get("/admin/api/usage")
+async def admin_usage(
+    request: Request,
+    services: ApiServices = Depends(get_services),
+):
+    require_loopback_admin(request)
+    try:
+        filters = _usage_filters(request)
+    except TypeError, ValueError:
+        raise HTTPException(status_code=400, detail="Invalid usage filters.") from None
+    try:
+        return await services.admin.usage(filters)
+    except Exception as exc:
+        logger.warning("Usage query failed: exc_type={}", type(exc).__name__)
+        return JSONResponse(
+            status_code=500, content={"detail": "Usage report is unavailable."}
+        )
+
+
+@router.get("/admin/api/usage/export")
+async def admin_usage_export(
+    request: Request,
+    services: ApiServices = Depends(get_services),
+):
+    require_loopback_admin(request)
+    try:
+        filters = _usage_filters(request)
+    except TypeError, ValueError:
+        raise HTTPException(status_code=400, detail="Invalid usage filters.") from None
+    try:
+        payload = await services.admin.usage(filters)
+        content = usage_csv(payload)
+    except Exception as exc:
+        logger.warning("Usage export failed: exc_type={}", type(exc).__name__)
+        return JSONResponse(
+            status_code=500, content={"detail": "Usage export is unavailable."}
+        )
+    return Response(
+        content=content,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="fcc-usage.csv"'},
+    )
 
 
 @router.get("/admin/api/providers/{provider_id}/local-status")

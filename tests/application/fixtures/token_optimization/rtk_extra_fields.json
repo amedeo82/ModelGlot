@@ -1,0 +1,15 @@
+{
+  "summary": {
+    "total_commands": 2,
+    "total_input": 200,
+    "total_output": 120,
+    "total_saved": 80,
+    "avg_savings_pct": 40.0,
+    "total_time_ms": 12,
+    "avg_time_ms": 6,
+    "future_metric": "ignored"
+  },
+  "future_top_level": {
+    "enabled": true
+  }
+}

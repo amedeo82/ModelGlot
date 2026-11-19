@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+from datetime import UTC, datetime
 from unittest.mock import patch
 
 import pytest
@@ -10,11 +11,18 @@ from loguru import logger
 
 from free_claude_code.api.request_ids import RequestCorrelationMiddleware
 from free_claude_code.api.request_outcomes import RequestOutcomeMiddleware
+from free_claude_code.application.usage_events import (
+    CanonicalUsage,
+    UsageObservation,
+    UsageProtocol,
+)
 from free_claude_code.config.model_refs import ModelFallback
 from free_claude_code.config.settings import Settings
 from free_claude_code.core.failures import ExecutionFailure, FailureKind
 from free_claude_code.core.request_outcomes import (
     current_request_outcome,
+    record_request_gateway_model,
+    record_request_observation,
     record_request_route,
 )
 from free_claude_code.core.stream_output import StreamOutput
@@ -300,6 +308,134 @@ async def test_other_endpoints_do_not_emit_inference_outcomes(outcomes, path, me
 
     await RequestOutcomeMiddleware(app)(_http_scope(path, method=method), receive, send)
     assert outcomes == []
+
+
+class UsageSink:
+    def __init__(self, *, error=None):
+        self.records = []
+        self.error = error
+
+    async def record_usage(self, record, attempts):
+        if self.error is not None:
+            raise self.error
+        self.records.append((record, attempts))
+
+
+def _observation(execution_id, attempt, provider, model, output, outcome):
+    return UsageObservation(
+        request_id="request",
+        execution_id=execution_id,
+        attempt=attempt,
+        protocol=UsageProtocol.OPENAI_CHAT,
+        usage=CanonicalUsage(input_total_tokens=10, output_tokens=output),
+        created_at=datetime(2026, 11, 18, tzinfo=UTC),
+        provider_id=provider,
+        gateway_model="gateway/model",
+        provider_model=model,
+        outcome=outcome,
+    )
+
+
+@pytest.mark.asyncio
+async def test_usage_sink_finalizes_one_logical_request_after_fallback():
+    sink = UsageSink()
+
+    async def app(scope, receive, send):
+        record_request_route("provider-b", "model-b")
+        record_request_gateway_model("gateway/model")
+        assert record_request_observation(
+            "execution-a",
+            1,
+            _observation("execution-a", 1, "provider-a", "model-a", 2, "failed"),
+        )
+        assert record_request_observation(
+            "execution-b",
+            1,
+            _observation("execution-b", 1, "provider-b", "model-b", 7, "succeeded"),
+        )
+        # Repeated terminal delivery is idempotent by execution/attempt identity.
+        assert not record_request_observation(
+            "execution-b",
+            1,
+            _observation("execution-b", 1, "provider-b", "model-b", 99, "succeeded"),
+        )
+        await send({"type": "http.response.start", "status": 200})
+        await send({"type": "http.response.body", "body": b"{}"})
+
+    async def receive():
+        return {"type": "http.disconnect"}
+
+    async def send(message):
+        pass
+
+    middleware = RequestCorrelationMiddleware(
+        RequestOutcomeMiddleware(app, usage_sink=sink)
+    )
+    await middleware(_http_scope(), receive, send)
+
+    assert len(sink.records) == 1
+    record, attempts = sink.records[0]
+    assert record.outcome == "success"
+    assert record.execution_id == "execution-b"
+    assert record.provider_id == "provider-b"
+    assert record.provider_model == "model-b"
+    assert record.gateway_model == "gateway/model"
+    assert record.usage.output_tokens == 7
+    assert record.usage.input_total_tokens == 10
+    assert len(attempts) == 2
+    assert attempts[0].usage.output_tokens == 2
+
+
+@pytest.mark.asyncio
+async def test_usage_sink_failure_is_best_effort_and_sanitized():
+    sink = UsageSink(error=RuntimeError("C:/private/database failure"))
+
+    async def app(scope, receive, send):
+        record_request_route("provider", "model")
+        await send({"type": "http.response.start", "status": 200})
+        await send({"type": "http.response.body", "body": b"unchanged"})
+
+    sent = []
+
+    async def receive():
+        return {"type": "http.disconnect"}
+
+    async def send(message):
+        sent.append(message)
+
+    middleware = RequestCorrelationMiddleware(
+        RequestOutcomeMiddleware(app, usage_sink=sink)
+    )
+    await middleware(_http_scope(), receive, send)
+    assert sent[-1]["body"] == b"unchanged"
+    assert current_request_outcome.get() is None
+
+
+@pytest.mark.asyncio
+async def test_cancellation_finalizes_one_usage_record_without_winning_usage():
+    sink = UsageSink()
+
+    async def app(scope, receive, send):
+        record_request_route("provider", "model")
+        raise asyncio.CancelledError()
+
+    async def receive():
+        return {"type": "http.disconnect"}
+
+    async def send(message):
+        pass
+
+    middleware = RequestCorrelationMiddleware(
+        RequestOutcomeMiddleware(app, usage_sink=sink)
+    )
+    with pytest.raises(asyncio.CancelledError):
+        await middleware(_http_scope(), receive, send)
+    assert len(sink.records) == 1
+    record, attempts = sink.records[0]
+    assert record.outcome == "cancelled"
+    assert record.execution_id is None
+    assert record.usage.output_tokens is None
+    assert attempts == ()
 
 
 @pytest.mark.asyncio

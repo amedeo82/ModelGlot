@@ -11,10 +11,12 @@ import asyncio
 import sys
 from collections.abc import AsyncGenerator, AsyncIterator, Callable, Mapping
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from typing import Any
 
 from loguru import logger
 
+from free_claude_code.application.usage_events import record_terminal_usage
 from free_claude_code.core.continuation_request import ContinuationRequest
 from free_claude_code.core.failures import ExecutionFailure
 from free_claude_code.core.json_types import JsonObject
@@ -141,6 +143,7 @@ async def run_attempts(plan: AttemptPlan) -> AsyncGenerator[StreamOutput]:
         attempt = plan.start(AttemptContext(body, operation_kind, history, source))
         scope: ProviderAttemptScope | None = None
         stream: AsyncIterator[StreamOutput] | None = None
+        attempt_outcome = "failed"
         try:
             await attempt.prepare()
             scope = ProviderAttemptScope(
@@ -152,8 +155,10 @@ async def run_attempts(plan: AttemptPlan) -> AsyncGenerator[StreamOutput]:
             async for output in stream:
                 yield output
             shell.trace("provider.response.completed", attempt.completed_fields())
+            attempt_outcome = "succeeded"
             return
         except asyncio.CancelledError, GeneratorExit:
+            attempt_outcome = "cancelled"
             raise
         except Exception as raw_error:
             if not attempt.resolvable(raw_error):
@@ -199,11 +204,70 @@ async def run_attempts(plan: AttemptPlan) -> AsyncGenerator[StreamOutput]:
                         preserved_error=active_error,
                     )
             finally:
-                if scope is not None:
-                    await scope.aclose(active_error=active_error)
+                try:
+                    if scope is not None:
+                        await scope.aclose(active_error=active_error)
+                finally:
+                    _record_attempt_usage(
+                        plan,
+                        attempt,
+                        source,
+                        scope,
+                        outcome=attempt_outcome,
+                        operation_kind=operation_kind,
+                    )
     if execution.last_failure is not None:
         raise execution.last_failure
     raise RuntimeError(f"{plan.transport} execution ended without a terminal result")
+
+
+def _record_attempt_usage(
+    plan: AttemptPlan,
+    attempt: TransportAttempt,
+    source: SourceRecoveryState,
+    scope: ProviderAttemptScope | None,
+    *,
+    outcome: str,
+    operation_kind: ProviderOperationKind,
+) -> None:
+    """Best-effort telemetry cannot alter generation, recovery, or cleanup."""
+
+    if scope is None:
+        return
+    try:
+        snapshot = source.usage_snapshot()
+        protocol, payload = snapshot or (plan.continuation.protocol, {})
+        sent_model = attempt.sent_body.get("model")
+        extra_body = attempt.sent_body.get("extra_body")
+        if isinstance(extra_body, Mapping) and isinstance(extra_body.get("model"), str):
+            sent_model = extra_body["model"]
+        observation = record_terminal_usage(
+            request_id=plan.execution.request_id,
+            execution_id=plan.execution.execution_id,
+            attempt=scope.attempt.ordinal,
+            protocol=protocol,
+            payload=payload,
+            provider_id=plan.execution.provider_id,
+            gateway_model=plan.gateway_model,
+            provider_model=(
+                sent_model if isinstance(sent_model, str) else plan.execution.model
+            ),
+            outcome=outcome,
+            operation_kind=operation_kind.value,
+            created_at=datetime.now(UTC),
+        )
+        if observation is not None:
+            for issue in observation.issues:
+                logger.debug(
+                    "Provider usage normalized with unknown field: protocol={} field={} reason={}",
+                    issue.protocol.value,
+                    issue.field,
+                    issue.reason,
+                )
+    except Exception as exc:
+        logger.debug(
+            "Provider usage observation failed: exc_type={}", type(exc).__name__
+        )
 
 
 class _Shell:
