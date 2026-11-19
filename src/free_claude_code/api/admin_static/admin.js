@@ -1106,11 +1106,22 @@ function inputForField(field) {
   return input;
 }
 
+function modelDisplayValue(value) {
+  const displayName = state.modelLabels.get(value) || value;
+  const providerLabel = value.includes("/") ? providerDisplayName(value.split("/", 1)[0]) : "";
+  const configuredProviders = (state.config?.provider_status || []).filter(
+    (provider) => provider.status === "configured",
+  );
+  return providerLabel && configuredProviders.length > 1
+    ? `${displayName} (${providerLabel})`
+    : displayName;
+}
+
 function createModelCombobox(input, field) {
   return new window.FccModelCombobox(input, {
     listboxId: `model-options-${field.key}`,
     label: field.label,
-    displayValue: (value) => state.modelLabels.get(value) || value,
+    displayValue: modelDisplayValue,
     values: () =>
       field.type === "optional_model"
         ? ["None", ...state.modelOptions]

@@ -4,7 +4,7 @@ import json
 from typing import cast
 
 import pytest
-from playwright.sync_api import Locator, Page, expect
+from playwright.sync_api import Locator, Page, Route, expect
 
 from e2e.provider_support import close_provider, open_provider
 
@@ -110,6 +110,119 @@ def test_model_routing_saves_independent_model_and_effort_choices(
         {"model": "open_router/vendor/model-a", "reasoning": "off", "api_key_number": 1}
     ]
     expect(page.locator("#dirtyState")).to_have_text("No changes")
+
+
+def _shared_model_catalog() -> dict[str, object]:
+    models = ["open_router/e2e-default", "groq/e2e-default"]
+    return {
+        "models": models,
+        "model_labels": dict.fromkeys(models, "Shared Model"),
+        "model_details": {
+            "open_router/e2e-default": {
+                "display_name": "Shared Model",
+                "provider_id": "open_router",
+                "provider_label": "OpenRouter",
+            },
+            "groq/e2e-default": {
+                "display_name": "Shared Model",
+                "provider_id": "groq",
+                "provider_label": "Groq",
+            },
+        },
+        "failed_providers": [],
+    }
+
+
+def test_model_routing_distinguishes_duplicate_titles_by_provider(
+    page: Page, admin_base_url: str
+) -> None:
+    def editable_default_config(route: Route) -> None:
+        response = route.fetch()
+        payload = response.json()
+        model_field = next(field for field in payload["fields"] if field["key"] == "MODEL")
+        model_field["locked"] = False
+        route.fulfill(response=response, json=payload)
+
+    page.route("**/admin/api/config", editable_default_config)
+    page.route(
+        "**/admin/api/models",
+        lambda route: route.fulfill(json=_shared_model_catalog()),
+    )
+    _open_models(page, admin_base_url)
+
+    default_model = page.locator("#field-MODEL")
+    default_model.fill("Shared Model")
+    default_options = page.locator("#model-options-MODEL")
+    expect(
+        default_options.locator('[data-value="open_router/e2e-default"]')
+    ).to_contain_text("Shared Model (OpenRouter)")
+    expect(default_options.locator('[data-value="groq/e2e-default"]')).to_contain_text(
+        "Shared Model (Groq)"
+    )
+    default_options.locator('[data-value="open_router/e2e-default"]').click()
+
+    editor = page.locator('.field[data-key="MODEL_FALLBACKS"]')
+    add_input = editor.locator("#field-MODEL_FALLBACKS-add")
+    add_input.fill("Shared Model")
+    fallback_options = page.locator("#model-options-MODEL_FALLBACKS-add")
+    expect(
+        fallback_options.locator('[data-value="open_router/e2e-default"]')
+    ).to_contain_text("Shared Model (OpenRouter)")
+    expect(fallback_options.locator('[data-value="groq/e2e-default"]')).to_contain_text(
+        "Shared Model (Groq)"
+    )
+    fallback_options.locator('[data-value="groq/e2e-default"]').click()
+    editor.get_by_role("button", name="Add fallback", exact=True).click()
+    assert _fallbacks(editor) == [
+        {
+            "model": "groq/e2e-default",
+            "reasoning": "inherit",
+            "api_key_number": 1,
+        }
+    ]
+
+    with page.expect_response("**/admin/api/config/apply") as saved:
+        page.locator("#applyButton").click()
+    values = saved.value.request.post_data_json["values"]
+    assert "MODEL" not in values
+    assert json.loads(values["MODEL_FALLBACKS"])[0]["model"] == "groq/e2e-default"
+
+
+def test_model_routing_omits_provider_suffix_with_one_configured_provider(
+    page: Page, admin_base_url: str
+) -> None:
+    def single_provider_config(route: Route) -> None:
+        response = route.fetch()
+        payload = response.json()
+        for provider in payload["provider_status"]:
+            if provider["provider_id"] != "open_router":
+                provider["status"] = "missing_configuration"
+        model_field = next(field for field in payload["fields"] if field["key"] == "MODEL")
+        model_field["locked"] = False
+        route.fulfill(response=response, json=payload)
+
+    page.route("**/admin/api/config", single_provider_config)
+    page.route(
+        "**/admin/api/models",
+        lambda route: route.fulfill(json=_shared_model_catalog()),
+    )
+    _open_models(page, admin_base_url)
+
+    default_model = page.locator("#field-MODEL")
+    default_model.fill("Shared Model")
+    default_options = page.locator("#model-options-MODEL")
+    expect(default_options.locator('[role="option"]')).to_have_count(2)
+    assert page.evaluate("modelDisplayValue('open_router/e2e-default')") == "Shared Model"
+    assert page.evaluate("modelDisplayValue('groq/e2e-default')") == "Shared Model"
+
+    editor = page.locator('.field[data-key="MODEL_FALLBACKS"]')
+    add_input = editor.locator("#field-MODEL_FALLBACKS-add")
+    add_input.fill("Shared Model")
+    fallback_options = page.locator("#model-options-MODEL_FALLBACKS-add")
+    expect(fallback_options.locator('[role="option"]')).to_have_count(2)
+    fallback_options.locator('[data-value="open_router/e2e-default"]').click()
+    editor.get_by_role("button", name="Add fallback", exact=True).click()
+    assert _fallbacks(editor)[0]["model"] == "open_router/e2e-default"
 
 
 @pytest.mark.parametrize(

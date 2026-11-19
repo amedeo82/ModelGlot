@@ -19,6 +19,15 @@ canonical value: nvidia_nim/minimaxai/minimax-m3.1-flash
 The canonical value is the FCC `provider_model_ref` used by configuration and routing. It is
 not the models.dev `canonical_model_id` field. The display value is presentation only.
 
+> **Implementation update — 2026-11-19.** Model Routing now qualifies known-model display labels
+> as `Title (Provider)` whenever more than one provider has `status: "configured"`. The rule
+> applies to Default Model, the other route selectors, and both new and existing Fallback Models
+> editors, so identical titles from different providers remain distinguishable in the input and in
+> the option list. With zero or one configured provider, the display label remains `Title`.
+> Provider qualification is presentation only: canonical values, fallback serialization, API-key
+> association, and Apply payloads are unchanged. Browser coverage verifies both the multi-provider
+> and single-provider cases.
+
 ---
 
 ## 0. Ground Rules
@@ -276,6 +285,9 @@ only value used for dirty-state comparison, fallback membership, and persistence
   - preserve `input.dataset.original` as the canonical baseline;
   - update `ModelListEditor` add/edit/provider/API-key logic to read canonical values through the
     same accessor rather than `combobox.input.value`;
+  - qualify known-model display labels as `Title (Provider)` when more than one configured
+    provider exists, resolving the provider display name from the canonical provider prefix; do
+    not alter `model_labels` or append provider text to canonical/custom values;
   - ensure model refreshes update labels/details without overwriting a custom edit in progress.
 - Do not infer a canonical value by looking up a title. Duplicate titles and unknown custom
   values must remain safe.
@@ -284,8 +296,8 @@ only value used for dirty-state comparison, fallback membership, and persistence
 
 | Interaction | Visible value | Canonical value |
 | --- | --- | --- |
-| Initial known model | Resolved title | Original provider/model reference |
-| Select known option | Resolved title | Selected option's `data-value` |
+| Initial known model | Resolved title, with `(Provider)` when multiple providers are configured | Original provider/model reference |
+| Select known option | Resolved title, with `(Provider)` when multiple providers are configured | Selected option's `data-value` |
 | Type custom model | Typed text | Same typed text |
 | Edit a known title | Edited text | Edited text, treated as custom |
 | Optional `None` | `None` | `null` at Admin serialization |
@@ -305,6 +317,10 @@ only value used for dirty-state comparison, fallback membership, and persistence
   - typing a custom reference marks the field dirty and saves the custom reference;
   - clearing/replacing a known title does not resurrect the previous canonical selection;
   - duplicate display titles select their own distinct canonical references;
+  - with multiple configured providers, Default Model and Fallback Models display
+    `Shared Model (OpenRouter)` and `Shared Model (Groq)` while preserving their distinct canonical
+    references in fallback state and Apply;
+  - with one configured provider, the same titles remain unqualified as `Shared Model`;
   - `None`, fallback add/edit, provider-specific API-key selection, and reload round trips remain
     correct;
   - Arrow/Escape/Enter/Tab behavior and focus restoration remain correct.
@@ -317,6 +333,7 @@ only value used for dirty-state comparison, fallback membership, and persistence
 - The displayed MiniMax title and persisted canonical value are simultaneously observable and
   different.
 - Dirty state is based only on canonical values.
+- Equal model titles are visibly provider-qualified whenever multiple providers are configured.
 - Every existing model and fallback workflow from the baseline passes.
 
 **Documentation.** Add a short maintainer note explaining the canonical/display invariant and
@@ -618,6 +635,7 @@ or correct persistence.
 | --- | --- |
 | Title already exists but selected input shows canonical reference | S0.1, S2.1 |
 | Display and canonical values must remain separate | S2.1 |
+| Equal titles from different configured providers need visible disambiguation | S2.1, S5.1 |
 | Fallback editor and dirty state also consume input values | S2.1 |
 | API needs structured details while `models`/`model_labels` remain stable | S1.2 |
 | models.dev description is cached but discarded by title resolution | S1.1 |
@@ -642,7 +660,7 @@ or correct persistence.
 | Display title is persisted as MODEL | Apply-payload E2E | Single canonical accessor; revert S2.1 atomically |
 | Dirty state appears after opening/selecting same model | No-change E2E | Compare canonical baseline only |
 | Custom model edits retain stale canonical state | Custom-edit E2E | Clear known mapping on genuine user input |
-| Duplicate titles select the wrong model | Duplicate-title E2E | Use option `data-value`, never reverse title lookup |
+| Duplicate titles select the wrong model | Duplicate-title E2E | Show `Title (Provider)` with multiple configured providers; use option `data-value`, never reverse title lookup |
 | Fallback rows save labels or lose API-key association | Fallback E2E | Update all consumers in S2.1; revert as one unit |
 | Catalog/default facts become authoritative badges | MiniMax fixture tests | Provider-only badge fields; omit unknowns |
 | Rich text introduces HTML injection | HTML-like-description test | DOM nodes plus `textContent`; no catalog `innerHTML` |
