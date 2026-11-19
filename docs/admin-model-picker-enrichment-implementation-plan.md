@@ -1,13 +1,14 @@
 # Implementation Plan: Admin Model Picker Enrichment
 
-Status: proposed
+Status: implemented for Waves 0–3 and 5; Wave 4 researched/designed on 2026-11-19 and deferred pending product approval
 Input: [`admin-model-picker-enrichment-analysis.md`](admin-model-picker-enrichment-analysis.md)
 Audience: Admin UI, API, model metadata, configuration, and test maintainers
 
 This plan turns the Admin model-picker analysis into ordered, reviewable steps. Each step is
 one pull request. Steps within a wave are sequential when they share a contract; otherwise
-the dependency table identifies the allowed order. The plan is documentation only: it does
-not implement the API, combobox, or styling changes described below.
+the dependency table identifies the allowed order. The initial release scope is implemented;
+the optional catalog expansion remains a documentation-only proposal until its decision gate
+is approved.
 
 The target behavior separates two values for every known model:
 
@@ -484,61 +485,374 @@ compatible; otherwise roll back with S3.1. Do not roll back S2.1 as part of a vi
 
 ## Wave 4 — Optional Catalog Metadata Expansion (Decision Gate)
 
-### S4.1 — Retain additional models.dev facts only after provenance approval
+> **Research and design update — 2026-11-19.** The current Admin screenshot is the expected
+> Waves 0–3 result, not a failed models.dev lookup. The reduced cache retains only name and
+> description, and the picker renders only provider-confirmed reasoning, image input, context,
+> and output. The research below turns the deferred catalog idea into an implementable design;
+> it does not approve or ship that design.
 
-**Finding.** models.dev currently reports a structured context/output limit of `262144`,
-reasoning/tools/structured output `true`, text/image/video modalities, cost `0`, and release date
-`2026-10-19`, while provider-live MiniMax facts are unknown and the description says `1M context`.
+### 4.1 Verified implementation gap
 
-**Goal.** Define a separate, explicitly labeled catalog-metadata path without allowing these
-values to masquerade as provider-confirmed runtime capabilities.
+The following current behavior is the baseline for Wave 4:
 
-**Decision gate.** This step must not start until maintainers approve all of the following:
+- `src/free_claude_code/providers/model_catalog_source.py:125-155` reduces every models.dev
+  entry to `(name, description)` and discards all structured fields;
+- `src/free_claude_code/api/admin_routes.py:629-654` exposes provider attribution, editorial
+  description, reasoning, FCC input modalities, context, and output through `model_details`;
+- `src/free_claude_code/api/admin_static/model_picker_details.js:22-43` creates badges only for
+  provider-confirmed reasoning, image input, context, and output;
+- tool calling, structured output, audio, video, PDF, lifecycle, open weights, logos, and
+  catalog freshness have no current cache/Admin presentation contract;
+- `src/free_claude_code/api/admin_static/admin.css:672-686` constrains the dropdown to `280px`,
+  so placing every possible detail in every option would make scanning and keyboard navigation
+  worse rather than better.
 
-1. whether models.dev is authoritative enough for any individual badge class;
-2. how catalog provenance and freshness are displayed;
-3. how conflicting provider and catalog facts are resolved;
-4. whether `cost: 0` has a documented meaning other than “free” (the initial UI omits cost
-   regardless);
-5. how FCC-supported text/image modalities are derived without promising video;
-6. whether the description conflict (`1M context` versus structured `262144`) is acceptable as
-   attributed editorial text or requires suppression.
+Wave 4 must extend the existing background-refresh/cache path. It must not add models.dev or
+provider I/O to model selection or to `GET /admin/api/models`.
 
-**Changes if approved.**
+### 4.2 External research and provider-specific evidence
 
-- `src/free_claude_code/providers/model_catalog_source.py` — extend the reduced cache with a
-  versioned, allowlisted subset of structured fields and source timestamp; preserve legacy cache
-  reads and atomic writes.
-- `src/free_claude_code/application/model_catalog.py` — keep provider facts and catalog facts in
-  separate fields/namespaces.
-- `src/free_claude_code/api/admin_routes.py` — expose catalog facts only with explicit source
-  metadata; do not overwrite the provider-fact fields from S1.2.
-- Admin presentation — show only the approved catalog badges with a visible source distinction.
-  Never derive `1M` from the description, never show fallback `200000`, never translate cost
-  zero to “free”, and never show video while FCC supports only text/image.
+Research was checked against the live models.dev v1 API/schema and model pages on 2026-11-19.
+The stable v1 `https://models.dev/api.json` payload is sufficient for the first catalog wave;
+the experimental v2 API is not a dependency.
+
+Relevant provider-entry fields are:
+
+| Field group | models.dev v1 fields | Initial Admin use |
+| --- | --- | --- |
+| Editorial identity | `name`, `description`, `canonical_model_id` | Existing title/description plus lab attribution |
+| Capabilities | `reasoning`, `tool_call`, `structured_output` | Catalog-only icon-and-text badges |
+| Modalities | `modalities.input`, `modalities.output` | Text/image/audio/video/PDF badges with catalog provenance |
+| Limits | `limit.context`, `limit.input`, `limit.output` | Provider-specific catalog facts, never description-derived |
+| Lifecycle | `status`, `release_date`, `last_updated`, `knowledge` | Selected-model detail panel |
+| Distribution | `open_weights` | Neutral informational badge |
+| Reasoning controls | `reasoning_options`, when present | Optional detail only after schema validation |
+| Pricing | `cost.input`, `cost.output`, cache/audio variants | Retain only if needed; omit from the initial UI |
+| Logo assets | `/logos/{provider}.svg`, `/logos/labs/{lab}.svg` | Same-origin, validated/cached presentation assets |
+
+The same model has different limits and sometimes different capabilities across hosts. These
+two live records are mandatory design fixtures:
+
+| Model | Provider-agnostic model page | NVIDIA provider row | Required interpretation |
+| --- | --- | --- | --- |
+| Gemma 4 31B IT | `262144` context, `32768` output | `256000` context, `16384` output | Use the NVIDIA row for `nvidia_nim/google/gemma-4-31b-it` |
+| MiniMax M3.1 Flash | `1000000` context, `512000` output | `262144` context, `262144` output | Never turn the editorial `1M context` sentence into an NVIDIA limit |
+
+Both NVIDIA rows report reasoning and tool calling; the MiniMax NVIDIA row also reports
+structured output. MiniMax's editorial description still says `1M context`, proving that
+editorial text and structured provider limits must remain separate.
+
+Sources:
+
+- [models.dev README, v1 API, schema, and logos](https://github.com/anomalyco/models.dev/blob/dev/README.md);
+- [MiniMax M3.1 Flash model and provider rows](https://models.dev/models/minimax/MiniMax-M3.1-Flash);
+- [Gemma 4 31B IT model and provider rows](https://models.dev/models/google/gemma-4-31b-it);
+- [Vercel AI Gateway model catalog](https://vercel.com/ai-gateway/models) and
+  [OpenRouter model catalog](https://openrouter.ai/models) for the compact-list/detail-page UI
+  pattern;
+- [WAI-ARIA tooltip pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip) for keyboard and
+  Escape behavior when supplementary tooltips are used.
+
+The key source rule is: **use the provider-scoped `api.json` entry for host-specific facts, not
+the provider-agnostic `models.json` record and never parsed description text.**
+
+### 4.3 Approved-for-design UX direction and reusable mockups
+
+The recommended target is a **hybrid compact dropdown plus selected-model detail card**.
+Alternatives remain recorded so implementation does not accidentally drift into an oversized
+listbox:
+
+| Alternative | Assessment |
+| --- | --- |
+| Full details in every option | Rejected: excessive height, repetition, poor keyboard scanning |
+| Compact rows plus selected-model detail card | **Recommended Wave 4 target** |
+| Separate searchable/filterable catalog table | Useful later, but out of scope for this wave |
+
+No repository mockup asset is shipped for this deferred wave. The following design hierarchy is
+the normative reference; an implementation need not reproduce particular pixels, fonts, or
+temporary hard-coded values:
+
+1. **Compact option row**
+   - 32px hosting-provider logo with initials fallback;
+   - readable model title and optional neutral `Open weights`/lifecycle marker;
+   - separate `Lab · ospitato da Provider` attribution;
+   - icon-and-text badges for the highest-value positive capabilities;
+   - compact context/output facts aligned on the trailing side when space permits;
+   - attributed description clamped to two lines and canonical reference kept secondary.
+2. **Selected-model detail card**
+   - larger provider identity, title, lab, selection state, description, and canonical reference;
+   - exact context/output values and release date;
+   - complete approved capability set, including audio/video/PDF only with catalog semantics;
+   - visible source, provider-specific scope, freshness, and runtime-vs-catalog explanation.
+3. **Responsive/accessibility behavior**
+   - badges always include visible text; icons are decorative and `aria-hidden`;
+   - no interactive button is nested inside a `role="option"` row;
+   - supplementary tooltips work on hover and keyboard focus and dismiss with Escape;
+   - compact facts wrap below badges at narrow widths and detail stats become one column;
+   - existing combobox focus, active descendant, selection, canonical-value, and custom-edit
+     behavior remains unchanged.
+
+### 4.4 Data authority and visual provenance contract
+
+Wave 4 distinguishes three facts that must never be conflated:
+
+| Layer | Question answered | Examples |
+| --- | --- | --- |
+| Model/lab metadata | What is the underlying model generally declared to do? | MiniMax authorship, editorial purpose, open weights |
+| Hosting-provider catalog metadata | What does models.dev declare for this exact hosted model? | NVIDIA MiniMax `262144` context and tool calling |
+| FCC/provider runtime metadata | What is confirmed for the actual FCC request/translation path? | Provider-confirmed reasoning and FCC-supported text/image input |
+
+Visual and precedence rules:
+
+- solid/success badges mean provider/FCC-confirmed runtime support;
+- dashed/info badges mean models.dev catalog declarations and always have an accessible source
+  explanation;
+- neutral lifecycle/open-weights badges are not runtime capability assertions;
+- unknown and absent remain unknown: no grey “unsupported” badge and no conversion to `false`;
+- an explicit provider runtime fact wins over a conflicting catalog fact;
+- a missing provider fact may produce a **catalog-only** badge, never a provider-confirmed one;
+- conflicting catalog values are not shown as a second contradictory runtime value;
+- audio/video/PDF may be displayed only as catalog declarations until the exact FCC route
+  supports them; they must not be presented as FCC runtime support;
+- missing cost is unknown and explicit `cost: 0` is not translated to “Free”; pricing is omitted
+  from the initial Wave 4 UI;
+- compact token units use one documented convention, while the detail card shows the exact raw
+  integer and unit;
+- source and `fetched_at`/staleness are available in the detail view; stale data does not block
+  selection or routing.
+
+### S4.1 — Retain provider-scoped models.dev facts and source metadata
+
+**Goal.** Extend the reduced cache with a small, validated, provider-specific presentation
+contract without changing routing or provider runtime facts.
+
+**Decision gate.** Implementation starts only after maintainers approve the hybrid UX,
+provider-scoped catalog badges, dashed provenance treatment, description-conflict handling, and
+catalog-only treatment of modalities not supported by FCC. Pricing remains excluded unless a
+separate decision approves it.
+
+**Changes.**
+
+- `src/free_claude_code/providers/model_catalog_source.py`:
+  - continue consuming the configured v1 `api.json` endpoint through the existing background
+    refresh;
+  - replace the `(name, description)`-only reduction with a versioned metadata record while
+    preserving legacy title-only and name/description cache reads;
+  - retain only allowlisted scalar/array fields for editorial identity, capabilities,
+    modalities, limits, lifecycle, open weights, canonical ID, and optional reasoning options;
+  - retain `fetched_at` and the entry's `last_updated`; bound string/array sizes and reject
+    malformed field types without accepting partial coercions;
+  - preserve atomic writes, stale-on-error behavior, and the existing 24-hour refresh policy;
+  - do not retain benchmarks, arbitrary metadata, links, weights payloads, or pricing in this
+    step.
+- `src/free_claude_code/application/model_catalog.py`:
+  - add a separate catalog-metadata value object/field on `CatalogModel`;
+  - keep all existing provider-owned fields unchanged;
+  - use the existing FCC-to-models.dev provider mapping, including `nvidia_nim -> nvidia`;
+  - resolve the lab from the validated `canonical_model_id` rather than guessing from titles.
+- `tests/providers/test_model_catalog_source.py` and
+  `tests/application/test_model_catalog.py`: add legacy, malformed, partial, stale, conflict,
+  MiniMax, and Gemma fixtures.
+
+**Tests and acceptance.**
+
+- Legacy caches round-trip without migration or loss of titles/descriptions.
+- MiniMax resolves NVIDIA `262144/262144`, not generic `1000000/512000` and not fallback `200000`.
+- Gemma resolves NVIDIA `256000/16384`, not generic `262144/32768`.
+- `1M context` remains editorial text and never populates a numeric field.
+- Missing/`null` capability values remain unknown; explicit booleans are not string-coerced.
+- Unsupported/extra upstream fields are ignored and cannot change canonical FCC model IDs.
+- No endpoint or selection interaction performs external I/O.
+
+**Documentation.** Update the cache-schema note and record the approved source-precedence table
+from §4.4.
+
+**Dependencies.** S3.2 plus explicit product/maintainer approval.
+
+**Rollback.** Ignore the additive metadata and continue reading the legacy cache fields. Do not
+delete or destructively migrate the cache.
+
+**PR title.** `minor: Retain provider-scoped models.dev metadata for the Admin picker`
+
+**Effort.** 1.5 days after the decision gate.
+
+---
+
+### S4.2 — Expose additive catalog details and safe same-origin logos
+
+**Goal.** Give the Admin frontend enough structured data to render provenance-aware details
+without client-side lookups or changes to existing provider-fact fields.
+
+**Changes.**
+
+- `src/free_claude_code/api/admin_routes.py`:
+  - retain every S1.2 field and its meaning;
+  - add a nested `catalog` object to each eligible `model_details` entry;
+  - include `source`, `source_provider_id`, `canonical_model_id`, `fetched_at`, `last_updated`,
+    lab identity, approved capabilities/modalities/limits, release/status, and open weights;
+  - expose logo URLs only as same-origin, validated asset references with explicit fallback
+    behavior;
+  - keep cost out of the response until separately approved.
+- Logo handling:
+  - map the hosting provider through the existing provider mapping and the lab through the
+    validated canonical ID;
+  - fetch/cache provider and lab SVGs outside the Admin read path, with timeout, size/content
+    validation, and initials fallback;
+  - serve validated assets same-origin with an SVG-safe content type and restrictive CSP; never
+    inject fetched SVG markup with `innerHTML` or execute external scripts;
+  - missing logos and offline refreshes must not hide model metadata or block the picker.
+- `tests/api/test_admin.py` and focused cache/logo tests:
+  - verify the additive response, same keys as `model_labels`, refresh parity, no request-path
+    I/O, safe URLs, fallback logos, and legacy-cache behavior.
+
+**Illustrative additive shape.** Existing provider fields remain siblings; this example shows
+only the new namespace:
+
+```json
+{
+  "catalog": {
+    "source": "models.dev",
+    "source_provider_id": "nvidia",
+    "canonical_model_id": "minimax/MiniMax-M3.1-Flash",
+    "lab": { "id": "minimax", "label": "MiniMax", "logo_url": "/admin/..." },
+    "provider_logo_url": "/admin/...",
+    "fetched_at": 1763654400,
+    "last_updated": "2026-10-19",
+    "reasoning": true,
+    "tool_call": true,
+    "structured_output": true,
+    "modalities": { "input": ["text", "image", "video"], "output": ["text"] },
+    "limit": { "context": 262144, "output": 262144 },
+    "release_date": "2026-10-19",
+    "status": null,
+    "open_weights": true
+  }
+}
+```
+
+**Acceptance.**
+
+- A reviewer can determine source, host scope, freshness, lab, and authority from the payload.
+- Existing provider reasoning/modalities/context/output fields are neither overwritten nor
+  backfilled from `catalog`.
+- MiniMax and Gemma API fixtures expose the exact NVIDIA values from §4.2.
+- Unknown/custom models retain their minimal response and presentation.
+
+**Documentation.** Document the nested contract as loopback-Admin-only and additive, including
+unknown semantics and logo fallback behavior.
+
+**Dependencies.** S4.1.
+
+**Rollback.** Remove `catalog` and logo URLs from the response. Existing S1.2 consumers require
+no migration; cached catalog data may remain unused.
+
+**PR title.** `minor: Expose provenance-aware model catalog details in the Admin API`
+
+**Effort.** 1 day.
+
+---
+
+### S4.3 — Implement the compact dropdown and selected-model detail card
+
+**Goal.** Match the approved mockup hierarchy while preserving the current combobox identity,
+keyboard, refresh, and custom-model contracts.
+
+**Changes.**
+
+- `src/free_claude_code/api/admin_static/model_picker_details.js`:
+  - build separate compact-option and selected-detail view models;
+  - render provider/lab identity, logos with fallback, icon-and-text capability badges,
+    context/output, editorial description, canonical reference, lifecycle, and source metadata;
+  - render provider/FCC facts as solid badges and catalog declarations as dashed badges;
+  - never infer capabilities from titles/descriptions and never turn unknown into false;
+  - use DOM nodes and `textContent`; external/catalog strings remain bounded plain text.
+- `src/free_claude_code/api/admin_static/model_combobox.js` and `admin.js`:
+  - retain one canonical-value implementation and existing option `data-value` behavior;
+  - keep option DOM non-interactive apart from selection; place any copy/detail controls outside
+    the listbox;
+  - refresh the selected detail card on hydration, selection, custom edit, and model refresh;
+  - preserve search and optionally extend it to provider, lab, and explicit capability labels
+    without changing filtering identity.
+- `src/free_claude_code/api/admin_static/admin.css`:
+  - implement the mockup's 32px logo, compact rows, badge wrapping, two-line description,
+    trailing token facts, selected-detail stats, and narrow-width stacking;
+  - do not rely on color alone: dashed versus solid borders and visible provenance text are
+    required;
+  - keep decorative icons hidden from assistive technology and badge text readable at 200% zoom.
+- Keep benchmarks, pricing, full catalog filters, and a separate model browser out of this step.
 
 **Tests.**
 
-- Legacy and new cache versions round-trip atomically.
-- Missing catalog fields remain unknown.
-- Provider facts win on conflict; a provider absence does not silently become a provider badge.
-- The exact MiniMax contradictory fixture produces only the approved presentation.
-- Routing, canonical IDs, and refresh behavior remain invariant.
+- Browser/helper coverage for solid provider badges, dashed catalog badges, unknown/false/null,
+  exact/compact token formatting, logo fallback, HTML-like strings, source freshness, and stale
+  cache;
+- MiniMax shows NVIDIA `262144/262144`, reasoning/tools/structured output, and catalog-only
+  video; its description may still contain attributed `1M context` without producing a `1M`
+  badge;
+- Gemma shows NVIDIA `256000/16384` and no fabricated structured-output/audio capability;
+- 1280px, 900px, and 390px layouts have no horizontal document overflow;
+- keyboard navigation, focus, active descendant, Enter/Escape/Tab, custom references, `None`,
+  fallbacks, Apply payloads, and no-change behavior remain correct;
+- any supplementary tooltip is focusable through its trigger, hover/focus persistent, and
+  Escape-dismissable without moving focus.
 
-**Acceptance.** A reviewer can identify the source and authority of every badge from the payload
-and the UI.
+**Acceptance.**
 
-**Documentation.** Publish the approved source-precedence table before enabling the badges.
+- The rendered structure visibly matches the linked mockup: compact options and a complete
+  selected-model card rather than full details in every option.
+- Every catalog badge is distinguishable without color alone and has an accessible source
+  explanation.
+- No audio/video/PDF badge claims FCC runtime support without provider/FCC evidence.
+- No canonical ID, routing candidate, fallback order, or Apply payload changes.
 
-**Dependencies.** S3.2 plus explicit product/maintainer approval. This wave is not required for
-the initial title/provider/description/canonical-reference delivery.
+**Documentation.** Add a concise Admin UI contract and link the HTML/SVG design references from
+the implementation notes.
 
-**Rollback.** Disable the catalog-badge rendering and ignore the additive cache fields. Keep the
-legacy title/description cache readable; no destructive cache migration.
+**Dependencies.** S4.2 and the design artifacts in §4.3.
 
-**PR title.** `minor: Add provenance-aware catalog metadata to the Admin picker`
+**Rollback.** Disable S4.3 rendering and retain the S3.x presentation. The additive API/cache
+fields may remain unused without affecting persistence.
 
-**Effort.** 1.5–2 days after the decision gate.
+**PR title.** `minor: Add provenance-aware capabilities and model details to the Admin picker`
+
+**Effort.** 2 days.
+
+---
+
+### S4.4 — Verify catalog conflicts, responsive rendering, and operational fallback
+
+**Goal.** Prove the integrated Wave 4 behavior against the researched fixtures and failure modes
+before changing its status to implemented.
+
+**Changes and verification.**
+
+- Add integrated MiniMax and Gemma fixtures to `e2e/test_admin_models.py` and
+  `e2e/test_admin_assets.py`; merge surgically with concurrent test changes.
+- Exercise legacy cache, missing catalog, stale cache, provider/catalog conflict, malformed
+  metadata, missing logos, offline refresh, and partial provider refresh failure.
+- Compare the rendered option/detail structure with the SVG/HTML design references at desktop
+  and narrow widths; use semantic assertions rather than brittle pixel-perfect screenshots.
+- Inspect the actual Apply request and refreshed `model_details` payload manually against a local
+  NVIDIA-shaped configuration.
+- Run the relevant focused suites and the complete CI sequence from S5.1.
+
+**Acceptance.**
+
+- All S4.1–S4.3 acceptance criteria pass together.
+- A stale or absent catalog never removes provider facts, blocks model selection, or changes
+  routing.
+- The UI never silently promotes catalog data to provider/FCC authority.
+- Source links in this plan resolve and the HTML prototype remains self-contained/offline.
+- Implementation status and measured test results are recorded here and in the analysis.
+
+**Dependencies.** S4.3.
+
+**Rollback.** Use S4.3, S4.2, and S4.1 rollbacks in that order. Visual rollback alone must not
+require cache deletion or canonical-configuration migration.
+
+**PR title.** `minor: Verify provenance-aware Admin model catalog enrichment`
+
+**Effort.** 1 day.
 
 ---
 
@@ -591,12 +905,14 @@ actual Apply request.
 - Canonical value everywhere in configuration, fallbacks, and Apply payloads is
   `nvidia_nim/minimaxai/minimax-m3.1-flash`.
 - `models` and `model_labels` are unchanged from baseline; `model_details` is additive.
-- No `1M` structured badge, fallback `200K` capability, “free” label, or video promise appears.
+- No `1M` structured badge, fallback `200K` capability, “free” label, or FCC runtime video
+  promise appears. If Wave 4 ships, video is permitted only as an explicitly catalog-scoped
+  declaration under S4.3.
 - Keyboard, responsive, custom-model, optional-model, locked-field, refresh, and persistence
   checks pass.
 - All relevant documents link to each other and no new dangling local Markdown links remain.
 
-**Dependencies.** S1.1–S3.2 for the initial release; S4.1 only if the optional catalog wave was
+**Dependencies.** S1.1–S3.2 for the initial release; S4.1–S4.4 if the optional catalog wave was
 approved and included.
 
 **Rollback.** Use the step-level rollbacks in reverse order. A documentation-only correction does
@@ -621,7 +937,10 @@ verification step, `minor: Verify and document the enriched Admin model picker`.
 | S3.1 | S2.1 | No |
 | S3.2 | S3.1 | No |
 | S4.1 | S3.2 + product decision | Optional and separately gated |
-| S5.1 | S1.1–S3.2; S4.1 if shipped | Final integration step |
+| S4.2 | S4.1 | No |
+| S4.3 | S4.2 + approved mockup hierarchy | No |
+| S4.4 | S4.3 | Wave 4 integration verification |
+| S5.1 | S1.1–S3.2; S4.1–S4.4 if shipped | Final integration step |
 
 The initial releasable scope is S0.1 through S3.2 plus the relevant parts of S5.1. Wave 4 must
 not delay readable titles, provider attribution, description, canonical-reference visibility,
@@ -641,13 +960,17 @@ or correct persistence.
 | models.dev description is cached but discarded by title resolution | S1.1 |
 | Provider badge and human-oriented description | S1.1, S1.2, S3.1 |
 | Canonical reference remains visible as secondary detail | S3.1, S3.2 |
-| Capability/limit badges require authority | S1.2, S3.1, S4.1 |
+| Capability/limit badges require authority | S1.2, S3.1, S4.1–S4.3 |
 | Provider-live MiniMax facts are unknown | S0.1, S1.2, S3.1 |
-| Fallback `200000` is not a real MiniMax limit | S1.2, S3.1 |
-| Description `1M context` must not become a structured badge | S1.1, S3.1 |
-| models.dev `262144`, reasoning/tools/structured output, cost, date need policy | S4.1 |
-| FCC exposes only text/image; no video promise | S1.2, S3.1, S4.1 |
-| Keyboard, accessibility, and responsive layout | S2.1, S3.2 |
+| Fallback `200000` is not a real MiniMax limit | S1.2, S3.1, S4.1 |
+| Description `1M context` must not become a structured badge | S1.1, S3.1, S4.1, S4.3 |
+| models.dev `262144`, reasoning/tools/structured output, cost, date need policy | S4.1–S4.3 |
+| Provider-agnostic MiniMax `1M` and Gemma `262144` differ from NVIDIA rows | S4.1–S4.4 |
+| FCC exposes only text/image; no unqualified runtime video promise | S1.2, S3.1, S4.3 |
+| Provider and lab logos need safe same-origin assets and fallback | S4.2, S4.3 |
+| Compact options plus selected detail are the approved-for-design hierarchy | S4.3, S4.4 |
+| Catalog provenance/freshness must be visible and unknown must stay unknown | S4.1–S4.4 |
+| Keyboard, accessibility, and responsive layout | S2.1, S3.2, S4.3, S4.4 |
 | Existing Admin/provider E2E assertions must follow the new display contract | S2.1, S5.1 |
 | Documentation cross-links and missing research-plan reference | S5.1 |
 
@@ -662,9 +985,13 @@ or correct persistence.
 | Custom model edits retain stale canonical state | Custom-edit E2E | Clear known mapping on genuine user input |
 | Duplicate titles select the wrong model | Duplicate-title E2E | Show `Title (Provider)` with multiple configured providers; use option `data-value`, never reverse title lookup |
 | Fallback rows save labels or lose API-key association | Fallback E2E | Update all consumers in S2.1; revert as one unit |
-| Catalog/default facts become authoritative badges | MiniMax fixture tests | Provider-only badge fields; omit unknowns |
+| Catalog/default facts become authoritative badges | MiniMax fixture tests | Separate provider/catalog fields; solid/dashed semantics; omit unknowns |
+| Canonical model limits override host-specific values | MiniMax/Gemma API and browser fixtures | Use provider-scoped `api.json`; never parse descriptions |
+| Catalog modalities become FCC runtime promises | Video/audio/PDF provenance tests | Catalog-only dashed badges until FCC confirms the exact route |
+| Remote SVG leaks data or injects active content | Logo route/security tests | Background fetch, validation, same-origin serving, no inline external SVG |
 | Rich text introduces HTML injection | HTML-like-description test | DOM nodes plus `textContent`; no catalog `innerHTML` |
-| Long details break Model Routing layout | 390/900/1280px E2E | Wrapping/stacking; revert visual steps independently |
+| Long details break Model Routing layout | 390/900/1280px E2E | Compact rows plus selected detail; wrapping/stacking; independent visual rollback |
+| Full metadata in every option harms keyboard scanning | Keyboard and responsive review | Enforce the linked hybrid mockup; leave full catalog table out of scope |
 | Optional catalog expansion blocks the core fix | Scope review | Keep Wave 4 explicitly optional |
 | Rollback leaves mixed UI/value contracts | Rollback review | S2.1 is atomic; S3.x may revert without changing persistence |
 
@@ -693,7 +1020,30 @@ A step is complete when:
 | 1 — Application metadata and Admin API | S1.1, S1.2 | 2 |
 | 2 — Canonical/display separation | S2.1 | 2 |
 | 3 — Graphical presentation and accessibility | S3.1, S3.2 | 2.5 |
-| 4 — Optional catalog expansion | S4.1 | 1.5–2 after approval |
+| 4 — Optional catalog expansion and hybrid detail UI | S4.1–S4.4 | 5.5 after approval |
 | 5 — Verification and documentation | S5.1 | 1 |
 | **Initial total (Waves 0–3 + 5)** | **6 steps** | **8** |
-| **Total including optional Wave 4** | **7 steps** | **9.5–10** |
+| **Total including optional Wave 4** | **10 steps** | **13.5** |
+
+---
+
+## Implementation Outcome — 2026-11-19
+
+| Step | Status | Shipped result / decision |
+| --- | --- | --- |
+| S0.1 | Implemented | Baseline fixture and regression suites recorded in the analysis document |
+| S1.1 | Implemented | Attributed models.dev descriptions flow through additive application fields |
+| S1.2 | Implemented | Additive `model_details` projection with provider-only facts and explicit `null` unknowns |
+| S2.1 | Implemented | Shared canonical accessor/setter across routing, fallback, API-key, refresh, and Code session consumers |
+| S3.1 | Implemented | Safe rich options and selected summaries with provider badges and provider-confirmed capability badges |
+| S3.2 | Implemented | Wrapping/stacking, 1280/900/390px coverage, accessible names, descriptions, and keyboard regression coverage |
+| S4.1 | **Deferred — not started** | No explicit product approval; no catalog-derived capability badge or expanded cache shipped |
+| S5.1 | Implemented | Documentation and focused verification shipped; unrelated repository-wide blockers remain explicitly recorded below |
+
+Verification results on 2026-11-19:
+
+- `.venv\Scripts\python.exe -m pytest tests/api/test_admin.py tests/application/test_model_titles.py tests/application/test_model_catalog.py tests/providers/test_model_catalog_source.py tests/providers/test_model_catalog_cache.py -q`: **278 passed**.
+- `.venv\Scripts\python.exe -m pytest e2e/test_admin_models.py e2e/test_admin_providers.py e2e/test_admin_assets.py -q -n 0`: **66 passed**.
+- Additional Code sessions, fallback key-control, and custom-provider browser coverage passed after the canonical/display changes.
+- Focused Ruff and focused `ty check` passed. `node --check` passed for the changed JavaScript assets. Local Markdown links and `git diff --check` passed.
+- The `uv` executable is unavailable, so `scripts/ci.ps1` was not run as a wrapper. Repository-wide `ruff check` still reports one unrelated `SIM112` in `cli/windows_app_identity.py`; repository-wide `ty check` reports unrelated diagnostics in concurrent usage/token-optimization work. These are not presented as a green full-CI result.

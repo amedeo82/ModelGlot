@@ -1,5 +1,9 @@
 (() => {
   class FccModelCombobox {
+    static canonicalValue(input) {
+      return input.dataset.canonicalValue ?? input.value;
+    }
+
     constructor(
       input,
       {
@@ -9,12 +13,15 @@
         emptyMessage,
         registry,
         displayValue = (value) => value,
+        details = () => null,
+        showSummary = false,
         onSelect = null,
         onClose = null,
       },
     ) {
       this.input = input;
       this.displayValue = displayValue;
+      this.detailsFor = details;
       this.getValues = values;
       this.getEmptyMessage = emptyMessage;
       this.registry = registry;
@@ -22,6 +29,10 @@
       this.onClose = onClose;
       this.activeIndex = -1;
       this.query = "";
+      this.customEdit = false;
+      this.canonicalValue = String(input.value ?? "");
+      input.dataset.canonicalValue = this.canonicalValue;
+      input.modelCombobox = this;
 
       this.element = document.createElement("div");
       this.element.className = "model-combobox";
@@ -45,7 +56,13 @@
       }
 
       input.addEventListener("click", () => this.open());
-      input.addEventListener("input", () => this.open(input.value));
+      input.addEventListener("input", () => {
+        this.canonicalValue = input.value;
+        input.dataset.canonicalValue = this.canonicalValue;
+        this.customEdit = true;
+        this.updateSummary();
+        this.open(input.value);
+      });
       input.addEventListener("keydown", (event) => this.handleKeydown(event));
       this.toggle.addEventListener("mousedown", (event) => event.preventDefault());
       this.toggle.addEventListener("click", () => {
@@ -64,6 +81,18 @@
       });
 
       this.element.append(input, this.toggle, this.listbox);
+      this.container = this.element;
+      this.summary = null;
+      if (showSummary) {
+        this.container = document.createElement("div");
+        this.container.className = "model-picker-control";
+        this.summary = document.createElement("div");
+        this.summary.className = "model-picker-summary";
+        this.summary.hidden = true;
+        if (input.id) this.summary.id = `${input.id}-model-details`;
+        this.container.append(this.element, this.summary);
+      }
+      this.updateSummary();
       registry.add(this);
     }
 
@@ -73,6 +102,42 @@
 
     get visibleOptions() {
       return Array.from(this.listbox.querySelectorAll('[role="option"]'));
+    }
+
+    setCanonicalValue(value, { custom = false } = {}) {
+      this.canonicalValue = String(value ?? "");
+      this.input.dataset.canonicalValue = this.canonicalValue;
+      this.customEdit = custom;
+      this.input.value = custom ? this.canonicalValue : this.displayValue(this.canonicalValue);
+      this.updateSummary();
+    }
+
+    refreshMetadata() {
+      if (!this.customEdit) this.input.value = this.displayValue(this.canonicalValue);
+      this.updateSummary();
+      if (this.isOpen) this.render(this.customEdit ? this.query : this.input.value);
+    }
+
+    updateSummary() {
+      if (!this.summary) return;
+      const helper = window.FccModelPickerDetails;
+      const visible = helper
+        ? helper.renderSummary(
+            this.summary,
+            this.canonicalValue,
+            this.customEdit ? this.canonicalValue : this.displayValue(this.canonicalValue),
+            this.customEdit ? null : this.detailsFor(this.canonicalValue),
+          )
+        : false;
+      this.summary.hidden = !visible;
+      if (!this.summary.id) return;
+      const ids = new Set(
+        (this.input.getAttribute("aria-describedby") || "").split(/\s+/).filter(Boolean),
+      );
+      if (visible) ids.add(this.summary.id);
+      else ids.delete(this.summary.id);
+      if (ids.size) this.input.setAttribute("aria-describedby", Array.from(ids).join(" "));
+      else this.input.removeAttribute("aria-describedby");
     }
 
     open(query = this.input.value) {
@@ -106,10 +171,14 @@
       this.query = query;
       const normalizedQuery = query.trim().toLocaleLowerCase();
       const allValues = this.getValues();
+      const helper = window.FccModelPickerDetails;
       const values = normalizedQuery
-        ? allValues.filter((value) =>
-            (value + " " + this.displayValue(value)).toLocaleLowerCase().includes(normalizedQuery),
-          )
+        ? allValues.filter((value) => {
+            const searchText = helper
+              ? helper.searchText(value, this.displayValue(value), this.detailsFor(value))
+              : `${value} ${this.displayValue(value)}`;
+            return searchText.toLocaleLowerCase().includes(normalizedQuery);
+          })
         : allValues;
       this.listbox.replaceChildren();
 
@@ -129,10 +198,19 @@
         optionEl.id = `${this.listbox.id}-option-${index}`;
         optionEl.dataset.value = value;
         optionEl.setAttribute("role", "option");
-        optionEl.textContent = this.displayValue(value);
+        const title = this.displayValue(value);
+        optionEl.setAttribute(
+          "aria-label",
+          title === value ? title : `${title} — ${value}`,
+        );
+        if (helper) {
+          optionEl.appendChild(helper.renderOption(value, title, this.detailsFor(value)));
+        } else {
+          optionEl.textContent = title;
+        }
         this.listbox.appendChild(optionEl);
       });
-      const selectedIndex = values.indexOf(this.input.value);
+      const selectedIndex = values.indexOf(FccModelCombobox.canonicalValue(this.input));
       this.setActive(selectedIndex >= 0 ? selectedIndex : 0, false);
     }
 
@@ -156,7 +234,7 @@
     }
 
     select(value) {
-      this.input.value = value;
+      this.setCanonicalValue(value);
       if (this.onSelect) this.onSelect(value);
       this.input.dispatchEvent(new Event("change", { bubbles: true }));
       this.close();

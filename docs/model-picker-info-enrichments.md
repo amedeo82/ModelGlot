@@ -1,5 +1,10 @@
 ## Cosa ho scoperto
 
+> Questo documento riguarda la proposta Terminal/Desktop. L'arricchimento Admin è implementato
+> separatamente secondo [`admin-model-picker-enrichment-implementation-plan.md`](admin-model-picker-enrichment-implementation-plan.md):
+> titolo, provider, descrizione attribuita e riferimento canonico sono visibili, mentre i badge
+> di capability e limiti usano soltanto fatti confermati dal provider.
+
 La base attuale è già corretta:
 
 - Il titolo risolto con override curated → `models.dev` → euristica → reference grezza in `application/model_titles.py:52-67`.
@@ -37,11 +42,13 @@ MiniMax-M3.1-Flash
 NVIDIA NIM
 ```
 
-Una versione più informativa potrebbe essere:
+Una versione più informativa potrebbe essere la seguente, ma ogni capability e ogni limite
+numerico va incluso soltanto se confermato dal provider; la descrizione models.dev resta testo
+editoriale e non alimenta questi fatti:
 
 ```text
 MiniMax-M3.1-Flash
-MiniMax · NVIDIA NIM · 1M context · 512K output · reasoning · vision · tools
+MiniMax · NVIDIA NIM · 1M context · 512K output · reasoning · vision
 ```
 
 Oppure, se si preferisce mostrare la descrizione del modello:
@@ -77,9 +84,9 @@ La vista `messages`/`responses` li serializza già in `api/model_catalog.py:233-
 
 ## Ordine di implementazione consigliato
 
-1. Estendere la cache models.dev per mantenere descrizione, limiti, reasoning, modalities, status e cost.
+1. Mantenere la descrizione models.dev come testo editoriale attribuito; valutare separatamente limiti, reasoning, modalities, status e cost con un gate esplicito di provenance.
 2. Aggiungere un formatter compatto della `description` per Claude/Desktop.
-3. Usare sempre i limiti e le capability del provider FCC; usare models.dev per arricchire i dati mancanti.
+3. Usare soltanto limiti e capability confermati dal provider FCC per i fatti operativi; non colmare i dati provider mancanti con modelli.dev o fallback predefiniti.
 4. Aggiungere un test che garantisca che la descrizione cambi ma ID, routing e fallback restino identici.
 5. Verificare la resa reale nel picker Desktop, perché il protocollo garantisce il campo ma non il layout grafico.
 

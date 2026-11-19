@@ -146,7 +146,48 @@ def test_catalog_title_is_used_between_curated_and_heuristic_titles() -> None:
 
     assert model.display_name == "Vendor Model"
     assert model.description == "OpenRouter"
+    assert model.model_description == "Description"
+    assert model.model_description_source == "models.dev"
     assert model.provider_model_ref == ref
+
+
+def test_minimax_metadata_separates_provider_attribution_from_purpose_text() -> None:
+    ref = "nvidia_nim/minimaxai/minimax-m3.1-flash"
+    snapshot = ModelCatalogSnapshot(
+        Settings(model=ref),
+        (ProviderModelInfo(ref),),
+        title_catalog={
+            ("nvidia", "minimaxai/minimax-m3.1-flash"): (
+                "MiniMax-M3.1-Flash",
+                "1M context",
+            )
+        },
+    )
+
+    model = read_model_catalog(snapshot).models[0]
+
+    assert model.display_name == "MiniMax-M3.1-Flash"
+    assert model.description == "NVIDIA NIM"
+    assert model.model_description == "1M context"
+    assert model.model_description_source == "models.dev"
+    assert model.provider_model_ref == ref
+    assert model.wire_slug == ref
+    assert model.supports_reasoning is None
+    assert model.input_modalities is None
+    assert model.context_window_tokens is None
+    assert model.max_output_tokens is None
+
+
+def test_absent_catalog_metadata_keeps_existing_fallbacks() -> None:
+    ref = "open_router/vendor/model"
+    snapshot = ModelCatalogSnapshot(Settings(model=ref), ())
+
+    model = read_model_catalog(snapshot).models[0]
+
+    assert model.display_name == "Vendor Model"
+    assert model.description == "OpenRouter"
+    assert model.model_description is None
+    assert model.model_description_source is None
 
 
 def test_no_thinking_title_keeps_the_routing_suffix() -> None:

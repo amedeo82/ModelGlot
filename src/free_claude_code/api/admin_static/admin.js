@@ -14,6 +14,7 @@ const state = {
   customProvider: null,
   configRefreshRequired: false,
   modelLabels: new Map(),
+  modelDetails: new Map(),
   localStatusRequest: null,
   startup: null,
   startupRequest: null,
@@ -1008,8 +1009,6 @@ function renderField(field) {
   input.dataset.remove = "false";
   input.dataset.fieldType = field.type;
   input.disabled = field.locked;
-  input.addEventListener("input", updateDirtyState);
-  input.addEventListener("change", updateDirtyState);
   input.addEventListener("input", () => {
     input.dataset.remove = "false";
     clearCredentialError(input);
@@ -1017,8 +1016,9 @@ function renderField(field) {
   });
   if (field.type === "optional_model") {
     input.addEventListener("blur", () => {
-      if (!input.value.trim() || input.value.trim().toLowerCase() === "none") {
-        input.value = "None";
+      const value = window.FccModelCombobox.canonicalValue(input).trim();
+      if (!value || value.toLowerCase() === "none") {
+        input.modelCombobox?.setCanonicalValue("None");
         updateDirtyState();
       }
     });
@@ -1026,12 +1026,15 @@ function renderField(field) {
 
   let control = input;
   if (field.type === "model" || field.type === "optional_model") {
-    control = createModelCombobox(input, field).element;
+    control = createModelCombobox(input, field).container;
   } else if (field.type === "model_list") {
     const editor = new ModelListEditor(input, field);
     label.htmlFor = editor.inputId;
     control = editor.element;
   }
+  // The combobox must update its canonical value before dirty-state readers run.
+  input.addEventListener("input", updateDirtyState);
+  input.addEventListener("change", updateDirtyState);
   wrapper.append(label, control);
   if (field.secret && field.nullable && field.configured && !field.locked) {
     const removeButton = document.createElement("button");
@@ -1130,6 +1133,8 @@ function createModelCombobox(input, field) {
     listboxId: `model-options-${field.key}`,
     label: field.label,
     displayValue: modelDisplayValue,
+    details: (value) => state.modelDetails.get(value) || null,
+    showSummary: true,
     values: () =>
       field.type === "optional_model"
         ? ["None", ...state.modelOptions]
@@ -1159,14 +1164,16 @@ class ModelListEditor {
     const addRow = document.createElement("div");
     addRow.className = "model-list-add";
     const addCombobox = this.modelCombobox("", "add", "New fallback model");
+    this.addCombobox = addCombobox;
     this.addInput = addCombobox.input;
     this.addEffort = this.effortSelect("inherit", "Fallback reasoning effort");
     this.addEffort.id = `field-${field.key}-effort`;
     this.addKey = this.keySelect("", 1, "Fallback API key");
     this.addProviderId = "";
     const updateAddModel = () => {
-      const providerId = this.providerId(this.addInput.value);
-      this.updateKeySelect(this.addKey, this.addInput.value, providerId === this.addProviderId ? Number(this.addKey.value) : 1);
+      const model = window.FccModelCombobox.canonicalValue(this.addInput);
+      const providerId = this.providerId(model);
+      this.updateKeySelect(this.addKey, model, providerId === this.addProviderId ? Number(this.addKey.value) : 1);
       this.addProviderId = providerId;
     };
     this.addInput.addEventListener("input", updateAddModel);
@@ -1175,7 +1182,7 @@ class ModelListEditor {
     this.addButton = this.actionButton("", "Add fallback", () => this.add());
     this.addButton.className = "secondary-button model-list-action";
     this.addButton.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 6v12M6 12h12" stroke-linecap="round"/></svg>';
-    addRow.append(addCombobox.element, this.addEffort, this.addKey, this.addButton);
+    addRow.append(addCombobox.container, this.addEffort, this.addKey, this.addButton);
 
     this.rows = document.createElement("div");
     this.rows.className = "model-list-rows";
@@ -1209,7 +1216,7 @@ class ModelListEditor {
   }
 
   add() {
-    const value = this.addInput.value.trim();
+    const value = window.FccModelCombobox.canonicalValue(this.addInput).trim();
     if (!value) {
       showMessage("Enter a full provider/model fallback.", "error");
       return;
@@ -1220,7 +1227,7 @@ class ModelListEditor {
       return;
     }
     this.values.push({ model: value, reasoning: this.addEffort.value, api_key_number: apiKeyNumber });
-    this.addInput.value = "";
+    this.addCombobox.setCanonicalValue("");
     this.addEffort.value = "inherit";
     this.addProviderId = "";
     this.updateKeySelect(this.addKey, "", 1);
@@ -1300,7 +1307,7 @@ class ModelListEditor {
       remove.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
       const updateModel = () => {
         const previousProvider = this.providerId(entry.model);
-        entry.model = combobox.input.value.trim();
+        entry.model = window.FccModelCombobox.canonicalValue(combobox.input).trim();
         if (this.providerId(entry.model) !== previousProvider) entry.api_key_number = 1;
         this.updateKeySelect(key, entry.model, entry.api_key_number ?? 1);
         key.setAttribute("aria-label", `API key for ${entry.model}`);
@@ -1312,7 +1319,7 @@ class ModelListEditor {
       combobox.input.addEventListener("input", updateModel);
       combobox.input.addEventListener("change", updateModel);
 
-      row.append(handle, combobox.element, effort, key, remove);
+      row.append(handle, combobox.container, effort, key, remove);
       this.rows.appendChild(row);
     });
   }
@@ -1399,7 +1406,7 @@ class ModelListEditor {
   }
 
   refreshKeyOptions() {
-    this.updateKeySelect(this.addKey, this.addInput.value, Number(this.addKey.value));
+    this.updateKeySelect(this.addKey, window.FccModelCombobox.canonicalValue(this.addInput), Number(this.addKey.value));
     this.rowKeys.forEach(({ entry, select }) => this.updateKeySelect(select, entry.model, entry.api_key_number ?? 1));
   }
 
@@ -1427,17 +1434,16 @@ function readFieldValue(input) {
   if (input.dataset.fieldType === "api_key_list") return JSON.parse(input.value);
   if (input.type === "checkbox") return input.checked ? "true" : "false";
   if (input.dataset.remove === "true") return null;
-  if (
-    input.dataset.fieldType === "optional_model" &&
-    input.value.trim().toLowerCase() === "none"
-  ) {
+  const isModel = ["model", "optional_model"].includes(input.dataset.fieldType);
+  const value = isModel ? window.FccModelCombobox.canonicalValue(input) : input.value;
+  if (input.dataset.fieldType === "optional_model" && value.trim().toLowerCase() === "none") {
     return null;
   }
   if (input.dataset.secret === "true" && input.dataset.configured === "true") {
     return input.value ? input.value : MASKED_SECRET;
   }
-  if (input.dataset.nullable === "true" && !input.value.trim()) return null;
-  return input.value;
+  if (input.dataset.nullable === "true" && !value.trim()) return null;
+  return value;
 }
 
 function comparableValue(value) {
@@ -1808,7 +1814,11 @@ async function loadModelOptions(refresh = false) {
   const result = await api("/admin/api/models" + (refresh ? "/refresh" : ""), {
     method: refresh ? "POST" : "GET",
   });
-  if (request === state.modelOptionsRequest && config === state.config) { state.modelLabels = new Map(Object.entries(result.model_labels || {})); setModelOptions(result.models); }
+  if (request === state.modelOptionsRequest && config === state.config) {
+    state.modelLabels = new Map(Object.entries(result.model_labels || {}));
+    state.modelDetails = new Map(Object.entries(result.model_details || {}));
+    setModelOptions(result.models);
+  }
   if (refresh && window.CodeSessions) void window.CodeSessions.refresh();
   return result;
 }
@@ -1852,9 +1862,7 @@ function setModelOptions(models) {
   state.modelOptions = Array.from(
     new Set(models.filter((model) => typeof model === "string" && model.trim())),
   );
-  state.modelComboboxes.forEach((combobox) => {
-    if (combobox.isOpen) combobox.render(combobox.query);
-  });
+  state.modelComboboxes.forEach((combobox) => combobox.refreshMetadata());
 }
 
 function showMessage(message, kind = "") {

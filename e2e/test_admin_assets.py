@@ -253,14 +253,81 @@ def test_admin_loads_current_release_assets_before_rendering_dynamic_content(
     assert f"{versioned_root}/app-icon.svg" in requested_paths
     assert f"{versioned_root}/admin.css" in requested_paths
     assert f"{versioned_root}/code_sessions.css" in requested_paths
+    assert f"{versioned_root}/model_picker_details.js" in requested_paths
     assert f"{versioned_root}/model_combobox.js" in requested_paths
     assert f"{versioned_root}/form_controls.js" in requested_paths
     assert f"{versioned_root}/code_sessions.js" in requested_paths
     assert f"{versioned_root}/admin.js" in requested_paths
     assert "/admin/assets/admin.css" not in requested_paths
     assert "/admin/assets/code_sessions.css" not in requested_paths
+    assert "/admin/assets/model_picker_details.js" not in requested_paths
     assert "/admin/assets/model_combobox.js" not in requested_paths
     assert "/admin/assets/code_sessions.js" not in requested_paths
     assert "/admin/assets/admin.js" not in requested_paths
     assert not any("/chat_sessions." in path for path in requested_paths)
     assert page_errors == []
+
+
+def test_model_picker_details_enforce_authority_and_safe_text_rendering(
+    page: Page, admin_base_url: str
+) -> None:
+    page.goto(f"{admin_base_url}/admin")
+    expect(page.locator('[data-provider="nvidia_nim"]')).to_be_visible()
+
+    result = page.evaluate("""() => {
+      const helper = window.FccModelPickerDetails;
+      const known = helper.viewModel('open_router/known', 'Known', {
+        supports_reasoning: true,
+        input_modalities: ['text', 'image', 'video'],
+        context_window_tokens: 262144,
+        max_output_tokens: 32768,
+      });
+      const unknown = helper.viewModel('nvidia_nim/minimax', 'MiniMax', {
+        description: '1M context',
+        supports_reasoning: null,
+        input_modalities: null,
+        context_window_tokens: null,
+        max_output_tokens: null,
+      });
+      const disabled = helper.viewModel('open_router/disabled', 'Disabled', {
+        supports_reasoning: false,
+        input_modalities: [],
+        context_window_tokens: 0,
+        max_output_tokens: -1,
+      });
+      const description = '<img src=x onerror=alert(1)> 1M context';
+      const option = helper.renderOption('custom/model', 'Custom <b>title</b>', {
+        description,
+        description_source: 'models.dev',
+        supports_reasoning: false,
+        input_modalities: ['video'],
+      });
+      document.body.appendChild(option);
+      const summary = document.createElement('div');
+      const customVisible = helper.renderSummary(summary, 'custom/model', 'custom/model');
+      return {
+        knownBadges: known.badges.map(badge => badge.label),
+        unknownBadges: unknown.badges,
+        disabledBadges: disabled.badges,
+        optionText: option.textContent,
+        optionImages: option.querySelectorAll('img, b').length,
+        optionBadges: option.querySelectorAll('.model-picker-badge--capability').length,
+        customVisible,
+        customChildren: summary.childElementCount,
+      };
+    }""")
+
+    assert result["knownBadges"] == [
+        "Reasoning",
+        "Image input",
+        "256K context",
+        "32K output",
+    ]
+    assert result["unknownBadges"] == []
+    assert result["disabledBadges"] == []
+    assert "<img src=x onerror=alert(1)> 1M context" in result["optionText"]
+    assert "Custom <b>title</b>" in result["optionText"]
+    assert result["optionImages"] == 0
+    assert result["optionBadges"] == 0
+    assert result["customVisible"] is False
+    assert result["customChildren"] == 0

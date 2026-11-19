@@ -49,6 +49,22 @@ _WORD_TITLES = {
 _ACRONYMS = frozenset({"ai", "api", "gpu", "llm", "moe", "vl", "vlm"})
 
 
+def lookup_model_catalog_entry(
+    provider_id: str,
+    model_id: str,
+    catalog: CatalogTitleMap | None = None,
+) -> tuple[str, str | None] | None:
+    """Return normalized cached title and purpose text without I/O."""
+    catalog_provider = MODEL_CATALOG_PROVIDER_MAPPING.get(provider_id)
+    if catalog_provider is None or catalog is None:
+        return None
+    entry = catalog.get((catalog_provider, model_id))
+    if entry is None or not entry[0].strip():
+        return None
+    description = entry[1].strip() if isinstance(entry[1], str) else ""
+    return entry[0].strip(), description or None
+
+
 def resolve_model_title(
     provider_id: str,
     model_id: str,
@@ -59,11 +75,9 @@ def resolve_model_title(
     override = MODEL_TITLE_OVERRIDES.get((provider_id, model_id))
     if override is not None:
         return override.title
-    catalog_provider = MODEL_CATALOG_PROVIDER_MAPPING.get(provider_id)
-    if catalog_provider is not None and catalog is not None:
-        entry = catalog.get((catalog_provider, model_id))
-        if entry is not None and entry[0].strip():
-            return entry[0].strip()
+    entry = lookup_model_catalog_entry(provider_id, model_id, catalog)
+    if entry is not None:
+        return entry[0]
     return heuristic_model_title(model_id) or provider_model_ref
 
 

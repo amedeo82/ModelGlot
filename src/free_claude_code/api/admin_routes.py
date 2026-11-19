@@ -21,17 +21,19 @@ from free_claude_code.application.connected_accounts import (
     ConnectedAccountLoginMode,
 )
 from free_claude_code.application.errors import ApplicationError
-from free_claude_code.application.model_catalog import read_model_catalog
+from free_claude_code.application.model_catalog import CatalogModel, read_model_catalog
 from free_claude_code.application.model_metadata import ProviderModelRefreshResult
 from free_claude_code.application.usage_events import UsageFilters, UsageGroupBy
 from free_claude_code.config.admin.custom_providers import CustomProviderMutation
 from free_claude_code.config.admin.manifest import FIELD_BY_KEY
 from free_claude_code.config.errors import ConfigConflictError
+from free_claude_code.config.model_refs import split_provider_model_ref
 from free_claude_code.config.provider_catalog import (
     PROVIDER_CATALOG,
     ProviderAuthKind,
 )
 from free_claude_code.core.json_types import JsonObject, JsonValue
+from free_claude_code.core.model_capabilities import ModelInputModality
 from free_claude_code.core.version import package_version
 
 from .admin_security import require_loopback_admin
@@ -62,6 +64,7 @@ _ADMIN_ASSET_FILENAMES = frozenset(
         "session_ui.js",
         "token_optimization.css",
         "token_optimization.js",
+        "model_picker_details.js",
         "model_combobox.js",
         "api_key_editor.js",
         *(
@@ -615,7 +618,39 @@ def _model_options(
         "model_labels": {
             model.provider_model_ref: model.display_name for model in catalog.models
         },
+        "model_details": {
+            model.provider_model_ref: _admin_model_details(model)
+            for model in catalog.models
+        },
         "failed_providers": list(failed_provider_ids),
+    }
+
+
+def _admin_model_details(model: CatalogModel) -> JsonObject:
+    provider_id, _ = split_provider_model_ref(model.provider_model_ref)
+    modalities = (
+        [
+            modality.value
+            for modality in ModelInputModality
+            if modality in model.input_modalities
+        ]
+        if model.input_modalities is not None
+        else []
+    )
+    context = model.context_window_tokens
+    output = model.max_output_tokens
+    return {
+        "display_name": model.display_name,
+        "provider_id": provider_id,
+        "provider_label": model.description,
+        "description": model.model_description,
+        "description_source": model.model_description_source,
+        "supports_reasoning": model.supports_reasoning,
+        "input_modalities": modalities or None,
+        "context_window_tokens": context
+        if context is not None and context > 0
+        else None,
+        "max_output_tokens": output if output is not None and output > 0 else None,
     }
 
 

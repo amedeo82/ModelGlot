@@ -17,7 +17,10 @@ Related documents:
   for the shipped title implementation;
 - [`claude-terminal-model-display-names-analysis.md`](claude-terminal-model-display-names-analysis.md)
   for the Terminal discovery contract and client-owned cache;
-- [`hot-to-use-models.dev.md`](hot-to-use-models.dev.md) for the models.dev endpoints and SDK.
+- [`hot-to-use-models.dev.md`](hot-to-use-models.dev.md) for the models.dev endpoints and SDK;
+- [`admin-model-picker-enrichment-implementation-plan.md`](admin-model-picker-enrichment-implementation-plan.md)
+  for the separate, implemented Admin picker. That plan does not implement the Terminal/Desktop
+  metadata-enrichment proposal in this document.
 
 ---
 

@@ -1,6 +1,6 @@
 # Admin Model Picker Enrichment Analysis
 
-Status: proposed
+Status: implemented for the initial Admin scope; optional catalog metadata remains proposed
 Input: [`model-picker-info-enrichments.md`](model-picker-info-enrichments.md), [`model-picker-metadata-research.md`](model-picker-metadata-research.md), and live verification of the local Admin server
 Audience: Admin UI, API, model metadata, and configuration maintainers
 
@@ -385,7 +385,7 @@ Expand the reduced models.dev cache and add explicitly labeled catalog-derived b
 
 Complete contract, accessibility, responsive, E2E, and documentation coverage.
 
-The ordered steps, acceptance criteria, tests, dependencies, and rollback strategy are defined in [`admin-model-picker-enrichment-implementation-plan.md`](admin-model-picker-enrichment-implementation-plan.md). No implementation has shipped yet.
+The ordered steps, acceptance criteria, tests, dependencies, and rollback strategy are defined in [`admin-model-picker-enrichment-implementation-plan.md`](admin-model-picker-enrichment-implementation-plan.md). The initial API, canonical/display separation, enriched presentation, accessibility, and regression coverage are implemented. Wave 4 catalog-derived badges remain deferred pending explicit product approval.
 
 ---
 
@@ -434,6 +434,51 @@ The following decisions are recommended for implementation:
 8. Keep catalog-derived badges behind a separate decision gate.
 9. Use the shared model-title catalog; do not create an Admin-only title map.
 10. Implement the presentation rules in a separately testable helper.
+
+---
+
+## 13. Implementation Record
+
+### S0.1 baseline — 2026-11-18
+
+The pre-enrichment fixture retained the following exact routing and presentation values:
+
+```text
+MODEL = nvidia_nim/minimaxai/minimax-m3.1-flash
+model_labels["nvidia_nim/minimaxai/minimax-m3.1-flash"] = "MiniMax-M3.1-Flash"
+selected input = nvidia_nim/minimaxai/minimax-m3.1-flash
+Apply MODEL = nvidia_nim/minimaxai/minimax-m3.1-flash
+```
+
+Provider reasoning, input modalities, context, and output facts were unknown for this MiniMax
+fixture; the fallback `200000` context was not a provider fact. Manual custom references,
+optional `None`, fallback rows, locked fields, and open/Arrow/Home/End/Enter/Escape/Tab keyboard
+flows were covered by the existing browser suites.
+
+Baseline results: `tests/api/test_admin.py` passed 207 tests. The combined Admin model/provider
+browser suites passed 48 tests with `-n 0`; the initial auto-xdist run passed 45 tests and hit
+three existing five-second server-startup timeouts, which disappeared in the serial rerun.
+
+### S1.1–S3.2 implementation — 2026-11-19
+
+`CatalogModel.description` remains provider attribution. The additive `model_description` and
+`model_description_source` fields carry normalized models.dev purpose text without changing
+Claude/Desktop/API descriptions, titles, `provider_model_ref`, or `wire_slug`. Both Admin model
+endpoints project `model_details` from the cached application inventory. Unknown reasoning,
+modalities, context, and output stay `null`; no client fallback is used.
+
+`FccModelCombobox.canonicalValue(input)` is the only Admin identity reader for model fields and
+fallback editors. Component state and `data-canonical-value` retain routing identity while the
+visible input holds the resolved title. Genuine typing marks a custom edit, so refreshes cannot
+resurrect a previous selection. Optional `None`, locked fields, API-key association, dirty state,
+Code sessions, and fallback serialization retain their prior contracts.
+
+`model_picker_details.js` builds options and summaries with DOM nodes and `textContent`. Provider
+badges are distinct from capability badges. Only provider-confirmed reasoning, image input, and
+positive context/output limits produce badges; models.dev descriptions remain attributed plain
+text. Responsive CSS wraps long values and stacks Model Routing at narrow widths. Accessible
+option names include title and canonical identity, and selected summaries are associated through
+`aria-describedby`.
 
 ---
 

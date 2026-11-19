@@ -7,6 +7,7 @@ import pytest
 
 from free_claude_code.config.settings import Settings
 from free_claude_code.providers.model_catalog_source import (
+    ModelCatalogCache,
     ModelCatalogSource,
     ModelCatalogSourceError,
     reduce_model_catalog,
@@ -107,6 +108,31 @@ async def test_refresh_fetches_reduces_and_publishes_the_catalog(
                 "description": "Description",
             }
         }
+    }
+
+
+def test_cache_round_trip_preserves_name_and_description(tmp_path: Path) -> None:
+    source = ModelCatalogSource(tmp_path / "catalog.json")
+    source.write(
+        ModelCatalogCache(
+            entries={("deepseek", "deepseek-chat"): ("DeepSeek Chat", "Description")}
+        )
+    )
+
+    assert source.load().entries == {
+        ("deepseek", "deepseek-chat"): ("DeepSeek Chat", "Description")
+    }
+
+
+def test_legacy_title_only_cache_entries_remain_readable(tmp_path: Path) -> None:
+    path = tmp_path / "catalog.json"
+    path.write_text(
+        json.dumps({"entries": {"deepseek": {"deepseek-chat": "DeepSeek Chat"}}}),
+        encoding="utf-8",
+    )
+
+    assert ModelCatalogSource(path).load().entries == {
+        ("deepseek", "deepseek-chat"): ("DeepSeek Chat", "")
     }
 
 

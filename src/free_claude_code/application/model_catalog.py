@@ -18,6 +18,7 @@ from .model_metadata import ProviderModelInfo
 from .model_titles import (
     CatalogTitleMap,
     disambiguate_duplicate_titles,
+    lookup_model_catalog_entry,
     resolve_model_title,
 )
 from .ports import ModelTitleCatalogPort
@@ -40,6 +41,8 @@ class CatalogModel:
     input_modalities: frozenset[ModelInputModality] | None = None
     context_window_tokens: int | None = None
     max_output_tokens: int | None = None
+    model_description: str | None = field(default=None, kw_only=True)
+    model_description_source: str | None = field(default=None, kw_only=True)
 
 
 @dataclass(frozen=True, slots=True)
@@ -151,6 +154,8 @@ def _catalog_model(
     provider_id, model_id = split_provider_model_ref(ref)
     no_thinking = info.supports_thinking is False
     title = resolve_model_title(provider_id, model_id, ref, title_catalog)
+    metadata = lookup_model_catalog_entry(provider_id, model_id, title_catalog)
+    model_description = metadata[1] if metadata is not None else None
     descriptor = PROVIDER_CATALOG.get(provider_id)
     return CatalogModel(
         wire_slug=no_thinking_gateway_model_id(ref) if no_thinking else ref,
@@ -161,6 +166,8 @@ def _catalog_model(
         input_modalities=info.input_modalities,
         context_window_tokens=info.context_window_tokens,
         max_output_tokens=info.max_output_tokens,
+        model_description=model_description,
+        model_description_source="models.dev" if model_description else None,
     )
 
 

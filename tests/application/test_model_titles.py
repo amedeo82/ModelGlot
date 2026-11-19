@@ -1,8 +1,12 @@
+from typing import cast
+
 import pytest
 
 from free_claude_code.application.model_titles import (
+    CatalogTitleMap,
     disambiguate_duplicate_titles,
     heuristic_model_title,
+    lookup_model_catalog_entry,
     resolve_model_title,
 )
 
@@ -32,6 +36,48 @@ def test_catalog_title_is_selected_with_the_explicit_provider_mapping() -> None:
             catalog,
         )
         == "Vendor Model"
+    )
+
+
+def test_catalog_lookup_exposes_the_same_title_and_normalized_description() -> None:
+    catalog = {("openrouter", "vendor/model"): (" Vendor Model ", " Description ")}
+
+    assert lookup_model_catalog_entry("open_router", "vendor/model", catalog) == (
+        "Vendor Model",
+        "Description",
+    )
+    assert (
+        resolve_model_title(
+            "open_router", "vendor/model", "open_router/vendor/model", catalog
+        )
+        == "Vendor Model"
+    )
+
+
+@pytest.mark.parametrize("description", ["", "   ", None, 42])
+def test_catalog_lookup_discards_missing_blank_or_malformed_descriptions(
+    description: object,
+) -> None:
+    catalog = cast(
+        CatalogTitleMap,
+        {("openrouter", "vendor/model"): ("Vendor Model", description)},
+    )
+
+    assert lookup_model_catalog_entry("open_router", "vendor/model", catalog) == (
+        "Vendor Model",
+        None,
+    )
+
+
+def test_catalog_lookup_returns_absent_for_missing_or_blank_titles() -> None:
+    assert lookup_model_catalog_entry("open_router", "missing", {}) is None
+    assert (
+        lookup_model_catalog_entry(
+            "open_router",
+            "vendor/model",
+            {("openrouter", "vendor/model"): (" ", "text")},
+        )
+        is None
     )
 
 

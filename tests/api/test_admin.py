@@ -28,6 +28,7 @@ from free_claude_code.config.model_refs import ModelFallback, decode_model_fallb
 from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
 from free_claude_code.config.server_urls import local_admin_url
 from free_claude_code.config.settings import Settings
+from free_claude_code.core.model_capabilities import ModelInputModality
 from free_claude_code.core.version import package_version
 from tests.api.support import (
     create_test_app,
@@ -273,7 +274,11 @@ def test_admin_page_uses_installed_version(monkeypatch, tmp_path):
     assert 'href="/admin/assets/9.8.7/code_sessions.css"' in response.text
     assert 'href="/admin/assets/9.8.7/token_optimization.css"' in response.text
     assert 'src="/admin/assets/9.8.7/token_optimization.js"' in response.text
+    assert 'src="/admin/assets/9.8.7/model_picker_details.js"' in response.text
     assert 'src="/admin/assets/9.8.7/model_combobox.js"' in response.text
+    assert response.text.index("model_picker_details.js") < response.text.index(
+        "model_combobox.js"
+    )
     assert 'src="/admin/assets/9.8.7/form_controls.js"' in response.text
     assert 'src="/admin/assets/9.8.7/code_sessions.js"' in response.text
     assert 'src="/admin/assets/9.8.7/admin.js"' in response.text
@@ -294,6 +299,7 @@ def test_admin_page_uses_installed_version(monkeypatch, tmp_path):
         ("token_optimization.css", "text/css"),
         ("token_optimization.js", "text/javascript"),
         ("session_ui.js", "text/javascript"),
+        ("model_picker_details.js", "text/javascript"),
         ("model_combobox.js", "text/javascript"),
         ("providers/openrouter.svg", "image/svg+xml"),
         ("providers/lightning.png", "image/png"),
@@ -354,6 +360,7 @@ def test_admin_versioned_logo_reuses_packaged_app_icon(monkeypatch, tmp_path):
         f"/admin/assets/{package_version()}/code_sessions.js",
         f"/admin/assets/{package_version()}/token_optimization.css",
         f"/admin/assets/{package_version()}/token_optimization.js",
+        f"/admin/assets/{package_version()}/model_picker_details.js",
         f"/admin/assets/{package_version()}/model_combobox.js",
         "/admin/api/config",
     ),
@@ -758,6 +765,14 @@ def test_admin_static_model_combobox_owns_dropdown_and_search_behavior():
     assert "this.setActive(this.visibleOptions.length - 1)" in combobox_script
     assert 'event.key === "Enter"' in combobox_script
     assert 'event.key === "Escape"' in combobox_script
+    assert "static canonicalValue(input)" in combobox_script
+    assert "input.dataset.canonicalValue" in combobox_script
+    assert (
+        "values.indexOf(FccModelCombobox.canonicalValue(this.input))" in combobox_script
+    )
+    assert "this.setCanonicalValue(value)" in combobox_script
+    assert "window.FccModelCombobox.canonicalValue(input)" in script
+    assert "window.FccModelCombobox.canonicalValue(combobox.input)" in script
     assert 'document.createElement("datalist")' not in combobox_script
     assert ".model-combobox-list" in styles
     assert ".model-combobox-option.active" in styles
@@ -974,7 +989,9 @@ def test_admin_models_include_configured_and_cached_canonical_slugs():
 
     assert response.status_code == 200
     assert {
-        key: value for key, value in response.json().items() if key != "model_labels"
+        key: value
+        for key, value in response.json().items()
+        if key not in {"model_labels", "model_details"}
     } == {
         "models": [
             "nvidia_nim/configured-model",
@@ -988,6 +1005,92 @@ def test_admin_models_include_configured_and_cached_canonical_slugs():
         "open_router/anthropic/configured-opus": "Configured Opus",
         "open_router/meta/llama-3.3": "Llama 3.3",
     }
+    assert set(response.json()["model_details"]) == set(response.json()["model_labels"])
+
+
+def test_admin_model_details_expose_attributed_minimax_text_and_unknown_facts(
+    monkeypatch,
+):
+    ref = "nvidia_nim/minimaxai/minimax-m3.1-flash"
+    app = create_test_app(Settings(model=ref))
+    manager = provider_manager_for_app(app)
+    manager.cache_model_infos(
+        "nvidia_nim", {ProviderModelInfo("minimaxai/minimax-m3.1-flash")}
+    )
+    monkeypatch.setattr(
+        manager,
+        "model_title_catalog",
+        lambda: {
+            ("nvidia", "minimaxai/minimax-m3.1-flash"): (
+                "MiniMax-M3.1-Flash",
+                "1M context",
+            )
+        },
+    )
+    runtime = app.state.services.admin
+    runtime.refresh_models = AsyncMock()
+
+    response = _local_client(app).get("/admin/api/models")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["models"] == [ref]
+    assert body["model_labels"] == {ref: "MiniMax-M3.1-Flash"}
+    assert body["model_details"] == {
+        ref: {
+            "display_name": "MiniMax-M3.1-Flash",
+            "provider_id": "nvidia_nim",
+            "provider_label": "NVIDIA NIM",
+            "description": "1M context",
+            "description_source": "models.dev",
+            "supports_reasoning": None,
+            "input_modalities": None,
+            "context_window_tokens": None,
+            "max_output_tokens": None,
+        }
+    }
+    assert body["model_details"][ref]["context_window_tokens"] != 200000
+    runtime.refresh_models.assert_not_awaited()
+
+
+def test_admin_model_details_use_only_provider_backed_capability_facts():
+    reasoning_ref = "open_router/vendor/reasoning"
+    disabled_ref = "open_router/vendor/no-reasoning"
+    app = create_test_app(
+        Settings(
+            model=reasoning_ref,
+            model_opus=disabled_ref,
+            open_router_api_keys=normalize_api_keys("open-router-key"),
+        )
+    )
+    provider_manager_for_app(app).cache_model_infos(
+        "open_router",
+        {
+            ProviderModelInfo(
+                "vendor/reasoning",
+                supports_thinking=True,
+                input_modalities=frozenset(
+                    {ModelInputModality.TEXT, ModelInputModality.IMAGE}
+                ),
+                context_window_tokens=262144,
+                max_output_tokens=32768,
+            ),
+            ProviderModelInfo("vendor/no-reasoning", supports_thinking=False),
+        },
+    )
+
+    body = _local_client(app).get("/admin/api/models").json()
+
+    reasoning = body["model_details"][reasoning_ref]
+    assert reasoning["supports_reasoning"] is True
+    assert reasoning["input_modalities"] == ["text", "image"]
+    assert reasoning["context_window_tokens"] == 262144
+    assert reasoning["max_output_tokens"] == 32768
+    disabled = body["model_details"][disabled_ref]
+    assert disabled["supports_reasoning"] is False
+    assert disabled["input_modalities"] is None
+    assert disabled["context_window_tokens"] is None
+    assert disabled["max_output_tokens"] is None
 
 
 def test_admin_model_refresh_returns_the_updated_canonical_catalog():
@@ -1011,10 +1114,24 @@ def test_admin_model_refresh_returns_the_updated_canonical_catalog():
 
     assert response.status_code == 200
     assert {
-        key: value for key, value in response.json().items() if key != "model_labels"
+        key: value
+        for key, value in response.json().items()
+        if key not in {"model_labels", "model_details"}
     } == {
         "models": ["deepseek/deepseek-chat", "deepseek/deepseek-reasoner"],
         "failed_providers": [],
+    }
+    assert set(response.json()["model_details"]) == set(response.json()["model_labels"])
+    assert response.json()["model_details"]["deepseek/deepseek-reasoner"] == {
+        "display_name": "DeepSeek Reasoner",
+        "provider_id": "deepseek",
+        "provider_label": "DeepSeek",
+        "description": None,
+        "description_source": None,
+        "supports_reasoning": None,
+        "input_modalities": None,
+        "context_window_tokens": None,
+        "max_output_tokens": None,
     }
     runtime.refresh_models.assert_awaited_once_with()
 
@@ -1034,11 +1151,14 @@ def test_admin_model_refresh_reports_partial_provider_failures():
 
     assert response.status_code == 200
     assert {
-        key: value for key, value in response.json().items() if key != "model_labels"
+        key: value
+        for key, value in response.json().items()
+        if key not in {"model_labels", "model_details"}
     } == {
         "models": ["deepseek/deepseek-chat"],
         "failed_providers": ["open_router"],
     }
+    assert set(response.json()["model_details"]) == set(response.json()["model_labels"])
 
 
 def test_admin_config_preserves_managed_env_source_contract(monkeypatch, tmp_path):

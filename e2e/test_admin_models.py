@@ -103,7 +103,10 @@ def test_model_routing_saves_independent_model_and_effort_choices(
     expect(opus.locator("#field-MODEL_OPUS")).to_have_value("None")
     expect(opus.locator("#field-REASONING_OPUS")).to_have_value("high")
     expect(sonnet.locator("#field-MODEL_SONNET")).to_have_value(
-        "open_router/vendor/model-b"
+        "Vendor Model B (OpenRouter)"
+    )
+    expect(sonnet.locator("#field-MODEL_SONNET")).to_have_attribute(
+        "data-canonical-value", "open_router/vendor/model-b"
     )
     expect(sonnet.locator("#field-REASONING_SONNET")).to_have_value("low")
     assert _fallbacks(fallback) == [
@@ -139,7 +142,9 @@ def test_model_routing_distinguishes_duplicate_titles_by_provider(
     def editable_default_config(route: Route) -> None:
         response = route.fetch()
         payload = response.json()
-        model_field = next(field for field in payload["fields"] if field["key"] == "MODEL")
+        model_field = next(
+            field for field in payload["fields"] if field["key"] == "MODEL"
+        )
         model_field["locked"] = False
         route.fulfill(response=response, json=payload)
 
@@ -183,7 +188,9 @@ def test_model_routing_distinguishes_duplicate_titles_by_provider(
 
     with page.expect_response("**/admin/api/config/apply") as saved:
         page.locator("#applyButton").click()
-    values = saved.value.request.post_data_json["values"]
+    payload = saved.value.request.post_data_json
+    assert isinstance(payload, dict)
+    values = payload["values"]
     assert "MODEL" not in values
     assert json.loads(values["MODEL_FALLBACKS"])[0]["model"] == "groq/e2e-default"
 
@@ -197,7 +204,9 @@ def test_model_routing_omits_provider_suffix_with_one_configured_provider(
         for provider in payload["provider_status"]:
             if provider["provider_id"] != "open_router":
                 provider["status"] = "missing_configuration"
-        model_field = next(field for field in payload["fields"] if field["key"] == "MODEL")
+        model_field = next(
+            field for field in payload["fields"] if field["key"] == "MODEL"
+        )
         model_field["locked"] = False
         route.fulfill(response=response, json=payload)
 
@@ -212,7 +221,9 @@ def test_model_routing_omits_provider_suffix_with_one_configured_provider(
     default_model.fill("Shared Model")
     default_options = page.locator("#model-options-MODEL")
     expect(default_options.locator('[role="option"]')).to_have_count(2)
-    assert page.evaluate("modelDisplayValue('open_router/e2e-default')") == "Shared Model"
+    assert (
+        page.evaluate("modelDisplayValue('open_router/e2e-default')") == "Shared Model"
+    )
     assert page.evaluate("modelDisplayValue('groq/e2e-default')") == "Shared Model"
 
     editor = page.locator('.field[data-key="MODEL_FALLBACKS"]')
@@ -266,11 +277,14 @@ def test_fallback_editor_adds_filters_reorders_and_removes_models(
 
     add_input.fill("model-b")
     expect(
-        editor.get_by_role("option", name="Vendor Model B", exact=True)
+        editor.locator('[role="option"][data-value="open_router/vendor/model-b"]')
     ).to_be_visible()
     add_input.press("ArrowDown")
     add_input.press("Enter")
-    expect(add_input).to_have_value("open_router/vendor/model-b")
+    expect(add_input).to_have_value("Vendor Model B (OpenRouter)")
+    expect(add_input).to_have_attribute(
+        "data-canonical-value", "open_router/vendor/model-b"
+    )
     add_effort.select_option("low")
     editor.get_by_role("button", name="Add fallback", exact=True).click()
     expect(add_effort).to_have_value("inherit")
@@ -415,8 +429,11 @@ def test_fallback_editor_pairs_match_existing_controls_and_save_effort(
     editor.get_by_role("button", name="Add fallback", exact=True).click()
     row_model = editor.get_by_role("combobox", name="Fallback model 1", exact=True)
     row_model.fill("model-b")
-    editor.get_by_role("option", name="Vendor Model B", exact=True).click()
-    expect(row_model).to_have_value("open_router/vendor/model-b")
+    editor.locator('[role="option"][data-value="open_router/vendor/model-b"]').click()
+    expect(row_model).to_have_value("Vendor Model B (OpenRouter)")
+    expect(row_model).to_have_attribute(
+        "data-canonical-value", "open_router/vendor/model-b"
+    )
     row_effort = editor.get_by_label(
         "Reasoning effort for open_router/vendor/model-b", exact=True
     )
@@ -447,7 +464,7 @@ def test_fallback_editor_pairs_match_existing_controls_and_save_effort(
 def test_fallback_drag_and_keyboard_reordering_save_model_effort_pairs(
     page: Page, admin_base_url: str
 ) -> None:
-    page.set_viewport_size({"width": 1280, "height": 1100})
+    page.set_viewport_size({"width": 1280, "height": 1400})
     _open_models(page, admin_base_url)
     editor = page.locator('.field[data-key="MODEL_FALLBACKS"]')
     entries = [
@@ -514,13 +531,12 @@ def test_fallback_plus_and_trash_have_matching_shape_and_centered_icons(
 def test_fallback_drag_indicators_only_offer_unique_positions_that_change_order(
     page: Page, admin_base_url: str
 ) -> None:
-    page.set_viewport_size({"width": 1280, "height": 1100})
+    page.set_viewport_size({"width": 1280, "height": 2000})
     _open_models(page, admin_base_url)
     editor = page.locator('.field[data-key="MODEL_FALLBACKS"]')
     for suffix in ("a", "b", "c", "d"):
         editor.locator("#field-MODEL_FALLBACKS-add").fill(f"groq/model-{suffix}")
         editor.get_by_role("button", name="Add fallback", exact=True).click()
-    editor.scroll_into_view_if_needed()
     original = _fallbacks(editor)
     rows = editor.locator(".model-list-row")
     handle = editor.get_by_role("button", name="Move groq/model-b", exact=True)
@@ -530,7 +546,7 @@ def test_fallback_drag_indicators_only_offer_unique_positions_that_change_order(
     y = handle_box["y"] + handle_box["height"] / 2
     page.mouse.move(x, y)
     page.mouse.down()
-    page.mouse.move(x + 8, y + 8, steps=5)
+    page.mouse.move(x + 8, y + 8, steps=20)
     expect(editor.locator(".model-list-row.dragging")).to_have_count(1)
     indicators = editor.locator(".model-list-row[data-drop-position]")
     try:
@@ -542,7 +558,7 @@ def test_fallback_drag_indicators_only_offer_unique_positions_that_change_order(
             page.mouse.move(
                 bounds["x"] + 10,
                 bounds["y"] + (bounds["height"] - 2 if after else 2),
-                steps=5,
+                steps=20,
             )
             expect(indicators).to_have_count(0)
             assert _fallbacks(editor) == original
@@ -552,9 +568,10 @@ def test_fallback_drag_indicators_only_offer_unique_positions_that_change_order(
             page.mouse.move(
                 bounds["x"] + 10,
                 bounds["y"] + (bounds["height"] - 2 if position == "after" else 2),
-                steps=5,
+                steps=20,
             )
             expect(indicators).to_have_count(1)
+
             expect(rows.nth(index)).to_have_attribute("data-drop-position", position)
         line_y = None
         for index, after in ((2, True), (3, False)):
@@ -563,7 +580,7 @@ def test_fallback_drag_indicators_only_offer_unique_positions_that_change_order(
             page.mouse.move(
                 bounds["x"] + 10,
                 bounds["y"] + (bounds["height"] - 2 if after else 2),
-                steps=5,
+                steps=20,
             )
             expect(indicators).to_have_count(1)
             current_y = indicators.evaluate(
@@ -578,7 +595,7 @@ def test_fallback_drag_indicators_only_offer_unique_positions_that_change_order(
         page.mouse.move(
             upper["x"] + 10,
             (upper["y"] + upper["height"] + lower["y"]) / 2,
-            steps=5,
+            steps=20,
         )
         expect(indicators).to_have_count(1)
         assert (
@@ -648,11 +665,11 @@ def test_editable_fallbacks_keep_focus_and_live_model_suggestions(
     # Refresh the catalog without closing the currently edited model dropdown.
     with page.expect_response("**/admin/api/models"):
         page.evaluate("void hydrateModelOptions()")
-    expect(
-        editor.get_by_role("option", name="open_router/new-model", exact=True)
-    ).to_be_visible()
-    expect(model).to_have_value("new-model")
-    editor.get_by_role("option", name="open_router/new-model", exact=True).click()
+        expect(
+            editor.locator('[role="option"][data-value="open_router/new-model"]')
+        ).to_be_visible()
+        expect(model).to_have_value("new-model")
+        editor.locator('[role="option"][data-value="open_router/new-model"]').click()
     assert _fallbacks(editor) == [
         {"model": "open_router/new-model", "reasoning": "client", "api_key_number": 1}
     ]
@@ -694,6 +711,16 @@ def test_model_suggestions_keep_server_order_after_provider_check_and_late_respo
         "alpha/z",
         "alpha-2/model",
     ]
+
+    def expected_titles() -> list[str]:
+        return [
+            "None",
+            *(
+                f"{model} ({'OpenRouter' if model.startswith('open_router/') else model.split('/', 1)[0]})"
+                for model in models
+            ),
+        ]
+
     page.route(
         "**/admin/api/models",
         lambda route: route.fulfill(json={"models": models, "failed_providers": []}),
@@ -702,7 +729,7 @@ def test_model_suggestions_keep_server_order_after_provider_check_and_late_respo
     page.wait_for_function("!state.startupRequest && !state.startupTimer")
     field = page.locator('.field[data-key="MODEL_SONNET"]')
     field.locator("input").fill("")
-    expect(field.get_by_role("option")).to_have_text(["None", *models])
+    expect(field.locator(".model-picker-title")).to_have_text(expected_titles())
     field.locator("input").fill("open_router/custom-unsaved")
     field.locator("input").press("Tab")
 
@@ -719,11 +746,11 @@ def test_model_suggestions_keep_server_order_after_provider_check_and_late_respo
     page.get_by_role("button", name="Model Config", exact=True).click()
     expect(field.locator("input")).to_have_value("open_router/custom-unsaved")
     field.locator("input").fill("")
-    expect(field.get_by_role("option")).to_have_text(["None", *models])
+    expect(field.locator(".model-picker-title")).to_have_text(expected_titles())
     field.locator("input").press("Escape")
     optional = page.locator('.field[data-key="MODEL_OPUS"]')
     optional.locator("input").fill("")
-    expect(optional.get_by_role("option")).to_have_text(["None", *models])
+    expect(optional.locator(".model-picker-title")).to_have_text(expected_titles())
 
     page.wait_for_function("!state.startupRequest && !state.startupTimer")
     page.unroute("**/admin/api/models")
@@ -743,4 +770,214 @@ def test_model_suggestions_keep_server_order_after_provider_check_and_late_respo
     with page.expect_response("**/admin/api/models") as stale:
         pending[0].fulfill(json={"models": ["old/stale"], "failed_providers": []})
     stale.value.finished()
-    expect(optional.get_by_role("option")).to_have_text(["None", *models])
+    expect(optional.locator(".model-picker-title")).to_have_text(expected_titles())
+
+
+def test_known_model_display_canonical_apply_refresh_and_custom_editing(
+    page: Page, admin_base_url: str
+) -> None:
+    ref = "nvidia_nim/minimaxai/minimax-m3.1-flash"
+
+    def single_nim_config(route: Route) -> None:
+        response = route.fetch()
+        payload = response.json()
+        for provider in payload["provider_status"]:
+            provider["status"] = (
+                "configured"
+                if provider["provider_id"] == "nvidia_nim"
+                else "missing_configuration"
+            )
+        route.fulfill(response=response, json=payload)
+
+    page.route("**/admin/api/config", single_nim_config)
+    page.route(
+        "**/admin/api/models",
+        lambda route: route.fulfill(
+            json={
+                "models": [ref],
+                "model_labels": {ref: "MiniMax-M3.1-Flash"},
+                "model_details": {
+                    ref: {
+                        "display_name": "MiniMax-M3.1-Flash",
+                        "provider_id": "nvidia_nim",
+                        "provider_label": "NVIDIA NIM",
+                        "description": "1M context",
+                        "description_source": "models.dev",
+                        "supports_reasoning": None,
+                        "input_modalities": None,
+                        "context_window_tokens": None,
+                        "max_output_tokens": None,
+                    }
+                },
+                "failed_providers": [],
+            }
+        ),
+    )
+    _open_models(page, admin_base_url)
+    model = page.locator("#field-MODEL_SONNET")
+    model.fill("")
+    option = page.locator(f'[role="option"][data-value="{ref}"]')
+    expect(option).to_have_attribute("aria-label", f"MiniMax-M3.1-Flash — {ref}")
+    option.click()
+
+    expect(model).to_have_value("MiniMax-M3.1-Flash")
+    expect(model).to_have_attribute("data-canonical-value", ref)
+    summary = page.locator("#field-MODEL_SONNET-model-details")
+    expect(summary.locator(".model-picker-badge--provider")).to_have_text("NVIDIA NIM")
+    expect(summary.locator(".model-picker-description")).to_contain_text("1M context")
+    expect(summary.locator(".model-picker-source")).to_have_text("models.dev")
+    expect(summary.locator(".model-picker-canonical")).to_have_text(ref)
+    expect(summary.locator(".model-picker-badge--capability")).to_have_count(0)
+    expect(summary).not_to_contain_text("200K")
+    with page.expect_response("**/admin/api/config/apply") as saved:
+        page.locator("#applyButton").click()
+    payload = saved.value.request.post_data_json
+    assert isinstance(payload, dict)
+    assert payload["values"] == {"MODEL_SONNET": ref}
+
+    page.reload()
+    expect(page.locator("#messageArea")).to_have_text("")
+    expect(model).to_have_value("MiniMax-M3.1-Flash")
+    expect(model).to_have_attribute("data-canonical-value", ref)
+    expect(page.locator("#dirtyState")).to_have_text("No changes")
+    model.press("ArrowDown")
+    model.press("Home")
+    model.press("End")
+    model.press("Enter")
+    expect(model).to_be_focused()
+    expect(page.locator("#dirtyState")).to_have_text("No changes")
+    expect(page.locator("#applyButton")).to_be_disabled()
+
+    model.fill("custom/provider-model")
+    expect(model).to_have_attribute("data-canonical-value", "custom/provider-model")
+    expect(page.locator("#dirtyState")).to_have_text("1 unsaved change")
+    with page.expect_response("**/admin/api/models"):
+        page.evaluate("void hydrateModelOptions()")
+    expect(model).to_have_value("custom/provider-model")
+    expect(model).to_have_attribute("data-canonical-value", "custom/provider-model")
+    with page.expect_response("**/admin/api/config/apply") as custom_saved:
+        page.locator("#applyButton").click()
+    custom_payload = custom_saved.value.request.post_data_json
+    assert isinstance(custom_payload, dict)
+    assert custom_payload["values"] == {"MODEL_SONNET": "custom/provider-model"}
+
+
+@pytest.mark.parametrize(
+    "admin_base_url", [{"MODEL_SONNET": "open_router/vendor/refresh"}], indirect=True
+)
+def test_known_model_refresh_updates_title_without_changing_canonical_or_dirty_state(
+    page: Page, admin_base_url: str
+) -> None:
+    ref = "open_router/vendor/refresh"
+    payload = {
+        "models": [ref],
+        "model_labels": {ref: "Original title"},
+        "model_details": {},
+        "failed_providers": [],
+    }
+    page.route("**/admin/api/models", lambda route: route.fulfill(json=payload))
+    _open_models(page, admin_base_url)
+    model = page.locator("#field-MODEL_SONNET")
+    expect(model).to_have_value("Original title (OpenRouter)")
+    expect(page.locator("#dirtyState")).to_have_text("No changes")
+
+    payload["model_labels"] = {ref: "Refreshed title"}
+    with page.expect_response("**/admin/api/models"):
+        page.evaluate("void hydrateModelOptions()")
+
+    expect(model).to_have_value("Refreshed title (OpenRouter)")
+    expect(model).to_have_attribute("data-canonical-value", ref)
+    expect(model).to_have_attribute("data-original", ref)
+    expect(page.locator("#dirtyState")).to_have_text("No changes")
+
+
+def test_duplicate_display_titles_keep_distinct_accessible_and_canonical_identities(
+    page: Page, admin_base_url: str
+) -> None:
+    first = "open_router/vendor/first"
+    second = "open_router/vendor/second"
+    page.route(
+        "**/admin/api/models",
+        lambda route: route.fulfill(
+            json={
+                "models": [first, second],
+                "model_labels": {first: "Shared title", second: "Shared title"},
+                "model_details": {},
+                "failed_providers": [],
+            }
+        ),
+    )
+    _open_models(page, admin_base_url)
+    model = page.locator("#field-MODEL_SONNET")
+    model.fill("Shared")
+    expect(
+        page.get_by_role(
+            "option", name=f"Shared title (OpenRouter) — {first}", exact=True
+        )
+    ).to_be_visible()
+    expect(
+        page.get_by_role(
+            "option", name=f"Shared title (OpenRouter) — {second}", exact=True
+        )
+    ).to_be_visible()
+
+    page.locator(f'[role="option"][data-value="{second}"]').click()
+
+    expect(model).to_have_value("Shared title (OpenRouter)")
+    expect(model).to_have_attribute("data-canonical-value", second)
+    with page.expect_response("**/admin/api/config/apply") as saved:
+        page.locator("#applyButton").click()
+    payload = saved.value.request.post_data_json
+    assert isinstance(payload, dict)
+    assert payload["values"]["MODEL_SONNET"] == second
+
+
+@pytest.mark.parametrize("width", [1280, 900, 390])
+def test_long_model_details_wrap_without_horizontal_overflow(
+    page: Page, admin_base_url: str, width: int
+) -> None:
+    ref = "open_router/vendor/" + "very-long-model-segment-" * 8
+    title = "A readable model title " + "with wrapped words " * 8
+    description = "An attributed description " + "that must remain text " * 12
+    page.set_viewport_size({"width": width, "height": 844})
+    page.route(
+        "**/admin/api/models",
+        lambda route: route.fulfill(
+            json={
+                "models": [ref],
+                "model_labels": {ref: title},
+                "model_details": {
+                    ref: {
+                        "display_name": title,
+                        "provider_id": "open_router",
+                        "provider_label": "OpenRouter",
+                        "description": description,
+                        "description_source": "models.dev",
+                        "supports_reasoning": True,
+                        "input_modalities": ["text", "image", "video"],
+                        "context_window_tokens": 262144,
+                        "max_output_tokens": 32768,
+                    }
+                },
+                "failed_providers": [],
+            }
+        ),
+    )
+    _open_models(page, admin_base_url)
+    model = page.locator("#field-MODEL_SONNET")
+    model.fill("")
+    page.locator(f'[role="option"][data-value="{ref}"]').click()
+    summary = page.locator("#field-MODEL_SONNET-model-details")
+
+    expect(summary.locator('[data-capability="context"]')).to_have_text("256K context")
+    expect(summary.locator('[data-capability="output"]')).to_have_text("32K output")
+    expect(summary.locator(".model-picker-badge--capability")).to_have_count(4)
+    expect(summary).not_to_contain_text("video")
+    assert page.evaluate(
+        "document.documentElement.scrollWidth <= document.documentElement.clientWidth"
+    )
+    assert summary.evaluate("el => el.scrollWidth <= el.clientWidth")
+    toggle = page.get_by_role("button", name="Show Sonnet Override options", exact=True)
+    expect(toggle).to_be_visible()
+    bounds = toggle.bounding_box()
+    assert bounds is not None and bounds["x"] + bounds["width"] <= width

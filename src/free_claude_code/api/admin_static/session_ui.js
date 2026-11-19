@@ -101,7 +101,7 @@
         onSelect(model);
       },
       onClose: () => {
-        input.value = committed;
+        combobox.setCanonicalValue(committed);
       },
     });
     group.append(label, combobox.element);
@@ -111,7 +111,7 @@
       combobox,
       update(model, disabled) {
         committed = model;
-        if (!combobox.isOpen) input.value = model;
+        if (!combobox.isOpen) combobox.setCanonicalValue(model);
         input.disabled = disabled;
         combobox.toggle.disabled = disabled;
         if (disabled) combobox.close();
