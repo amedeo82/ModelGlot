@@ -568,9 +568,17 @@ listbox:
 | Compact rows plus selected-model detail card | **Recommended Wave 4 target** |
 | Separate searchable/filterable catalog table | Useful later, but out of scope for this wave |
 
-No repository mockup asset is shipped for this deferred wave. The following design hierarchy is
-the normative reference; an implementation need not reproduce particular pixels, fonts, or
-temporary hard-coded values:
+Design artifacts:
+
+- [Self-contained HTML design prototype](../assets/admin-model-picker-catalog-enrichment-mockup.html)
+  preserves the editable visual reference, inline icons, responsive rules, and provenance legend;
+- [SVG overview](../assets/admin-model-picker-catalog-enrichment-mockup.svg) is the repository
+  documentation preview. Both are design assets only and are not production Admin assets.
+
+![Wave 4 compact dropdown and selected-model detail mockup](../assets/admin-model-picker-catalog-enrichment-mockup.svg)
+
+The implementation must reproduce the mockup's information hierarchy, not necessarily its exact
+pixels, fonts, or temporary hard-coded values:
 
 1. **Compact option row**
    - 32px hosting-provider logo with initials fallback;
@@ -716,7 +724,7 @@ only the new namespace:
     "canonical_model_id": "minimax/MiniMax-M3.1-Flash",
     "lab": { "id": "minimax", "label": "MiniMax", "logo_url": "/admin/..." },
     "provider_logo_url": "/admin/...",
-    "fetched_at": 1763654400,
+    "fetched_at": 1795046400,
     "last_updated": "2026-10-19",
     "reasoning": true,
     "tool_call": true,
@@ -1037,7 +1045,10 @@ A step is complete when:
 | S2.1 | Implemented | Shared canonical accessor/setter across routing, fallback, API-key, refresh, and Code session consumers |
 | S3.1 | Implemented | Safe rich options and selected summaries with provider badges and provider-confirmed capability badges |
 | S3.2 | Implemented | Wrapping/stacking, 1280/900/390px coverage, accessible names, descriptions, and keyboard regression coverage |
-| S4.1 | **Deferred — not started** | No explicit product approval; no catalog-derived capability badge or expanded cache shipped |
+| S4.1 | **Deferred — not started** | No explicit product approval; provider-scoped cache contract and MiniMax/Gemma acceptance fixtures documented, but no expanded cache shipped |
+| S4.2 | **Deferred — not started** | Additive `catalog` payload and safe same-origin logo behavior designed, but no API or logo route shipped |
+| S4.3 | **Deferred — not started** | Hybrid UI documented in `assets/admin-model-picker-catalog-enrichment-mockup.html` and `.svg`; no production rendering shipped |
+| S4.4 | **Deferred — not started** | Conflict, responsive, offline, and integration verification criteria documented but not executed against a Wave 4 implementation |
 | S5.1 | Implemented | Documentation and focused verification shipped; unrelated repository-wide blockers remain explicitly recorded below |
 
 Verification results on 2026-11-19:

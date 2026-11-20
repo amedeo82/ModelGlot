@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Model Picker — Wave 4 design mockup</title>
+<!--
+  Static design reference for docs/admin-model-picker-enrichment-implementation-plan.md.
+  This file is not a production Admin asset. It is self-contained and performs no network I/O.
+-->
+<style>
+  :root {
+    color-scheme: dark;
+    --background: #080c12;
+    --foreground: #e2e8f0;
+    --card: #0d141d;
+    --card-foreground: #e2e8f0;
+    --secondary: #111a25;
+    --muted-foreground: #94a3b8;
+    --border: #27364a;
+    --primary: #10b981;
+    --accent: #103c31;
+    --accent-foreground: #d1fae5;
+    --info: #38bdf8;
+    --success: #34d399;
+    --radius: 12px;
+    --font-sans: Inter, "Segoe UI", Arial, sans-serif;
+    --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  button, input { font: inherit; }
+  svg { display: block; }
+  .page { width: min(1040px, 100%); margin: 0 auto; padding: 28px 20px 36px; }
+  .page-header { margin-bottom: 20px; }
+  .page-header h1 { margin: 4px 0 6px; font-size: 24px; line-height: 1.2; }
+  .page-header p { margin: 0; max-width: 780px; color: var(--muted-foreground); }
+  .mock { display: grid; gap: 14px; width: 100%; }
+  .label {
+    color: var(--muted-foreground);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .panel {
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--card);
+    color: var(--card-foreground);
+  }
+  .fake-input {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 7px 0 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--primary);
+    border-radius: calc(var(--radius) - 2px);
+    color: var(--muted-foreground);
+  }
+  .options { display: grid; gap: 6px; }
+  .option {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 10px;
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid transparent;
+    border-radius: calc(var(--radius) - 2px);
+  }
+  .option.active { border-color: var(--primary); background: var(--accent); color: var(--accent-foreground); }
+  .provider-logo {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--secondary);
+    color: var(--foreground);
+  }
+  .provider-logo svg { width: 22px; height: 22px; }
+  .model-head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; min-width: 0; }
+  .model-name { color: var(--foreground); font-weight: 750; overflow-wrap: anywhere; }
+  .host { margin-top: 2px; color: var(--muted-foreground); font-size: 11px; }
+  .canonical, .description, .source { color: var(--muted-foreground); }
+  .description { margin-top: 7px; font-size: 12px; }
+  .option .description {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  .canonical {
+    margin-top: 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    overflow-wrap: anywhere;
+  }
+  .row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 7px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 650;
+    white-space: nowrap;
+  }
+  .badge.catalog { border-style: dashed; border-color: var(--info); }
+  .badge.status { border-color: var(--success); color: var(--success); }
+  .badge .ic { width: 12px; height: 12px; }
+  .facts { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-left: auto; font-size: 11px; font-weight: 650; }
+  .fact { display: inline-flex; align-items: center; gap: 5px; }
+  .fact .ic { width: 13px; height: 13px; color: var(--muted-foreground); }
+  .detail-head { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+  .detail-head .provider-logo { width: 38px; height: 38px; }
+  .detail-title { font-size: 16px; font-weight: 750; }
+  .selected { display: inline-flex; align-items: center; gap: 5px; color: var(--success); font-size: 11px; font-weight: 700; }
+  .selected svg { width: 13px; height: 13px; }
+  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+  .stat { min-width: 0; padding: 10px; border: 1px solid var(--border); border-radius: calc(var(--radius) - 2px); background: var(--secondary); }
+  .stat-label { color: var(--muted-foreground); font-size: 10px; letter-spacing: .04em; text-transform: uppercase; }
+  .stat-value { margin-top: 3px; font-family: var(--font-mono); font-size: 14px; font-weight: 750; overflow-wrap: anywhere; }
+  .source { display: flex; align-items: flex-start; gap: 7px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 10px; }
+  .source .ic { flex: 0 0 auto; width: 13px; height: 13px; margin-top: 1px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 0 2px; color: var(--muted-foreground); font-size: 11px; }
+  .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+  .dash { width: 20px; border-top: 1px dashed var(--info); }
+  .solid { width: 20px; border-top: 2px solid var(--success); }
+  .design-notes { margin: 18px 0 0; padding-left: 20px; color: var(--muted-foreground); }
+  .design-notes li + li { margin-top: 5px; }
+  @media (max-width: 560px) {
+    .page { padding: 18px 12px 26px; }
+    .facts { width: 100%; margin-left: 0; }
+    .stats { grid-template-columns: 1fr; }
+    .detail-head { grid-template-columns: 38px minmax(0, 1fr); }
+    .selected { grid-column: 2; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="logo-nvidia" viewBox="0 0 40 40"><path d="M16.1801 15.8791V14.0283C16.3472 14.0155 16.5271 14.0026 16.7199 14.0026C21.7966 13.8356 25.1254 18.3596 25.1254 18.3596C25.1254 18.3596 21.5267 23.3463 17.671 23.3463C17.1569 23.3463 16.6557 23.2692 16.1801 23.1021V17.4728C18.1465 17.7298 18.545 18.591 19.7274 20.5702L22.375 18.3468C22.375 18.3468 20.4343 15.8277 17.1955 15.8277C16.8356 15.8277 16.5014 15.8405 16.1801 15.8791ZM16.1801 9.75492V12.5246C16.3472 12.5118 16.5271 12.4989 16.7199 12.4861C23.763 12.2547 28.377 18.2696 28.377 18.2696C28.377 18.2696 23.0819 24.683 17.5939 24.683C17.0798 24.683 16.6171 24.6444 16.1801 24.5545V26.2767C16.5528 26.3152 16.9384 26.341 17.3625 26.341C22.4649 26.341 26.1664 23.7448 29.7523 20.6473C30.3435 21.1229 32.7597 22.2796 33.261 22.7937C29.8679 25.6341 21.9251 27.9346 17.4396 27.9346C17.0155 27.9346 16.5914 27.9089 16.1801 27.8704V30.2866H35.6001V9.75492H16.1801ZM16.1801 23.1021V24.5545C11.4376 23.7191 10.1266 18.7966 10.1266 18.7966C10.1266 18.7966 12.4015 16.2775 16.1801 15.8791V17.4728H16.1673C14.188 17.2414 12.6329 19.0922 12.6329 19.0922C12.6329 19.0922 13.5068 22.2025 16.1801 23.1021ZM7.77464 18.591C7.77464 18.591 10.5765 14.4525 16.1801 14.0283V12.5246C9.9724 13.0259 4.6001 18.2696 4.6001 18.2696C4.6001 18.2696 7.64612 27.0735 16.1801 27.8575V26.2767C9.90814 25.4798 7.77464 18.591 7.77464 18.591Z" fill="currentColor"/></symbol>
+  <symbol id="i-brain" viewBox="0 0 24 24"><path d="M9.5 4.5A3 3 0 0 0 4.7 7 3.2 3.2 0 0 0 4 13.2 3.4 3.4 0 0 0 6 18.5 3.1 3.1 0 0 0 12 19V5.8a3 3 0 0 0-2.5-1.3ZM14.5 4.5A3 3 0 0 1 19.3 7a3.2 3.2 0 0 1 .7 6.2 3.4 3.4 0 0 1-2 5.3 3.1 3.1 0 0 1-6 .5V5.8a3 3 0 0 1 2.5-1.3ZM8 9a3 3 0 0 0 4 2M16 9a3 3 0 0 1-4 2M8 15a3 3 0 0 1 4-1M16 15a3 3 0 0 0-4-1" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+  <symbol id="i-tool" viewBox="0 0 24 24"><path d="M14.5 6.5a4 4 0 0 0-5-5l2.2 2.2-2.9 2.9-2.2-2.2a4 4 0 0 0 5 5L20 18a1.4 1.4 0 0 1-2 2l-8.4-8.4M4 15l5 5M3 20l2-2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.7" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="5" width="13" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m16 10 5-3v10l-5-3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+  <symbol id="i-braces" viewBox="0 0 24 24"><path d="M8 3H6a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h2M16 3h2a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-2M9 8l-3 4 3 4M15 8l3 4-3 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-context" viewBox="0 0 24 24"><path d="m12 3 9 4-9 4-9-4 9-4Zm-9 8 9 4 9-4M3 15l9 4 9-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-output" viewBox="0 0 24 24"><path d="M4 5h16M4 10h10M4 15h7M15 15l5 4-5 4M20 19H9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 11v6M12 7.5v.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m7 10 5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+<main class="page">
+  <header class="page-header">
+    <div class="label">Free Claude Code · Admin Model Picker · Wave 4</div>
+    <h1>Catalog metadata enrichment</h1>
+    <p>Static target for the compact-dropdown plus selected-detail design. Values reproduce the provider-specific NVIDIA fixtures documented in the implementation plan.</p>
+  </header>
+  <div class="mock">
+    <div class="label">Dropdown compatto + dettaglio selezionato</div>
+    <section class="panel" aria-label="Esempio di selettore modello arricchito">
+      <div class="label">Default Model</div>
+      <div class="fake-input"><span>Cerca un modello per nome, provider o capability…</span><svg width="16" height="16" aria-hidden="true"><use href="#i-chevron"/></svg></div>
+      <div class="options">
+        <article class="option">
+          <div class="provider-logo"><svg aria-hidden="true"><use href="#logo-nvidia"/></svg></div>
+          <div>
+            <div class="model-head"><span class="model-name">Gemma 4 31B IT</span><span class="badge status">Open weights</span></div>
+            <div class="host">Google · ospitato da NVIDIA NIM</div>
+            <div class="row">
+              <span class="badge catalog"><svg class="ic" aria-hidden="true"><use href="#i-brain"/></svg>Reasoning</span>
+              <span class="badge catalog"><svg class="ic" aria-hidden="true"><use href="#i-tool"/></svg>Tool calling</span>
+              <span class="badge catalog"><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg>Vision</span>
+              <span class="facts"><span class="fact"><svg class="ic" aria-hidden="true"><use href="#i-context"/></svg>256K context</span><span class="fact"><svg class="ic" aria-hidden="true"><use href="#i-output"/></svg>16K output</span></span>
+            </div>
+            <div class="description">Largest Gemma 4 instruction model for open, self-hosted chat and reasoning</div>
+          </div>
+        </article>
+        <article class="option active">
+          <div class="provider-logo"><svg aria-hidden="true"><use href="#logo-nvidia"/></svg></div>
+          <div>
+            <div class="model-head"><span class="model-name">MiniMax M3.1 Flash</span><span class="badge status">Open weights</span></div>
+            <div class="host">MiniMax · ospitato da NVIDIA NIM</div>
+            <div class="row">
+              <span class="badge catalog"><svg class="ic" aria-hidden="true"><use href="#i-brain"/></svg>Reasoning</span>
+              <span class="badge catalog"><svg class="ic" aria-hidden="true"><use href="#i-tool"/></svg>Tool calling</span>
+              <span class="badge catalog"><svg class="ic" aria-hidden="true"><use href="#i-braces"/></svg>Structured output</span>
+              <span class="badge catalog"><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg>Vision</span>
+              <span class="facts"><span class="fact"><svg class="ic" aria-hidden="true"><use href="#i-context"/></svg>262K context</span><span class="fact"><svg class="ic" aria-hidden="true"><use href="#i-output"/></svg>262K output</span></span>
+            </div>
+            <div class="description">Frontier multimodal coding model with 1M context window and tunable thinking depth</div>
+            <div class="canonical">nvidia_nim/minimaxai/minimax-m3.1-flash</div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Esempio di dettaglio del modello selezionato">
+      <div class="detail-head">
+        <div class="provider-logo"><svg aria-hidden="true"><use href="#logo-nvidia"/></svg></div>
+        <div><div class="detail-title">MiniMax M3.1 Flash</div><div class="host">MiniMax · NVIDIA NIM</div></div>
+        <div class="selected"><svg aria-hidden="true"><use href="#i-check"/></svg>Selezionato</div>
+      </div>
+      <div class="description">Frontier multimodal coding model with 1M context window and tunable thinking depth · <strong>models.dev</strong></div>
+      <div class="stats">
+        <div class="stat"><div class="stat-label">Context · NVIDIA</div><div class="stat-value">262.144 token</div></div>
+        <div class="stat"><div class="stat-label">Max output · NVIDIA</div><div class="stat-value">262.144 token</div></div>
+        <div class="stat"><div class="stat-label">Release</div><div class="stat-value">19 ott 2026</div></div>
+      </div>
+      <div class="row">
+        <span class="badge catalog"><svg class="ic" aria-hidden="true"><use href="#i-brain"/></svg>Reasoning</span>
+        <span class="badge catalog"><svg class="ic" aria-hidden="true"><use href="#i-tool"/></svg>Tool calling</span>
+        <span class="badge catalog"><svg class="ic" aria-hidden="true"><use href="#i-braces"/></svg>Structured output</span>
+        <span class="badge catalog"><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg>Image input</span>
+        <span class="badge catalog"><svg class="ic" aria-hidden="true"><use href="#i-video"/></svg>Video input</span>
+      </div>
+      <div class="source"><svg class="ic" aria-hidden="true"><use href="#i-info"/></svg><span>Limiti e capability dalla voce <strong>NVIDIA</strong> di models.dev, non dalla descrizione editoriale. I badge di catalogo non certificano il supporto del percorso runtime FCC.</span></div>
+    </section>
+
+    <div class="legend"><span class="legend-item"><span class="solid"></span>confermato provider/FCC</span><span class="legend-item"><span class="dash"></span>dichiarato da models.dev</span><span class="legend-item">Icona sempre accompagnata da testo; tooltip solo per dettagli aggiuntivi.</span></div>
+  </div>
+  <ul class="design-notes">
+    <li>Reproduce the hierarchy, not necessarily the exact pixels or hard-coded values.</li>
+    <li>Compact token labels are illustrative; the implementation must use one documented unit convention and exact values in the detail card.</li>
+    <li>Dashed catalog badges never imply runtime support for modalities not implemented by the selected FCC route.</li>
+  </ul>
+</main>
+</body>
+</html>

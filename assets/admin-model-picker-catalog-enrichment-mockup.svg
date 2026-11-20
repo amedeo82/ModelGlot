@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1400" viewBox="0 0 1200 1400" role="img" aria-labelledby="title desc">
+  <title id="title">Mockup Wave 4 del model picker Admin di Free Claude Code</title>
+  <desc id="desc">Dropdown compatto con loghi NVIDIA, capability e limiti; scheda del modello MiniMax selezionato con dettagli models.dev e distinzione grafica della provenance.</desc>
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="10" stdDeviation="16" flood-color="#020617" flood-opacity="0.38"/>
+    </filter>
+    <symbol id="nvidia" viewBox="0 0 40 40">
+      <path d="M16.1801 15.8791V14.0283C16.3472 14.0155 16.5271 14.0026 16.7199 14.0026C21.7966 13.8356 25.1254 18.3596 25.1254 18.3596C25.1254 18.3596 21.5267 23.3463 17.671 23.3463C17.1569 23.3463 16.6557 23.2692 16.1801 23.1021V17.4728C18.1465 17.7298 18.545 18.591 19.7274 20.5702L22.375 18.3468C22.375 18.3468 20.4343 15.8277 17.1955 15.8277C16.8356 15.8277 16.5014 15.8405 16.1801 15.8791ZM16.1801 9.75492V12.5246C16.3472 12.5118 16.5271 12.4989 16.7199 12.4861C23.763 12.2547 28.377 18.2696 28.377 18.2696C28.377 18.2696 23.0819 24.683 17.5939 24.683C17.0798 24.683 16.6171 24.6444 16.1801 24.5545V26.2767C16.5528 26.3152 16.9384 26.341 17.3625 26.341C22.4649 26.341 26.1664 23.7448 29.7523 20.6473C30.3435 21.1229 32.7597 22.2796 33.261 22.7937C29.8679 25.6341 21.9251 27.9346 17.4396 27.9346C17.0155 27.9346 16.5914 27.9089 16.1801 27.8704V30.2866H35.6001V9.75492H16.1801ZM16.1801 23.1021V24.5545C11.4376 23.7191 10.1266 18.7966 10.1266 18.7966C10.1266 18.7966 12.4015 16.2775 16.1801 15.8791V17.4728H16.1673C14.188 17.2414 12.6329 19.0922 12.6329 19.0922C12.6329 19.0922 13.5068 22.2025 16.1801 23.1021ZM7.77464 18.591C7.77464 18.591 10.5765 14.4525 16.1801 14.0283V12.5246C9.9724 13.0259 4.6001 18.2696 4.6001 18.2696C4.6001 18.2696 7.64612 27.0735 16.1801 27.8575V26.2767C9.90814 25.4798 7.77464 18.591 7.77464 18.591Z" fill="currentColor"/>
+    </symbol>
+    <symbol id="brain" viewBox="0 0 24 24"><path d="M9.5 4.5A3 3 0 0 0 4.7 7 3.2 3.2 0 0 0 4 13.2 3.4 3.4 0 0 0 6 18.5 3.1 3.1 0 0 0 12 19V5.8a3 3 0 0 0-2.5-1.3ZM14.5 4.5A3 3 0 0 1 19.3 7a3.2 3.2 0 0 1 .7 6.2 3.4 3.4 0 0 1-2 5.3 3.1 3.1 0 0 1-6 .5V5.8a3 3 0 0 1 2.5-1.3ZM8 9a3 3 0 0 0 4 2M16 9a3 3 0 0 1-4 2M8 15a3 3 0 0 1 4-1M16 15a3 3 0 0 0-4-1" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="tool" viewBox="0 0 24 24"><path d="M14.5 6.5a4 4 0 0 0-5-5l2.2 2.2-2.9 2.9-2.2-2.2a4 4 0 0 0 5 5L20 18a1.4 1.4 0 0 1-2 2l-8.4-8.4M4 15l5 5M3 20l2-2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="eye" viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.7" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+    <symbol id="video" viewBox="0 0 24 24"><rect x="3" y="5" width="13" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m16 10 5-3v10l-5-3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+    <symbol id="braces" viewBox="0 0 24 24"><path d="M8 3H6a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h2M16 3h2a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-2M9 8l-3 4 3 4M15 8l3 4-3 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="context" viewBox="0 0 24 24"><path d="m12 3 9 4-9 4-9-4 9-4Zm-9 8 9 4 9-4M3 15l9 4 9-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="output" viewBox="0 0 24 24"><path d="M4 5h16M4 10h10M4 15h7M15 15l5 4-5 4M20 19H9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 11v6M12 7.5v.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <style>
+      .text { fill: #e2e8f0; }
+      .muted { fill: #94a3b8; }
+      .strong { fill: #f8fafc; font-weight: 700; }
+      .label { fill: #94a3b8; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+      .body { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 13px; }
+      .small { font-size: 11px; }
+      .mono { font-family: Consolas, monospace; }
+      .catalog { fill: #0d141d; stroke: #38bdf8; stroke-dasharray: 4 3; }
+      .status { fill: #0d141d; stroke: #34d399; }
+      .logo-box { fill: #111a25; stroke: #27364a; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="1400" fill="#080c12"/>
+  <g class="body text">
+    <text x="40" y="36" class="label">FREE CLAUDE CODE · ADMIN MODEL PICKER · WAVE 4</text>
+    <text x="40" y="66" class="strong" font-size="24">Catalog metadata enrichment</text>
+    <text x="40" y="88" class="muted">Compact dropdown + selected-model detail · provider-specific NVIDIA fixtures</text>
+
+    <!-- Compact dropdown -->
+    <rect x="30" y="110" width="1140" height="620" rx="14" fill="#0d141d" stroke="#27364a" filter="url(#shadow)"/>
+    <text x="52" y="142" class="label">DEFAULT MODEL</text>
+    <rect x="50" y="156" width="1100" height="46" rx="9" fill="#0d141d" stroke="#10b981"/>
+    <text x="66" y="184" class="muted">Cerca un modello per nome, provider o capability…</text>
+    <path d="m1118 173 6 6 6-6" fill="none" stroke="#94a3b8" stroke-width="1.6"/>
+
+    <!-- Gemma option -->
+    <rect x="50" y="216" width="1100" height="174" rx="10" fill="#0d141d" stroke="#27364a" stroke-opacity="0.45"/>
+    <rect x="70" y="236" width="38" height="38" rx="8" class="logo-box"/>
+    <use href="#nvidia" x="77" y="243" width="24" height="24" color="#e2e8f0"/>
+    <text x="126" y="246" class="strong" font-size="15">Gemma 4 31B IT</text>
+    <rect x="270" y="229" width="103" height="25" rx="12" class="status"/>
+    <text x="282" y="246" fill="#34d399" font-size="10" font-weight="700">Open weights</text>
+    <text x="126" y="270" class="muted small">Google · ospitato da NVIDIA NIM</text>
+
+    <rect x="126" y="285" width="108" height="28" rx="14" class="catalog"/>
+    <use href="#brain" x="135" y="292" width="13" height="13" color="#e2e8f0"/>
+    <text x="153" y="304" font-size="10">Reasoning</text>
+    <rect x="242" y="285" width="116" height="28" rx="14" class="catalog"/>
+    <use href="#tool" x="251" y="292" width="13" height="13" color="#e2e8f0"/>
+    <text x="269" y="304" font-size="10">Tool calling</text>
+    <rect x="366" y="285" width="86" height="28" rx="14" class="catalog"/>
+    <use href="#eye" x="375" y="292" width="13" height="13" color="#e2e8f0"/>
+    <text x="393" y="304" font-size="10">Vision</text>
+    <use href="#context" x="840" y="291" width="14" height="14" color="#94a3b8"/>
+    <text x="860" y="303" font-size="11" font-weight="700">256K context</text>
+    <use href="#output" x="970" y="291" width="14" height="14" color="#94a3b8"/>
+    <text x="990" y="303" font-size="11" font-weight="700">16K output</text>
+    <text x="126" y="340" class="muted" font-size="12">Largest Gemma 4 instruction model for open, self-hosted chat and reasoning</text>
+    <text x="126" y="365" class="muted mono" font-size="10">nvidia_nim/google/gemma-4-31b-it</text>
+
+    <!-- MiniMax option -->
+    <rect x="50" y="402" width="1100" height="302" rx="10" fill="#103c31" stroke="#10b981"/>
+    <rect x="70" y="422" width="38" height="38" rx="8" class="logo-box"/>
+    <use href="#nvidia" x="77" y="429" width="24" height="24" color="#e2e8f0"/>
+    <text x="126" y="432" class="strong" font-size="15">MiniMax M3.1 Flash</text>
+    <rect x="304" y="415" width="103" height="25" rx="12" class="status"/>
+    <text x="316" y="432" fill="#34d399" font-size="10" font-weight="700">Open weights</text>
+    <text x="126" y="456" class="muted small">MiniMax · ospitato da NVIDIA NIM</text>
+
+    <rect x="126" y="472" width="108" height="28" rx="14" class="catalog"/>
+    <use href="#brain" x="135" y="479" width="13" height="13" color="#e2e8f0"/>
+    <text x="153" y="491" font-size="10">Reasoning</text>
+    <rect x="242" y="472" width="116" height="28" rx="14" class="catalog"/>
+    <use href="#tool" x="251" y="479" width="13" height="13" color="#e2e8f0"/>
+    <text x="269" y="491" font-size="10">Tool calling</text>
+    <rect x="366" y="472" width="146" height="28" rx="14" class="catalog"/>
+    <use href="#braces" x="375" y="479" width="13" height="13" color="#e2e8f0"/>
+    <text x="393" y="491" font-size="10">Structured output</text>
+    <rect x="520" y="472" width="86" height="28" rx="14" class="catalog"/>
+    <use href="#eye" x="529" y="479" width="13" height="13" color="#e2e8f0"/>
+    <text x="547" y="491" font-size="10">Vision</text>
+    <use href="#context" x="824" y="478" width="14" height="14" color="#94a3b8"/>
+    <text x="844" y="490" font-size="11" font-weight="700">262K context</text>
+    <use href="#output" x="964" y="478" width="14" height="14" color="#94a3b8"/>
+    <text x="984" y="490" font-size="11" font-weight="700">262K output</text>
+    <text x="126" y="530" class="muted" font-size="12">Frontier multimodal coding model with 1M context window and tunable thinking depth</text>
+    <text x="126" y="555" class="muted mono" font-size="10">nvidia_nim/minimaxai/minimax-m3.1-flash</text>
+    <line x1="70" y1="580" x2="1130" y2="580" stroke="#10b981" stroke-opacity="0.35"/>
+    <text x="70" y="608" fill="#38bdf8" font-size="10" font-weight="700">CATALOG METADATA</text>
+    <text x="70" y="632" class="muted small">I limiti provengono dalla riga NVIDIA, non dalla descrizione “1M context”.</text>
+    <text x="70" y="657" class="muted small">Le righe restano compatte; il dettaglio completo è nella scheda sottostante.</text>
+    <text x="70" y="682" class="muted small">Canonical ID e selezione non cambiano.</text>
+
+    <!-- Selected detail -->
+    <rect x="30" y="754" width="1140" height="520" rx="14" fill="#0d141d" stroke="#27364a" filter="url(#shadow)"/>
+    <rect x="52" y="778" width="44" height="44" rx="9" class="logo-box"/>
+    <use href="#nvidia" x="60" y="786" width="28" height="28" color="#e2e8f0"/>
+    <text x="114" y="794" class="strong" font-size="18">MiniMax M3.1 Flash</text>
+    <text x="114" y="817" class="muted small">MiniMax · NVIDIA NIM</text>
+    <path d="m1030 793 5 5 10-12" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="1052" y="798" fill="#34d399" font-size="11" font-weight="700">Selezionato</text>
+    <text x="52" y="852" class="muted" font-size="12">Frontier multimodal coding model with 1M context window and tunable thinking depth · models.dev</text>
+
+    <rect x="52" y="876" width="346" height="82" rx="9" fill="#111a25" stroke="#27364a"/>
+    <text x="68" y="901" class="label" font-size="10">CONTEXT · NVIDIA</text>
+    <text x="68" y="933" class="strong mono" font-size="17">262.144 token</text>
+    <rect x="426" y="876" width="346" height="82" rx="9" fill="#111a25" stroke="#27364a"/>
+    <text x="442" y="901" class="label" font-size="10">MAX OUTPUT · NVIDIA</text>
+    <text x="442" y="933" class="strong mono" font-size="17">262.144 token</text>
+    <rect x="800" y="876" width="348" height="82" rx="9" fill="#111a25" stroke="#27364a"/>
+    <text x="816" y="901" class="label" font-size="10">RELEASE</text>
+    <text x="816" y="933" class="strong mono" font-size="17">19 ott 2026</text>
+
+    <rect x="52" y="982" width="108" height="28" rx="14" class="catalog"/>
+    <use href="#brain" x="61" y="989" width="13" height="13" color="#e2e8f0"/>
+    <text x="79" y="1001" font-size="10">Reasoning</text>
+    <rect x="168" y="982" width="116" height="28" rx="14" class="catalog"/>
+    <use href="#tool" x="177" y="989" width="13" height="13" color="#e2e8f0"/>
+    <text x="195" y="1001" font-size="10">Tool calling</text>
+    <rect x="292" y="982" width="146" height="28" rx="14" class="catalog"/>
+    <use href="#braces" x="301" y="989" width="13" height="13" color="#e2e8f0"/>
+    <text x="319" y="1001" font-size="10">Structured output</text>
+    <rect x="446" y="982" width="112" height="28" rx="14" class="catalog"/>
+    <use href="#eye" x="455" y="989" width="13" height="13" color="#e2e8f0"/>
+    <text x="473" y="1001" font-size="10">Image input</text>
+    <rect x="566" y="982" width="112" height="28" rx="14" class="catalog"/>
+    <use href="#video" x="575" y="989" width="13" height="13" color="#e2e8f0"/>
+    <text x="593" y="1001" font-size="10">Video input</text>
+
+    <text x="52" y="1043" class="muted mono" font-size="10">nvidia_nim/minimaxai/minimax-m3.1-flash</text>
+    <line x1="52" y1="1070" x2="1148" y2="1070" stroke="#27364a"/>
+    <use href="#info" x="52" y="1090" width="16" height="16" color="#94a3b8"/>
+    <text x="78" y="1102" class="muted small">Limiti e capability dalla voce NVIDIA di models.dev, non dalla descrizione editoriale.</text>
+    <text x="78" y="1126" class="muted small">I badge di catalogo non certificano il supporto del percorso runtime FCC.</text>
+    <text x="52" y="1170" fill="#38bdf8" font-size="10" font-weight="700">FONTE: MODELS.DEV · PROVIDER: NVIDIA · CACHE: 24H</text>
+    <text x="52" y="1200" class="muted small">Video input è una dichiarazione di catalogo finché il percorso FCC non lo supporta.</text>
+    <text x="52" y="1228" class="muted small">Unknown non equivale a false. Costo zero non equivale automaticamente a “Free”.</text>
+
+    <!-- Legend -->
+    <line x1="42" y1="1310" x2="70" y2="1310" stroke="#34d399" stroke-width="2"/>
+    <text x="80" y="1314" class="muted small">confermato provider/FCC</text>
+    <line x1="280" y1="1310" x2="308" y2="1310" stroke="#38bdf8" stroke-dasharray="4 3"/>
+    <text x="318" y="1314" class="muted small">dichiarato da models.dev</text>
+    <text x="42" y="1348" class="muted small">Icona sempre accompagnata da testo · dettaglio selezionato separato dal listbox · layout responsive</text>
+    <text x="42" y="1376" fill="#64748b" font-size="10">Design reference: assets/admin-model-picker-catalog-enrichment-mockup.html</text>
+  </g>
+</svg>
