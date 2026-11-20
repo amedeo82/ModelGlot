@@ -57,6 +57,8 @@ def tray(monkeypatch: pytest.MonkeyPatch):
         "create_desktop_notifier",
         lambda _icon: RecordingNotifier(),
     )
+    monkeypatch.setattr(desktop_tray, "confirm_update", lambda _latest: False)
+    monkeypatch.setattr(desktop_tray, "launch_update", Mock())
     controller = cast(
         desktop_tray.DesktopController,
         SimpleNamespace(
@@ -294,7 +296,146 @@ def test_update_check_publishes_result_in_menu_and_notification(
     assert instance._update_check_item.enabled is True
     assert icon.notifications == [(result.message, "Free Claude Code")]
     assert icon.notification_details[0].level is expected_level
-    assert icon.update_count == 2
+    assert icon.update_count == (3 if result.status is UpdateStatus.AVAILABLE else 2)
+
+
+def test_available_update_prompts_and_declining_preserves_retry(tray, monkeypatch):
+    instance, icon = tray
+    result = UpdateCheckResult(
+        status=UpdateStatus.AVAILABLE,
+        installed="1.9.0",
+        latest="1.10.0",
+        message="FCC update available: 1.9.0 to 1.10.0.",
+    )
+    confirm = Mock(return_value=False)
+    launch = Mock()
+    monkeypatch.setattr(desktop_tray, "check_for_updates", lambda: result)
+    monkeypatch.setattr(desktop_tray, "confirm_update", confirm)
+    monkeypatch.setattr(desktop_tray, "launch_update", launch)
+
+    instance._check_updates(None, None)
+    _wait_for_update(instance)
+
+    confirm.assert_called_once_with("1.10.0")
+    launch.assert_not_called()
+    instance._controller.quit.assert_not_called()
+    assert instance._update_check_item.enabled is True
+    assert instance._update_status_item.text == "Update available: 1.9.0 -> 1.10.0"
+    assert icon.notifications == [(result.message, "Free Claude Code")]
+
+
+def test_accepted_update_launches_detected_release_and_restarts_desktop(
+    tray, monkeypatch, tmp_path
+):
+    instance, icon = tray
+    result = UpdateCheckResult(
+        status=UpdateStatus.AVAILABLE,
+        installed="1.9.0",
+        latest="1.10.0",
+        message="FCC update available: 1.9.0 to 1.10.0.",
+    )
+    launch = Mock(return_value=tmp_path / "desktop-update.log")
+    monkeypatch.setattr(desktop_tray, "check_for_updates", lambda: result)
+    monkeypatch.setattr(desktop_tray, "confirm_update", lambda _latest: True)
+    monkeypatch.setattr(desktop_tray, "launch_update", launch)
+
+    instance._check_updates(None, None)
+    _wait_for_update(instance)
+
+    launch.assert_called_once_with("1.10.0")
+    instance._controller.quit.assert_called_once_with()
+    assert instance._update_check_item.enabled is False
+    assert instance._update_status_item.text == "◌ Installing 1.10.0…"
+    assert icon.notifications == [
+        (result.message, "Free Claude Code"),
+        (
+            "Installing FCC 1.10.0. FCC will close and reopen when it finishes.",
+            "Free Claude Code",
+        ),
+    ]
+
+
+def test_stop_during_update_confirmation_does_not_launch_installer(tray, monkeypatch):
+    instance, icon = tray
+    entered = threading.Event()
+    release = threading.Event()
+    result = UpdateCheckResult(
+        status=UpdateStatus.AVAILABLE,
+        installed="1.9.0",
+        latest="1.10.0",
+        message="FCC update available: 1.9.0 to 1.10.0.",
+    )
+    launch = Mock()
+
+    def confirm(_latest: str) -> bool:
+        entered.set()
+        assert release.wait(2)
+        return True
+
+    monkeypatch.setattr(desktop_tray, "check_for_updates", lambda: result)
+    monkeypatch.setattr(desktop_tray, "confirm_update", confirm)
+    monkeypatch.setattr(desktop_tray, "launch_update", launch)
+
+    instance._check_updates(None, None)
+    assert entered.wait(1)
+    instance.stop()
+    release.set()
+    _wait_for_update(instance)
+
+    launch.assert_not_called()
+    instance._controller.quit.assert_not_called()
+    assert icon.notifications == [(result.message, "Free Claude Code")]
+
+
+def test_stop_before_result_notification_suppresses_notification_and_confirmation(
+    tray, monkeypatch
+):
+    instance, icon = tray
+    result = UpdateCheckResult(
+        status=UpdateStatus.AVAILABLE,
+        installed="1.9.0",
+        latest="1.10.0",
+        message="FCC update available: 1.9.0 to 1.10.0.",
+    )
+    confirm = Mock()
+    monkeypatch.setattr(desktop_tray, "confirm_update", confirm)
+    monkeypatch.setattr(instance, "_refresh_menu", Mock(side_effect=instance.stop))
+
+    instance._finish_update_check(result)
+
+    confirm.assert_not_called()
+    assert icon.notifications == []
+
+
+def test_update_launch_failure_keeps_desktop_running_and_offers_retry(
+    tray, monkeypatch
+):
+    instance, icon = tray
+    result = UpdateCheckResult(
+        status=UpdateStatus.AVAILABLE,
+        installed="1.9.0",
+        latest="1.10.0",
+        message="FCC update available: 1.9.0 to 1.10.0.",
+    )
+    monkeypatch.setattr(desktop_tray, "check_for_updates", lambda: result)
+    monkeypatch.setattr(desktop_tray, "confirm_update", lambda _latest: True)
+    monkeypatch.setattr(
+        desktop_tray,
+        "launch_update",
+        Mock(side_effect=FileNotFoundError("fcc-update unavailable")),
+    )
+
+    instance._check_updates(None, None)
+    _wait_for_update(instance)
+
+    instance._controller.quit.assert_not_called()
+    assert instance._update_check_item.enabled is True
+    assert instance._update_status_item.text == "Update available: 1.9.0 -> 1.10.0"
+    assert icon.notifications[-1] == (
+        "Could not start the FCC update. Run fcc-update from a terminal.",
+        "Free Claude Code",
+    )
+    assert icon.notification_details[-1].level is desktop_tray.NotificationLevel.ERROR
 
 
 def test_failed_update_check_uses_generic_user_feedback(tray, monkeypatch):

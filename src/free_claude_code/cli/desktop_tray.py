@@ -29,6 +29,7 @@ from free_claude_code.updater.check import (
     UpdateStatus,
     check_for_updates,
 )
+from free_claude_code.updater.desktop import confirm_update, launch_update
 
 
 class PystrayDesktopTray:
@@ -167,9 +168,10 @@ class PystrayDesktopTray:
         self._finish_update_check(result)
 
     def _finish_update_check(self, result: UpdateCheckResult) -> None:
+        offer_update = result.status is UpdateStatus.AVAILABLE
         with self._update_lock:
-            self._update_check_active = False
-            self._update_check_enabled = True
+            self._update_check_active = offer_update
+            self._update_check_enabled = not offer_update
             if self._closed:
                 return
             self._update_status_label = _update_status_text(result)
@@ -186,6 +188,67 @@ class PystrayDesktopTray:
             UpdateStatus.FAILED: NotificationLevel.ERROR,
         }[result.status]
         self._notify(result.message, level=level)
+        if offer_update:
+            self._offer_update(result)
+
+    def _offer_update(self, result: UpdateCheckResult) -> None:
+        with self._update_lock:
+            if self._closed:
+                return
+        latest = result.latest
+        if latest is None:
+            logger.error("FCC update result has no release to install")
+            self._finish_update_offer()
+            self._notify(
+                "Could not start the FCC update. Run fcc-update from a terminal.",
+                level=NotificationLevel.ERROR,
+            )
+            return
+        try:
+            confirmed = confirm_update(latest)
+        except Exception:
+            logger.exception("Could not display the FCC update confirmation")
+            self._finish_update_offer()
+            self._notify(
+                "Could not display the update confirmation. Please retry.",
+                level=NotificationLevel.ERROR,
+            )
+            return
+        if not confirmed:
+            self._finish_update_offer()
+            return
+        with self._update_lock:
+            if self._closed:
+                return
+            self._update_status_label = f"◌ Installing {latest}…"
+        self._refresh_menu()
+        try:
+            log_path = launch_update(latest)
+        except Exception:
+            logger.exception("Could not launch the FCC update installer")
+            with self._update_lock:
+                if not self._closed:
+                    self._update_status_label = _update_status_text(result)
+            self._finish_update_offer()
+            self._notify(
+                "Could not start the FCC update. Run fcc-update from a terminal.",
+                level=NotificationLevel.ERROR,
+            )
+            return
+        logger.info("FCC desktop updater started; output: {}", log_path)
+        self._notify(
+            f"Installing FCC {latest}. FCC will close and reopen when it finishes.",
+            level=NotificationLevel.INFO,
+        )
+        self._controller.quit()
+
+    def _finish_update_offer(self) -> None:
+        with self._update_lock:
+            self._update_check_active = False
+            self._update_check_enabled = True
+            if self._closed:
+                return
+        self._refresh_menu()
 
     def _notify(
         self,
@@ -193,6 +256,9 @@ class PystrayDesktopTray:
         *,
         level: NotificationLevel = NotificationLevel.INFO,
     ) -> None:
+        with self._update_lock:
+            if self._closed:
+                return
         try:
             self._notifier.notify(
                 DesktopNotification(

@@ -124,8 +124,9 @@ FCC opens the Admin UI after starting. On Windows and macOS, use the tray or
 menu-bar icon to open Admin, check the server status or installed version, check
 for project updates, restart, or quit. **Check for Updates** runs the release
 check in the background and shows the installed and latest stable versions in a
-native notification and in the tray menu. When using `fcc-server`, keep its
-terminal open.
+native notification and in the tray menu. If an update is available, FCC asks
+for confirmation before closing, installing it, and reopening. When using
+`fcc-server`, keep its terminal open.
 
 > **Network exposure:** the current defaults bind the server to `0.0.0.0` and leave
 > Proxy Authentication disabled, so generation endpoints are reachable from other hosts
@@ -727,18 +728,23 @@ Run `fcc-server --version` to check the installed version without starting FCC.
 ### Update
 
 On Windows and macOS, select **Check for Updates** from the FCC tray or
-menu-bar icon to check whether a newer stable release is available. The check
-only reports availability; it does not install the update.
+menu-bar icon to check whether a newer stable release is available. When one is
+found, FCC displays a system notification and asks whether to install it. If you
+confirm, FCC closes, installs the detected release, and reopens automatically.
+Declining leaves the current installation running and lets you retry later.
 
-To install the available update, stop all running FCC commands, then run:
+To check and install the latest stable release from a terminal instead, stop all
+running FCC commands, then run:
 
 ```sh
 fcc-update
 ```
 
-`fcc-update` reinstalls the current `custom/main` commit.
-
-If `fcc-update` is unavailable or fails, try running the [install command](#install) again.
+Both the tray and `fcc-update` use the same stable-release channel. After an
+update attempt, FCC tries to reopen automatically and reports startup failures;
+desktop updater output is stored in `~/.fcc/logs/desktop-update-*.log`. If
+`fcc-update` is unavailable or fails, try running the [install command](#install)
+again.
 
 To reinstall FCC or change optional components while already up to date, run the [installer](#install) directly.
 

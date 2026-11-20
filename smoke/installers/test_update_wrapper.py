@@ -14,7 +14,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 RAW_URL = "https://raw.githubusercontent.com/amedeo82/free-claude-code"
-RELEASES_URL = "https://github.com/amedeo82/free-claude-code/releases"
+REPOSITORY_URL = "https://github.com/amedeo82/free-claude-code"
 SCRIPTS = ("fcc-update", "fcc-update.cmd")
 INSTALLED = "1.0.0"
 LATEST = {"current": INSTALLED, "newer-installed": "0.9.0"}
@@ -30,7 +30,7 @@ def installer_server(body, status, latest):
             base = f"http://127.0.0.1:{server.server_port}"
             payload = (
                 body.replace(RAW_URL, base)
-                .replace(RELEASES_URL, base + "/releases")
+                .replace(REPOSITORY_URL, base)
                 .encode("utf-8")
             )
             response_status = status
@@ -132,7 +132,7 @@ def test_installed_update_delegates_and_survives_replacement(
         if powershell is None:
             pytest.skip("Windows PowerShell is required for the native update wrapper")
         env["PSMODULEPATH"] = powershell_module_paths[powershell]
-        body = """param([switch] $Update, [switch] $VoiceLocal, [string] $TorchBackend)
+        body = """param([switch] $Update, [switch] $VoiceLocal, [string] $TorchBackend, [string] $Ref)
 $answer = Read-Host 'Continue'
 Write-Output "installer:$Update|$VoiceLocal|$TorchBackend|$answer|$env:FCC_INSTALL_VERSION"
 [IO.File]::WriteAllText($env:FCC_TEST_LAUNCHER, 'exit /b 99')
@@ -214,13 +214,27 @@ printf 'exit 99\\n' > "$FCC_TEST_LAUNCHER"
                 )
         else:
             assert result.returncode == 0, output
-            assert requests == [
+            release_requests = [
                 *main_installer,
-                "/custom/main/pyproject.toml",
-            ], output
-            assert "Refreshing FCC from custom/main." in output
-            assert "marker:[]" in result.stdout, output
-            assert result.stdout.count(expected) == 1, output
+                "/releases/latest",
+                f"/releases/tag/v{latest}",
+                f"/v{latest}/scripts/install.{suffix}",
+            ]
+            if outcome == "real-installer":
+                release_requests.append(f"/v{latest}/pyproject.toml")
+            assert requests == release_requests, output
+            if outcome == "real-installer":
+                assert "marker:[]" in result.stdout, output
+                assert result.stdout.count(expected + latest) == 1, output
+            else:
+                expected_message = (
+                    "is already up to date."
+                    if outcome == "current"
+                    else "is newer than the published version"
+                )
+                assert expected_message in output
+                assert "marker:" not in result.stdout, output
+            assert "Refreshing FCC from custom/main." not in output
             assert "Installer log:" not in result.stdout
         result = subprocess.run(
             [uv, "tool", "uninstall", "free-claude-code"],
