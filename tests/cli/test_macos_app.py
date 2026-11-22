@@ -149,6 +149,17 @@ def owned_app(home):
     return app
 
 
+def test_legacy_owned_bundle_remains_managed_during_identity_migration(tmp_path):
+    app = tmp_path / "Applications/Free Claude Code.app"
+    contents = app / "Contents"
+    contents.mkdir(parents=True)
+    (contents / ".free-claude-code-owner").write_text(
+        macos_app.LEGACY_BUNDLE_IDS[0], encoding="utf-8"
+    )
+
+    assert macos_app.is_owned(app)
+
+
 def test_upgrade_replaces_legacy_owned_bundle_and_updates_runtime(
     installer, runtime, monkeypatch, tmp_path
 ):

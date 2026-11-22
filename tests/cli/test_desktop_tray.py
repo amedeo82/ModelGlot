@@ -1,6 +1,7 @@
 """Native tray update-check behavior."""
 
 import threading
+import time
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import Mock
@@ -22,7 +23,12 @@ class FakeIcon:
         self.notification_details: list[desktop_tray.DesktopNotification] = []
         self.update_count = 0
         self.stopped = False
+        self.visible = False
         self.notify_error: Exception | None = None
+
+    def run(self, setup=None) -> None:
+        if setup is not None:
+            setup(self)
 
     def update_menu(self) -> None:
         self.update_count += 1
@@ -79,22 +85,6 @@ def _wait_for_update(tray: desktop_tray.PystrayDesktopTray) -> None:
     assert not thread.is_alive()
 
 
-def test_check_version_remains_available(tray, monkeypatch):
-    instance, icon = tray
-    monkeypatch.setattr(
-        desktop_tray,
-        "version_text",
-        lambda: "Free Claude Code 1.2.3",
-    )
-    monkeypatch.setattr(desktop_tray, "package_version", lambda: "1.2.3")
-
-    instance._check_version(None, None)
-
-    assert icon.notifications == [("Free Claude Code 1.2.3", "Free Claude Code")]
-    assert instance._version_item.text == "Installed version: 1.2.3"
-    assert instance._version_item.enabled is False
-
-
 def test_server_status_uses_native_success_style(tray):
     instance, icon = tray
     instance._controller = cast(
@@ -105,7 +95,7 @@ def test_server_status_uses_native_success_style(tray):
     instance._check_status(None, None)
 
     assert icon.notification_details[0].level is desktop_tray.NotificationLevel.SUCCESS
-    assert instance._server_status_item.text == "Server status: Running"
+    assert instance._server_status_item.text == "● Running"
     assert instance._server_status_item.enabled is False
 
 
@@ -129,6 +119,9 @@ def test_open_admin_menu_action_opens_admin(tray):
     admin_action(icon)
 
     instance._controller.open_admin.assert_called_once_with()
+    assert icon.notifications == [
+        ("Opening the Free Claude Code Admin UI…", "Free Claude Code")
+    ]
 
 
 def test_quit_menu_action_stops_desktop(tray):
@@ -144,13 +137,68 @@ def test_quit_menu_action_stops_desktop(tray):
 def test_status_menu_action_updates_visible_status_row(tray):
     instance, icon = tray
     menu = instance._build_menu()
-    status_action = next(item for item in menu if item.text == "Check Server Status")
+    status_action = next(item for item in menu if item.text == "Refresh Server Status")
 
     status_action(icon)
 
-    assert instance._server_status_item.text == "Server status: Running"
+    assert instance._server_status_item.text == "● Running"
     assert instance._server_status_item.enabled is False
-    assert icon.notifications == [("Server is Running.", "Free Claude Code")]
+    assert icon.notifications == [("FCC server is running.", "Free Claude Code")]
+
+
+@pytest.mark.parametrize(
+    ("status", "expected"),
+    [
+        (ServerStatus.RUNNING, "● Running"),
+        (ServerStatus.STARTING, "◌ Starting…"),
+        (ServerStatus.STOPPING, "◌ Stopping…"),
+        (ServerStatus.STOPPED, "○ Stopped"),
+    ],
+)
+def test_server_status_text_reflects_each_lifecycle_state(status, expected):
+    assert desktop_tray._server_status_text(status) == expected
+
+
+def test_status_sync_updates_visible_status_row_when_state_changes(tray):
+    instance, icon = tray
+    controller = cast(
+        Any,
+        SimpleNamespace(status=ServerStatus.STOPPED),
+    )
+    instance._controller = controller
+
+    instance._sync_server_status()
+    assert instance._server_status_item.text == "○ Stopped"
+
+    controller.status = ServerStatus.RUNNING
+    instance._sync_server_status()
+
+    assert instance._server_status_item.text == "● Running"
+    assert icon.update_count == 2
+
+
+def test_run_starts_status_watcher_and_reports_live_server_state(tray):
+    instance, icon = tray
+    instance._controller = cast(
+        Any,
+        SimpleNamespace(status=ServerStatus.RUNNING),
+    )
+
+    instance.run(lambda: None)
+
+    deadline = time.monotonic() + 2
+    while (
+        instance._server_status_item.text != "● Running" and time.monotonic() < deadline
+    ):
+        time.sleep(0.01)
+
+    assert instance._server_status_item.text == "● Running"
+    assert icon.visible is True
+    assert instance._status_thread is not None
+
+    instance.stop()
+    instance._status_thread.join(2)
+    assert not instance._status_thread.is_alive()
 
 
 def test_restart_menu_action_updates_visible_status_row(tray):
@@ -162,9 +210,43 @@ def test_restart_menu_action_updates_visible_status_row(tray):
     assert instance._restart_thread is not None
     instance._restart_thread.join(2)
 
-    assert instance._server_status_item.text == "Server status: Running"
+    assert instance._server_status_item.text == "● Running"
     assert instance._controller.restart_server.call_count == 1
-    assert icon.notifications == [("Server restarted.", "Free Claude Code")]
+    assert icon.notifications == [
+        ("Restarting the FCC server…", "Free Claude Code"),
+        ("Server restarted.", "Free Claude Code"),
+    ]
+
+
+def test_concurrent_restart_clicks_start_only_one_restart(tray):
+    instance, _icon = tray
+    entered = threading.Event()
+    release = threading.Event()
+
+    def restart() -> None:
+        entered.set()
+        release.wait(2)
+
+    instance._controller = cast(
+        Any,
+        SimpleNamespace(
+            status=ServerStatus.RUNNING,
+            restart_server=Mock(side_effect=restart),
+        ),
+    )
+    first = threading.Thread(target=instance._restart_server, args=(None, None))
+
+    first.start()
+    assert entered.wait(1)
+    instance._restart_server(None, None)
+
+    assert instance._restart_item.text == "Restarting Server…"
+    assert instance._restart_item.enabled is False
+    release.set()
+    first.join(2)
+    assert instance._restart_thread is not None
+    instance._restart_thread.join(2)
+    assert instance._controller.restart_server.call_count == 1
 
 
 def test_update_check_exposes_checking_state(tray, monkeypatch):
@@ -187,13 +269,13 @@ def test_update_check_exposes_checking_state(tray, monkeypatch):
     try:
         instance._check_updates(None, None)
         assert started.wait(1)
-        assert instance._update_status_item.text == "Update status: checking..."
+        assert instance._update_status_item.text == "◌ Checking…"
         assert instance._update_check_item.enabled is False
     finally:
         release.set()
     _wait_for_update(instance)
 
-    assert instance._update_status_item.text == "Up to date: 1.10.0"
+    assert instance._update_status_item.text == "● Up to date: 1.10.0"
     assert instance._update_check_item.enabled is True
 
 
@@ -211,7 +293,7 @@ def test_notification_failure_does_not_break_update_result(tray, monkeypatch):
     instance._check_updates(None, None)
     _wait_for_update(instance)
 
-    assert instance._update_status_item.text == "Up to date: 1.10.0"
+    assert instance._update_status_item.text == "● Up to date: 1.10.0"
     assert instance._update_check_item.enabled is True
 
 
@@ -252,9 +334,9 @@ def test_stop_during_update_check_suppresses_late_notification(tray, monkeypatch
                 status=UpdateStatus.AVAILABLE,
                 installed="1.9.0",
                 latest="1.10.0",
-                message="FCC update available: 1.9.0 -> 1.10.0.",
+                message="FCC update available: 1.9.0 to 1.10.0.",
             ),
-            "Update available: 1.9.0 -> 1.10.0",
+            "● Update available: 1.9.0 → 1.10.0",
             desktop_tray.NotificationLevel.INFO,
         ),
         (
@@ -264,7 +346,7 @@ def test_stop_during_update_check_suppresses_late_notification(tray, monkeypatch
                 latest="1.10.0",
                 message="FCC 1.10.0 is already up to date.",
             ),
-            "Up to date: 1.10.0",
+            "● Up to date: 1.10.0",
             desktop_tray.NotificationLevel.SUCCESS,
         ),
         (
@@ -274,7 +356,7 @@ def test_stop_during_update_check_suppresses_late_notification(tray, monkeypatch
                 latest="1.10.0",
                 message="FCC 1.11.0 is newer than the published version 1.10.0.",
             ),
-            "Installed version is newer: 1.11.0",
+            "◌ Installed version is newer: 1.11.0",
             desktop_tray.NotificationLevel.WARNING,
         ),
     ],
@@ -320,7 +402,7 @@ def test_available_update_prompts_and_declining_preserves_retry(tray, monkeypatc
     launch.assert_not_called()
     instance._controller.quit.assert_not_called()
     assert instance._update_check_item.enabled is True
-    assert instance._update_status_item.text == "Update available: 1.9.0 -> 1.10.0"
+    assert instance._update_status_item.text == "● Update available: 1.9.0 → 1.10.0"
     assert icon.notifications == [(result.message, "Free Claude Code")]
 
 
@@ -430,7 +512,7 @@ def test_update_launch_failure_keeps_desktop_running_and_offers_retry(
 
     instance._controller.quit.assert_not_called()
     assert instance._update_check_item.enabled is True
-    assert instance._update_status_item.text == "Update available: 1.9.0 -> 1.10.0"
+    assert instance._update_status_item.text == "● Update available: 1.9.0 → 1.10.0"
     assert icon.notifications[-1] == (
         "Could not start the FCC update. Run fcc-update from a terminal.",
         "Free Claude Code",
@@ -451,7 +533,7 @@ def test_failed_update_check_uses_generic_user_feedback(tray, monkeypatch):
     instance._check_updates(None, None)
     _wait_for_update(instance)
 
-    assert instance._update_status_item.text == "Update status: check failed"
+    assert instance._update_status_item.text == "○ Update check failed"
     assert icon.notifications == [
         ("Could not check for FCC updates. Please retry.", "Free Claude Code")
     ]
@@ -487,7 +569,7 @@ def test_failed_update_check_can_be_retried(tray, monkeypatch):
     _wait_for_update(instance)
 
     assert calls == 2
-    assert instance._update_status_item.text == "Up to date: 1.10.0"
+    assert instance._update_status_item.text == "● Up to date: 1.10.0"
     assert instance._update_check_item.enabled is True
 
 
@@ -502,7 +584,7 @@ def test_unexpected_update_check_error_does_not_escape_worker(tray, monkeypatch)
     instance._check_updates(None, None)
     _wait_for_update(instance)
 
-    assert instance._update_status_item.text == "Update status: check failed"
+    assert instance._update_status_item.text == "○ Update check failed"
     assert instance._update_check_item.enabled is True
     assert icon.notifications == [
         ("Could not check for FCC updates. Please retry.", "Free Claude Code")
@@ -523,7 +605,7 @@ def test_update_worker_start_failure_is_reported(tray, monkeypatch):
 
     instance._check_updates(None, None)
 
-    assert instance._update_status_item.text == "Update status: check failed"
+    assert instance._update_status_item.text == "○ Update check failed"
     assert instance._update_check_item.enabled is True
     assert icon.notifications == [
         ("Could not check for FCC updates. Please retry.", "Free Claude Code")
@@ -561,22 +643,31 @@ def test_concurrent_update_clicks_start_only_one_check(tray, monkeypatch):
     assert calls == 1
 
 
-def test_tray_menu_exposes_visible_status_and_update_check(tray):
+def test_tray_menu_exposes_compact_branded_status_and_actions(tray):
     instance, _icon = tray
 
     labels = [item.text for item in instance._build_menu()]
 
-    assert "Check Server Status" in labels
-    assert "Server status: unknown" in labels
-    assert "Check Version" in labels
-    assert sum(label.startswith("Installed version: ") for label in labels) == 1
-    assert "Check for Updates" in labels
-    assert "Update status: not checked" in labels
-    assert "Test System Notification" not in labels
+    assert labels == [
+        "Free Claude Code",
+        "● Running",
+        instance._version_item.text,
+        "- - - -",
+        "Open Admin",
+        "Refresh Server Status",
+        "Check for Updates",
+        "○ Not checked",
+        "- - - -",
+        "Restart Server",
+        "- - - -",
+        "Quit",
+    ]
+    assert instance._brand_item.enabled is False
     assert instance._server_status_item.enabled is False
     assert instance._version_item.enabled is False
     assert instance._update_check_item.enabled is True
     assert instance._update_status_item.enabled is False
+    assert instance._restart_item.enabled is True
 
 
 def test_macos_menu_refresh_is_dispatched_on_main_queue(tray, monkeypatch):

@@ -3,7 +3,7 @@ set -eu
 
 PACKAGE_NAME="free-claude-code"
 FCC_HOME_DIRNAME=".fcc"
-FCC_MACOS_BUNDLE_ID="io.github.alishahryar1.free-claude-code"
+FCC_MACOS_BUNDLE_IDS="io.github.amedeo82.free-claude-code io.github.alishahryar1.free-claude-code"
 FCC_MACOS_OWNER_FILE=".free-claude-code-owner"
 # Include retired entry points so older installations are fully stopped and removed.
 FCC_COMMANDS="fcc-desktop fcc-server fcc-claude fcc-codex fcc-pi fcc-opencode fcc-cline fcc-hermes fcc-dsh fcc-grok fcc-muse fcc-aider fcc-agy fcc-doctor fcc-update fcc-init free-claude-code"
@@ -225,9 +225,15 @@ macos_app_is_fcc_owned() {
     app_dir=$1
     [ -d "$app_dir" ] && [ ! -L "$app_dir" ] || return 1
     for owner_file in "$app_dir/Contents/Resources/$FCC_MACOS_OWNER_FILE" "$app_dir/Contents/$FCC_MACOS_OWNER_FILE"; do
-        if [ -f "$owner_file" ] && [ "$(cat "$owner_file")" = "$FCC_MACOS_BUNDLE_ID" ]; then
-            return 0
+        if [ ! -f "$owner_file" ]; then
+            continue
         fi
+        owner_id=$(cat "$owner_file")
+        for bundle_id in $FCC_MACOS_BUNDLE_IDS; do
+            if [ "$owner_id" = "$bundle_id" ]; then
+                return 0
+            fi
+        done
     done
     return 1
 }

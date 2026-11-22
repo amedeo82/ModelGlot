@@ -13,8 +13,12 @@ from free_claude_code.cli.desktop_notifications import (
     DesktopNotification,
     NotificationLevel,
     PystrayDesktopNotifier,
+    notification_title,
 )
+from free_claude_code.cli.windows_app_identity import ensure_windows_app_identity
 from free_claude_code.config.paths import config_dir_path
+
+_IDENTITY_REPAIR_TIMEOUT_SECONDS = 30.0
 
 _NIM_MODIFY = 0x00000001
 _NIF_INFO = 0x00000010
@@ -31,13 +35,6 @@ _LEVEL_FLAGS = {
     NotificationLevel.ERROR: _NIIF_ERROR,
 }
 
-_LEVEL_TITLES = {
-    NotificationLevel.INFO: "",
-    NotificationLevel.SUCCESS: "Success — ",
-    NotificationLevel.WARNING: "Warning — ",
-    NotificationLevel.ERROR: "Error — ",
-}
-
 
 class WindowsDesktopNotifier:
     """Show branded Windows toasts with a native-styled balloon fallback."""
@@ -48,6 +45,7 @@ class WindowsDesktopNotifier:
         self._lock = threading.Lock()
         self._toast_notifier: Any = None
         self._logo_path: Path | None = None
+        self._identity_thread: threading.Thread | None = None
         if not enable_toast:
             return
         try:
@@ -62,6 +60,7 @@ class WindowsDesktopNotifier:
         with self._lock:
             if self._toast_notifier is not None:
                 try:
+                    self._wait_for_identity()
                     if not self._toast_enabled():
                         logger.warning(
                             "Windows notifications are disabled for FCC; using a balloon"
@@ -85,8 +84,36 @@ class WindowsDesktopNotifier:
         _set_process_app_user_model_id()
         self._logo_path = config_dir_path() / "app-icon.png"
         export_app_icon(self._logo_path)
-        _register_app_user_model_id(self._logo_path)
         self._toast_notifier = _create_toast_notifier()
+        self._start_identity_repair()
+
+    def _start_identity_repair(self) -> None:
+        thread = threading.Thread(
+            target=self._repair_identity,
+            name="fcc-app-identity",
+            daemon=True,
+        )
+        self._identity_thread = thread
+        thread.start()
+
+    def _repair_identity(self) -> None:
+        try:
+            if not ensure_windows_app_identity(APP_USER_MODEL_ID):
+                logger.warning(
+                    "Could not complete the Windows app identity; "
+                    "native toasts may not be displayed"
+                )
+        except Exception:
+            logger.warning(
+                "Could not complete the Windows app identity",
+                exc_info=True,
+            )
+
+    def _wait_for_identity(self) -> None:
+        thread = self._identity_thread
+        if thread is None:
+            return
+        thread.join(_IDENTITY_REPAIR_TIMEOUT_SECONDS)
 
     def _toast_enabled(self) -> bool:
         try:
@@ -94,9 +121,10 @@ class WindowsDesktopNotifier:
         except ImportError:
             return False
         try:
-            return self._toast_notifier.setting == NotificationSetting.ENABLED
+            setting = self._toast_notifier.setting
         except AttributeError, OSError, RuntimeError:
-            return False
+            return True
+        return setting == NotificationSetting.ENABLED
 
     def _notify_toast(self, notification: DesktopNotification) -> None:
         if self._logo_path is None:
@@ -113,11 +141,7 @@ class WindowsDesktopNotifier:
         binding.set_attribute("template", "ToastGeneric")
         visual.append_child(binding)
         title = document.create_element("text")
-        title.append_child(
-            document.create_text_node(
-                f"{_LEVEL_TITLES[notification.level]}{notification.title}"
-            )
-        )
+        title.append_child(document.create_text_node(notification_title(notification)))
         binding.append_child(title)
         message = document.create_element("text")
         message.append_child(document.create_text_node(notification.message))
@@ -139,7 +163,7 @@ class WindowsDesktopNotifier:
                 _NIM_MODIFY,
                 _NIF_INFO,
                 szInfo=notification.message,
-                szInfoTitle=notification.title,
+                szInfoTitle=notification_title(notification),
                 dwInfoFlags=(
                     _LEVEL_FLAGS[notification.level] | _NIIF_USER | _NIIF_LARGE_ICON
                 ),
@@ -170,37 +194,4 @@ def _set_process_app_user_model_id() -> None:
         raise OSError(
             "Could not set the Windows application identity: "
             f"HRESULT 0x{result & 0xFFFFFFFF:08X}"
-        )
-
-
-def _register_app_user_model_id(icon_path: Path) -> None:
-    import winreg
-
-    key_path = rf"Software\Classes\AppUserModelId\{APP_USER_MODEL_ID}"
-    with winreg.CreateKeyEx(
-        winreg.HKEY_CURRENT_USER,
-        key_path,
-        0,
-        winreg.KEY_WRITE,
-    ) as key:
-        winreg.SetValueEx(
-            key,
-            "DisplayName",
-            0,
-            winreg.REG_SZ,
-            "Free Claude Code",
-        )
-        winreg.SetValueEx(
-            key,
-            "IconUri",
-            0,
-            winreg.REG_SZ,
-            str(icon_path),
-        )
-        winreg.SetValueEx(
-            key,
-            "IconBackgroundColor",
-            0,
-            winreg.REG_SZ,
-            "FF000000",
         )

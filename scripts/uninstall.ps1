@@ -11,6 +11,10 @@ $ErrorActionPreference = "Stop"
 
 $PackageName = "free-claude-code"
 $FccHomeDirname = ".fcc"
+$FccAppUserModelIds = @(
+    "io.github.amedeo82.free-claude-code",
+    "io.github.alishahryar1.free-claude-code"
+)
 $FccCommands = @(
     # Include retired entry points so older installations are fully stopped and removed.
     "fcc-desktop",
@@ -313,6 +317,19 @@ function Remove-FccDesktopShortcuts {
     }
 }
 
+function Remove-FccAppUserModelIds {
+    foreach ($appUserModelId in $FccAppUserModelIds) {
+        $registryPath = "Registry::HKEY_CURRENT_USER\Software\Classes\AppUserModelId\$appUserModelId"
+        if (-not (Test-Path -LiteralPath $registryPath)) {
+            continue
+        }
+        Write-Host "+ Remove-Item -LiteralPath $(Format-Argument $registryPath) -Force"
+        if (-not $DryRun) {
+            Remove-Item -LiteralPath $registryPath -Force
+        }
+    }
+}
+
 function Purge-FccHome {
     $fccHome = Join-Path $env:USERPROFILE $FccHomeDirname
     if (-not (Test-Path -LiteralPath $fccHome)) {
@@ -367,6 +384,9 @@ Confirm-FccCommandsRemoved
 
 Write-Step "Removing Free Claude Code desktop shortcuts"
 Remove-FccDesktopShortcuts
+
+Write-Step "Removing Free Claude Code notification identities"
+Remove-FccAppUserModelIds
 
 Write-Step "Purging FCC config and data from ~/.fcc"
 Purge-FccHome

@@ -8,19 +8,22 @@ import pytest
 
 INSTALLER = Path(__file__).resolve().parents[2] / "scripts/install.ps1"
 INSTALLER_TEXT = INSTALLER.read_text(encoding="utf-8")
+UNINSTALLER = Path(__file__).resolve().parents[2] / "scripts/uninstall.ps1"
+UNINSTALLER_TEXT = UNINSTALLER.read_text(encoding="utf-8")
 
 
-def _function_body(declaration: str) -> str:
-    start = INSTALLER_TEXT.index(declaration)
-    brace_start = INSTALLER_TEXT.index("{", start)
+def _function_body(declaration: str, source: str | None = None) -> str:
+    text = INSTALLER_TEXT if source is None else source
+    start = text.index(declaration)
+    brace_start = text.index("{", start)
     depth = 0
-    for index, char in enumerate(INSTALLER_TEXT[brace_start:], start=brace_start):
+    for index, char in enumerate(text[brace_start:], start=brace_start):
         if char == "{":
             depth += 1
         elif char == "}":
             depth -= 1
             if depth == 0:
-                return INSTALLER_TEXT[brace_start + 1 : index]
+                return text[brace_start + 1 : index]
     raise AssertionError(f"Unclosed function body for {declaration}")
 
 
@@ -33,12 +36,21 @@ def _csharp_source() -> str:
 
 
 def test_installer_defines_stable_appusermodelid() -> None:
-    assert '$FccAppUserModelId = "io.github.alishahryar1.free-claude-code"' in (
+    assert '$FccAppUserModelId = "io.github.amedeo82.free-claude-code"' in (
         INSTALLER_TEXT
     )
     assert "9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3" in INSTALLER_TEXT
     assert "PkeyAppUserModelIdProperty = 5" in INSTALLER_TEXT
     assert "VT_LPWSTR = 31" in INSTALLER_TEXT
+
+
+def test_uninstaller_removes_current_and_legacy_notification_identities() -> None:
+    body = _function_body("function Remove-FccAppUserModelIds", UNINSTALLER_TEXT)
+
+    assert "io.github.amedeo82.free-claude-code" in UNINSTALLER_TEXT
+    assert "io.github.alishahryar1.free-claude-code" in UNINSTALLER_TEXT
+    assert "Software\\Classes\\AppUserModelId" in body
+    assert "Remove-Item -LiteralPath $registryPath -Force" in body
 
 
 def test_com_helper_uses_persistfile_and_property_store() -> None:
@@ -88,7 +100,7 @@ def test_com_helper_sets_appusermodelid_idempotently(tmp_path: Path) -> None:
         pytest.skip("Windows PowerShell is not available")
 
     shortcut_path = tmp_path / "Free Claude Code.lnk"
-    app_user_model_id = "io.github.alishahryar1.free-claude-code"
+    app_user_model_id = "io.github.amedeo82.free-claude-code"
     script_path = tmp_path / "set-aumid.ps1"
     script_path.write_text(
         f"""$ErrorActionPreference = "Stop"

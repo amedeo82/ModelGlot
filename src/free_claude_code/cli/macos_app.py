@@ -16,7 +16,8 @@ from packaging.specifiers import SpecifierSet
 
 from free_claude_code.cli.desktop_assets import export_app_icon
 
-BUNDLE_ID = "io.github.alishahryar1.free-claude-code"
+BUNDLE_ID = "io.github.amedeo82.free-claude-code"
+LEGACY_BUNDLE_IDS = ("io.github.alishahryar1.free-claude-code",)
 OWNER_FILE = ".free-claude-code-owner"
 
 
@@ -62,7 +63,10 @@ def is_owned(app: Path) -> bool:
     # Existing shell bundles used Contents directly. Signed bundles use Resources.
     for directory in (app / "Contents/Resources", app / "Contents"):
         marker = directory / OWNER_FILE
-        if marker.is_file() and marker.read_text(encoding="utf-8").strip() == BUNDLE_ID:
+        if marker.is_file() and marker.read_text(encoding="utf-8").strip() in {
+            BUNDLE_ID,
+            *LEGACY_BUNDLE_IDS,
+        }:
             return True
     return False
 

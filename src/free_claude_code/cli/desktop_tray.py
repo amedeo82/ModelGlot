@@ -15,7 +15,6 @@ from free_claude_code.cli.commands import ServerStatus
 from free_claude_code.cli.desktop import (
     DesktopController,
     launch_desktop,
-    version_text,
 )
 from free_claude_code.cli.desktop_assets import app_icon_bytes
 from free_claude_code.cli.desktop_notifications import (
@@ -40,12 +39,19 @@ class PystrayDesktopTray:
         self._update_lock = threading.RLock()
         self._update_check_active = False
         self._update_check_enabled = True
-        self._update_status_label = "Update status: not checked"
-        self._server_status_label = "Server status: unknown"
-        self._version_label = f"Installed version: {package_version()}"
+        self._update_status_label = "○ Not checked"
+        self._server_status_label = _server_status_text(controller.status)
+        self._version_label = f"v{package_version()}"
         self._closed = False
+        self._restart_active = False
         self._update_thread: threading.Thread | None = None
         self._restart_thread: threading.Thread | None = None
+        self._status_thread: threading.Thread | None = None
+        self._brand_item = MenuItem(
+            "Free Claude Code",
+            lambda _icon, _item: None,
+            enabled=False,
+        )
         self._server_status_item = MenuItem(
             lambda _item: self._server_status_label,
             lambda _icon, _item: None,
@@ -66,6 +72,13 @@ class PystrayDesktopTray:
             lambda _icon, _item: None,
             enabled=False,
         )
+        self._restart_item = MenuItem(
+            lambda _item: (
+                "Restarting Server…" if self._restart_active else "Restart Server"
+            ),
+            self._restart_server,
+            enabled=lambda _item: not self._restart_active,
+        )
         self._icon = Icon(
             "free-claude-code",
             _create_icon(),
@@ -76,23 +89,28 @@ class PystrayDesktopTray:
 
     def _build_menu(self) -> Menu:
         return Menu(
-            MenuItem("Open Admin", self._open_admin, default=True),
-            MenuItem("Check Server Status", self._check_status),
+            self._brand_item,
             self._server_status_item,
-            MenuItem("Check Version", self._check_version),
             self._version_item,
+            Menu.SEPARATOR,
+            MenuItem("Open Admin", self._open_admin, default=True),
+            MenuItem("Refresh Server Status", self._check_status),
             self._update_check_item,
             self._update_status_item,
             Menu.SEPARATOR,
-            MenuItem("Restart Server", self._restart_server),
+            self._restart_item,
             Menu.SEPARATOR,
             MenuItem("Quit", self._quit),
         )
 
     def run(self, setup: Callable[[], None]) -> None:
+        with self._update_lock:
+            self._server_status_label = "◌ Starting…"
+
         def ready(icon: Icon) -> None:
             icon.visible = True
             setup()
+            self._start_status_watcher()
 
         self._icon.run(setup=ready)
 
@@ -104,21 +122,59 @@ class PystrayDesktopTray:
         self._icon.stop()
         self._notifier.close()
 
+    def _start_status_watcher(self) -> None:
+        with self._update_lock:
+            if self._closed or self._status_thread is not None:
+                return
+            thread = threading.Thread(
+                target=self._watch_server_status,
+                name="fcc-server-status",
+                daemon=True,
+            )
+            self._status_thread = thread
+        try:
+            thread.start()
+        except RuntimeError as exc:
+            logger.error("Could not start the FCC server status watcher: {}", exc)
+            with self._update_lock:
+                self._status_thread = None
+
+    def _watch_server_status(self) -> None:
+        while True:
+            with self._update_lock:
+                if self._closed:
+                    return
+            self._sync_server_status()
+            time.sleep(0.25)
+
+    def _sync_server_status(self) -> None:
+        with self._update_lock:
+            if self._closed or self._restart_active:
+                return
+        label = _server_status_text(self._controller.status)
+        with self._update_lock:
+            if self._closed or self._restart_active:
+                return
+            if self._server_status_label == label:
+                return
+            self._server_status_label = label
+        self._refresh_menu()
+
     def _open_admin(self, _icon: Icon, _item: MenuItem) -> None:
         self._controller.open_admin()
+        self._notify(
+            "Opening the Free Claude Code Admin UI…",
+            level=NotificationLevel.INFO,
+        )
 
     def _check_status(self, _icon: Icon, _item: MenuItem) -> None:
         status = self._controller.status
-        self._set_server_status(f"Server status: {status}")
+        self._set_server_status(_server_status_text(status))
         level = {
             ServerStatus.RUNNING: NotificationLevel.SUCCESS,
             ServerStatus.STOPPED: NotificationLevel.WARNING,
         }.get(status, NotificationLevel.INFO)
-        self._notify(f"Server is {status}.", level=level)
-
-    def _check_version(self, _icon: Icon, _item: MenuItem) -> None:
-        self._set_version(f"Installed version: {package_version()}")
-        self._notify(version_text())
+        self._notify(_server_status_message(status), level=level)
 
     def _check_updates(self, _icon: Icon, _item: MenuItem) -> None:
         with self._update_lock:
@@ -126,7 +182,7 @@ class PystrayDesktopTray:
                 return
             self._update_check_active = True
             self._update_check_enabled = False
-            self._update_status_label = "Update status: checking..."
+            self._update_status_label = "◌ Checking…"
         self._refresh_menu()
         thread = threading.Thread(
             target=self._run_update_check,
@@ -277,13 +333,6 @@ class PystrayDesktopTray:
             self._server_status_label = label
         self._refresh_menu()
 
-    def _set_version(self, label: str) -> None:
-        with self._update_lock:
-            if self._closed:
-                return
-            self._version_label = label
-        self._refresh_menu()
-
     def _refresh_menu(self) -> None:
         with self._update_lock:
             if self._closed:
@@ -309,15 +358,23 @@ class PystrayDesktopTray:
             logger.exception("Could not refresh the FCC tray menu")
 
     def _restart_server(self, _icon: Icon, _item: MenuItem) -> None:
-        self._set_server_status("Server status: restarting...")
+        with self._update_lock:
+            if self._closed or self._restart_active:
+                return
+            self._restart_active = True
+        self._set_server_status("◌ Restarting…")
+        self._notify(
+            "Restarting the FCC server…",
+            level=NotificationLevel.INFO,
+        )
         try:
             self._controller.restart_server()
         except Exception:
             logger.exception("Could not restart the FCC server")
-            self._set_server_status("Server status: restart failed")
-            self._notify(
+            self._finish_restart(
+                "○ Restart failed",
                 "Could not restart the FCC server.",
-                level=NotificationLevel.ERROR,
+                NotificationLevel.ERROR,
             )
             return
         thread = threading.Thread(
@@ -325,8 +382,31 @@ class PystrayDesktopTray:
             name="fcc-restart-status",
             daemon=True,
         )
-        self._restart_thread = thread
-        thread.start()
+        with self._update_lock:
+            self._restart_thread = thread
+        try:
+            thread.start()
+        except RuntimeError as exc:
+            logger.error("Could not start the FCC restart watcher: {}", exc)
+            self._finish_restart(
+                "○ Restart failed",
+                "Could not restart the FCC server.",
+                NotificationLevel.ERROR,
+            )
+
+    def _finish_restart(
+        self,
+        status_label: str,
+        message: str,
+        level: NotificationLevel,
+    ) -> None:
+        with self._update_lock:
+            if self._closed:
+                return
+            self._restart_active = False
+            self._server_status_label = status_label
+        self._refresh_menu()
+        self._notify(message, level=level)
 
     def _wait_for_restart(self) -> None:
         deadline = time.monotonic() + 60.0
@@ -336,21 +416,24 @@ class PystrayDesktopTray:
                     return
             status = self._controller.status
             if status is ServerStatus.RUNNING:
-                self._set_server_status(f"Server status: {status}")
-                self._notify("Server restarted.", level=NotificationLevel.SUCCESS)
+                self._finish_restart(
+                    _server_status_text(status),
+                    "Server restarted.",
+                    NotificationLevel.SUCCESS,
+                )
                 return
             if status is ServerStatus.STOPPED:
-                self._set_server_status("Server status: stopped")
-                self._notify(
+                self._finish_restart(
+                    _server_status_text(status),
                     "The FCC server stopped during restart.",
-                    level=NotificationLevel.ERROR,
+                    NotificationLevel.ERROR,
                 )
                 return
             time.sleep(0.25)
-        self._set_server_status("Server status: restart timed out")
-        self._notify(
+        self._finish_restart(
+            "◌ Restart timed out",
             "The FCC server did not restart in time.",
-            level=NotificationLevel.WARNING,
+            NotificationLevel.WARNING,
         )
 
     def _quit(self, _icon: Icon, _item: MenuItem) -> None:
@@ -360,12 +443,36 @@ class PystrayDesktopTray:
 def _update_status_text(result: UpdateCheckResult) -> str:
     installed = result.installed or "unknown"
     if result.status is UpdateStatus.AVAILABLE:
-        return f"Update available: {installed} -> {result.latest}"
+        return f"● Update available: {installed} → {result.latest}"
     if result.status is UpdateStatus.UP_TO_DATE:
-        return f"Up to date: {installed}"
+        return f"● Up to date: {installed}"
     if result.status is UpdateStatus.LOCAL_NEWER:
-        return f"Installed version is newer: {installed}"
-    return "Update status: check failed"
+        return f"◌ Installed version is newer: {installed}"
+    return "○ Update check failed"
+
+
+def _server_status_text(status: ServerStatus) -> str:
+    if status is ServerStatus.RUNNING:
+        return "● Running"
+    if status is ServerStatus.STARTING:
+        return "◌ Starting…"
+    if status is ServerStatus.STOPPING:
+        return "◌ Stopping…"
+    if status is ServerStatus.STOPPED:
+        return "○ Stopped"
+    return "◌ Unknown"
+
+
+def _server_status_message(status: ServerStatus) -> str:
+    if status is ServerStatus.RUNNING:
+        return "FCC server is running."
+    if status is ServerStatus.STARTING:
+        return "FCC server is starting."
+    if status is ServerStatus.STOPPING:
+        return "FCC server is stopping."
+    if status is ServerStatus.STOPPED:
+        return "FCC server is stopped."
+    return "FCC server status is unknown."
 
 
 def _create_icon() -> Image.Image:

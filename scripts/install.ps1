@@ -78,7 +78,7 @@ $script:InstallStageCount = 0
 $script:FccVerified = $false
 $script:DesktopReady = $false
 $script:HeadroomPath = ""
-$FccAppUserModelId = "io.github.alishahryar1.free-claude-code"
+$FccAppUserModelId = "io.github.amedeo82.free-claude-code"
 $FccCommands = @(
     # Include retired entry points so updates reject older FCC processes before replacement.
     "fcc-desktop",

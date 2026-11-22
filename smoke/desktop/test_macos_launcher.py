@@ -66,8 +66,8 @@ def observed_launches(installed_desktop):
 
 def test_finder_launch_keeps_fcc_bundle_identity(installed_desktop, observed_launches):
     _terminal, legacy, actual = observed_launches
-    assert legacy["bundle_id"] != "io.github.alishahryar1.free-claude-code"
-    assert actual["bundle_id"] == "io.github.alishahryar1.free-claude-code"
+    assert legacy["bundle_id"] != "io.github.amedeo82.free-claude-code"
+    assert actual["bundle_id"] == "io.github.amedeo82.free-claude-code"
     assert Path(actual["bundle_path"]).resolve() == installed_desktop["app"].resolve()
     assert (
         Path(actual["process_executable"]).resolve()

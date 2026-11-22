@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Protocol, cast
 
-APP_USER_MODEL_ID = "io.github.alishahryar1.free-claude-code"
+APP_USER_MODEL_ID = "io.github.amedeo82.free-claude-code"
 
 
 class NotificationLevel(StrEnum):
@@ -35,6 +35,20 @@ class DesktopNotifier(Protocol):
     def close(self) -> None: ...
 
 
+def notification_title(notification: DesktopNotification) -> str:
+    """Return one consistent, branded title for every notification backend."""
+
+    suffix = {
+        NotificationLevel.INFO: "",
+        NotificationLevel.SUCCESS: "Success",
+        NotificationLevel.WARNING: "Warning",
+        NotificationLevel.ERROR: "Error",
+    }[notification.level]
+    if not suffix:
+        return notification.title
+    return f"{notification.title} — {suffix}"
+
+
 class PystrayDesktopNotifier:
     """Portable notification fallback backed by the tray icon."""
 
@@ -42,7 +56,7 @@ class PystrayDesktopNotifier:
         self._icon = icon
 
     def notify(self, notification: DesktopNotification) -> None:
-        self._icon.notify(notification.message, notification.title)
+        self._icon.notify(notification.message, notification_title(notification))
 
     def close(self) -> None:
         return None

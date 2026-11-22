@@ -81,7 +81,7 @@ def check_for_updates() -> UpdateCheckResult:
         status=UpdateStatus.AVAILABLE,
         installed=installed,
         latest=latest,
-        message=f"FCC update available: {installed} -> {latest}.",
+        message=f"FCC update available: {installed} to {latest}.",
     )
 
 
@@ -127,7 +127,7 @@ def main(argv: list[str] | None = None) -> int:
     output = sys.stderr if arguments.print_version else sys.stdout
     if result.status is UpdateStatus.AVAILABLE:
         print(
-            f"FCC update available: {result.installed} -> {result.latest}. "
+            f"FCC update available: {result.installed} to {result.latest}. "
             "Running the installer.",
             file=output,
         )
