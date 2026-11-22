@@ -7,6 +7,7 @@ import pytest
 from playwright.sync_api import Locator, Page, Route, expect
 
 from e2e.provider_support import close_provider, open_provider
+from free_claude_code.core.version import package_version
 
 
 def _open_models(page: Page, admin_base_url: str) -> None:
@@ -503,7 +504,10 @@ def test_fallback_drag_and_keyboard_reordering_save_model_effort_pairs(
     assert _fallbacks(editor) == [entries[1], entries[2], entries[3], entries[0]]
     expect(
         editor.get_by_role("combobox", name="Fallback model 1", exact=True)
-    ).to_have_value("groq/model-b")
+    ).to_have_value("Model B (Groq)")
+    expect(
+        editor.get_by_role("combobox", name="Fallback model 1", exact=True)
+    ).to_have_attribute("data-canonical-value", "groq/model-b")
 
 
 def test_fallback_plus_and_trash_have_matching_shape_and_centered_icons(
@@ -826,7 +830,7 @@ def test_known_model_display_canonical_apply_refresh_and_custom_editing(
     expect(summary.locator(".model-picker-badge--provider")).to_have_text("NVIDIA NIM")
     expect(summary.locator(".model-picker-description")).to_contain_text("1M context")
     expect(summary.locator(".model-picker-source")).to_have_text("models.dev")
-    expect(summary.locator(".model-picker-canonical")).to_have_text(ref)
+    expect(summary.locator(".model-picker-canonical")).to_have_count(0)
     expect(summary.locator(".model-picker-badge--capability")).to_have_count(0)
     expect(summary).not_to_contain_text("200K")
     with page.expect_response("**/admin/api/config/apply") as saved:
@@ -860,6 +864,187 @@ def test_known_model_display_canonical_apply_refresh_and_custom_editing(
     custom_payload = custom_saved.value.request.post_data_json
     assert isinstance(custom_payload, dict)
     assert custom_payload["values"] == {"MODEL_SONNET": "custom/provider-model"}
+
+
+@pytest.mark.parametrize("width", [1280, 900, 390])
+def test_catalog_enriched_minimax_and_gemma_preserve_authority_layout_and_identity(
+    page: Page, admin_base_url: str, width: int
+) -> None:
+    minimax = "nvidia_nim/minimaxai/minimax-m3.1-flash"
+    gemma = "nvidia_nim/google/gemma-4-31b-it"
+
+    def single_nim_config(route: Route) -> None:
+        response = route.fetch()
+        payload = response.json()
+        for provider in payload["provider_status"]:
+            provider["status"] = (
+                "configured"
+                if provider["provider_id"] == "nvidia_nim"
+                else "missing_configuration"
+            )
+        route.fulfill(response=response, json=payload)
+
+    def details(
+        title: str, canonical_id: str, catalog: dict[str, object]
+    ) -> dict[str, object]:
+        return {
+            "display_name": title,
+            "provider_id": "nvidia_nim",
+            "provider_label": "NVIDIA NIM",
+            "description": "1M context",
+            "description_source": "models.dev",
+            "supports_reasoning": None,
+            "input_modalities": None,
+            "context_window_tokens": None,
+            "max_output_tokens": None,
+            "catalog": {
+                "source": "models.dev",
+                "source_provider_id": "nvidia",
+                "canonical_model_id": canonical_id,
+                "lab": {
+                    "id": canonical_id.split("/")[0],
+                    "label": "MiniMax"
+                    if canonical_id.startswith("minimax/")
+                    else "Google",
+                    "logo_url": None,
+                },
+                "provider_logo_url": (
+                    f"/admin/assets/{package_version()}/providers/nvidia-color.svg"
+                ),
+                "fetched_at": 1763654400,
+                "stale": True,
+                "last_updated": "2026-11-01",
+                "status": None,
+                "knowledge": None,
+                **catalog,
+            },
+        }
+
+    payload = {
+        "models": [minimax, gemma],
+        "model_labels": {minimax: "MiniMax-M3.1-Flash", gemma: "Gemma 4 31B IT"},
+        "model_details": {
+            minimax: details(
+                "MiniMax-M3.1-Flash",
+                "minimax/MiniMax-M3.1-Flash",
+                {
+                    "reasoning": True,
+                    "tool_call": True,
+                    "structured_output": True,
+                    "modalities": {
+                        "input": ["text", "image", "video"],
+                        "output": ["text"],
+                    },
+                    "limit": {"context": 262144, "input": 262144, "output": 262144},
+                    "release_date": "2026-10-19",
+                    "open_weights": True,
+                },
+            ),
+            gemma: details(
+                "Gemma 4 31B IT",
+                "google/gemma-4-31b-it",
+                {
+                    "reasoning": True,
+                    "tool_call": True,
+                    "structured_output": None,
+                    "modalities": {"input": ["text", "image"], "output": ["text"]},
+                    "limit": {"context": 256000, "input": None, "output": 16384},
+                    "release_date": None,
+                    "open_weights": False,
+                },
+            ),
+        },
+        "failed_providers": [],
+    }
+    external_requests: list[str] = []
+    page.on(
+        "request",
+        lambda request: (
+            external_requests.append(request.url)
+            if request.url.startswith("https://models.dev/")
+            else None
+        ),
+    )
+    page.set_viewport_size({"width": width, "height": 900})
+    page.route("**/admin/api/config", single_nim_config)
+    page.route("**/admin/api/models", lambda route: route.fulfill(json=payload))
+    _open_models(page, admin_base_url)
+    provider_logo_src = (
+        page.locator('[data-provider="nvidia_nim"] .provider-logo')
+        .get_attribute("src")
+        or ""
+    )
+    provider_logo_path = provider_logo_src.removeprefix(admin_base_url)
+    assert provider_logo_path == (
+        f"/admin/assets/{package_version()}/providers/nvidia-color.svg"
+    )
+    model = page.locator("#field-MODEL_SONNET")
+    model.fill("MiniMax")
+    option = page.locator(f'[role="option"][data-value="{minimax}"]')
+    expect(option.locator(".model-picker-title")).to_have_text("MiniMax-M3.1-Flash")
+    expect(option.locator(".model-picker-logo--provider img")).to_have_attribute(
+        "src", provider_logo_path
+    )
+    expect(option.locator(".model-picker-attribution")).to_contain_text(
+        "Hosted by NVIDIA NIM"
+    )
+    expect(option.locator(".model-picker-canonical")).to_have_count(0)
+    expect(option.locator('[data-capability="video"]')).to_have_attribute(
+        "data-authority", "catalog"
+    )
+    option.click()
+
+    summary = page.locator("#field-MODEL_SONNET-model-details")
+    expect(model).to_have_attribute("data-canonical-value", minimax)
+    expect(summary.locator('[data-capability="reasoning"]')).to_have_attribute(
+        "data-authority", "catalog"
+    )
+    expect(summary.locator('[data-capability="tools"]')).to_contain_text("Catalog")
+    expect(summary.locator('[data-capability="structured-output"]')).to_be_visible()
+    expect(summary.locator('[data-capability="video"]')).to_contain_text("Video input")
+    expect(summary.locator('[data-capability="context"]')).to_contain_text(
+        "256K context"
+    )
+    expect(summary.locator('[data-stat="context"]')).to_contain_text("262,144 tokens")
+    expect(summary.locator('[data-stat="output"]')).to_contain_text("262,144 tokens")
+    expect(summary.locator(".model-picker-description")).to_contain_text("1M context")
+    expect(summary.locator('[data-capability="context"]')).not_to_contain_text("1M")
+    expect(summary.locator(".model-picker-catalog-source")).to_contain_text(
+        "Provider scope: nvidia"
+    )
+    expect(summary.locator(".model-picker-catalog-source")).to_contain_text(
+        "Stale cache"
+    )
+    expect(summary.locator(".model-picker-logo--provider img")).to_have_attribute(
+        "src", provider_logo_path
+    )
+    expect(summary.locator(".model-picker-logo-fallback")).to_have_count(1)
+    expect(summary.locator(".model-picker-canonical")).to_have_count(0)
+    expect(summary.locator('[data-icon="video"]')).to_be_visible()
+    expect(summary.locator('[data-stat="context"] [data-icon="context"]')).to_be_visible()
+    with page.expect_response("**/admin/api/config/apply") as saved:
+        page.locator("#applyButton").click()
+    apply_payload = saved.value.request.post_data_json
+    assert isinstance(apply_payload, dict)
+    assert apply_payload["values"] == {"MODEL_SONNET": minimax}
+
+    page.reload()
+    expect(page.locator("#messageArea")).to_have_text("")
+    expect(model).to_have_attribute("data-canonical-value", minimax)
+    expect(page.locator("#dirtyState")).to_have_text("No changes")
+    model.fill("Gemma")
+    page.locator(f'[role="option"][data-value="{gemma}"]').click()
+    expect(model).to_have_attribute("data-canonical-value", gemma)
+    expect(summary.locator('[data-stat="context"]')).to_contain_text("256,000 tokens")
+    expect(summary.locator('[data-stat="output"]')).to_contain_text("16,384 tokens")
+    expect(summary.locator('[data-capability="structured-output"]')).to_have_count(0)
+    expect(summary.locator('[data-capability="audio"]')).to_have_count(0)
+    expect(summary.locator('[data-capability="video"]')).to_have_count(0)
+    assert page.evaluate(
+        "document.documentElement.scrollWidth <= document.documentElement.clientWidth"
+    )
+    assert summary.evaluate("el => el.scrollWidth <= el.clientWidth")
+    assert external_requests == []
 
 
 @pytest.mark.parametrize(

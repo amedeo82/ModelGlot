@@ -79,6 +79,7 @@ def test_cache_file_contains_only_the_reduced_map(tmp_path: Path) -> None:
 
     payload = json.loads(path.read_text(encoding="utf-8"))
     assert payload == {
+        "schema_version": 2,
         "entries": {
             "deepseek": {
                 "deepseek-chat": {

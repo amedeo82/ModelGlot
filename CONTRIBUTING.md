@@ -67,7 +67,7 @@ GitHub CI runs Ruff in check-only mode and also bans `# type: ignore`, `# ty: ig
 - [`docs/model-picker-metadata-research.md`](docs/model-picker-metadata-research.md) records the proposed picker metadata enrichment.
 - [`docs/model-picker-info-enrichments.md`](docs/model-picker-info-enrichments.md) summarizes the candidate model information and its presentation constraints.
 - [`docs/admin-model-picker-enrichment-analysis.md`](docs/admin-model-picker-enrichment-analysis.md) records the implemented Admin model-picker enrichment design.
-- [`docs/admin-model-picker-enrichment-implementation-plan.md`](docs/admin-model-picker-enrichment-implementation-plan.md) tracks the implementation, verification results, and deferred catalog-metadata decisions.
+- [`docs/admin-model-picker-enrichment-implementation-plan.md`](docs/admin-model-picker-enrichment-implementation-plan.md) tracks the implementation, verification results, and the approved catalog-metadata contract.
 - [`docs/hot-to-use-models.dev.md`](docs/hot-to-use-models.dev.md) documents the models.dev endpoints and usage.
 
 ### Code sessions and web tools

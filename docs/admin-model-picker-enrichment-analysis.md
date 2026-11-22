@@ -1,6 +1,6 @@
 # Admin Model Picker Enrichment Analysis
 
-Status: implemented for the initial Admin scope; optional catalog metadata remains proposed
+Status: implemented for the initial Admin scope and the approved Wave 4 catalog expansion
 Input: [`model-picker-info-enrichments.md`](model-picker-info-enrichments.md), [`model-picker-metadata-research.md`](model-picker-metadata-research.md), and live verification of the local Admin server
 Audience: Admin UI, API, model metadata, and configuration maintainers
 
@@ -9,6 +9,18 @@ Related documents:
 - [`admin-model-picker-enrichment-implementation-plan.md`](admin-model-picker-enrichment-implementation-plan.md)
 - [`model-display-names-implementation-plan.md`](model-display-names-implementation-plan.md)
 - [`claude-terminal-model-display-names-implementation-plan.md`](claude-terminal-model-display-names-implementation-plan.md)
+
+> **Implementation update — 2026-11-20.** Wave 4 now retains provider-scoped models.dev facts in
+> cache schema v2, exposes them through the additive `catalog` namespace, and renders compact
+> options plus a selected detail card. Solid badges remain provider/FCC facts; dashed badges with
+> visible `Catalog` text are declarations for the exact hosting-provider row, never runtime
+> guarantees. Runtime facts win conflicts. Pricing is not retained or displayed.
+>
+> **UX refinement — 2026-11-22.** Provider identity reuses the display names and packaged
+> `logo_filename` assets already shown on the Admin Providers screen; models.dev logos are not
+> downloaded for providers. Capability/limit facts use meaningful static SVG icons, and the
+> canonical reference is no longer rendered in visible model information: it remains only in
+> component state, data attributes, search, and Apply payloads.
 
 ---
 
@@ -297,7 +309,26 @@ A compatible structured map is added:
       "supports_reasoning": null,
       "input_modalities": null,
       "context_window_tokens": null,
-      "max_output_tokens": null
+      "max_output_tokens": null,
+      "catalog": {
+        "source": "models.dev",
+        "source_provider_id": "nvidia",
+        "canonical_model_id": "minimax/MiniMax-M3.1-Flash",
+        "lab": {"id": "minimax", "label": "MiniMax", "logo_url": null},
+        "provider_logo_url": null,
+        "fetched_at": 1763654400,
+        "stale": true,
+        "last_updated": "2026-11-01",
+        "reasoning": true,
+        "tool_call": true,
+        "structured_output": true,
+        "modalities": {"input": ["text", "image", "video"], "output": ["text"]},
+        "limit": {"context": 262144, "input": 262144, "output": 262144},
+        "release_date": "2026-10-19",
+        "status": null,
+        "knowledge": null,
+        "open_weights": true
+      }
     }
   }
 }
@@ -313,7 +344,13 @@ A compatible structured map is added:
 - boolean capability fields use `null` for unknown, not `false`.
 - numeric limits are positive integers or `null`; default fallbacks are excluded from the Admin contract.
 - `input_modalities` is a non-empty list or `null`.
-- fields not yet implemented may be omitted; clients must treat absent fields as unknown.
+- fields not applicable to a model may be omitted; clients must treat absent fields as unknown.
+- `catalog` is additive and loopback-Admin-only. It identifies the models.dev source provider,
+  canonical lab, fetch/update freshness, capabilities, modalities, limits, lifecycle, and logo URLs.
+- Catalog facts never overwrite or backfill sibling provider/FCC fields. Audio, video, and PDF are
+  catalog declarations only; cost is neither retained nor exposed.
+- Logo URLs are same-origin references to bounded, validated SVGs or `null`; clients use initials
+  for `null` URLs and image-load failures. No Admin model-read endpoint fetches catalog or logos.
 - The term *canonical value* in this document means the FCC `provider_model_ref`; it is not the models.dev `canonical_model_id` field.
 
 ---
@@ -346,8 +383,8 @@ The observed data demonstrates why provenance is required.
 | Fact | Provider | Catalog/models.dev | Admin decision |
 |---|---|---|---|
 | Display title | Resolved shared title | Available | Use shared title |
-| Context window | Unknown | `262144` structured; description mentions 1M | Omit provider badge in initial release; catalog badge only behind explicit catalog policy |
-| Output limit | Unknown | `262144` | Omit provider badge in initial release |
+| Context window | Unknown | `262144` structured; description mentions 1M | Show `256K context` as a dashed Catalog declaration and `262,144 tokens` in details; keep provider field `null` |
+| Output limit | Unknown | `262144` | Show `256K output` as a dashed Catalog declaration and `262,144 tokens` in details; keep provider field `null` |
 | Reasoning | Unknown | Enabled | Omit provider badge; optional catalog badge behind policy |
 | Tools / structured output | Unknown | Enabled | Omit from initial release |
 | Input modalities | Unknown | Text, image, video | Do not expose video through the current Admin contract |
@@ -377,15 +414,15 @@ Change the combobox so the known selection is displayed by title while the canon
 
 Add the provider, description, canonical reference, and provider-authoritative badges to the picker.
 
-### Wave 4 — Optional catalog metadata
+### Wave 4 — Approved catalog metadata
 
-Expand the reduced models.dev cache and add explicitly labeled catalog-derived badges only after the product approves their semantics.
+Expand the reduced models.dev cache and add explicitly labeled catalog-derived badges with the approved provider-scoped provenance semantics.
 
 ### Wave 5 — Hardening, documentation, and release
 
 Complete contract, accessibility, responsive, E2E, and documentation coverage.
 
-The ordered steps, acceptance criteria, tests, dependencies, and rollback strategy are defined in [`admin-model-picker-enrichment-implementation-plan.md`](admin-model-picker-enrichment-implementation-plan.md). The initial API, canonical/display separation, enriched presentation, accessibility, and regression coverage are implemented. Wave 4 catalog-derived badges remain deferred pending explicit product approval.
+The ordered steps, acceptance criteria, tests, dependencies, and rollback strategy are defined in [`admin-model-picker-enrichment-implementation-plan.md`](admin-model-picker-enrichment-implementation-plan.md). The initial API, canonical/display separation, enriched presentation, accessibility, regression coverage, and approved Wave 4 catalog-derived badges are implemented.
 
 ---
 
@@ -480,6 +517,33 @@ text. Responsive CSS wraps long values and stacks Model Routing at narrow widths
 option names include title and canonical identity, and selected summaries are associated through
 `aria-describedby`.
 
+### S4.1–S4.4 implementation — 2026-11-20
+
+The models.dev background refresh now writes cache schema v2 with bounded, validated metadata for
+canonical lab identity, reasoning, tool calling, structured output, input/output modalities,
+provider-specific limits, lifecycle, open weights, and freshness. Legacy string and
+name/description records remain readable. Invalid field types discard only the structured record,
+not the legacy title/description. Unsupported fields, benchmarks, links, and pricing are ignored.
+
+`config.model_catalog_metadata.ModelCatalogMetadata` is attached separately to
+`CatalogModel.catalog_metadata`, leaving provider runtime facts unchanged. The Admin `catalog`
+namespace exposes source provider, lab, freshness, exact limits, and logo URLs without network or
+filesystem probes in model serialization. The NVIDIA fixtures retain MiniMax `262144/262144` and
+Gemma `256000/16384`; descriptions such as `1M context` never populate numeric fields.
+
+Provider/lab SVGs download from fixed models.dev paths only during the existing background refresh.
+The store enforces a 64 KiB streaming cap, MIME and XML/SVG validation, rejects active/external
+content, and publishes atomically. `/admin/catalog-logos/...` serves only cached allowlisted IDs
+with `image/svg+xml`, `nosniff`, and restrictive CSP. Offline, missing, or invalid logos preserve
+metadata and use initials.
+
+The hybrid UI uses compact option rows and a selected detail card. Compact token labels divide by
+1024 (`262144` → `256K`, `256000` → `250K`); detail stats show exact integers and `tokens`. Solid
+badges identify provider/FCC facts, dashed badges include visible `Catalog` text, and neutral
+lifecycle/open-weight badges make no runtime assertion. Runtime values suppress conflicting
+catalog values. The card exposes source, provider scope, update/freshness, and the runtime/catalog
+explanation. No custom tooltip or interactive control is nested in listbox options.
+
 ---
 
 ## Evidence Index
@@ -491,12 +555,17 @@ option names include title and canonical identity, and selected summaries are as
 - `src/free_claude_code/api/admin_routes.py`
 - `src/free_claude_code/application/model_catalog.py`
 - `src/free_claude_code/application/model_metadata.py`
+- `src/free_claude_code/config/model_catalog_metadata.py`
 - `src/free_claude_code/application/model_titles.py`
 - `src/free_claude_code/providers/model_catalog_source.py`
+- `src/free_claude_code/providers/model_catalog_logos.py`
 - `src/free_claude_code/config/model_catalog_mapping.py`
 - `src/free_claude_code/config/model_title_overrides.py`
 - `tests/api/test_admin.py`
+- `tests/providers/test_model_catalog_logos.py`
+- `tests/providers/test_model_catalog_source.py`
 - `e2e/test_admin_models.py`
+- `e2e/test_admin_assets.py`
 - `e2e/test_admin_providers.py`
 - `docs/model-picker-info-enrichments.md`
 - `docs/model-picker-metadata-research.md`

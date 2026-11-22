@@ -3,7 +3,7 @@
 from collections.abc import Awaitable, Callable, Mapping
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from time import perf_counter
+from time import perf_counter, time
 
 import httpx
 from fastapi import (
@@ -23,10 +23,15 @@ from free_claude_code.application.connected_accounts import (
 from free_claude_code.application.errors import ApplicationError
 from free_claude_code.application.model_catalog import CatalogModel, read_model_catalog
 from free_claude_code.application.model_metadata import ProviderModelRefreshResult
+from free_claude_code.application.ports import ModelCatalogLogoPort
 from free_claude_code.application.usage_events import UsageFilters, UsageGroupBy
 from free_claude_code.config.admin.custom_providers import CustomProviderMutation
 from free_claude_code.config.admin.manifest import FIELD_BY_KEY
 from free_claude_code.config.errors import ConfigConflictError
+from free_claude_code.config.model_catalog_mapping import (
+    MODEL_CATALOG_CACHE_TTL_SECONDS,
+    MODEL_CATALOG_PROVIDER_MAPPING,
+)
 from free_claude_code.config.model_refs import split_provider_model_ref
 from free_claude_code.config.provider_catalog import (
     PROVIDER_CATALOG,
@@ -132,6 +137,31 @@ async def admin_asset(version: str, filename: str, request: Request):
     if version != package_version() or filename not in _ADMIN_ASSET_FILENAMES:
         raise HTTPException(status_code=404, detail="Admin asset not found")
     return _asset_response(filename)
+
+
+@router.get("/admin/catalog-logos/{kind}/{logo_id}.svg", include_in_schema=False)
+def admin_catalog_logo(
+    kind: str,
+    logo_id: str,
+    request: Request,
+    services: ApiServices = Depends(get_services),
+):
+    require_loopback_admin(request)
+    store = services.model_catalog_logos
+    path = store.path_for(kind, logo_id) if store is not None else None
+    if path is None or not path.is_file():
+        raise HTTPException(status_code=404, detail="Catalog logo not found")
+    return FileResponse(
+        path,
+        media_type="image/svg+xml",
+        headers={
+            "Content-Security-Policy": (
+                "default-src 'none'; script-src 'none'; object-src 'none'; "
+                "style-src 'unsafe-inline'; base-uri 'none'; sandbox"
+            ),
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
 
 
 @router.get("/admin/api/config")
@@ -619,14 +649,18 @@ def _model_options(
             model.provider_model_ref: model.display_name for model in catalog.models
         },
         "model_details": {
-            model.provider_model_ref: _admin_model_details(model)
+            model.provider_model_ref: _admin_model_details(
+                model, services.model_catalog_logos
+            )
             for model in catalog.models
         },
         "failed_providers": list(failed_provider_ids),
     }
 
 
-def _admin_model_details(model: CatalogModel) -> JsonObject:
+def _admin_model_details(
+    model: CatalogModel, logo_store: ModelCatalogLogoPort | None = None
+) -> JsonObject:
     provider_id, _ = split_provider_model_ref(model.provider_model_ref)
     modalities = (
         [
@@ -639,7 +673,7 @@ def _admin_model_details(model: CatalogModel) -> JsonObject:
     )
     context = model.context_window_tokens
     output = model.max_output_tokens
-    return {
+    details: JsonObject = {
         "display_name": model.display_name,
         "provider_id": provider_id,
         "provider_label": model.description,
@@ -652,6 +686,60 @@ def _admin_model_details(model: CatalogModel) -> JsonObject:
         else None,
         "max_output_tokens": output if output is not None and output > 0 else None,
     }
+    metadata = model.catalog_metadata
+    source_provider_id = MODEL_CATALOG_PROVIDER_MAPPING.get(provider_id)
+    if metadata is not None and source_provider_id is not None:
+        lab_id = metadata.lab_id
+        fetched_at = metadata.fetched_at
+        details["catalog"] = {
+            "source": "models.dev",
+            "source_provider_id": source_provider_id,
+            "canonical_model_id": metadata.canonical_model_id,
+            "lab": {
+                "id": lab_id,
+                "label": metadata.lab_label,
+                "logo_url": logo_store.url_for("labs", lab_id)
+                if logo_store is not None
+                else None,
+            }
+            if lab_id is not None
+            else None,
+            "provider_logo_url": _admin_provider_logo_url(provider_id),
+            "fetched_at": fetched_at,
+            "stale": fetched_at is None
+            or time() - fetched_at >= MODEL_CATALOG_CACHE_TTL_SECONDS,
+            "last_updated": metadata.last_updated,
+            "reasoning": metadata.reasoning,
+            "tool_call": metadata.tool_call,
+            "structured_output": metadata.structured_output,
+            "modalities": {
+                "input": list(metadata.input_modalities)
+                if metadata.input_modalities is not None
+                else None,
+                "output": list(metadata.output_modalities)
+                if metadata.output_modalities is not None
+                else None,
+            },
+            "limit": {
+                "context": metadata.context_limit,
+                "input": metadata.input_limit,
+                "output": metadata.output_limit,
+            },
+            "release_date": metadata.release_date,
+            "status": metadata.status,
+            "knowledge": metadata.knowledge,
+            "open_weights": metadata.open_weights,
+        }
+    return details
+
+
+def _admin_provider_logo_url(provider_id: str) -> str | None:
+    descriptor = PROVIDER_CATALOG.get(provider_id)
+    if descriptor is None or not descriptor.logo_filename:
+        return None
+    return (
+        f"/admin/assets/{package_version()}/providers/{descriptor.logo_filename}"
+    )
 
 
 def _filtered_values(values: Mapping[str, JsonValue]) -> JsonObject:

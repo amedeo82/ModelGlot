@@ -117,6 +117,12 @@ def model_catalog_cache_path() -> Path:
     return config_dir_path() / MODEL_CATALOG_CACHE_FILENAME
 
 
+def model_catalog_logo_dir_path() -> Path:
+    """Return the validated models.dev SVG cache directory."""
+
+    return config_dir_path() / "models-dev-logos"
+
+
 def claude_desktop_disconnect_path() -> Path:
     return config_dir_path() / "claude-desktop-disconnect.json"
 

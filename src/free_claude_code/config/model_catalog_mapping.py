@@ -2,6 +2,8 @@
 
 from types import MappingProxyType
 
+MODEL_CATALOG_CACHE_TTL_SECONDS = 24 * 60 * 60
+
 MODEL_CATALOG_PROVIDER_MAPPING = MappingProxyType(
     {
         "nvidia_nim": "nvidia",

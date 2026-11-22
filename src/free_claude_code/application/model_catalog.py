@@ -1,10 +1,14 @@
 """Application model inventory and presentation order, independent of clients."""
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING
 
 from free_claude_code.config.constants import DEFAULT_MODEL_CONTEXT_TOKENS
+from free_claude_code.config.model_catalog_mapping import (
+    MODEL_CATALOG_PROVIDER_MAPPING,
+)
+from free_claude_code.config.model_catalog_metadata import ModelCatalogMetadata
 from free_claude_code.config.model_refs import (
     configured_chat_model_refs,
     split_provider_model_ref,
@@ -21,7 +25,7 @@ from .model_titles import (
     lookup_model_catalog_entry,
     resolve_model_title,
 )
-from .ports import ModelTitleCatalogPort
+from .ports import ModelCatalogMetadataPort, ModelTitleCatalogPort
 
 if TYPE_CHECKING:
     from free_claude_code.config.settings import Settings
@@ -43,6 +47,7 @@ class CatalogModel:
     max_output_tokens: int | None = None
     model_description: str | None = field(default=None, kw_only=True)
     model_description_source: str | None = field(default=None, kw_only=True)
+    catalog_metadata: ModelCatalogMetadata | None = field(default=None, kw_only=True)
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,16 +81,24 @@ def read_model_catalog(
         if isinstance(runtime, ModelTitleCatalogPort)
         else {}
     )
+    catalog_metadata = (
+        runtime.model_catalog_metadata()
+        if isinstance(runtime, ModelCatalogMetadataPort)
+        else {}
+    )
     models: dict[str, CatalogModel] = {}
     for ref in configured_chat_model_refs(settings):
         models[ref.model_ref] = _catalog_model(
             ref.model_ref,
             runtime.cached_model_info(ref.provider_id, ref.model_id),
             title_catalog,
+            catalog_metadata,
         )
     for info in runtime.cached_prefixed_model_infos():
         if info.model_id not in models:
-            models[info.model_id] = _catalog_model(info.model_id, info, title_catalog)
+            models[info.model_id] = _catalog_model(
+                info.model_id, info, title_catalog, catalog_metadata
+            )
     for ref, model in tuple(models.items()):
         provider_id, model_id = split_provider_model_ref(ref)
         definition = settings.custom_provider(provider_id)
@@ -149,6 +162,7 @@ def _catalog_model(
     ref: str,
     info: ProviderModelInfo | None,
     title_catalog: CatalogTitleMap,
+    metadata_catalog: Mapping[tuple[str, str], ModelCatalogMetadata],
 ) -> CatalogModel:
     info = info if info is not None else ProviderModelInfo(ref)
     provider_id, model_id = split_provider_model_ref(ref)
@@ -157,6 +171,12 @@ def _catalog_model(
     metadata = lookup_model_catalog_entry(provider_id, model_id, title_catalog)
     model_description = metadata[1] if metadata is not None else None
     descriptor = PROVIDER_CATALOG.get(provider_id)
+    catalog_provider = MODEL_CATALOG_PROVIDER_MAPPING.get(provider_id)
+    catalog_metadata = (
+        metadata_catalog.get((catalog_provider, model_id))
+        if catalog_provider is not None
+        else None
+    )
     return CatalogModel(
         wire_slug=no_thinking_gateway_model_id(ref) if no_thinking else ref,
         provider_model_ref=ref,
@@ -168,6 +188,7 @@ def _catalog_model(
         max_output_tokens=info.max_output_tokens,
         model_description=model_description,
         model_description_source="models.dev" if model_description else None,
+        catalog_metadata=catalog_metadata,
     )
 
 

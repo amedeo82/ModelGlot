@@ -2,8 +2,10 @@
 
 from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
 from dataclasses import dataclass, field, replace
+from pathlib import Path
 from typing import Protocol, runtime_checkable
 
+from free_claude_code.config.model_catalog_metadata import ModelCatalogMetadata
 from free_claude_code.config.settings import Settings
 from free_claude_code.core.anthropic import MessagesRequest
 from free_claude_code.core.anthropic.passthrough import NativeMessagesRequest
@@ -132,11 +134,31 @@ class ModelTitleCatalogPort(Protocol):
     def model_title_catalog(self) -> Mapping[tuple[str, str], tuple[str, str]]: ...
 
 
+class ModelCatalogLogoPort(Protocol):
+    """Read-only access to previously validated same-origin catalog logos."""
+
+    def url_for(self, kind: str, logo_id: str | None) -> str | None: ...
+
+    def path_for(self, kind: str, logo_id: str) -> Path | None: ...
+
+
+@runtime_checkable
+class ModelCatalogMetadataPort(Protocol):
+    """Optional runtime capability exposing provider-scoped catalog facts."""
+
+    def model_catalog_metadata(
+        self,
+    ) -> Mapping[tuple[str, str], ModelCatalogMetadata]: ...
+
+
 @dataclass(frozen=True, slots=True)
 class ModelCatalogSnapshot:
     settings: Settings
     model_infos: tuple[ProviderModelInfo, ...]
     title_catalog: Mapping[tuple[str, str], tuple[str, str]] = field(
+        default_factory=dict
+    )
+    catalog_metadata: Mapping[tuple[str, str], ModelCatalogMetadata] = field(
         default_factory=dict
     )
 
@@ -148,6 +170,11 @@ class ModelCatalogSnapshot:
 
     def model_title_catalog(self) -> Mapping[tuple[str, str], tuple[str, str]]:
         return self.title_catalog
+
+    def model_catalog_metadata(
+        self,
+    ) -> Mapping[tuple[str, str], ModelCatalogMetadata]:
+        return self.catalog_metadata
 
     def cached_model_info(
         self, provider_id: str, model_id: str

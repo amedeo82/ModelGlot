@@ -8,6 +8,7 @@ from free_claude_code.application.model_catalog import (
 from free_claude_code.application.model_metadata import ProviderModelInfo
 from free_claude_code.application.ports import ModelCatalogSnapshot
 from free_claude_code.config.custom_providers import CustomProviderDefinition
+from free_claude_code.config.model_catalog_metadata import ModelCatalogMetadata
 from free_claude_code.config.model_refs import ModelFallback
 from free_claude_code.config.settings import Settings
 
@@ -176,6 +177,44 @@ def test_minimax_metadata_separates_provider_attribution_from_purpose_text() -> 
     assert model.input_modalities is None
     assert model.context_window_tokens is None
     assert model.max_output_tokens is None
+
+
+def test_provider_scoped_catalog_facts_do_not_replace_runtime_provider_facts() -> None:
+    ref = "nvidia_nim/minimaxai/minimax-m3.1-flash"
+    key = ("nvidia", "minimaxai/minimax-m3.1-flash")
+    snapshot = ModelCatalogSnapshot(
+        Settings(model=ref),
+        (
+            ProviderModelInfo(
+                ref, supports_thinking=False, context_window_tokens=131072
+            ),
+        ),
+        title_catalog={key: ("MiniMax-M3.1-Flash", "1M context")},
+        catalog_metadata={
+            key: ModelCatalogMetadata(
+                canonical_model_id="minimax/MiniMax-M3.1-Flash",
+                reasoning=True,
+                tool_call=True,
+                structured_output=True,
+                input_modalities=("text", "video"),
+                context_limit=262144,
+                output_limit=262144,
+                fetched_at=1234.0,
+            )
+        },
+    )
+
+    model = read_model_catalog(snapshot).models[0]
+
+    assert model.supports_reasoning is False
+    assert model.context_window_tokens == 131072
+    assert model.catalog_metadata is not None
+    assert model.catalog_metadata.context_limit == 262144
+    assert model.catalog_metadata.output_limit == 262144
+    assert model.catalog_metadata.lab_id == "minimax"
+    assert model.catalog_metadata.lab_label == "MiniMax"
+    assert model.provider_model_ref == ref
+    assert model.wire_slug.endswith(ref)
 
 
 def test_absent_catalog_metadata_keeps_existing_fallbacks() -> None:

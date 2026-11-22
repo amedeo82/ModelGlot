@@ -17,6 +17,7 @@ from free_claude_code.application.model_metadata import (
 )
 from free_claude_code.application.ports import ModelCatalogPort, ModelCatalogSnapshot
 from free_claude_code.application.readiness import InitializationWait
+from free_claude_code.config.model_catalog_metadata import ModelCatalogMetadata
 from free_claude_code.config.model_refs import split_provider_model_ref
 from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
 from free_claude_code.config.settings import Settings
@@ -28,6 +29,7 @@ from free_claude_code.providers.admission_policy import ProviderAdmissionLimits
 from free_claude_code.providers.admission_registry import ProviderAdmissionRegistry
 from free_claude_code.providers.base import BaseProvider
 from free_claude_code.providers.history_negotiation import HistoryModeCache
+from free_claude_code.providers.model_catalog_logos import ModelCatalogLogoStore
 from free_claude_code.providers.model_catalog_source import (
     MODEL_CATALOG_CACHE_TTL_SECONDS,
     ModelCatalogCache,
@@ -177,6 +179,7 @@ class ProviderRuntimeManager:
         connected_provider_ids: ConnectedProviderIds = tuple,
         model_catalog_publisher: ModelCatalogPublisher | None = None,
         model_title_source: ModelCatalogSource | None = None,
+        model_catalog_logos: ModelCatalogLogoStore | None = None,
     ) -> None:
         self._runtime_factory = runtime_factory
         self._history_cache = HistoryModeCache()
@@ -186,7 +189,9 @@ class ProviderRuntimeManager:
         self._connected_provider_ids = connected_provider_ids
         self._model_catalog_publisher = model_catalog_publisher
         self._model_title_source = model_title_source
+        self._model_catalog_logos = model_catalog_logos
         self._title_catalog: dict[tuple[str, str], tuple[str, str]] = {}
+        self._catalog_metadata: dict[tuple[str, str], ModelCatalogMetadata] = {}
         self._title_cache = ModelCatalogCache()
         self._title_refresh_task: asyncio.Task[None] | None = None
         self._title_last_attempt_at: float | None = None
@@ -272,11 +277,21 @@ class ProviderRuntimeManager:
         self._ensure_open()
         self._synchronize_model_cache_scope()
         snapshot = self._current.snapshot()
-        return replace(snapshot, title_catalog=self._title_catalog)
+        return replace(
+            snapshot,
+            title_catalog=self._title_catalog,
+            catalog_metadata=self._catalog_metadata,
+        )
 
     def model_title_catalog(self) -> Mapping[tuple[str, str], tuple[str, str]]:
         self._ensure_open()
         return self._title_catalog
+
+    def model_catalog_metadata(
+        self,
+    ) -> Mapping[tuple[str, str], ModelCatalogMetadata]:
+        self._ensure_open()
+        return self._catalog_metadata
 
     def model_title_catalog_status(self) -> dict[str, object]:
         cache = self._title_cache
@@ -634,12 +649,14 @@ class ProviderRuntimeManager:
     def _load_title_catalog(self, settings: Settings) -> None:
         if self._model_title_source is None or settings.model_catalog_source == "none":
             self._title_catalog = {}
+            self._catalog_metadata = {}
             self._title_cache = ModelCatalogCache()
             self._title_last_attempt_at = None
             return
         cache = self._model_title_source.load()
         self._title_cache = cache
         self._title_catalog = dict(cache.entries)
+        self._catalog_metadata = dict(cache.metadata)
 
     def _schedule_title_catalog_refresh(self, settings: Settings) -> None:
         if self._closing or self._model_title_source is None:
@@ -684,7 +701,10 @@ class ProviderRuntimeManager:
             return
         self._title_cache = cache
         self._title_catalog = dict(cache.entries)
+        self._catalog_metadata = dict(cache.metadata)
         self._catalog_updated()
+        if self._model_catalog_logos is not None:
+            await self._model_catalog_logos.refresh(cache.metadata)
 
     def _request_publication(self) -> asyncio.Task[None]:
         self._current.file_state = "starting"

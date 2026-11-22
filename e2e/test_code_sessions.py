@@ -49,9 +49,12 @@ def test_model_picker_uses_application_order_and_keeps_configured_selection(
     )
     page.locator("#codeComposer").fill("Keep this draft")
     page.locator("#codeModel").fill("")
-    expect(page.locator("#codeModel").locator("..").get_by_role("option")).to_have_text(
-        ["Apple", "apple", "Zulu"]
-    )
+    expect(
+        page.locator("#codeModel")
+        .locator("..")
+        .get_by_role("option")
+        .locator(".model-picker-title")
+    ).to_have_text(["Apple", "apple", "Zulu"])
     page.locator("#codeModel").press("Escape")
     page.evaluate("window.CodeSessions.refresh()")
     expect(page.locator("#codeModel")).to_have_value("Zulu")

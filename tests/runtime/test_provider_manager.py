@@ -10,6 +10,7 @@ from free_claude_code.application.errors import ApplicationUnavailableError
 from free_claude_code.application.model_metadata import ProviderModelInfo
 from free_claude_code.application.ports import ModelCatalogPort
 from free_claude_code.config.api_keys import normalize_api_keys
+from free_claude_code.config.model_catalog_metadata import ModelCatalogMetadata
 from free_claude_code.config.settings import Settings
 from free_claude_code.providers.base import BaseProvider
 from free_claude_code.providers.model_catalog_source import (
@@ -1078,6 +1079,65 @@ async def test_model_title_refresh_runs_in_background_without_blocking_reads(
             ("openrouter", "model"): ("Descriptive Model", "")
         }
     finally:
+        await manager.close()
+
+
+@pytest.mark.asyncio
+async def test_catalog_metadata_is_available_before_logo_refresh_finishes(
+    tmp_path,
+) -> None:
+    metadata = ModelCatalogMetadata(
+        canonical_model_id="minimax/MiniMax-M3.1-Flash",
+        context_limit=262144,
+        output_limit=262144,
+    )
+
+    class Source(ModelCatalogSource):
+        def load(self) -> ModelCatalogCache:
+            return ModelCatalogCache()
+
+        async def refresh(self, settings: Settings) -> ModelCatalogCache:
+            return ModelCatalogCache(
+                entries={
+                    ("nvidia", "minimaxai/minimax-m3.1-flash"): (
+                        "MiniMax-M3.1-Flash",
+                        "1M context",
+                    )
+                },
+                metadata={("nvidia", "minimaxai/minimax-m3.1-flash"): metadata},
+                fetched_at=1.0,
+            )
+
+        def write(self, cache: ModelCatalogCache) -> None:
+            return None
+
+    class BlockingLogos:
+        def __init__(self) -> None:
+            self.started = asyncio.Event()
+            self.release = asyncio.Event()
+
+        async def refresh(self, _metadata) -> None:
+            self.started.set()
+            await self.release.wait()
+
+    logos = BlockingLogos()
+    manager = ProviderRuntimeManager(
+        _settings("nvidia_nim/minimaxai/minimax-m3.1-flash"),
+        runtime_factory=RuntimeFactory(),
+        model_title_source=Source(tmp_path / "titles.json"),
+        model_catalog_logos=logos,
+    )
+    try:
+        manager.start_model_list_refresh()
+        await logos.started.wait()
+
+        assert manager.model_catalog_metadata() == {
+            ("nvidia", "minimaxai/minimax-m3.1-flash"): metadata
+        }
+        logos.release.set()
+        await finish_discovery(manager)
+    finally:
+        logos.release.set()
         await manager.close()
 
 

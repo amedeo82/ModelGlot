@@ -10,7 +10,11 @@ from free_claude_code.application.connected_accounts import (
     ConnectedAccountStatus,
 )
 from free_claude_code.application.model_metadata import ProviderModelRefreshResult
-from free_claude_code.application.ports import RequestRuntimePort, TaskController
+from free_claude_code.application.ports import (
+    ModelCatalogLogoPort,
+    RequestRuntimePort,
+    TaskController,
+)
 from free_claude_code.application.usage_events import (
     RequestUsageRecord,
     UsageFilters,
@@ -138,3 +142,4 @@ class ApiServices:
     web_tools: WebToolsPort
     code: CodeApplicationPort | None = None
     usage: UsageEventSink | None = None
+    model_catalog_logos: ModelCatalogLogoPort | None = None

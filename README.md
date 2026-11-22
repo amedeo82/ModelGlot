@@ -431,7 +431,7 @@ In **Admin UI → Model Config**, add **Fallback Models** in the order FCC shoul
 
 Choose a model, effort, and API key number in the bottom row, then click **+**. **Key 1**, **Key 2**, and so on refer to the current numbered keys in that provider's settings. The primary route always uses key 1, so a fallback row is required to rotate to another key. Edit the selections in place, drag the handle to change the order, or click the red trash button to remove a fallback.
 
-The Admin model picker displays a readable title, provider, optional attributed description, and the canonical provider/model reference. It saves only the canonical reference; entering an unlisted reference manually remains supported. Capability and token-limit badges appear only for provider-confirmed facts. Catalog descriptions are editorial text and do not imply runtime limits or capabilities.
+The Admin model picker displays a readable title, provider, optional attributed description, and the canonical provider/model reference. It saves only the canonical reference; entering an unlisted reference manually remains supported. Solid capability and token-limit badges are provider/FCC-confirmed facts. Dashed badges labeled **Catalog** are provider-scoped models.dev declarations, not runtime guarantees; audio/video/PDF never appear as FCC-supported runtime modalities. The selected detail card shows exact limits, source, scope, and freshness. Catalog descriptions remain editorial text and are never parsed into numeric limits.
 
 **Inherit** keeps the original request's resolved reasoning setting. **From client** uses the effort or token budget sent by your coding agent, bypassing the global or tier setting. You can select the same model with another key number.
 
@@ -675,7 +675,10 @@ reference unchanged. Titles are resolved in this order:
 The provider name is included as secondary description text. The catalog is never required to
 serve a model list: an offline, cold, or stale cache degrades to curated, heuristic, or raw
 labels. The reduced cache is stored at `~/.fcc/models-dev-catalog.json` and `fcc-doctor` reports
-its source, age, and last refresh outcome.
+its source, age, and last refresh outcome. Cache schema v2 also retains bounded provider-scoped
+presentation facts; legacy caches remain readable. Validated models.dev provider/lab SVGs are
+cached under `~/.fcc/models-dev-logos` during the same background refresh and served same-origin.
+Missing or offline logos fall back to initials and never block model selection.
 
 External catalog access can be disabled completely:
 

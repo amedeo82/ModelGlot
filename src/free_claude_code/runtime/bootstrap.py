@@ -16,6 +16,7 @@ from free_claude_code.config.paths import (
     fcc_database_path,
     legacy_code_database_path,
     model_catalog_cache_path,
+    model_catalog_logo_dir_path,
     server_log_path,
 )
 from free_claude_code.config.settings import Settings
@@ -24,6 +25,7 @@ from free_claude_code.messaging.voice import Transcriber
 from free_claude_code.providers.base import BaseProvider, ProviderConfig
 from free_claude_code.providers.github_copilot.auth import CopilotAuthManager
 from free_claude_code.providers.history_negotiation import HistoryModeCache
+from free_claude_code.providers.model_catalog_logos import ModelCatalogLogoStore
 from free_claude_code.providers.model_catalog_source import ModelCatalogSource
 from free_claude_code.providers.openai_codex.auth import OpenAIAuthManager
 from free_claude_code.providers.runtime.runtime import ProviderRuntime, create_provider
@@ -71,6 +73,7 @@ def build_asgi_app(
         ProviderRuntime,
         provider_constructor=provider_constructor,
     )
+    model_catalog_logos = ModelCatalogLogoStore(model_catalog_logo_dir_path())
     provider_manager = ProviderRuntimeManager(
         settings,
         runtime_factory=runtime_factory,
@@ -80,6 +83,7 @@ def build_asgi_app(
         ),
         model_catalog_publisher=CodexModelCatalogPublisher(),
         model_title_source=ModelCatalogSource(model_catalog_cache_path()),
+        model_catalog_logos=model_catalog_logos,
     )
     database = SQLiteDatabase(
         fcc_database_path(), code_lock_path(), legacy_path=legacy_code_database_path()
@@ -107,6 +111,7 @@ def build_asgi_app(
         web_tools=HTTPWebToolsClient(),
         code=code_service,
         usage=runtime,
+        model_catalog_logos=model_catalog_logos,
     )
     return RuntimeASGIApp(create_app(services), runtime)
 

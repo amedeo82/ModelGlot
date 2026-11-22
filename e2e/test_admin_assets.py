@@ -312,6 +312,7 @@ def test_model_picker_details_enforce_authority_and_safe_text_rendering(
         optionText: option.textContent,
         optionImages: option.querySelectorAll('img, b').length,
         optionBadges: option.querySelectorAll('.model-picker-badge--capability').length,
+        optionCanonical: option.querySelectorAll('.model-picker-canonical').length,
         customVisible,
         customChildren: summary.childElementCount,
       };
@@ -329,5 +330,91 @@ def test_model_picker_details_enforce_authority_and_safe_text_rendering(
     assert "Custom <b>title</b>" in result["optionText"]
     assert result["optionImages"] == 0
     assert result["optionBadges"] == 0
+    assert result["optionCanonical"] == 0
     assert result["customVisible"] is False
     assert result["customChildren"] == 0
+
+
+def test_model_picker_catalog_details_keep_provenance_conflicts_and_fallbacks(
+    page: Page, admin_base_url: str
+) -> None:
+    page.goto(f"{admin_base_url}/admin")
+    expect(page.locator('[data-provider="nvidia_nim"]')).to_be_visible()
+
+    result = page.evaluate("""() => {
+      const helper = window.FccModelPickerDetails;
+      const catalog = {
+        source: 'models.dev', source_provider_id: 'nvidia',
+        canonical_model_id: 'minimax/MiniMax-M3.1-Flash',
+        lab: {id: 'minimax', label: 'MiniMax <b>Lab</b>', logo_url: null},
+        provider_logo_url: null, fetched_at: 1763654400, stale: true,
+        last_updated: '2026-11-01', reasoning: true, tool_call: true,
+        structured_output: true,
+        modalities: {input: ['text', 'image', 'video'], output: ['text']},
+        limit: {context: 262144, input: 262144, output: 262144},
+        release_date: '2026-10-19', status: null, open_weights: true,
+      };
+      const details = {
+        provider_label: 'NVIDIA NIM', description: '1M context',
+        description_source: 'models.dev', supports_reasoning: null,
+        input_modalities: null, context_window_tokens: null,
+        max_output_tokens: null, catalog,
+      };
+      const minimax = helper.viewModel(
+        'nvidia_nim/minimaxai/minimax-m3.1-flash', 'MiniMax-M3.1-Flash', details,
+      );
+      const conflict = helper.viewModel('nvidia_nim/model', 'Model', {
+        ...details, supports_reasoning: false, context_window_tokens: 131072,
+      });
+      const summary = document.createElement('div');
+      helper.renderSummary(
+        summary, 'nvidia_nim/minimaxai/minimax-m3.1-flash', 'MiniMax-M3.1-Flash', details,
+      );
+      document.body.appendChild(summary);
+      const brokenLogo = document.createElement('div');
+      helper.renderSummary(brokenLogo, 'nvidia_nim/model', 'Model', {
+        ...details,
+        catalog: {...catalog, provider_logo_url: '/admin/assets/missing/providers/nope.svg'},
+      });
+      brokenLogo.querySelector('img').dispatchEvent(new Event('error'));
+      return {
+        badges: minimax.badges.map(badge => [badge.key, badge.authority]),
+        conflictBadges: conflict.badges.map(badge => [badge.key, badge.label, badge.authority]),
+        exact: helper.formatExactTokens(262144),
+        summaryText: summary.textContent,
+        summaryHtml: summary.innerHTML,
+        catalogBadges: summary.querySelectorAll('.model-picker-badge--catalog').length,
+        runtimeBadges: summary.querySelectorAll('.model-picker-badge--runtime').length,
+        fallbacks: summary.querySelectorAll('.model-picker-logo-fallback').length,
+        images: summary.querySelectorAll('img').length,
+        errorFallback: brokenLogo.querySelector('.model-picker-logo-fallback').textContent,
+        errorImages: brokenLogo.querySelectorAll('img').length,
+        context: summary.querySelector('[data-stat="context"]').textContent,
+        output: summary.querySelector('[data-stat="output"]').textContent,
+        release: summary.querySelector('[data-stat="release"]').textContent,
+      };
+    }""")
+
+    assert ["reasoning", "catalog"] in result["badges"]
+    assert ["tools", "catalog"] in result["badges"]
+    assert ["structured-output", "catalog"] in result["badges"]
+    assert ["video", "catalog"] in result["badges"]
+    assert ["context", "catalog"] in result["badges"]
+    assert ["reasoning", "catalog"] not in result["conflictBadges"]
+    assert ["context", "128K context", "runtime"] in result["conflictBadges"]
+    assert result["exact"] == "262,144 tokens"
+    assert result["context"] == "Context262,144 tokensmodels.dev catalog"
+    assert result["output"] == "Max output262,144 tokensmodels.dev catalog"
+    assert result["release"] == "Released2026-10-19"
+    assert "Source: models.dev" in result["summaryText"]
+    assert "Provider scope: nvidia" in result["summaryText"]
+    assert "Stale cache" in result["summaryText"]
+    assert "not FCC runtime guarantees" in result["summaryText"]
+    assert "MiniMax <b>Lab</b>" in result["summaryText"]
+    assert "<b>Lab</b>" not in result["summaryHtml"]
+    assert result["catalogBadges"] >= 7
+    assert result["runtimeBadges"] == 0
+    assert result["fallbacks"] == 2
+    assert result["images"] == 0
+    assert result["errorFallback"] == "NN"
+    assert result["errorImages"] == 0

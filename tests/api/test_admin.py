@@ -24,12 +24,14 @@ from free_claude_code.config.env_files import (
     dotenv_values_from_file,
     dotenv_values_from_text,
 )
+from free_claude_code.config.model_catalog_metadata import ModelCatalogMetadata
 from free_claude_code.config.model_refs import ModelFallback, decode_model_fallbacks
 from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
 from free_claude_code.config.server_urls import local_admin_url
 from free_claude_code.config.settings import Settings
 from free_claude_code.core.model_capabilities import ModelInputModality
 from free_claude_code.core.version import package_version
+from free_claude_code.providers.model_catalog_logos import ModelCatalogLogoStore
 from tests.api.support import (
     create_test_app,
     post_config,
@@ -329,6 +331,35 @@ def test_admin_versioned_assets_serve_packaged_files(
     assert response.status_code == 200
     assert response.headers["content-type"].startswith(media_type)
     assert response.content == asset_path.read_bytes()
+
+
+def test_admin_catalog_logos_are_same_origin_validated_assets(monkeypatch, tmp_path):
+    _set_home(monkeypatch, tmp_path)
+    logo_root = tmp_path / "logos"
+    provider_dir = logo_root / "providers"
+    provider_dir.mkdir(parents=True)
+    svg = b'<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0h1v1z"/></svg>'
+    (provider_dir / "nvidia.svg").write_bytes(svg)
+    store = ModelCatalogLogoStore(logo_root)
+    app = create_test_app()
+    app.state.services = replace(app.state.services, model_catalog_logos=store)
+    client = _local_client(app)
+
+    response = client.get("/admin/catalog-logos/providers/nvidia.svg")
+
+    assert response.status_code == 200
+    assert response.content == svg
+    assert response.headers["content-type"].startswith("image/svg+xml")
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert "default-src 'none'" in response.headers["content-security-policy"]
+    assert "sandbox" in response.headers["content-security-policy"]
+    assert store.url_for("providers", "nvidia") == (
+        "/admin/catalog-logos/providers/nvidia.svg"
+    )
+    assert store.url_for("providers", "missing") is None
+    assert client.get("/admin/catalog-logos/providers/missing.svg").status_code == 404
+    assert client.get("/admin/catalog-logos/providers/%2E%2E.svg").status_code == 404
+    assert client.get("/admin/catalog-logos/other/nvidia.svg").status_code == 404
 
 
 def test_admin_versioned_logo_reuses_packaged_app_icon(monkeypatch, tmp_path):
@@ -1051,6 +1082,94 @@ def test_admin_model_details_expose_attributed_minimax_text_and_unknown_facts(
     }
     assert body["model_details"][ref]["context_window_tokens"] != 200000
     runtime.refresh_models.assert_not_awaited()
+
+
+def test_admin_model_details_expose_provider_scoped_catalog_namespace(monkeypatch):
+    minimax_ref = "nvidia_nim/minimaxai/minimax-m3.1-flash"
+    gemma_ref = "nvidia_nim/google/gemma-4-31b-it"
+    app = create_test_app(Settings(model=minimax_ref, model_sonnet=gemma_ref))
+    manager = provider_manager_for_app(app)
+    titles = {
+        "minimaxai/minimax-m3.1-flash": "MiniMax-M3.1-Flash",
+        "google/gemma-4-31b-it": "Gemma 4 31B IT",
+    }
+    monkeypatch.setattr(
+        manager,
+        "model_title_catalog",
+        lambda: {
+            ("nvidia", model_id): (title, "1M context")
+            for model_id, title in titles.items()
+        },
+    )
+    monkeypatch.setattr(
+        manager,
+        "model_catalog_metadata",
+        lambda: {
+            ("nvidia", "minimaxai/minimax-m3.1-flash"): ModelCatalogMetadata(
+                canonical_model_id="minimax/MiniMax-M3.1-Flash",
+                reasoning=True,
+                tool_call=True,
+                structured_output=True,
+                input_modalities=("text", "image", "video"),
+                output_modalities=("text",),
+                context_limit=262144,
+                input_limit=262144,
+                output_limit=262144,
+                release_date="2026-10-19",
+                last_updated="2026-11-01",
+                open_weights=True,
+                fetched_at=1_763_654_400.0,
+            ),
+            ("nvidia", "google/gemma-4-31b-it"): ModelCatalogMetadata(
+                canonical_model_id="google/gemma-4-31b-it",
+                reasoning=True,
+                tool_call=True,
+                input_modalities=("text", "image"),
+                output_modalities=("text",),
+                context_limit=256000,
+                output_limit=16384,
+                fetched_at=1_763_654_400.0,
+            ),
+        },
+    )
+
+    body = _local_client(app).get("/admin/api/models").json()
+    minimax = body["model_details"][minimax_ref]
+    gemma = body["model_details"][gemma_ref]
+
+    assert minimax["context_window_tokens"] is None
+    assert minimax["supports_reasoning"] is None
+    assert minimax["catalog"] == {
+        "source": "models.dev",
+        "source_provider_id": "nvidia",
+        "canonical_model_id": "minimax/MiniMax-M3.1-Flash",
+        "lab": {"id": "minimax", "label": "MiniMax", "logo_url": None},
+        "provider_logo_url": (
+            f"/admin/assets/{package_version()}/providers/nvidia-color.svg"
+        ),
+        "fetched_at": 1_763_654_400.0,
+        "stale": True,
+        "last_updated": "2026-11-01",
+        "reasoning": True,
+        "tool_call": True,
+        "structured_output": True,
+        "modalities": {
+            "input": ["text", "image", "video"],
+            "output": ["text"],
+        },
+        "limit": {"context": 262144, "input": 262144, "output": 262144},
+        "release_date": "2026-10-19",
+        "status": None,
+        "knowledge": None,
+        "open_weights": True,
+    }
+    assert gemma["catalog"]["limit"] == {
+        "context": 256000,
+        "input": None,
+        "output": 16384,
+    }
+    assert gemma["catalog"]["structured_output"] is None
+    assert "cost" not in minimax["catalog"]
 
 
 def test_admin_model_details_use_only_provider_backed_capability_facts():

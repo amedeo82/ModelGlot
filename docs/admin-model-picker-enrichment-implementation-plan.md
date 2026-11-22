@@ -1,14 +1,18 @@
 # Implementation Plan: Admin Model Picker Enrichment
 
-Status: implemented for Waves 0–3 and 5; Wave 4 researched/designed on 2026-11-19 and deferred pending product approval
+Status: implemented for Waves 0–5, including the approved Wave 4 catalog expansion
 Input: [`admin-model-picker-enrichment-analysis.md`](admin-model-picker-enrichment-analysis.md)
 Audience: Admin UI, API, model metadata, configuration, and test maintainers
 
 This plan turns the Admin model-picker analysis into ordered, reviewable steps. Each step is
 one pull request. Steps within a wave are sequential when they share a contract; otherwise
-the dependency table identifies the allowed order. The initial release scope is implemented;
-the optional catalog expansion remains a documentation-only proposal until its decision gate
-is approved.
+the dependency table identifies the allowed order. The initial release scope and the subsequently
+approved catalog expansion are implemented; pricing and a separate model browser remain excluded.
+
+> **UX refinement — 2026-11-22.** Provider names and logos in Model Config reuse the Admin
+> Providers catalog and packaged assets exactly. Capability and limit facts use static SVG icons.
+> The canonical reference is not shown in visible model information; it remains the routing value
+> in state, data attributes, and Apply payloads.
 
 The target behavior separates two values for every known model:
 
@@ -28,6 +32,15 @@ not the models.dev `canonical_model_id` field. The display value is presentation
 > Provider qualification is presentation only: canonical values, fallback serialization, API-key
 > association, and Apply payloads are unchanged. Browser coverage verifies both the multi-provider
 > and single-provider cases.
+>
+> **Wave 4 implementation update — 2026-11-20.** The decision gate was approved by the explicit
+> implementation request. Cache schema v2 retains bounded provider-scoped models.dev capabilities,
+> modalities, limits, lifecycle, open-weights, canonical lab identity, and freshness while reading
+> legacy title caches unchanged. The Admin response adds `model_details[].catalog` without
+> backfilling provider/FCC fields. Validated SVG provider/lab logos refresh only in the background
+> and are served same-origin with restrictive CSP; missing or invalid assets fall back to initials.
+> Compact options and the selected detail card distinguish solid runtime facts from dashed Catalog
+> declarations in text as well as styling. Pricing remains excluded.
 
 ---
 
@@ -483,7 +496,7 @@ compatible; otherwise roll back with S3.1. Do not roll back S2.1 as part of a vi
 
 ---
 
-## Wave 4 — Optional Catalog Metadata Expansion (Decision Gate)
+## Wave 4 — Catalog Metadata Expansion (Approved and Implemented)
 
 > **Research and design update — 2026-11-19.** The current Admin screenshot is the expected
 > Waves 0–3 result, not a failed models.dev lookup. The reduced cache retains only name and
@@ -634,7 +647,7 @@ Visual and precedence rules:
 **Goal.** Extend the reduced cache with a small, validated, provider-specific presentation
 contract without changing routing or provider runtime facts.
 
-**Decision gate.** Implementation starts only after maintainers approve the hybrid UX,
+**Decision gate — approved 2026-11-20.** The explicit implementation request approves the hybrid UX,
 provider-scoped catalog badges, dashed provenance treatment, description-conflict handling, and
 catalog-only treatment of modalities not supported by FCC. Pricing remains excluded unless a
 separate decision approves it.
@@ -1028,27 +1041,27 @@ A step is complete when:
 | 1 — Application metadata and Admin API | S1.1, S1.2 | 2 |
 | 2 — Canonical/display separation | S2.1 | 2 |
 | 3 — Graphical presentation and accessibility | S3.1, S3.2 | 2.5 |
-| 4 — Optional catalog expansion and hybrid detail UI | S4.1–S4.4 | 5.5 after approval |
+| 4 — Approved catalog expansion and hybrid detail UI | S4.1–S4.4 | 5.5 after approval |
 | 5 — Verification and documentation | S5.1 | 1 |
 | **Initial total (Waves 0–3 + 5)** | **6 steps** | **8** |
-| **Total including optional Wave 4** | **10 steps** | **13.5** |
+| **Total including Wave 4** | **10 steps** | **13.5** |
 
 ---
 
-## Implementation Outcome — 2026-11-19
+## Implementation Outcome — 2026-11-19; Wave 4 completed 2026-11-20
 
 | Step | Status | Shipped result / decision |
 | --- | --- | --- |
 | S0.1 | Implemented | Baseline fixture and regression suites recorded in the analysis document |
 | S1.1 | Implemented | Attributed models.dev descriptions flow through additive application fields |
-| S1.2 | Implemented | Additive `model_details` projection with provider-only facts and explicit `null` unknowns |
+| S1.2 | Implemented | Additive `model_details` projection with provider facts, explicit `null` unknowns, and a separate Wave 4 `catalog` namespace |
 | S2.1 | Implemented | Shared canonical accessor/setter across routing, fallback, API-key, refresh, and Code session consumers |
 | S3.1 | Implemented | Safe rich options and selected summaries with provider badges and provider-confirmed capability badges |
 | S3.2 | Implemented | Wrapping/stacking, 1280/900/390px coverage, accessible names, descriptions, and keyboard regression coverage |
-| S4.1 | **Deferred — not started** | No explicit product approval; provider-scoped cache contract and MiniMax/Gemma acceptance fixtures documented, but no expanded cache shipped |
-| S4.2 | **Deferred — not started** | Additive `catalog` payload and safe same-origin logo behavior designed, but no API or logo route shipped |
-| S4.3 | **Deferred — not started** | Hybrid UI documented in `assets/admin-model-picker-catalog-enrichment-mockup.html` and `.svg`; no production rendering shipped |
-| S4.4 | **Deferred — not started** | Conflict, responsive, offline, and integration verification criteria documented but not executed against a Wave 4 implementation |
+| S4.1 | Implemented | Versioned provider-scoped metadata cache with legacy compatibility, bounded validation, and exact MiniMax/Gemma fixtures |
+| S4.2 | Implemented | Additive `catalog` payload plus background-refreshed, validated same-origin SVGs and initials fallback |
+| S4.3 | Implemented | Compact options and selected detail card with solid runtime, dashed Catalog, and neutral provenance-aware presentation |
+| S4.4 | Implemented | Conflict, malformed/stale/offline, responsive, canonical Apply, and background-publication verification shipped |
 | S5.1 | Implemented | Documentation and focused verification shipped; unrelated repository-wide blockers remain explicitly recorded below |
 
 Verification results on 2026-11-19:
@@ -1057,4 +1070,16 @@ Verification results on 2026-11-19:
 - `.venv\Scripts\python.exe -m pytest e2e/test_admin_models.py e2e/test_admin_providers.py e2e/test_admin_assets.py -q -n 0`: **66 passed**.
 - Additional Code sessions, fallback key-control, and custom-provider browser coverage passed after the canonical/display changes.
 - Focused Ruff and focused `ty check` passed. `node --check` passed for the changed JavaScript assets. Local Markdown links and `git diff --check` passed.
-- The `uv` executable is unavailable, so `scripts/ci.ps1` was not run as a wrapper. Repository-wide `ruff check` still reports one unrelated `SIM112` in `cli/windows_app_identity.py`; repository-wide `ty check` reports unrelated diagnostics in concurrent usage/token-optimization work. These are not presented as a green full-CI result.
+- On 2026-11-19 the `uv` executable was unavailable, so `scripts/ci.ps1` was not run as a wrapper. Repository-wide `ruff check` still reports one unrelated `SIM112` in `cli/windows_app_identity.py`; repository-wide `ty check` reports unrelated diagnostics in concurrent usage/token-optimization work. These are not presented as a green full-CI result.
+
+Wave 4 verification on 2026-11-20:
+
+- `uv run pytest tests/api/test_admin.py tests/application/test_model_titles.py tests/application/test_model_catalog.py tests/providers/test_model_catalog_source.py tests/providers/test_model_catalog_cache.py tests/providers/test_model_catalog_logos.py tests/runtime/test_provider_manager.py -q`: **329 passed**.
+- MiniMax/Gemma browser fixtures passed at 1280, 900, and 390px, including exact NVIDIA limits, dashed video/catalog semantics, initials fallback, no browser models.dev requests, and canonical Apply/reload behavior.
+- Focused Ruff and focused `ty check` passed for every Wave 4 production file.
+- `node --check` passed for `model_picker_details.js`, `model_combobox.js`, and `admin.js`; `git diff --check` passed for the Wave 4 files.
+- The final 70-test Admin model/provider/asset browser selection passed with `-n 0`. A later repeat produced **67 passed, 3 failed** in timing-sensitive fallback/layout assertions; all three passed when rerun together in isolation, so the browser suite remains load/timing-sensitive.
+- Final focused post-architecture/parity verification plus the corrected Code Sessions title assertion: **330 passed**. The two new Wave 4 import-boundary failures found by the full suite were corrected; the catalog value object now lives in `config`, and Admin depends on an application logo port.
+- `scripts/ci.ps1 -Only pytest`: **11,931 passed, 33 skipped, 3 failed**. The remaining failures are the two pre-existing discovery expectations and the unrelated `updater/desktop.py -> config.paths` import violation. No Wave 4 test remains failing.
+- `scripts/ci.ps1 -Only playwright`: **328 passed, 1 skipped, 4 failed, 6 errors**. Six were fixture startup timeouts under 14 workers. One option-text assertion caused by the new identity hierarchy was corrected to inspect `.model-picker-title` and passed on isolated rerun; the other failures are in concurrent fallback/integration/Code Sessions behavior.
+- The complete `scripts/ci.ps1` remains **not green**: global Ruff stops on the pre-existing `SIM112` in `cli/windows_app_identity.py`, and global `ty check` has unrelated concurrent diagnostics. Focused Wave 4 checks are green, but this is not claimed as full-CI success.

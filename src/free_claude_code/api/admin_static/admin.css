@@ -708,7 +708,58 @@ button.startup-busy::before,
   gap: 6px;
 }
 
-.model-picker-heading,
+.model-picker-identity {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.model-picker-logos {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.model-picker-logo {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--input);
+  color: var(--text-strong);
+}
+
+.model-picker-logo img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.model-picker-logo-fallback {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.model-picker-heading {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.model-picker-attribution {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
 .model-picker-badges {
   display: flex;
   min-width: 0;
@@ -747,6 +798,49 @@ button.startup-busy::before,
 .model-picker-badge--capability {
   background: var(--panel);
   color: var(--text);
+  gap: 4px;
+}
+
+.model-picker-badge--runtime {
+  border-style: solid;
+  border-color: var(--ok-border);
+  background: var(--ok-bg);
+}
+
+.model-picker-badge--catalog {
+  border-style: dashed;
+  border-color: var(--info);
+  background: transparent;
+}
+
+.model-picker-badge--neutral {
+  border-style: dotted;
+  background: var(--neutral-bg);
+  color: var(--muted);
+}
+
+.model-picker-badge-icon {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.35;
+}
+
+.model-picker-badge-source {
+  border-left: 1px solid currentColor;
+  padding-left: 4px;
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.model-picker-badge[data-capability="context"] {
+  margin-left: auto;
 }
 
 .model-picker-description {
@@ -770,9 +864,91 @@ button.startup-busy::before,
   white-space: normal;
 }
 
+.model-picker-stat dt .model-picker-badge-icon {
+  width: 11px;
+  height: 11px;
+  flex-basis: 11px;
+}
+
+.model-picker-option-content .model-picker-description > span:first-child {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
 .model-picker-summary {
-  border-left: 2px solid var(--line);
-  padding-left: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  padding: 12px;
+}
+
+.model-picker-summary .model-picker-logo {
+  width: 40px;
+  height: 40px;
+  flex-basis: 40px;
+}
+
+.model-picker-summary .model-picker-title {
+  font-size: 14px;
+}
+
+.model-picker-stats {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 2px 0 0;
+}
+
+.model-picker-stat {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+}
+
+.model-picker-stat--catalog {
+  border-style: dashed;
+}
+
+.model-picker-stat dt {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.model-picker-stat dd {
+  margin: 3px 0 0;
+  color: var(--text-strong);
+  font-size: 11px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.model-picker-stat-source {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.model-picker-catalog-source,
+.model-picker-catalog-explanation {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.model-picker-catalog-source {
+  color: var(--text);
+  font-weight: 600;
 }
 
 .model-picker-summary[hidden] {
@@ -791,6 +967,26 @@ button.startup-busy::before,
   color: var(--muted);
   font-size: 12px;
   line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+  .model-picker-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .model-picker-badge[data-capability="context"] {
+    margin-left: 0;
+  }
+
+  .model-picker-summary {
+    padding: 10px;
+  }
+
+  .model-picker-summary .model-picker-logo {
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
+  }
 }
 
 .field[data-key="MODEL_FALLBACKS"] {
