@@ -57,11 +57,11 @@ class ModelCatalogLogoStore:
         self, metadata: Mapping[tuple[str, str], ModelCatalogMetadata]
     ) -> None:
         """Refresh required logos without failing catalog metadata publication."""
-        assets = set(
+        assets = {
             ("labs", lab_id)
             for item in metadata.values()
             if (lab_id := item.lab_id) is not None
-        )
+        }
         assets = {
             (kind, logo_id) for kind, logo_id in assets if _valid_logo_id(logo_id)
         }
