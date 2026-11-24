@@ -40,7 +40,7 @@ from free_claude_code.config.server_urls import local_admin_url
 from free_claude_code.config.settings import Settings
 from free_claude_code.core.async_rwlock import AsyncReadWriteLock
 from free_claude_code.core.async_tasks import run_sync_owned
-from free_claude_code.core.json_types import JsonObject
+from free_claude_code.core.json_types import JsonObject, JsonValue
 from free_claude_code.core.version import package_version
 from free_claude_code.messaging.voice import Transcriber
 from free_claude_code.providers.credential_validation import (
@@ -329,20 +329,17 @@ class ApplicationRuntime:
             checks = await check_credentials(
                 prepared.settings, prepared.credential_submissions
             )
-            check_response: list[JsonObject] = [
-                {
+            check_response: list[JsonObject] = []
+            for check in checks:
+                entry: JsonObject = {
                     "key": check.key,
                     "index": check.index,
                     "status": check.status.value,
                     "message": check.message,
                 }
-                | (
-                    {"provider_id": check.provider_id}
-                    if check.provider_id is not None
-                    else {}
-                )
-                for check in checks
-            ]
+                if check.provider_id is not None:
+                    entry["provider_id"] = check.provider_id
+                check_response.append(entry)
             rejected = [
                 check for check in checks if check.status == CredentialStatus.REJECTED
             ]
@@ -709,7 +706,7 @@ def _with_context_utilization(
     runtime: ApplicationRuntime, result: UsageQueryResult
 ) -> JsonObject:
     try:
-        limits = {
+        limits: dict[str, int | None] = {
             model.provider_model_ref: model.context_window_tokens
             for model in read_model_catalog(runtime.provider_manager).models
         }
@@ -785,7 +782,7 @@ def _context_row(
     provider_model: str | None,
     used: int | None,
     limit: int | None,
-    sampled_at,
+    sampled_at: datetime | None,
     stale: bool,
 ) -> JsonObject:
     confirmed_limit = (
@@ -829,8 +826,8 @@ def _context_summary(
     rows: list[JsonObject],
     *,
     population: str,
-    coverage_start,
-    coverage_end,
+    coverage_start: JsonValue,
+    coverage_end: JsonValue,
 ) -> JsonObject:
     percentages: list[float] = []
     for row in rows:

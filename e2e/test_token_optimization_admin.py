@@ -1,5 +1,10 @@
+from typing import NotRequired, Required, TypedDict, cast
+
 import pytest
-from playwright.sync_api import Page, Route, expect
+from playwright.sync_api import Error, Page, Request, Route, expect
+
+from free_claude_code.core.json_types import JsonValue
+from tests.assertions import require_present
 
 TOKEN_OPTIMIZATION_ENDPOINT = "**/admin/api/token-optimization"
 TOKEN_OPTIMIZATION_PATH = "/admin/token_optimization"
@@ -7,7 +12,50 @@ GENERATED_AT = "2026-11-17T12:00:00.000Z"
 UPDATED_AT = "2026-11-17T12:05:00.000Z"
 
 
-def _rtk():
+class _TokenTool(TypedDict):
+    state: Required[str]
+    version: Required[str | None]
+    source: Required[str]
+    basis: Required[str]
+    total_commands: NotRequired[int | None]
+    tokens_before: Required[int | None]
+    tokens_after: NotRequired[int | None]
+    tokens_saved: Required[int | None]
+    savings_percent: Required[float | None]
+    message: Required[str | None]
+    model_attribution: NotRequired[str | None]
+    calls: NotRequired[int | None]
+    daily: NotRequired[list[dict[str, JsonValue]]]
+    path: NotRequired[str]
+    cost_usd: NotRequired[float]
+
+
+class _TokenReport(TypedDict):
+    schema_version: int
+    generated_at: str
+    optimizations: dict[str, _TokenTool]
+    notices: list[JsonValue]
+
+
+class _CurrentResponse(TypedDict):
+    status: int
+    payload: _TokenReport | dict[str, str]
+
+
+class _UsagePayload(TypedDict):
+    schema_version: int
+    generated_at: str
+    coverage_start: str
+    coverage_end: str
+    retention_days: int
+    storage: str
+    group_by: str
+    rows: list[dict[str, JsonValue]]
+    context: dict[str, dict[str, JsonValue]]
+    notices: list[JsonValue]
+
+
+def _rtk() -> _TokenTool:
     return {
         "state": "available",
         "version": "0.44.2",
@@ -22,7 +70,7 @@ def _rtk():
     }
 
 
-def _headroom():
+def _headroom() -> _TokenTool:
     return {
         "state": "available",
         "version": "0.40.0",
@@ -37,25 +85,38 @@ def _headroom():
     }
 
 
-def _unavailable(tool, state, message):
-    source = "rtk gain --format json" if tool == "rtk" else "headroom savings --json"
-    counters = (
-        ("total_commands", "tokens_before", "tokens_after", "tokens_saved")
-        if tool == "rtk"
-        else ("calls", "tokens_before", "tokens_saved")
-    )
+def _unavailable(tool: str, state: str, message: str) -> _TokenTool:
+    if tool == "rtk":
+        return {
+            "state": state,
+            "version": None,
+            "source": "rtk gain --format json",
+            "basis": "tool_reported",
+            "total_commands": None,
+            "tokens_before": None,
+            "tokens_after": None,
+            "tokens_saved": None,
+            "savings_percent": None,
+            "message": message,
+        }
     return {
         "state": state,
         "version": None,
-        "source": source,
+        "source": "headroom savings --json",
         "basis": "tool_reported",
+        "calls": None,
+        "tokens_before": None,
+        "tokens_saved": None,
         "savings_percent": None,
         "message": message,
-        **dict.fromkeys(counters),
     }
 
 
-def _report(rtk=None, headroom=None, generated_at=GENERATED_AT):
+def _report(
+    rtk: _TokenTool | None = None,
+    headroom: _TokenTool | None = None,
+    generated_at: str = GENERATED_AT,
+) -> _TokenReport:
     return {
         "schema_version": 1,
         "generated_at": generated_at,
@@ -67,7 +128,7 @@ def _report(rtk=None, headroom=None, generated_at=GENERATED_AT):
     }
 
 
-def _route_report(page: Page, payload):
+def _route_report(page: Page, payload: _TokenReport) -> list[Request]:
     requests = []
 
     def respond(route: Route):
@@ -96,7 +157,9 @@ def _open_token_optimization(page: Page, admin_base_url: str):
     expect(page.locator("#tokenOptimizationRefresh")).to_be_enabled()
 
 
-def test_navigation_direct_reload_history_and_apply_visibility(page, admin_base_url):
+def test_navigation_direct_reload_history_and_apply_visibility(
+    page: Page, admin_base_url: str
+) -> None:
     requests = _route_report(page, _report())
     page.goto(f"{admin_base_url}/admin")
     expect(page.locator('[data-provider="nvidia_nim"]')).to_be_visible()
@@ -141,8 +204,8 @@ def test_navigation_direct_reload_history_and_apply_visibility(page, admin_base_
 
 
 def test_populated_cards_provenance_and_private_fields_are_not_rendered(
-    page, admin_base_url
-):
+    page: Page, admin_base_url: str
+) -> None:
     payload = _report()
     payload["optimizations"]["rtk"]["message"] = (
         '<img id="tokenOptimizationXss" src=x onerror="window.tokenXss = true">'
@@ -199,13 +262,19 @@ def test_populated_cards_provenance_and_private_fields_are_not_rendered(
     ).to_have_count(0)
 
 
-def test_zero_headroom_is_available_and_does_not_imply_inactivity(page, admin_base_url):
-    headroom = _headroom() | {
-        "tokens_saved": 0,
-        "tokens_before": 0,
-        "calls": 0,
-        "savings_percent": 0.0,
-    }
+def test_zero_headroom_is_available_and_does_not_imply_inactivity(
+    page: Page, admin_base_url: str
+) -> None:
+    headroom = cast(
+        _TokenTool,
+        _headroom()
+        | {
+            "tokens_saved": 0,
+            "tokens_before": 0,
+            "calls": 0,
+            "savings_percent": 0.0,
+        },
+    )
     _route_report(page, _report(headroom=headroom))
     _open_token_optimization(page, admin_base_url)
 
@@ -223,8 +292,8 @@ def test_zero_headroom_is_available_and_does_not_imply_inactivity(page, admin_ba
 
 @pytest.mark.parametrize("unavailable_tool", ["rtk", "headroom"])
 def test_one_unavailable_tool_keeps_the_other_report_visible(
-    page, admin_base_url, unavailable_tool
-):
+    page: Page, admin_base_url: str, unavailable_tool: str
+) -> None:
     unavailable = _unavailable(
         unavailable_tool, "not_installed", f"{unavailable_tool} is missing"
     )
@@ -253,7 +322,9 @@ def test_one_unavailable_tool_keeps_the_other_report_visible(
     expect(page.locator("#tokenOptimizationEmpty")).to_be_hidden()
 
 
-def test_both_unavailable_timeout_and_invalid_output_states(page, admin_base_url):
+def test_both_unavailable_timeout_and_invalid_output_states(
+    page: Page, admin_base_url: str
+) -> None:
     payload = _report(
         rtk=_unavailable("rtk", "timeout", "RTK collection timed out"),
         headroom=_unavailable(
@@ -279,10 +350,16 @@ def test_both_unavailable_timeout_and_invalid_output_states(page, admin_base_url
     expect(page.locator("#tokenOptimizationCards")).to_be_visible()
 
 
-def test_malformed_response_has_error_and_empty_regions(page, admin_base_url):
+def test_malformed_response_has_error_and_empty_regions(
+    page: Page, admin_base_url: str
+) -> None:
     errors = []
-    page.on("pageerror", lambda error: errors.append(str(error)))
-    invalid = _headroom() | {"tokens_saved": -1}
+
+    def record_error(error: Error) -> None:
+        errors.append(str(error))
+
+    page.on("pageerror", record_error)
+    invalid = cast(_TokenTool, _headroom() | {"tokens_saved": -1})
     _route_report(page, _report(headroom=invalid))
     _open_token_optimization(page, admin_base_url)
 
@@ -298,8 +375,8 @@ def test_malformed_response_has_error_and_empty_regions(page, admin_base_url):
 
 
 def test_loading_does_not_block_admin_and_concurrent_refreshes_coalesce(
-    page, admin_base_url
-):
+    page: Page, admin_base_url: str
+) -> None:
     pending = []
 
     def hold(route: Route):
@@ -319,7 +396,7 @@ def test_loading_does_not_block_admin_and_concurrent_refreshes_coalesce(
         "aria-busy", "true"
     )
 
-    same_flight = page.evaluate(
+    same_flight: bool = page.evaluate(
         """() => {
           const first = window.fccTokenOptimization.refresh();
           const second = window.fccTokenOptimization.refresh();
@@ -345,7 +422,9 @@ def test_loading_does_not_block_admin_and_concurrent_refreshes_coalesce(
     expect(page.locator("#tokenOptimizationRefresh")).to_be_enabled()
 
 
-def test_stale_response_from_previous_activation_is_ignored(page, admin_base_url):
+def test_stale_response_from_previous_activation_is_ignored(
+    page: Page, admin_base_url: str
+) -> None:
     pending = []
 
     def hold(route: Route):
@@ -380,8 +459,10 @@ def test_stale_response_from_previous_activation_is_ignored(page, admin_base_url
     assert len(pending) == 2
 
 
-def test_manual_refresh_preserves_last_valid_report_on_errors(page, admin_base_url):
-    current = {"status": 200, "payload": _report()}
+def test_manual_refresh_preserves_last_valid_report_on_errors(
+    page: Page, admin_base_url: str
+) -> None:
+    current: _CurrentResponse = {"status": 200, "payload": _report()}
     requests = []
 
     def respond(route: Route):
@@ -393,7 +474,9 @@ def test_manual_refresh_preserves_last_valid_report_on_errors(page, admin_base_u
     expect(_counter(page, "rtk", "tokens_saved")).to_have_text("8,720")
 
     current["payload"] = _report(generated_at=UPDATED_AT)
-    current["payload"]["optimizations"]["rtk"]["tokens_saved"] = 9_000
+    refreshed = current["payload"]
+    refreshed["optimizations"]["rtk"]["tokens_saved"] = 9_000
+    current["payload"] = refreshed
     page.locator("#tokenOptimizationRefresh").click()
     expect(_counter(page, "rtk", "tokens_saved")).to_have_text("9,000")
     expect(page.locator("#tokenOptimizationGeneratedAt")).to_have_text(UPDATED_AT)
@@ -412,7 +495,10 @@ def test_manual_refresh_preserves_last_valid_report_on_errors(page, admin_base_u
     expect(page.locator("#tokenOptimizationRefresh")).to_be_enabled()
     assert len(requests) == 3
 
-    current.update(status=200, payload=_report(headroom={"state": "invalid"}))
+    current.update(
+        status=200,
+        payload=_report(headroom=cast(_TokenTool, {"state": "invalid"})),
+    )
     page.locator("#tokenOptimizationRefresh").click()
     expect(page.locator("#tokenOptimizationError")).to_contain_text(
         "invalid token optimization report"
@@ -430,14 +516,16 @@ def test_manual_refresh_preserves_last_valid_report_on_errors(page, admin_base_u
 
 
 @pytest.mark.parametrize("width", [1280, 768, 390])
-def test_token_optimization_layout_is_responsive(page, admin_base_url, width):
+def test_token_optimization_layout_is_responsive(
+    page: Page, admin_base_url: str, width: int
+) -> None:
     page.set_viewport_size({"width": width, "height": 900})
     _route_report(page, _report())
     _open_token_optimization(page, admin_base_url)
     expect(page.locator("#tokenOptimizationRtkState")).to_have_text("Available")
 
-    rtk_box = _card(page, "rtk").bounding_box()
-    headroom_box = _card(page, "headroom").bounding_box()
+    rtk_box = require_present(_card(page, "rtk").bounding_box())
+    headroom_box = require_present(_card(page, "headroom").bounding_box())
     if width <= 900:
         assert headroom_box["y"] >= rtk_box["y"] + rtk_box["height"] - 1
     else:
@@ -448,7 +536,7 @@ def test_token_optimization_layout_is_responsive(page, admin_base_url, width):
     expect(page.locator(".action-bar")).to_be_hidden()
 
 
-def _usage_payload():
+def _usage_payload() -> _UsagePayload:
     return {
         "schema_version": 1,
         "generated_at": GENERATED_AT,
@@ -519,7 +607,9 @@ def _usage_payload():
     }
 
 
-def test_usage_context_trends_filters_and_csv_download(page, admin_base_url):
+def test_usage_context_trends_filters_and_csv_download(
+    page: Page, admin_base_url: str
+) -> None:
     rtk = _rtk()
     rtk["daily"] = [
         {
@@ -534,19 +624,20 @@ def test_usage_context_trends_filters_and_csv_download(page, admin_base_url):
     _route_report(page, _report(rtk=rtk))
     usage_requests = []
 
-    def usage_response(route):
+    def usage_response(route: Route) -> None:
         usage_requests.append(route.request.url)
         route.fulfill(json=_usage_payload())
 
     page.route("**/admin/api/usage?**", usage_response)
-    page.route(
-        "**/admin/api/usage/export?**",
-        lambda route: route.fulfill(
+
+    def usage_export_response(route: Route) -> None:
+        route.fulfill(
             body="day,output_tokens\r\n2026-11-17,40\r\n",
             content_type="text/csv",
             headers={"Content-Disposition": 'attachment; filename="fcc-usage.csv"'},
-        ),
-    )
+        )
+
+    page.route("**/admin/api/usage/export?**", usage_export_response)
     _open_token_optimization(page, admin_base_url)
 
     expect(page.locator("#usageRows tr")).to_have_count(1)
@@ -572,11 +663,13 @@ def test_usage_context_trends_filters_and_csv_download(page, admin_base_url):
     assert download_info.value.suggested_filename == "fcc-usage.csv"
 
 
-def test_usage_failure_does_not_hide_external_or_previous_usage(page, admin_base_url):
+def test_usage_failure_does_not_hide_external_or_previous_usage(
+    page: Page, admin_base_url: str
+) -> None:
     _route_report(page, _report())
     current = {"calls": 0}
 
-    def usage_response(route):
+    def usage_response(route: Route) -> None:
         current["calls"] += 1
         if current["calls"] == 1:
             route.fulfill(json=_usage_payload())

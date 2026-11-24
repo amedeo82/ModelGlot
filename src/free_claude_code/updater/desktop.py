@@ -13,14 +13,62 @@ import tempfile
 import threading
 import time
 import uuid
+from collections.abc import Callable
 from pathlib import Path
-
-from free_claude_code.config.paths import config_dir_path
+from typing import Protocol, cast
 
 _RELEASE_PATTERN = re.compile(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)")
 _WINDOWS_IDYES = 6
 _WINDOWS_YES_NO_QUESTION = 0x4 | 0x20 | 0x10000 | 0x40000
 _PARENT_EXIT_TIMEOUT_SECONDS = 120
+
+
+class _WindowsFunction(Protocol):
+    argtypes: tuple[object, ...]
+    restype: type[object]
+
+    def __call__(self, *arguments: object) -> int: ...
+
+
+class _MacOSApplication(Protocol):
+    def activateIgnoringOtherApps_(self, activate: bool) -> None: ...
+
+
+class _MacOSApplicationFactory(Protocol):
+    def sharedApplication(self) -> _MacOSApplication: ...
+
+
+class _MacOSAlert(Protocol):
+    def setMessageText_(self, message: str) -> None: ...
+
+    def setInformativeText_(self, message: str) -> None: ...
+
+    def addButtonWithTitle_(self, title: str) -> None: ...
+
+    def runModal(self) -> int: ...
+
+
+class _MacOSAlertAllocator(Protocol):
+    def init(self) -> _MacOSAlert: ...
+
+
+class _MacOSAlertFactory(Protocol):
+    def alloc(self) -> _MacOSAlertAllocator: ...
+
+
+class _MacOSOperationQueue(Protocol):
+    def addOperationWithBlock_(self, operation: Callable[[], None]) -> None: ...
+
+
+class _MacOSOperationQueueFactory(Protocol):
+    def mainQueue(self) -> _MacOSOperationQueue: ...
+
+
+class _AppKit(Protocol):
+    NSApplication: _MacOSApplicationFactory
+    NSAlert: _MacOSAlertFactory
+    NSAlertFirstButtonReturn: int
+    NSOperationQueue: _MacOSOperationQueueFactory
 
 
 def confirm_update(latest: str) -> bool:
@@ -38,7 +86,7 @@ def confirm_update(latest: str) -> bool:
     raise RuntimeError("Desktop updates are supported only on Windows and macOS.")
 
 
-def launch_update(latest: str) -> Path:
+def launch_update(latest: str, log_directory: Path) -> Path:
     """Launch a detached updater and return its output log path.
 
     The native helper waits for this desktop process to exit, delegates to the
@@ -48,7 +96,6 @@ def launch_update(latest: str) -> Path:
 
     _validate_release(latest)
     update_command, desktop_command = _installed_commands()
-    log_directory = config_dir_path() / "logs"
     log_directory.mkdir(parents=True, exist_ok=True)
     log_path = log_directory / (
         f"desktop-update-{time.strftime('%Y%m%d-%H%M%S')}-{uuid.uuid4().hex}.log"
@@ -120,8 +167,8 @@ def _installed_commands() -> tuple[str, str]:
 
 
 def _windows_confirmation(message: str) -> bool:
-    user32 = ctypes.WinDLL("user32", use_last_error=True)
-    message_box = user32.MessageBoxW
+    user32: ctypes.CDLL = ctypes.WinDLL("user32", use_last_error=True)
+    message_box = cast(_WindowsFunction, user32.MessageBoxW)
     message_box.argtypes = (
         ctypes.c_void_p,
         ctypes.c_wchar_p,
@@ -139,7 +186,7 @@ def _windows_confirmation(message: str) -> bool:
 
 
 def _macos_confirmation(message: str) -> bool:
-    appkit = importlib.import_module("AppKit")
+    appkit = cast(_AppKit, importlib.import_module("AppKit"))
     finished = threading.Event()
     result: list[bool] = []
     errors: list[BaseException] = []
@@ -152,7 +199,11 @@ def _macos_confirmation(message: str) -> bool:
             alert.setInformativeText_(message)
             alert.addButtonWithTitle_("Install")
             alert.addButtonWithTitle_("Cancel")
-            first_button = getattr(appkit, "NSAlertFirstButtonReturn", 1000)
+            first_button = (
+                appkit.NSAlertFirstButtonReturn
+                if hasattr(appkit, "NSAlertFirstButtonReturn")
+                else 1000
+            )
             result.append(alert.runModal() == first_button)
         except BaseException as exc:
             errors.append(exc)

@@ -97,10 +97,10 @@ class ModelCatalogLogoStore:
                 client.stream("GET", f"https://models.dev{path}") as response,
             ):
                 response.raise_for_status()
-                content_type = response.headers.get("content-type", "")
+                content_type: str = response.headers.get("content-type", "")
                 if content_type.partition(";")[0].strip().lower() != "image/svg+xml":
                     raise ModelCatalogLogoError("logo response is not SVG")
-                content_length = response.headers.get("content-length")
+                content_length: str | None = response.headers.get("content-length")
                 if (
                     content_length
                     and content_length.isdigit()
@@ -167,7 +167,8 @@ def validate_catalog_svg(content: bytes) -> None:
                 raise ModelCatalogLogoError("SVG external references are not allowed")
             if local_name == "style":
                 _validate_css(value)
-            for url in _EXTERNAL_CSS_URL.findall(value):
+            for match in _EXTERNAL_CSS_URL.finditer(value):
+                url: str = match.group(1)
                 if not url.startswith("#"):
                     raise ModelCatalogLogoError("SVG external CSS URLs are not allowed")
 
@@ -176,7 +177,8 @@ def _validate_css(value: str) -> None:
     normalized = re.sub(r"[\s\x00-\x20]+", "", value).lower()
     if "@import" in normalized:
         raise ModelCatalogLogoError("SVG CSS imports are not allowed")
-    for url in _EXTERNAL_CSS_URL.findall(value):
+    for match in _EXTERNAL_CSS_URL.finditer(value):
+        url: str = match.group(1)
         if not url.startswith("#"):
             raise ModelCatalogLogoError("SVG external CSS URLs are not allowed")
 

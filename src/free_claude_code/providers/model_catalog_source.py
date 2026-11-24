@@ -8,7 +8,7 @@ import time
 import uuid
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Any
+from typing import cast
 
 import httpx
 
@@ -18,6 +18,7 @@ from free_claude_code.config.model_catalog_mapping import (
 )
 from free_claude_code.config.model_catalog_metadata import ModelCatalogMetadata
 from free_claude_code.config.settings import Settings
+from free_claude_code.core.json_types import JsonObject, JsonValue, load_json_value
 
 MODEL_CATALOG_FETCH_TIMEOUT_SECONDS = 15.0
 _MODEL_CATALOG_CACHE_SCHEMA_VERSION = 2
@@ -61,12 +62,13 @@ class ModelCatalogSource:
     def load(self) -> ModelCatalogCache:
         """Read current and legacy reduced caches without network access."""
         try:
-            payload = json.loads(self.path.read_text(encoding="utf-8"))
+            payload = load_json_value(self.path.read_text(encoding="utf-8"))
         except OSError, json.JSONDecodeError:
             return ModelCatalogCache()
         if not isinstance(payload, dict):
             return ModelCatalogCache()
-        raw_fetched_at = payload.get("fetched_at")
+        cache_payload = cast(JsonObject, payload)
+        raw_fetched_at = cache_payload.get("fetched_at")
         fetched_at = (
             float(raw_fetched_at)
             if isinstance(raw_fetched_at, int | float)
@@ -76,21 +78,22 @@ class ModelCatalogSource:
         )
         entries: CatalogEntryMap = {}
         metadata: CatalogMetadataMap = {}
-        raw_entries = payload.get("entries")
+        raw_entries = cache_payload.get("entries")
         if isinstance(raw_entries, dict):
-            for provider_id, models in raw_entries.items():
-                if not isinstance(provider_id, str) or not isinstance(models, dict):
+            entries_payload = cast(JsonObject, raw_entries)
+            for provider_id, models in entries_payload.items():
+                if not isinstance(models, dict):
                     continue
-                for model_id, title in models.items():
-                    if not isinstance(model_id, str):
-                        continue
+                models_payload = cast(JsonObject, models)
+                for model_id, title in models_payload.items():
                     if isinstance(title, str):
                         entries[(provider_id, model_id)] = (title, "")
                         continue
                     if not isinstance(title, dict):
                         continue
-                    name = title.get("name")
-                    description = title.get("description")
+                    title_payload = cast(JsonObject, title)
+                    name = title_payload.get("name")
+                    description = title_payload.get("description")
                     if not isinstance(name, str):
                         continue
                     key = (provider_id, model_id)
@@ -98,12 +101,14 @@ class ModelCatalogSource:
                         name,
                         description if isinstance(description, str) else "",
                     )
-                    raw_metadata = title.get("metadata")
+                    raw_metadata = title_payload.get("metadata")
                     if isinstance(raw_metadata, dict):
-                        parsed = _metadata_from_mapping(raw_metadata, fetched_at)
+                        parsed = _metadata_from_mapping(
+                            cast(JsonObject, raw_metadata), fetched_at
+                        )
                         if parsed is not None:
                             metadata[key] = parsed
-        last_error = payload.get("last_error")
+        last_error = cache_payload.get("last_error")
         return ModelCatalogCache(
             entries=entries,
             fetched_at=fetched_at,
@@ -121,7 +126,7 @@ class ModelCatalogSource:
         ) as client:
             response = await client.get(settings.model_catalog_url)
             response.raise_for_status()
-            payload = response.json()
+            payload = cast(JsonValue, response.json())
         entries, metadata = _reduce_catalog(payload)
         fetched_at = time.time()
         metadata = {
@@ -137,9 +142,9 @@ class ModelCatalogSource:
     def write(self, cache: ModelCatalogCache) -> None:
         """Publish the reduced cache atomically."""
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        reduced: dict[str, dict[str, dict[str, Any]]] = {}
+        reduced: dict[str, dict[str, JsonObject]] = {}
         for (provider_id, model_id), (title, description) in cache.entries.items():
-            record: dict[str, Any] = {
+            record: JsonObject = {
                 "name": title,
                 "description": description,
             }
@@ -167,42 +172,46 @@ class ModelCatalogSource:
             temporary.unlink(missing_ok=True)
 
 
-def reduce_model_catalog(payload: Any) -> CatalogEntryMap:
+def reduce_model_catalog(payload: object) -> CatalogEntryMap:
     """Retain the legacy name/description projection without network access."""
     entries, _ = _reduce_catalog(payload)
     return entries
 
 
-def reduce_model_catalog_metadata(payload: Any) -> CatalogMetadataMap:
+def reduce_model_catalog_metadata(payload: object) -> CatalogMetadataMap:
     """Retain validated provider-scoped catalog facts for Admin presentation."""
     _, metadata = _reduce_catalog(payload)
     return metadata
 
 
-def _reduce_catalog(payload: Any) -> tuple[CatalogEntryMap, CatalogMetadataMap]:
+def _reduce_catalog(payload: object) -> tuple[CatalogEntryMap, CatalogMetadataMap]:
     if not isinstance(payload, dict):
         raise ModelCatalogSourceError("model catalog payload is not an object")
+    catalog_payload = cast(JsonObject, payload)
     wanted = frozenset(MODEL_CATALOG_PROVIDER_MAPPING.values())
     entries: CatalogEntryMap = {}
     metadata: CatalogMetadataMap = {}
     for provider_id in wanted:
-        provider = payload.get(provider_id)
+        provider = catalog_payload.get(provider_id)
         if provider is None:
             continue
         if not isinstance(provider, dict):
             raise ModelCatalogSourceError(
                 f"model catalog provider {provider_id!r} is not an object"
             )
-        models = provider.get("models")
+        provider_payload = cast(JsonObject, provider)
+        models = provider_payload.get("models")
         if not isinstance(models, dict):
             raise ModelCatalogSourceError(
                 f"model catalog provider {provider_id!r} has no models object"
             )
-        for model_id, model in models.items():
+        models_payload = cast(JsonObject, models)
+        for model_id, model in models_payload.items():
             if not isinstance(model_id, str) or not isinstance(model, dict):
                 continue
-            name = model.get("name")
-            description = model.get("description")
+            model_payload = cast(JsonObject, model)
+            name = model_payload.get("name")
+            description = model_payload.get("description")
             if (
                 not isinstance(name, str)
                 or not name.strip()
@@ -217,14 +226,14 @@ def _reduce_catalog(payload: Any) -> tuple[CatalogEntryMap, CatalogMetadataMap]:
             )
             key = (provider_id, model_id)
             entries[key] = (name.strip(), clean_description)
-            parsed = _metadata_from_mapping(model, None)
+            parsed = _metadata_from_mapping(model_payload, None)
             if parsed is not None and _metadata_to_mapping(parsed):
                 metadata[key] = parsed
     return entries, metadata
 
 
 def _metadata_from_mapping(
-    model: dict[str, Any], fetched_at: float | None
+    model: JsonObject, fetched_at: float | None
 ) -> ModelCatalogMetadata | None:
     strings: dict[str, str | None] = {}
     for key in (
@@ -258,28 +267,28 @@ def _metadata_from_mapping(
         return None
     modalities: dict[str, tuple[str, ...] | None] = {"input": None, "output": None}
     if isinstance(raw_modalities, dict):
+        modalities_payload = cast(JsonObject, raw_modalities)
         for direction in ("input", "output"):
-            values = raw_modalities.get(direction)
+            values = modalities_payload.get(direction)
             if values is None:
                 continue
-            if (
-                not isinstance(values, list)
-                or len(values) > _MAX_MODALITIES
-                or any(
-                    not isinstance(value, str) or value not in _MODALITIES
-                    for value in values
-                )
-            ):
+            if not isinstance(values, list) or len(values) > _MAX_MODALITIES:
                 return None
-            modalities[direction] = tuple(dict.fromkeys(values))
+            normalized_values: list[str] = []
+            for value in values:
+                if not isinstance(value, str) or value not in _MODALITIES:
+                    return None
+                normalized_values.append(value)
+            modalities[direction] = tuple(dict.fromkeys(normalized_values))
 
     raw_limits = model.get("limit")
     if raw_limits is not None and not isinstance(raw_limits, dict):
         return None
     limits: dict[str, int | None] = {"context": None, "input": None, "output": None}
     if isinstance(raw_limits, dict):
+        limits_payload = cast(JsonObject, raw_limits)
         for key in limits:
-            value = raw_limits.get(key)
+            value = limits_payload.get(key)
             if value is None:
                 continue
             if (
@@ -309,20 +318,19 @@ def _metadata_from_mapping(
     )
 
 
-def _metadata_to_mapping(metadata: ModelCatalogMetadata) -> dict[str, Any]:
-    result: dict[str, Any] = {}
-    for key in (
-        "canonical_model_id",
-        "reasoning",
-        "tool_call",
-        "structured_output",
-        "status",
-        "release_date",
-        "last_updated",
-        "knowledge",
-        "open_weights",
+def _metadata_to_mapping(metadata: ModelCatalogMetadata) -> JsonObject:
+    result: JsonObject = {}
+    for key, value in (
+        ("canonical_model_id", metadata.canonical_model_id),
+        ("reasoning", metadata.reasoning),
+        ("tool_call", metadata.tool_call),
+        ("structured_output", metadata.structured_output),
+        ("status", metadata.status),
+        ("release_date", metadata.release_date),
+        ("last_updated", metadata.last_updated),
+        ("knowledge", metadata.knowledge),
+        ("open_weights", metadata.open_weights),
     ):
-        value = getattr(metadata, key)
         if value is not None:
             result[key] = value
     modalities = {

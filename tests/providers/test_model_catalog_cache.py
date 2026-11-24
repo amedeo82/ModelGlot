@@ -9,6 +9,7 @@ from free_claude_code.providers.model_catalog_source import (
     ModelCatalogCache,
     ModelCatalogSource,
 )
+from tests.wire_payload import decode_object
 
 
 def test_fresh_cache_is_read_without_network_access(
@@ -77,7 +78,7 @@ def test_cache_file_contains_only_the_reduced_map(tmp_path: Path) -> None:
         )
     )
 
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload = decode_object(path.read_text(encoding="utf-8"))
     assert payload == {
         "schema_version": 2,
         "entries": {

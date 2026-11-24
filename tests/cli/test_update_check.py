@@ -1,6 +1,7 @@
 """The updater checks published versions before authorizing installation."""
 
 from importlib.metadata import PackageNotFoundError
+from typing import Protocol
 
 import httpx
 import pytest
@@ -8,27 +9,48 @@ import pytest
 from free_claude_code.updater import check as update_check
 
 
-def release(version="1.10.0", *, yanked=False):
+class CheckRunner(Protocol):
+    def __call__(
+        self,
+        installed: str = "1.9.0",
+        payload: object | None = None,
+        status: int = 200,
+        error: Exception | None = None,
+        body: str | bytes | None = None,
+        print_version: bool = False,
+        structured: bool = False,
+        release_url: str = (
+            "https://github.com/amedeo82/free-claude-code/releases/tag/v1.10.0"
+        ),
+    ) -> int | update_check.UpdateCheckResult: ...
+
+
+def release(version: str = "1.10.0", *, yanked: bool = False) -> dict[str, object]:
     return {"info": {"version": version}, "urls": [{"yanked": yanked}]}
 
 
 @pytest.fixture
-def check(monkeypatch):
+def check(monkeypatch: pytest.MonkeyPatch) -> CheckRunner:
     original_client = httpx.Client
 
     def run(
-        installed="1.9.0",
-        payload=None,
-        status=200,
-        error=None,
-        body=None,
-        print_version=False,
-        structured=False,
-        release_url="https://github.com/amedeo82/free-claude-code/releases/tag/v1.10.0",
-    ):
-        monkeypatch.setattr(update_check, "version", lambda name: installed)
+        installed: str = "1.9.0",
+        payload: object | None = None,
+        status: int = 200,
+        error: Exception | None = None,
+        body: str | bytes | None = None,
+        print_version: bool = False,
+        structured: bool = False,
+        release_url: str = (
+            "https://github.com/amedeo82/free-claude-code/releases/tag/v1.10.0"
+        ),
+    ) -> int | update_check.UpdateCheckResult:
+        def installed_version(_name: str) -> str:
+            return installed
 
-        def respond(request):
+        monkeypatch.setattr(update_check, "version", installed_version)
+
+        def respond(request: httpx.Request) -> httpx.Response:
             if error is not None:
                 raise error
             if str(request.url).endswith("/releases/latest"):
@@ -42,13 +64,20 @@ def check(monkeypatch):
                 return httpx.Response(status, content=body)
             return httpx.Response(status, json=payload)
 
-        monkeypatch.setattr(
-            update_check.httpx,
-            "Client",
-            lambda **kwargs: original_client(
-                transport=httpx.MockTransport(respond), **kwargs
-            ),
-        )
+        def client(
+            *,
+            timeout: float = 10.0,
+            follow_redirects: bool = True,
+            max_redirects: int = 5,
+        ) -> httpx.Client:
+            return original_client(
+                transport=httpx.MockTransport(respond),
+                timeout=timeout,
+                follow_redirects=follow_redirects,
+                max_redirects=max_redirects,
+            )
+
+        monkeypatch.setattr(update_check.httpx, "Client", client)
         if structured:
             return update_check.check_for_updates()
         return update_check.main(["--print-version"] if print_version else [])
@@ -66,7 +95,12 @@ def check(monkeypatch):
         ("1.10.0.dev1", 10),
     ],
 )
-def test_version_comparison(check, capsys, installed, expected):
+def test_version_comparison(
+    check: CheckRunner,
+    capsys: pytest.CaptureFixture[str],
+    installed: str,
+    expected: int,
+) -> None:
     assert check(installed, release()) == expected
     output = capsys.readouterr()
     assert installed in output.out
@@ -81,18 +115,27 @@ def test_version_comparison(check, capsys, installed, expected):
         ("1.11.0", update_check.UpdateStatus.LOCAL_NEWER, "1.10.0"),
     ],
 )
-def test_structured_update_result(check, installed, expected_status, expected_latest):
+def test_structured_update_result(
+    check: CheckRunner,
+    installed: str,
+    expected_status: update_check.UpdateStatus,
+    expected_latest: str,
+) -> None:
     result = check(installed, release(), structured=True)
 
+    assert isinstance(result, update_check.UpdateCheckResult)
     assert result.status is expected_status
     assert result.installed == installed
     assert result.latest == expected_latest
     assert installed in result.message
 
 
-def test_structured_update_result_contains_failure_detail(check):
+def test_structured_update_result_contains_failure_detail(
+    check: CheckRunner,
+) -> None:
     result = check("1.9.0", release("invalid"), structured=True)
 
+    assert isinstance(result, update_check.UpdateCheckResult)
     assert result.status is update_check.UpdateStatus.FAILED
     assert result.message == "Could not check for FCC updates. Please retry."
     assert result.detail is not None
@@ -120,18 +163,25 @@ def test_structured_update_result_contains_failure_detail(check):
         {"info": {"version": "2.0"}, "urls": [{}]},
     ],
 )
-def test_invalid_release_does_not_authorize_installation(check, capsys, payload):
+def test_invalid_release_does_not_authorize_installation(
+    check: CheckRunner,
+    capsys: pytest.CaptureFixture[str],
+    payload: object,
+) -> None:
     assert check(payload=payload) == 1
     assert capsys.readouterr().err
 
 
 @pytest.mark.parametrize("installed", ["invalid", "0+unknown"])
-def test_unknown_installed_version(check, installed):
+def test_unknown_installed_version(check: CheckRunner, installed: str) -> None:
     assert check(installed, release()) == 1
 
 
-def test_missing_distribution(monkeypatch, capsys):
-    def missing(name):
+def test_missing_distribution(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    def missing(name: str) -> str:
         raise PackageNotFoundError(name)
 
     monkeypatch.setattr(update_check, "version", missing)
@@ -139,23 +189,36 @@ def test_missing_distribution(monkeypatch, capsys):
     assert capsys.readouterr().err
 
 
-def test_http_error(check, capsys):
+def test_http_error(
+    check: CheckRunner,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     assert check(payload=release(), status=503) == 1
     assert capsys.readouterr().err
 
 
-def test_timeout(check, capsys):
+def test_timeout(
+    check: CheckRunner,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     assert check(error=httpx.ReadTimeout("timed out")) == 1
     assert capsys.readouterr().err
 
 
-def test_malformed_json(check, capsys):
+def test_malformed_json(
+    check: CheckRunner,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     assert check(body="not JSON") == 1
     assert capsys.readouterr().err
 
 
 @pytest.mark.parametrize("installed", ["1.9.0", "1.10.0", "1.11.0"])
-def test_print_version_is_only_the_authorized_release(check, capsys, installed):
+def test_print_version_is_only_the_authorized_release(
+    check: CheckRunner,
+    capsys: pytest.CaptureFixture[str],
+    installed: str,
+) -> None:
     expected = 10 if installed == "1.9.0" else 0
     assert check(installed, release(), print_version=True) == expected
     output = capsys.readouterr()
@@ -163,7 +226,10 @@ def test_print_version_is_only_the_authorized_release(check, capsys, installed):
     assert installed in output.err
 
 
-def test_failed_preflight_prints_no_release(check, capsys):
+def test_failed_preflight_prints_no_release(
+    check: CheckRunner,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     assert check(payload=release("2.0.0/../main"), print_version=True) == 1
     output = capsys.readouterr()
     assert output.out == ""
@@ -174,7 +240,10 @@ def test_failed_preflight_prints_no_release(check, capsys):
     "suffix",
     ["v1.10.0rc1", "v01.10.0", "v1.10.0?query=1", "v1.10.0#fragment", "v1.10.0/extra"],
 )
-def test_invalid_github_release_does_not_authorize_installation(check, suffix):
+def test_invalid_github_release_does_not_authorize_installation(
+    check: CheckRunner,
+    suffix: str,
+) -> None:
     assert (
         check(
             payload=release(),
@@ -185,7 +254,7 @@ def test_invalid_github_release_does_not_authorize_installation(check, suffix):
     )
 
 
-def test_release_from_another_repository_is_rejected(check):
+def test_release_from_another_repository_is_rejected(check: CheckRunner) -> None:
     assert (
         check(
             payload=release(),
@@ -195,5 +264,7 @@ def test_release_from_another_repository_is_rejected(check):
     )
 
 
-def test_pypi_metadata_must_match_selected_github_release(check):
+def test_pypi_metadata_must_match_selected_github_release(
+    check: CheckRunner,
+) -> None:
     assert check(payload=release("1.11.0")) == 1

@@ -2,7 +2,7 @@
 
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Protocol, cast, override
 
 import pytest
 
@@ -19,6 +19,15 @@ from free_claude_code.cli.windows_desktop_notifications import (
 )
 
 
+class ToastContent(Protocol):
+    def get_xml(self) -> str: ...
+
+
+class ToastNotification(Protocol):
+    @property
+    def content(self) -> ToastContent: ...
+
+
 class FakePystrayIcon:
     def __init__(self) -> None:
         self.notifications: list[tuple[str, str]] = []
@@ -32,6 +41,9 @@ class FakeWindowsIcon:
         self._icon_handle = 123
         self.messages: list[tuple[int, int, dict[str, object]]] = []
         self.notifications: list[tuple[str, str]] = []
+
+    def notify(self, message: str, title: str) -> None:
+        self.notifications.append((message, title))
 
     def _message(self, code: int, flags: int, **values: object) -> None:
         self.messages.append((code, flags, values))
@@ -147,9 +159,11 @@ def test_windows_notifier_falls_back_without_native_handles() -> None:
 
 def test_windows_notifier_falls_back_when_native_balloon_fails() -> None:
     class FailingWindowsIcon(FakeWindowsIcon):
+        @override
         def notify(self, message: str, title: str) -> None:
             self.notifications.append((message, title))
 
+        @override
         def _message(self, code: int, flags: int, **values: object) -> None:
             raise RuntimeError("shell unavailable")
 
@@ -174,11 +188,11 @@ def test_windows_notifier_uses_branded_toast(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     class FakeToastNotifier:
-        notification: Any = None
+        notification: ToastNotification | None = None
         setting = 0
 
-        def show(self, notification) -> None:
-            self.notification = notification
+        def show(self, notification: object) -> None:
+            self.notification = cast(ToastNotification, notification)
 
     toast_notifier = FakeToastNotifier()
     monkeypatch.setattr(
@@ -191,20 +205,30 @@ def test_windows_notifier_uses_branded_toast(
         "_create_toast_notifier",
         lambda: toast_notifier,
     )
+
+    def ensure_identity(_app_user_model_id: str) -> bool:
+        return True
+
+    def export_icon(_icon_path: Path) -> None:
+        return None
+
+    def config_directory() -> Path:
+        return tmp_path
+
     monkeypatch.setattr(
         windows_desktop_notifications,
         "ensure_windows_app_identity",
-        lambda _app_user_model_id: True,
+        ensure_identity,
     )
     monkeypatch.setattr(
         windows_desktop_notifications,
         "export_app_icon",
-        lambda _icon_path: None,
+        export_icon,
     )
     monkeypatch.setattr(
         windows_desktop_notifications,
         "config_dir_path",
-        lambda: tmp_path,
+        config_directory,
     )
     icon = FakeWindowsIcon()
     notifier = WindowsDesktopNotifier(icon)
@@ -236,7 +260,7 @@ def test_windows_notifier_falls_back_when_toast_is_disabled(
     class DisabledToastNotifier:
         setting = 1
 
-        def show(self, _notification) -> None:
+        def show(self, _notification: object) -> None:
             raise AssertionError("Disabled toasts must not be shown")
 
     monkeypatch.setattr(
@@ -249,20 +273,30 @@ def test_windows_notifier_falls_back_when_toast_is_disabled(
         "_create_toast_notifier",
         lambda: DisabledToastNotifier(),
     )
+
+    def ensure_identity(_app_user_model_id: str) -> bool:
+        return True
+
+    def export_icon(_icon_path: Path) -> None:
+        return None
+
+    def config_directory() -> Path:
+        return tmp_path
+
     monkeypatch.setattr(
         windows_desktop_notifications,
         "ensure_windows_app_identity",
-        lambda _app_user_model_id: True,
+        ensure_identity,
     )
     monkeypatch.setattr(
         windows_desktop_notifications,
         "export_app_icon",
-        lambda _icon_path: None,
+        export_icon,
     )
     monkeypatch.setattr(
         windows_desktop_notifications,
         "config_dir_path",
-        lambda: tmp_path,
+        config_directory,
     )
     icon = FakeWindowsIcon()
     notifier = WindowsDesktopNotifier(icon)
@@ -287,14 +321,14 @@ def test_windows_notifier_keeps_native_toasts_when_setting_lookup_fails(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     class UnresolvedToastNotifier:
-        notification: Any = None
+        notification: ToastNotification | None = None
 
         @property
-        def setting(self) -> Any:
+        def setting(self) -> object:
             raise OSError("Element not found")
 
-        def show(self, notification) -> None:
-            self.notification = notification
+        def show(self, notification: object) -> None:
+            self.notification = cast(ToastNotification, notification)
 
     toast_notifier = UnresolvedToastNotifier()
     monkeypatch.setattr(
@@ -307,20 +341,30 @@ def test_windows_notifier_keeps_native_toasts_when_setting_lookup_fails(
         "_create_toast_notifier",
         lambda: toast_notifier,
     )
+
+    def ensure_identity(_app_user_model_id: str) -> bool:
+        return True
+
+    def export_icon(_icon_path: Path) -> None:
+        return None
+
+    def config_directory() -> Path:
+        return tmp_path
+
     monkeypatch.setattr(
         windows_desktop_notifications,
         "ensure_windows_app_identity",
-        lambda _app_user_model_id: True,
+        ensure_identity,
     )
     monkeypatch.setattr(
         windows_desktop_notifications,
         "export_app_icon",
-        lambda _icon_path: None,
+        export_icon,
     )
     monkeypatch.setattr(
         windows_desktop_notifications,
         "config_dir_path",
-        lambda: tmp_path,
+        config_directory,
     )
     icon = FakeWindowsIcon()
     notifier = WindowsDesktopNotifier(icon)

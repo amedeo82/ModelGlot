@@ -40,7 +40,7 @@ _COLUMNS = (
 )
 
 
-def _safe_cell(value):
+def _safe_cell(value: object) -> str:
     if value is None:
         return ""
     if isinstance(value, bool):

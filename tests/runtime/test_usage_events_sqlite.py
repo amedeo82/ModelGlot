@@ -1,5 +1,6 @@
 import sqlite3
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import pytest
 
@@ -10,15 +11,23 @@ from free_claude_code.application.usage_events import (
     UsageObservation,
     UsageProtocol,
 )
+from free_claude_code.runtime.sqlite_database import query_rows, required_column
 from free_claude_code.runtime.usage_events_sqlite import (
     SQLiteUsageEventStore,
     UsageConflictError,
 )
+from tests.fixture_types import DatabaseFactory
+from tests.wire_payload import array_payload, object_payload, string_payload
 
 NOW = datetime(2026, 11, 18, 12, tzinfo=UTC)
 
 
-def record(request_id="request-1", *, created_at=NOW, output=7):
+def record(
+    request_id: str = "request-1",
+    *,
+    created_at: datetime = NOW,
+    output: int = 7,
+) -> RequestUsageRecord:
     return RequestUsageRecord(
         request_id=request_id,
         wire_api="chat",
@@ -41,7 +50,7 @@ def record(request_id="request-1", *, created_at=NOW, output=7):
     )
 
 
-def attempt(number=1, *, outcome="succeeded"):
+def attempt(number: int = 1, *, outcome: str = "succeeded") -> UsageObservation:
     return UsageObservation(
         request_id="request-1",
         execution_id="execution-request-1",
@@ -56,14 +65,14 @@ def attempt(number=1, *, outcome="succeeded"):
     )
 
 
-def filters():
+def filters() -> UsageFilters:
     return UsageFilters(start=NOW - timedelta(days=1), end=NOW + timedelta(days=1))
 
 
 @pytest.mark.asyncio
 async def test_sqlite_insert_duplicate_conflict_and_null_handling(
-    database_factory, tmp_path
-):
+    database_factory: DatabaseFactory, tmp_path: Path
+) -> None:
     database = database_factory(tmp_path / "usage.db", tmp_path / "usage.lock")
     store = SQLiteUsageEventStore(database, clock=lambda: NOW)
     await store.start()
@@ -75,25 +84,27 @@ async def test_sqlite_insert_duplicate_conflict_and_null_handling(
 
     result = await store.usage(filters())
     assert result.payload["storage"] == "sqlite"
-    row = result.payload["rows"][0]
+    row = object_payload(array_payload(result.payload["rows"])[0])
     assert row["request_count"] == 1
     assert row["output_tokens"] == 7
     assert row["physical_attempt_count"] == 2
     assert row["failed_attempt_count"] == 1
     assert row["reasoning_tokens"] is None
-    assert row["reported_counts"]["reasoning_tokens"] == 0
+    reported_counts = object_payload(row["reported_counts"])
+    assert reported_counts["reasoning_tokens"] == 0
 
-    columns = await database.run(
-        lambda connection: tuple(
-            row[1] for row in connection.execute("PRAGMA table_info(usage_events)")
-        ),
-        write=False,
-    )
+    def usage_event_columns(connection: sqlite3.Connection) -> tuple[str, ...]:
+        rows = query_rows(connection, "PRAGMA table_info(usage_events)").fetchall()
+        return tuple(required_column(row, 1, str) for row in rows)
+
+    columns = await database.run(usage_event_columns, write=False)
     assert not {"prompt", "completion", "raw", "payload", "path"}.intersection(columns)
 
 
 @pytest.mark.asyncio
-async def test_sqlite_retention_and_restart_persistence(database_factory, tmp_path):
+async def test_sqlite_retention_and_restart_persistence(
+    database_factory: DatabaseFactory, tmp_path: Path
+) -> None:
     path = tmp_path / "usage.db"
     lock = tmp_path / "usage.lock"
     database = database_factory(path, lock)
@@ -110,18 +121,21 @@ async def test_sqlite_retention_and_restart_persistence(database_factory, tmp_pa
     restarted = SQLiteUsageEventStore(reopened, clock=lambda: NOW)
     await restarted.start()
     result = await restarted.usage(filters())
-    assert result.payload["rows"][0]["request_count"] == 2
+    row = object_payload(array_payload(result.payload["rows"])[0])
+    assert row["request_count"] == 2
     assert result.payload["retention_days"] == 30
-    assert result.payload["coverage_start"].startswith("2026-11-17")
+    assert string_payload(result.payload["coverage_start"]).startswith("2026-11-17")
 
 
 @pytest.mark.asyncio
-async def test_sqlite_code_context_is_metadata_only(database_factory, tmp_path):
+async def test_sqlite_code_context_is_metadata_only(
+    database_factory: DatabaseFactory, tmp_path: Path
+) -> None:
     database = database_factory(tmp_path / "usage.db", tmp_path / "usage.lock")
     store = SQLiteUsageEventStore(database, clock=lambda: NOW)
     await store.start()
 
-    def insert_context(connection):
+    def insert_context(connection: sqlite3.Connection) -> None:
         connection.execute(
             "INSERT INTO code_sessions ("
             "id,cwd,model,reasoning_effort,harness,title,title_search,cwd_search,"
@@ -163,22 +177,26 @@ async def test_sqlite_code_context_is_metadata_only(database_factory, tmp_path):
 
 @pytest.mark.asyncio
 async def test_sqlite_read_deadline_interrupts_slow_sql_and_restores_connection(
-    database_factory, tmp_path
-):
+    database_factory: DatabaseFactory, tmp_path: Path
+) -> None:
     database = database_factory(tmp_path / "usage.db", tmp_path / "usage.lock")
     await database.start()
 
-    def slow_query(connection):
-        return connection.execute(
+    def slow_query(connection: sqlite3.Connection) -> None:
+        query_rows(
+            connection,
             "WITH RECURSIVE counter(value) AS ("
             "SELECT 0 UNION ALL SELECT value + 1 FROM counter LIMIT 100000000"
-            ") SELECT sum(value) FROM counter"
+            ") SELECT sum(value) FROM counter",
         ).fetchone()
 
     with pytest.raises(sqlite3.OperationalError, match="interrupt"):
         await database.run_read(slow_query, timeout_seconds=0.001)
-    value = await database.run_read(
-        lambda connection: connection.execute("SELECT 42").fetchone()[0],
-        timeout_seconds=1,
-    )
+
+    def read_value(connection: sqlite3.Connection) -> int:
+        row = query_rows(connection, "SELECT 42 AS value").fetchone()
+        assert row is not None
+        return required_column(row, "value", int)
+
+    value = await database.run_read(read_value, timeout_seconds=1)
     assert value == 42

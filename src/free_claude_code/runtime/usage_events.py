@@ -25,6 +25,14 @@ TOKEN_FIELDS = (
 )
 DAY_MS = 86_400_000
 
+type UsageGroupKey = tuple[str | None, str | None, str | None, str | None]
+
+
+@dataclass(slots=True)
+class _UsageGroup:
+    records: list[RequestUsageRecord]
+    attempts: list[UsageObservation]
+
 
 @dataclass(frozen=True, slots=True)
 class CodeContextSample:
@@ -70,11 +78,11 @@ def build_usage_query(
         for attempt in attempts
         if filters.matches(attempt) and attempt.created_at >= cutoff
     )
-    groups: dict[tuple[str | None, str | None, str | None, str | None], dict] = {}
+    groups: dict[UsageGroupKey, _UsageGroup] = {}
 
     def group_for(
         event: RequestUsageRecord | UsageObservation,
-    ) -> tuple[str | None, str | None, str | None, str | None]:
+    ) -> UsageGroupKey:
         day = event.created_at.astimezone(UTC).date().isoformat()
         if filters.group_by is UsageGroupBy.MODEL:
             return event.provider_id, event.gateway_model, event.provider_model, None
@@ -82,21 +90,18 @@ def build_usage_query(
             return event.provider_id, None, None, None
         return None, None, None, day
 
-    def group(key):
+    def group(key: UsageGroupKey) -> _UsageGroup:
         if key not in groups:
-            groups[key] = {
-                "records": [],
-                "attempts": [],
-            }
+            groups[key] = _UsageGroup(records=[], attempts=[])
         return groups[key]
 
     for record in retained_records:
-        group(group_for(record))["records"].append(record)
+        group(group_for(record)).records.append(record)
     for attempt in retained_attempts:
-        group(group_for(attempt))["attempts"].append(attempt)
+        group(group_for(attempt)).attempts.append(attempt)
 
     rows = [
-        _aggregate_row(key, values["records"], values["attempts"], filters.group_by)
+        _aggregate_row(key, values.records, values.attempts, filters.group_by)
         for key, values in groups.items()
     ]
     rows.sort(key=_row_order)
@@ -148,7 +153,12 @@ def build_usage_query(
     return UsageQueryResult(payload, request_samples, code_samples)
 
 
-def _aggregate_row(key, records, attempts, group_by: UsageGroupBy) -> JsonObject:
+def _aggregate_row(
+    key: UsageGroupKey,
+    records: list[RequestUsageRecord],
+    attempts: list[UsageObservation],
+    group_by: UsageGroupBy,
+) -> JsonObject:
     provider_id, gateway_model, provider_model, day = key
     successful = [record for record in records if record.outcome == "success"]
     reported_counts = {
@@ -195,7 +205,7 @@ def _aggregate_row(key, records, attempts, group_by: UsageGroupBy) -> JsonObject
     }
 
 
-def _nullable_sum(values) -> int | None:
+def _nullable_sum(values: Iterable[int | None]) -> int | None:
     materialized = [value for value in values if value is not None]
     return sum(materialized) if materialized else None
 
@@ -310,7 +320,7 @@ class InMemoryUsageEventStore:
         ]
         events.sort(key=lambda event: (event[0], event[1], str(event[2])))
         for _, kind, key in events[: min(overflow, self._retention_batch)]:
-            if kind == "final":
+            if kind == "final" and isinstance(key, str):
                 self._records.pop(key, None)
-            else:
+            elif isinstance(key, tuple):
                 self._attempts.pop(key, None)

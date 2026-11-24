@@ -3,6 +3,7 @@
 import sqlite3
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
+from typing import cast
 
 from free_claude_code.application.usage_events import (
     CanonicalUsage,
@@ -69,6 +70,27 @@ def _from_epoch_ms(value: int) -> datetime:
     return datetime(1970, 1, 1, tzinfo=UTC) + timedelta(milliseconds=value)
 
 
+def _row_value(row: sqlite3.Row, column: str) -> object:
+    value: object = row[column]
+    return value
+
+
+def _required_int(row: sqlite3.Row, column: str) -> int:
+    return cast(int, _row_value(row, column))
+
+
+def _optional_int(row: sqlite3.Row, column: str) -> int | None:
+    return cast(int | None, _row_value(row, column))
+
+
+def _required_text(row: sqlite3.Row, column: str) -> str:
+    return cast(str, _row_value(row, column))
+
+
+def _optional_text(row: sqlite3.Row, column: str) -> str | None:
+    return cast(str | None, _row_value(row, column))
+
+
 def _values(
     event: RequestUsageRecord | UsageObservation, record_kind: str
 ) -> tuple[object, ...]:
@@ -125,32 +147,32 @@ def _values(
 
 def _usage(row: sqlite3.Row) -> CanonicalUsage:
     return CanonicalUsage(
-        input_tokens=row["input_tokens"],
-        cache_read_tokens=row["cache_read_tokens"],
-        cache_creation_tokens=row["cache_creation_tokens"],
-        input_total_tokens=row["input_total_tokens"],
-        output_tokens=row["output_tokens"],
-        reasoning_tokens=row["reasoning_tokens"],
-        total_tokens=row["total_tokens"],
-        estimated_input_tokens=row["estimated_input_tokens"],
+        input_tokens=_optional_int(row, "input_tokens"),
+        cache_read_tokens=_optional_int(row, "cache_read_tokens"),
+        cache_creation_tokens=_optional_int(row, "cache_creation_tokens"),
+        input_total_tokens=_optional_int(row, "input_total_tokens"),
+        output_tokens=_optional_int(row, "output_tokens"),
+        reasoning_tokens=_optional_int(row, "reasoning_tokens"),
+        total_tokens=_optional_int(row, "total_tokens"),
+        estimated_input_tokens=_optional_int(row, "estimated_input_tokens"),
     )
 
 
 def _record(row: sqlite3.Row) -> RequestUsageRecord:
     return RequestUsageRecord(
-        request_id=row["request_id"],
-        wire_api=row["wire_api"],
-        outcome=row["outcome"],
-        created_at=_from_epoch_ms(row["created_at"]),
-        execution_id=row["execution_id"],
-        attempt=row["attempt"],
+        request_id=_required_text(row, "request_id"),
+        wire_api=_required_text(row, "wire_api"),
+        outcome=_required_text(row, "outcome"),
+        created_at=_from_epoch_ms(_required_int(row, "created_at")),
+        execution_id=_optional_text(row, "execution_id"),
+        attempt=_optional_int(row, "attempt"),
         usage=_usage(row),
-        provider_id=row["provider_id"],
-        gateway_model=row["gateway_model"],
-        provider_model=row["provider_model"],
-        status_code=row["status_code"],
-        duration_ms=row["duration_ms"],
-        failure_category=row["failure_category"],
+        provider_id=_optional_text(row, "provider_id"),
+        gateway_model=_optional_text(row, "gateway_model"),
+        provider_model=_optional_text(row, "provider_model"),
+        status_code=_optional_int(row, "status_code"),
+        duration_ms=cast(float | None, _row_value(row, "duration_ms")),
+        failure_category=_optional_text(row, "failure_category"),
     )
 
 
@@ -159,17 +181,17 @@ def _attempt(row: sqlite3.Row) -> UsageObservation:
         "success": "succeeded",
         "failure": "failed",
         "cancelled": "cancelled",
-    }[row["outcome"]]
+    }[_required_text(row, "outcome")]
     return UsageObservation(
-        request_id=row["request_id"],
-        execution_id=row["execution_id"],
-        attempt=row["attempt"],
-        protocol=usage_protocol(row["wire_api"]),
+        request_id=_required_text(row, "request_id"),
+        execution_id=_required_text(row, "execution_id"),
+        attempt=_required_int(row, "attempt"),
+        protocol=usage_protocol(_required_text(row, "wire_api")),
         usage=_usage(row),
-        created_at=_from_epoch_ms(row["created_at"]),
-        provider_id=row["provider_id"],
-        gateway_model=row["gateway_model"],
-        provider_model=row["provider_model"],
+        created_at=_from_epoch_ms(_required_int(row, "created_at")),
+        provider_id=_optional_text(row, "provider_id"),
+        gateway_model=_optional_text(row, "gateway_model"),
+        provider_model=_optional_text(row, "provider_model"),
         outcome=outcome,
     )
 
@@ -193,7 +215,7 @@ def _insert_idempotent(
     else:
         where = "execution_id = ? AND attempt = ? AND record_kind = 'attempt'"
         identity = (event.execution_id, event.attempt)
-    existing = connection.execute(
+    existing: sqlite3.Row | None = connection.execute(
         f"SELECT {_SELECT_COLUMNS} FROM usage_events WHERE {where}", identity
     ).fetchone()
     if existing is None or tuple(existing) != values:
@@ -262,27 +284,32 @@ class SQLiteUsageEventStore:
         start = max(filters.start, cutoff)
         clauses = ["created_at >= ?", "created_at < ?"]
         parameters: list[object] = [_epoch_ms(start), _epoch_ms(filters.end)]
-        for field in ("provider_id", "gateway_model", "provider_model"):
-            value = getattr(filters, field)
+        for field, value in (
+            ("provider_id", filters.provider_id),
+            ("gateway_model", filters.gateway_model),
+            ("provider_model", filters.provider_model),
+        ):
             if value is not None:
                 clauses.append(f"{field} = ?")
                 parameters.append(value)
         where = " AND ".join(clauses)
 
-        def read(connection: sqlite3.Connection):
-            final_rows = connection.execute(
+        def read(
+            connection: sqlite3.Connection,
+        ) -> tuple[list[sqlite3.Row], list[sqlite3.Row], list[sqlite3.Row]]:
+            final_rows: list[sqlite3.Row] = connection.execute(
                 f"SELECT {_SELECT_COLUMNS} FROM usage_events "
                 f"WHERE record_kind = 'final' AND {where} "
                 "ORDER BY created_at, id",
                 parameters,
             ).fetchall()
-            attempt_rows = connection.execute(
+            attempt_rows: list[sqlite3.Row] = connection.execute(
                 f"SELECT {_SELECT_COLUMNS} FROM usage_events "
                 f"WHERE record_kind = 'attempt' AND {where} "
                 "ORDER BY created_at, id",
                 parameters,
             ).fetchall()
-            context_rows = connection.execute(
+            context_rows: list[sqlite3.Row] = connection.execute(
                 "SELECT context_model, context_used_tokens, context_sampled_at "
                 "FROM code_sessions WHERE context_used_tokens IS NOT NULL"
             ).fetchall()
@@ -293,11 +320,11 @@ class SQLiteUsageEventStore:
         )
         code_samples = tuple(
             CodeContextSample(
-                context_model=row["context_model"],
-                context_used_tokens=row["context_used_tokens"],
+                context_model=_optional_text(row, "context_model"),
+                context_used_tokens=_optional_int(row, "context_used_tokens"),
                 context_sampled_at=(
-                    _from_epoch_ms(row["context_sampled_at"])
-                    if row["context_sampled_at"] is not None
+                    _from_epoch_ms(_required_int(row, "context_sampled_at"))
+                    if _row_value(row, "context_sampled_at") is not None
                     else None
                 ),
             )
@@ -331,7 +358,10 @@ class SQLiteUsageEventStore:
             (cutoff, self._retention_batch),
         )
         deleted = cursor.rowcount
-        count = connection.execute("SELECT COUNT(*) FROM usage_events").fetchone()[0]
+        count = cast(
+            int,
+            connection.execute("SELECT COUNT(*) FROM usage_events").fetchone()[0],
+        )
         overflow = max(0, count - self._max_rows)
         if overflow:
             cursor = connection.execute(

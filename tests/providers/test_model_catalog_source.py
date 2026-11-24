@@ -1,12 +1,12 @@
 import asyncio
 import json
 from pathlib import Path
-from typing import Any
 
 import pytest
 
 from free_claude_code.config.model_catalog_metadata import ModelCatalogMetadata
 from free_claude_code.config.settings import Settings
+from free_claude_code.core.json_types import JsonValue
 from free_claude_code.providers.model_catalog_source import (
     ModelCatalogCache,
     ModelCatalogSource,
@@ -14,6 +14,7 @@ from free_claude_code.providers.model_catalog_source import (
     reduce_model_catalog,
     reduce_model_catalog_metadata,
 )
+from tests.wire_payload import decode_object, object_payload
 
 
 def test_valid_payload_is_reduced_to_mapped_provider_models() -> None:
@@ -69,7 +70,7 @@ async def test_refresh_fetches_reduces_and_publishes_the_catalog(
         def raise_for_status(self) -> None:
             return None
 
-        def json(self) -> dict[str, Any]:
+        def json(self) -> JsonValue:
             return {
                 "deepseek": {
                     "models": {
@@ -92,9 +93,12 @@ async def test_refresh_fetches_reduces_and_publishes_the_catalog(
         async def get(self, _url: str) -> Response:
             return Response()
 
+    def client_factory(**_kwargs: object) -> Client:
+        return Client()
+
     monkeypatch.setattr(
         "free_claude_code.providers.model_catalog_source.httpx.AsyncClient",
-        lambda **_kwargs: Client(),
+        client_factory,
     )
     path = tmp_path / "catalog.json"
 
@@ -104,7 +108,7 @@ async def test_refresh_fetches_reduces_and_publishes_the_catalog(
         ("deepseek", "deepseek-chat"): ("DeepSeek Chat", "Description")
     }
     assert cache.metadata == {}
-    assert json.loads(path.read_text(encoding="utf-8"))["entries"] == {
+    assert decode_object(path.read_text(encoding="utf-8"))["entries"] == {
         "deepseek": {
             "deepseek-chat": {
                 "name": "DeepSeek Chat",
@@ -241,15 +245,19 @@ def test_catalog_metadata_round_trip_preserves_facts_and_freshness(
     loaded = source.load()
     assert loaded.entries[key] == ("MiniMax-M3.1-Flash", "1M context")
     assert loaded.metadata == {key: metadata}
-    payload = json.loads((tmp_path / "catalog.json").read_text(encoding="utf-8"))
+    payload = decode_object((tmp_path / "catalog.json").read_text(encoding="utf-8"))
     assert payload["schema_version"] == 2
-    assert "cost" not in payload["entries"]["nvidia"][key[1]]["metadata"]
+    entries = object_payload(payload["entries"])
+    nvidia = object_payload(entries["nvidia"])
+    model = object_payload(nvidia[key[1]])
+    metadata = object_payload(model["metadata"])
+    assert "cost" not in metadata
 
 
 def test_source_none_does_not_make_a_network_request(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    def forbidden(*_args: Any, **_kwargs: Any) -> None:
+    def forbidden(*_args: object, **_kwargs: object) -> None:
         pytest.fail("disabled catalog source must not make a network request")
 
     monkeypatch.setattr(

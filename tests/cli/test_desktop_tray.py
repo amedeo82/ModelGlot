@@ -2,13 +2,16 @@
 
 import threading
 import time
+from collections.abc import Callable
+from pathlib import Path
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, cast
 from unittest.mock import Mock
 
 import pytest
 
 from free_claude_code.cli.commands import ServerStatus
+from free_claude_code.cli.desktop_notifications import DesktopIcon, DesktopNotifier
 from free_claude_code.updater.check import UpdateCheckResult, UpdateStatus
 
 if TYPE_CHECKING:
@@ -17,8 +20,8 @@ else:
     desktop_tray = pytest.importorskip("free_claude_code.cli.desktop_tray")
 
 
-class FakeIcon:
-    def __init__(self, *_args, **_kwargs) -> None:
+class FakeIcon(DesktopIcon):
+    def __init__(self, *_args: object, **_kwargs: object) -> None:
         self.notifications: list[tuple[str, str]] = []
         self.notification_details: list[desktop_tray.DesktopNotification] = []
         self.update_count = 0
@@ -26,7 +29,7 @@ class FakeIcon:
         self.visible = False
         self.notify_error: Exception | None = None
 
-    def run(self, setup=None) -> None:
+    def run(self, setup: Callable[[FakeIcon], None] | None = None) -> None:
         if setup is not None:
             setup(self)
 
@@ -42,11 +45,24 @@ class FakeIcon:
         self.stopped = True
 
 
+class FakeController:
+    def __init__(self, status: ServerStatus) -> None:
+        self.status = status
+        self.open_admin = Mock()
+        self.restart_server = Mock()
+        self.quit = Mock()
+
+
+type TrayFixture = tuple[desktop_tray.PystrayDesktopTray, FakeIcon]
+
+
 @pytest.fixture
-def tray(monkeypatch: pytest.MonkeyPatch):
+def tray(
+    monkeypatch: pytest.MonkeyPatch,
+) -> tuple[desktop_tray.PystrayDesktopTray, FakeIcon]:
     icon = FakeIcon()
 
-    class RecordingNotifier:
+    class RecordingNotifier(DesktopNotifier):
         def notify(self, notification: desktop_tray.DesktopNotification) -> None:
             icon.notification_details.append(notification)
             if icon.notify_error is not None:
@@ -56,25 +72,31 @@ def tray(monkeypatch: pytest.MonkeyPatch):
         def close(self) -> None:
             return None
 
-    monkeypatch.setattr(desktop_tray, "_create_icon", lambda: object())
-    monkeypatch.setattr(desktop_tray, "Icon", lambda *_args, **_kwargs: icon)
+    def create_icon() -> object:
+        return object()
+
+    def create_icon_instance(*_args: object, **_kwargs: object) -> FakeIcon:
+        return icon
+
+    def create_notifier(_icon: DesktopIcon) -> DesktopNotifier:
+        return RecordingNotifier()
+
+    def decline_update(_latest: str) -> bool:
+        return False
+
+    monkeypatch.setattr(desktop_tray, "_create_icon", create_icon)
+    monkeypatch.setattr(desktop_tray, "Icon", create_icon_instance)
     monkeypatch.setattr(
         desktop_tray,
         "create_desktop_notifier",
-        lambda _icon: RecordingNotifier(),
+        create_notifier,
     )
-    monkeypatch.setattr(desktop_tray, "confirm_update", lambda _latest: False)
+    monkeypatch.setattr(desktop_tray, "confirm_update", decline_update)
     monkeypatch.setattr(desktop_tray, "launch_update", Mock())
-    controller = cast(
-        desktop_tray.DesktopController,
-        SimpleNamespace(
-            status=ServerStatus.RUNNING,
-            open_admin=Mock(),
-            restart_server=Mock(),
-            quit=Mock(),
-        ),
+    controller = FakeController(ServerStatus.RUNNING)
+    instance = desktop_tray.PystrayDesktopTray(
+        cast(desktop_tray.DesktopController, controller)
     )
-    instance = desktop_tray.PystrayDesktopTray(controller)
     return instance, icon
 
 
@@ -85,56 +107,56 @@ def _wait_for_update(tray: desktop_tray.PystrayDesktopTray) -> None:
     assert not thread.is_alive()
 
 
-def test_server_status_uses_native_success_style(tray):
+def test_server_status_uses_native_success_style(tray: TrayFixture) -> None:
     instance, icon = tray
     instance._controller = cast(
-        Any,
-        SimpleNamespace(status=ServerStatus.RUNNING),
+        desktop_tray.DesktopController,
+        FakeController(ServerStatus.RUNNING),
     )
 
-    instance._check_status(None, None)
+    instance._check_status(instance._icon, instance._server_status_item)
 
     assert icon.notification_details[0].level is desktop_tray.NotificationLevel.SUCCESS
     assert instance._server_status_item.text == "● Running"
-    assert instance._server_status_item.enabled is False
+    assert not instance._server_status_item.enabled
 
 
-def test_stopped_server_uses_native_warning_style(tray):
+def test_stopped_server_uses_native_warning_style(tray: TrayFixture) -> None:
     instance, icon = tray
     instance._controller = cast(
-        Any,
-        SimpleNamespace(status=ServerStatus.STOPPED),
+        desktop_tray.DesktopController,
+        FakeController(ServerStatus.STOPPED),
     )
 
-    instance._check_status(None, None)
+    instance._check_status(instance._icon, instance._server_status_item)
 
     assert icon.notification_details[0].level is desktop_tray.NotificationLevel.WARNING
 
 
-def test_open_admin_menu_action_opens_admin(tray):
+def test_open_admin_menu_action_opens_admin(tray: TrayFixture) -> None:
     instance, icon = tray
     menu = instance._build_menu()
     admin_action = next(item for item in menu if item.text == "Open Admin")
 
     admin_action(icon)
 
-    instance._controller.open_admin.assert_called_once_with()
+    cast(Mock, instance._controller.open_admin).assert_called_once_with()
     assert icon.notifications == [
         ("Opening the Free Claude Code Admin UI…", "Free Claude Code")
     ]
 
 
-def test_quit_menu_action_stops_desktop(tray):
+def test_quit_menu_action_stops_desktop(tray: TrayFixture) -> None:
     instance, icon = tray
     menu = instance._build_menu()
     quit_action = next(item for item in menu if item.text == "Quit")
 
     quit_action(icon)
 
-    instance._controller.quit.assert_called_once_with()
+    cast(Mock, instance._controller.quit).assert_called_once_with()
 
 
-def test_status_menu_action_updates_visible_status_row(tray):
+def test_status_menu_action_updates_visible_status_row(tray: TrayFixture) -> None:
     instance, icon = tray
     menu = instance._build_menu()
     status_action = next(item for item in menu if item.text == "Refresh Server Status")
@@ -142,7 +164,7 @@ def test_status_menu_action_updates_visible_status_row(tray):
     status_action(icon)
 
     assert instance._server_status_item.text == "● Running"
-    assert instance._server_status_item.enabled is False
+    assert not instance._server_status_item.enabled
     assert icon.notifications == [("FCC server is running.", "Free Claude Code")]
 
 
@@ -155,17 +177,19 @@ def test_status_menu_action_updates_visible_status_row(tray):
         (ServerStatus.STOPPED, "○ Stopped"),
     ],
 )
-def test_server_status_text_reflects_each_lifecycle_state(status, expected):
+def test_server_status_text_reflects_each_lifecycle_state(
+    status: ServerStatus,
+    expected: str,
+) -> None:
     assert desktop_tray._server_status_text(status) == expected
 
 
-def test_status_sync_updates_visible_status_row_when_state_changes(tray):
+def test_status_sync_updates_visible_status_row_when_state_changes(
+    tray: TrayFixture,
+) -> None:
     instance, icon = tray
-    controller = cast(
-        Any,
-        SimpleNamespace(status=ServerStatus.STOPPED),
-    )
-    instance._controller = controller
+    controller = FakeController(ServerStatus.STOPPED)
+    instance._controller = cast(desktop_tray.DesktopController, controller)
 
     instance._sync_server_status()
     assert instance._server_status_item.text == "○ Stopped"
@@ -177,11 +201,13 @@ def test_status_sync_updates_visible_status_row_when_state_changes(tray):
     assert icon.update_count == 2
 
 
-def test_run_starts_status_watcher_and_reports_live_server_state(tray):
+def test_run_starts_status_watcher_and_reports_live_server_state(
+    tray: TrayFixture,
+) -> None:
     instance, icon = tray
     instance._controller = cast(
-        Any,
-        SimpleNamespace(status=ServerStatus.RUNNING),
+        desktop_tray.DesktopController,
+        FakeController(ServerStatus.RUNNING),
     )
 
     instance.run(lambda: None)
@@ -201,7 +227,7 @@ def test_run_starts_status_watcher_and_reports_live_server_state(tray):
     assert not instance._status_thread.is_alive()
 
 
-def test_restart_menu_action_updates_visible_status_row(tray):
+def test_restart_menu_action_updates_visible_status_row(tray: TrayFixture) -> None:
     instance, icon = tray
     menu = instance._build_menu()
     restart_action = next(item for item in menu if item.text == "Restart Server")
@@ -211,14 +237,16 @@ def test_restart_menu_action_updates_visible_status_row(tray):
     instance._restart_thread.join(2)
 
     assert instance._server_status_item.text == "● Running"
-    assert instance._controller.restart_server.call_count == 1
+    assert cast(Mock, instance._controller.restart_server).call_count == 1
     assert icon.notifications == [
         ("Restarting the FCC server…", "Free Claude Code"),
         ("Server restarted.", "Free Claude Code"),
     ]
 
 
-def test_concurrent_restart_clicks_start_only_one_restart(tray):
+def test_concurrent_restart_clicks_start_only_one_restart(
+    tray: TrayFixture,
+) -> None:
     instance, _icon = tray
     entered = threading.Event()
     release = threading.Event()
@@ -227,29 +255,31 @@ def test_concurrent_restart_clicks_start_only_one_restart(tray):
         entered.set()
         release.wait(2)
 
-    instance._controller = cast(
-        Any,
-        SimpleNamespace(
-            status=ServerStatus.RUNNING,
-            restart_server=Mock(side_effect=restart),
-        ),
+    controller = FakeController(ServerStatus.RUNNING)
+    controller.restart_server = Mock(side_effect=restart)
+    instance._controller = cast(desktop_tray.DesktopController, controller)
+    first = threading.Thread(
+        target=instance._restart_server,
+        args=(instance._icon, instance._server_status_item),
     )
-    first = threading.Thread(target=instance._restart_server, args=(None, None))
 
     first.start()
     assert entered.wait(1)
-    instance._restart_server(None, None)
+    instance._restart_server(instance._icon, instance._server_status_item)
 
     assert instance._restart_item.text == "Restarting Server…"
-    assert instance._restart_item.enabled is False
+    assert not instance._restart_item.enabled
     release.set()
     first.join(2)
     assert instance._restart_thread is not None
     instance._restart_thread.join(2)
-    assert instance._controller.restart_server.call_count == 1
+    assert cast(Mock, instance._controller.restart_server).call_count == 1
 
 
-def test_update_check_exposes_checking_state(tray, monkeypatch):
+def test_update_check_exposes_checking_state(
+    tray: TrayFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     instance, _icon = tray
     started = threading.Event()
     release = threading.Event()
@@ -267,10 +297,10 @@ def test_update_check_exposes_checking_state(tray, monkeypatch):
     monkeypatch.setattr(desktop_tray, "check_for_updates", check)
 
     try:
-        instance._check_updates(None, None)
+        instance._check_updates(instance._icon, instance._server_status_item)
         assert started.wait(1)
         assert instance._update_status_item.text == "◌ Checking…"
-        assert instance._update_check_item.enabled is False
+        assert not instance._update_check_item.enabled
     finally:
         release.set()
     _wait_for_update(instance)
@@ -279,7 +309,10 @@ def test_update_check_exposes_checking_state(tray, monkeypatch):
     assert instance._update_check_item.enabled is True
 
 
-def test_notification_failure_does_not_break_update_result(tray, monkeypatch):
+def test_notification_failure_does_not_break_update_result(
+    tray: TrayFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     instance, icon = tray
     icon.notify_error = RuntimeError("notification unavailable")
     result = UpdateCheckResult(
@@ -290,14 +323,17 @@ def test_notification_failure_does_not_break_update_result(tray, monkeypatch):
     )
     monkeypatch.setattr(desktop_tray, "check_for_updates", lambda: result)
 
-    instance._check_updates(None, None)
+    instance._check_updates(instance._icon, instance._server_status_item)
     _wait_for_update(instance)
 
     assert instance._update_status_item.text == "● Up to date: 1.10.0"
     assert instance._update_check_item.enabled is True
 
 
-def test_stop_during_update_check_suppresses_late_notification(tray, monkeypatch):
+def test_stop_during_update_check_suppresses_late_notification(
+    tray: TrayFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     instance, icon = tray
     started = threading.Event()
     release = threading.Event()
@@ -315,7 +351,7 @@ def test_stop_during_update_check_suppresses_late_notification(tray, monkeypatch
     monkeypatch.setattr(desktop_tray, "check_for_updates", check)
 
     try:
-        instance._check_updates(None, None)
+        instance._check_updates(instance._icon, instance._server_status_item)
         assert started.wait(1)
         instance.stop()
     finally:
@@ -362,26 +398,33 @@ def test_stop_during_update_check_suppresses_late_notification(tray, monkeypatch
     ],
 )
 def test_update_check_publishes_result_in_menu_and_notification(
-    tray, monkeypatch, result, expected_status, expected_level
-):
+    tray: TrayFixture,
+    monkeypatch: pytest.MonkeyPatch,
+    result: UpdateCheckResult,
+    expected_status: str,
+    expected_level: desktop_tray.NotificationLevel,
+) -> None:
     instance, icon = tray
     # On macOS menu refreshes are dispatched to the AppKit main queue, which does
     # not run during this test; that path is covered by the dispatch test below.
     monkeypatch.setattr(desktop_tray.sys, "platform", "linux")
     monkeypatch.setattr(desktop_tray, "check_for_updates", lambda: result)
 
-    instance._check_updates(None, None)
+    instance._check_updates(instance._icon, instance._server_status_item)
     _wait_for_update(instance)
 
     assert instance._update_status_item.text == expected_status
-    assert instance._update_status_item.enabled is False
+    assert not instance._update_status_item.enabled
     assert instance._update_check_item.enabled is True
     assert icon.notifications == [(result.message, "Free Claude Code")]
     assert icon.notification_details[0].level is expected_level
     assert icon.update_count == (3 if result.status is UpdateStatus.AVAILABLE else 2)
 
 
-def test_available_update_prompts_and_declining_preserves_retry(tray, monkeypatch):
+def test_available_update_prompts_and_declining_preserves_retry(
+    tray: TrayFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     instance, icon = tray
     result = UpdateCheckResult(
         status=UpdateStatus.AVAILABLE,
@@ -395,20 +438,22 @@ def test_available_update_prompts_and_declining_preserves_retry(tray, monkeypatc
     monkeypatch.setattr(desktop_tray, "confirm_update", confirm)
     monkeypatch.setattr(desktop_tray, "launch_update", launch)
 
-    instance._check_updates(None, None)
+    instance._check_updates(instance._icon, instance._server_status_item)
     _wait_for_update(instance)
 
     confirm.assert_called_once_with("1.10.0")
     launch.assert_not_called()
-    instance._controller.quit.assert_not_called()
+    cast(Mock, instance._controller.quit).assert_not_called()
     assert instance._update_check_item.enabled is True
     assert instance._update_status_item.text == "● Update available: 1.9.0 → 1.10.0"
     assert icon.notifications == [(result.message, "Free Claude Code")]
 
 
 def test_accepted_update_launches_detected_release_and_restarts_desktop(
-    tray, monkeypatch, tmp_path
-):
+    tray: TrayFixture,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
     instance, icon = tray
     result = UpdateCheckResult(
         status=UpdateStatus.AVAILABLE,
@@ -417,16 +462,21 @@ def test_accepted_update_launches_detected_release_and_restarts_desktop(
         message="FCC update available: 1.9.0 to 1.10.0.",
     )
     launch = Mock(return_value=tmp_path / "desktop-update.log")
-    monkeypatch.setattr(desktop_tray, "check_for_updates", lambda: result)
-    monkeypatch.setattr(desktop_tray, "confirm_update", lambda _latest: True)
-    monkeypatch.setattr(desktop_tray, "launch_update", launch)
 
-    instance._check_updates(None, None)
+    def accept_update(_latest: str) -> bool:
+        return True
+
+    monkeypatch.setattr(desktop_tray, "check_for_updates", lambda: result)
+    monkeypatch.setattr(desktop_tray, "confirm_update", accept_update)
+    monkeypatch.setattr(desktop_tray, "launch_update", launch)
+    monkeypatch.setattr(desktop_tray, "config_dir_path", lambda: tmp_path)
+
+    instance._check_updates(instance._icon, instance._server_status_item)
     _wait_for_update(instance)
 
-    launch.assert_called_once_with("1.10.0")
-    instance._controller.quit.assert_called_once_with()
-    assert instance._update_check_item.enabled is False
+    launch.assert_called_once_with("1.10.0", tmp_path / "logs")
+    cast(Mock, instance._controller.quit).assert_called_once_with()
+    assert not instance._update_check_item.enabled
     assert instance._update_status_item.text == "◌ Installing 1.10.0…"
     assert icon.notifications == [
         (result.message, "Free Claude Code"),
@@ -437,7 +487,10 @@ def test_accepted_update_launches_detected_release_and_restarts_desktop(
     ]
 
 
-def test_stop_during_update_confirmation_does_not_launch_installer(tray, monkeypatch):
+def test_stop_during_update_confirmation_does_not_launch_installer(
+    tray: TrayFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     instance, icon = tray
     entered = threading.Event()
     release = threading.Event()
@@ -458,20 +511,21 @@ def test_stop_during_update_confirmation_does_not_launch_installer(tray, monkeyp
     monkeypatch.setattr(desktop_tray, "confirm_update", confirm)
     monkeypatch.setattr(desktop_tray, "launch_update", launch)
 
-    instance._check_updates(None, None)
+    instance._check_updates(instance._icon, instance._server_status_item)
     assert entered.wait(1)
     instance.stop()
     release.set()
     _wait_for_update(instance)
 
     launch.assert_not_called()
-    instance._controller.quit.assert_not_called()
+    cast(Mock, instance._controller.quit).assert_not_called()
     assert icon.notifications == [(result.message, "Free Claude Code")]
 
 
 def test_stop_before_result_notification_suppresses_notification_and_confirmation(
-    tray, monkeypatch
-):
+    tray: TrayFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     instance, icon = tray
     result = UpdateCheckResult(
         status=UpdateStatus.AVAILABLE,
@@ -490,8 +544,9 @@ def test_stop_before_result_notification_suppresses_notification_and_confirmatio
 
 
 def test_update_launch_failure_keeps_desktop_running_and_offers_retry(
-    tray, monkeypatch
-):
+    tray: TrayFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     instance, icon = tray
     result = UpdateCheckResult(
         status=UpdateStatus.AVAILABLE,
@@ -499,18 +554,22 @@ def test_update_launch_failure_keeps_desktop_running_and_offers_retry(
         latest="1.10.0",
         message="FCC update available: 1.9.0 to 1.10.0.",
     )
+
+    def accept_update(_latest: str) -> bool:
+        return True
+
     monkeypatch.setattr(desktop_tray, "check_for_updates", lambda: result)
-    monkeypatch.setattr(desktop_tray, "confirm_update", lambda _latest: True)
+    monkeypatch.setattr(desktop_tray, "confirm_update", accept_update)
     monkeypatch.setattr(
         desktop_tray,
         "launch_update",
         Mock(side_effect=FileNotFoundError("fcc-update unavailable")),
     )
 
-    instance._check_updates(None, None)
+    instance._check_updates(instance._icon, instance._server_status_item)
     _wait_for_update(instance)
 
-    instance._controller.quit.assert_not_called()
+    cast(Mock, instance._controller.quit).assert_not_called()
     assert instance._update_check_item.enabled is True
     assert instance._update_status_item.text == "● Update available: 1.9.0 → 1.10.0"
     assert icon.notifications[-1] == (
@@ -520,7 +579,10 @@ def test_update_launch_failure_keeps_desktop_running_and_offers_retry(
     assert icon.notification_details[-1].level is desktop_tray.NotificationLevel.ERROR
 
 
-def test_failed_update_check_uses_generic_user_feedback(tray, monkeypatch):
+def test_failed_update_check_uses_generic_user_feedback(
+    tray: TrayFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     instance, icon = tray
     result = UpdateCheckResult(
         status=UpdateStatus.FAILED,
@@ -530,7 +592,7 @@ def test_failed_update_check_uses_generic_user_feedback(tray, monkeypatch):
     )
     monkeypatch.setattr(desktop_tray, "check_for_updates", lambda: result)
 
-    instance._check_updates(None, None)
+    instance._check_updates(instance._icon, instance._server_status_item)
     _wait_for_update(instance)
 
     assert instance._update_status_item.text == "○ Update check failed"
@@ -539,7 +601,10 @@ def test_failed_update_check_uses_generic_user_feedback(tray, monkeypatch):
     ]
 
 
-def test_failed_update_check_can_be_retried(tray, monkeypatch):
+def test_failed_update_check_can_be_retried(
+    tray: TrayFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     instance, _icon = tray
     results = [
         UpdateCheckResult(
@@ -563,9 +628,9 @@ def test_failed_update_check_can_be_retried(tray, monkeypatch):
 
     monkeypatch.setattr(desktop_tray, "check_for_updates", check)
 
-    instance._check_updates(None, None)
+    instance._check_updates(instance._icon, instance._server_status_item)
     _wait_for_update(instance)
-    instance._check_updates(None, None)
+    instance._check_updates(instance._icon, instance._server_status_item)
     _wait_for_update(instance)
 
     assert calls == 2
@@ -573,7 +638,10 @@ def test_failed_update_check_can_be_retried(tray, monkeypatch):
     assert instance._update_check_item.enabled is True
 
 
-def test_unexpected_update_check_error_does_not_escape_worker(tray, monkeypatch):
+def test_unexpected_update_check_error_does_not_escape_worker(
+    tray: TrayFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     instance, icon = tray
 
     def fail() -> UpdateCheckResult:
@@ -581,7 +649,7 @@ def test_unexpected_update_check_error_does_not_escape_worker(tray, monkeypatch)
 
     monkeypatch.setattr(desktop_tray, "check_for_updates", fail)
 
-    instance._check_updates(None, None)
+    instance._check_updates(instance._icon, instance._server_status_item)
     _wait_for_update(instance)
 
     assert instance._update_status_item.text == "○ Update check failed"
@@ -591,7 +659,10 @@ def test_unexpected_update_check_error_does_not_escape_worker(tray, monkeypatch)
     ]
 
 
-def test_update_worker_start_failure_is_reported(tray, monkeypatch):
+def test_update_worker_start_failure_is_reported(
+    tray: TrayFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     instance, icon = tray
 
     class FailingThread:
@@ -603,7 +674,7 @@ def test_update_worker_start_failure_is_reported(tray, monkeypatch):
 
     monkeypatch.setattr(desktop_tray.threading, "Thread", FailingThread)
 
-    instance._check_updates(None, None)
+    instance._check_updates(instance._icon, instance._server_status_item)
 
     assert instance._update_status_item.text == "○ Update check failed"
     assert instance._update_check_item.enabled is True
@@ -612,7 +683,10 @@ def test_update_worker_start_failure_is_reported(tray, monkeypatch):
     ]
 
 
-def test_concurrent_update_clicks_start_only_one_check(tray, monkeypatch):
+def test_concurrent_update_clicks_start_only_one_check(
+    tray: TrayFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     instance, _icon = tray
     started = threading.Event()
     release = threading.Event()
@@ -633,9 +707,9 @@ def test_concurrent_update_clicks_start_only_one_check(tray, monkeypatch):
     monkeypatch.setattr(desktop_tray, "check_for_updates", check)
 
     try:
-        instance._check_updates(None, None)
+        instance._check_updates(instance._icon, instance._server_status_item)
         assert started.wait(1)
-        instance._check_updates(None, None)
+        instance._check_updates(instance._icon, instance._server_status_item)
     finally:
         release.set()
     _wait_for_update(instance)
@@ -643,7 +717,9 @@ def test_concurrent_update_clicks_start_only_one_check(tray, monkeypatch):
     assert calls == 1
 
 
-def test_tray_menu_exposes_compact_branded_status_and_actions(tray):
+def test_tray_menu_exposes_compact_branded_status_and_actions(
+    tray: TrayFixture,
+) -> None:
     instance, _icon = tray
 
     labels = [item.text for item in instance._build_menu()]
@@ -662,30 +738,37 @@ def test_tray_menu_exposes_compact_branded_status_and_actions(tray):
         "- - - -",
         "Quit",
     ]
-    assert instance._brand_item.enabled is False
-    assert instance._server_status_item.enabled is False
-    assert instance._version_item.enabled is False
+    assert not instance._brand_item.enabled
+    assert not instance._server_status_item.enabled
+    assert not instance._version_item.enabled
     assert instance._update_check_item.enabled is True
-    assert instance._update_status_item.enabled is False
+    assert not instance._update_status_item.enabled
     assert instance._restart_item.enabled is True
 
 
-def test_macos_menu_refresh_is_dispatched_on_main_queue(tray, monkeypatch):
+def test_macos_menu_refresh_is_dispatched_on_main_queue(
+    tray: TrayFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     instance, icon = tray
-    scheduled: list = []
+    scheduled: list[Callable[[], None]] = []
 
     class FakeQueue:
-        def addOperationWithBlock_(self, operation) -> None:
+        def addOperationWithBlock_(self, operation: Callable[[], None]) -> None:
             scheduled.append(operation)
 
     appkit = SimpleNamespace(
         NSOperationQueue=SimpleNamespace(mainQueue=lambda: FakeQueue())
     )
     monkeypatch.setattr(desktop_tray.sys, "platform", "darwin")
+
+    def import_module(_name: str) -> object:
+        return appkit
+
     monkeypatch.setattr(
         desktop_tray.importlib,
         "import_module",
-        lambda name: appkit,
+        import_module,
     )
 
     instance._refresh_menu()

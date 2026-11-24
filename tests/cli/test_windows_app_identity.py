@@ -3,12 +3,12 @@
 import sys
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
 from unittest.mock import MagicMock, Mock
 
 import pytest
 
 from free_claude_code.cli import windows_app_identity
+from free_claude_code.cli.desktop_notifications import DesktopIcon
 
 if sys.platform != "win32":
     pytest.skip(
@@ -18,6 +18,19 @@ if sys.platform != "win32":
 
 
 APP_USER_MODEL_ID = "io.github.amedeo82.free-claude-code"
+
+
+class FakeRun:
+    def __init__(self) -> None:
+        self.commands: list[list[str]] = []
+
+    def __call__(
+        self,
+        command: list[str],
+        **_kwargs: object,
+    ) -> SimpleNamespace:
+        self.commands.append(command)
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
 
 
 def test_register_app_user_model_id_writes_branded_identity(
@@ -65,23 +78,33 @@ def test_ensure_windows_app_identity_exports_icons_and_repairs_shortcut(
         "app_icon_paths",
         lambda: (tmp_path / "app-icon.png", tmp_path / "app-icon.ico"),
     )
+
+    def export_icon(destination: Path) -> None:
+        exported.append(destination)
+
+    def register_identity(app_user_model_id: str, _icon_path: Path) -> bool:
+        return app_user_model_id == APP_USER_MODEL_ID
+
+    shortcut_calls: list[tuple[str, Path]] = []
+
+    def ensure_shortcut(app_user_model_id: str, icon_path: Path) -> bool:
+        shortcut_calls.append((app_user_model_id, icon_path))
+        return True
+
     monkeypatch.setattr(
         windows_app_identity,
         "export_app_icon",
-        lambda destination: exported.append(destination),
+        export_icon,
     )
     monkeypatch.setattr(
         windows_app_identity,
         "register_app_user_model_id",
-        lambda app_user_model_id, icon_path: app_user_model_id == APP_USER_MODEL_ID,
+        register_identity,
     )
-    shortcut_calls: list[tuple[str, Path]] = []
     monkeypatch.setattr(
         windows_app_identity,
         "ensure_start_menu_shortcut",
-        lambda app_user_model_id, icon_path: (
-            shortcut_calls.append((app_user_model_id, icon_path)) or True
-        ),
+        ensure_shortcut,
     )
 
     ensured = windows_app_identity.ensure_windows_app_identity(APP_USER_MODEL_ID)
@@ -99,23 +122,33 @@ def test_ensure_windows_app_identity_stops_when_registry_write_fails(
         "app_icon_paths",
         lambda: (tmp_path / "app-icon.png", tmp_path / "app-icon.ico"),
     )
+
+    def export_icon(_destination: Path) -> None:
+        return None
+
+    def register_identity(_app_user_model_id: str, _icon_path: Path) -> bool:
+        return False
+
+    shortcut_calls: list[str] = []
+
+    def ensure_shortcut(app_user_model_id: str, _icon_path: Path) -> bool:
+        shortcut_calls.append(app_user_model_id)
+        return True
+
     monkeypatch.setattr(
         windows_app_identity,
         "export_app_icon",
-        lambda destination: None,
+        export_icon,
     )
     monkeypatch.setattr(
         windows_app_identity,
         "register_app_user_model_id",
-        lambda app_user_model_id, icon_path: False,
+        register_identity,
     )
-    shortcut_calls: list[str] = []
     monkeypatch.setattr(
         windows_app_identity,
         "ensure_start_menu_shortcut",
-        lambda app_user_model_id, icon_path: (
-            shortcut_calls.append(app_user_model_id) or True
-        ),
+        ensure_shortcut,
     )
 
     ensured = windows_app_identity.ensure_windows_app_identity(APP_USER_MODEL_ID)
@@ -127,8 +160,7 @@ def test_ensure_windows_app_identity_stops_when_registry_write_fails(
 def test_ensure_start_menu_shortcut_invokes_powershell_helper(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    completed = SimpleNamespace(returncode=0, stdout="", stderr="")
-    run = Mock(return_value=completed)
+    run = FakeRun()
     monkeypatch.setattr(
         windows_app_identity,
         "_powershell_executable",
@@ -147,7 +179,7 @@ def test_ensure_start_menu_shortcut_invokes_powershell_helper(
     )
 
     assert created is True
-    command = run.call_args.args[0]
+    command = run.commands[0]
     assert command[0] == "powershell.exe"
     assert "-ExecutionPolicy" in command
     assert "Bypass" in command
@@ -250,10 +282,10 @@ def test_notifier_repairs_the_identity_before_showing_the_first_toast(
     )
 
     class FakeToastNotifier:
-        notification: Any = None
+        notification: object | None = None
         setting = 0
 
-        def show(self, notification) -> None:
+        def show(self, notification: object) -> None:
             self.notification = notification
 
     repaired: list[str] = []
@@ -277,18 +309,29 @@ def test_notifier_repairs_the_identity_before_showing_the_first_toast(
         "ensure_windows_app_identity",
         ensure_identity,
     )
+
+    def export_icon(_icon_path: Path) -> None:
+        return None
+
+    def config_directory() -> Path:
+        return tmp_path
+
     monkeypatch.setattr(
         windows_desktop_notifications,
         "export_app_icon",
-        lambda icon_path: None,
+        export_icon,
     )
     monkeypatch.setattr(
         windows_desktop_notifications,
         "config_dir_path",
-        lambda: tmp_path,
+        config_directory,
     )
 
-    notifier = windows_desktop_notifications.WindowsDesktopNotifier(object())
+    class FakeIcon(DesktopIcon):
+        def notify(self, message: str, title: str) -> None:
+            return None
+
+    notifier = windows_desktop_notifications.WindowsDesktopNotifier(FakeIcon())
     notifier.notify(
         DesktopNotification(
             title="Free Claude Code",

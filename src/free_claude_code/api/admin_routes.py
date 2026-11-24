@@ -737,9 +737,7 @@ def _admin_provider_logo_url(provider_id: str) -> str | None:
     descriptor = PROVIDER_CATALOG.get(provider_id)
     if descriptor is None or not descriptor.logo_filename:
         return None
-    return (
-        f"/admin/assets/{package_version()}/providers/{descriptor.logo_filename}"
-    )
+    return f"/admin/assets/{package_version()}/providers/{descriptor.logo_filename}"
 
 
 def _filtered_values(values: Mapping[str, JsonValue]) -> JsonObject:

@@ -1,3 +1,5 @@
+from typing import cast
+
 from free_claude_code.core.request_outcomes import (
     RequestOutcome,
     current_request_outcome,
@@ -54,7 +56,7 @@ def test_observation_limit_and_invalid_estimate_do_not_invent_values():
         assert record_request_observation("execution", 1, object(), limit=1)
         assert not record_request_observation("execution", 2, object(), limit=1)
         for invalid in (True, -1, 1.5, "10"):
-            record_estimated_input_tokens(invalid)
+            record_estimated_input_tokens(cast(int, invalid))
     finally:
         current_request_outcome.reset(token)
     assert outcome.estimated_input_tokens is None

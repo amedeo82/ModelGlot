@@ -51,17 +51,14 @@ class CanonicalUsage:
     estimated_input_tokens: int | None = None
 
     def __post_init__(self) -> None:
-        for field_name in (
-            "input_tokens",
-            "cache_read_tokens",
-            "cache_creation_tokens",
-            "input_total_tokens",
-            "output_tokens",
-            "reasoning_tokens",
-            "total_tokens",
-            "estimated_input_tokens",
-        ):
-            _validate_optional_count(getattr(self, field_name), field_name)
+        _validate_optional_count(self.input_tokens, "input_tokens")
+        _validate_optional_count(self.cache_read_tokens, "cache_read_tokens")
+        _validate_optional_count(self.cache_creation_tokens, "cache_creation_tokens")
+        _validate_optional_count(self.input_total_tokens, "input_total_tokens")
+        _validate_optional_count(self.output_tokens, "output_tokens")
+        _validate_optional_count(self.reasoning_tokens, "reasoning_tokens")
+        _validate_optional_count(self.total_tokens, "total_tokens")
+        _validate_optional_count(self.estimated_input_tokens, "estimated_input_tokens")
 
 
 @dataclass(frozen=True, slots=True)
@@ -173,8 +170,9 @@ class RequestUsageRecord:
             object.__setattr__(self, "protocol", UsageProtocol(self.protocol))
         if not isinstance(self.usage, CanonicalUsage):
             raise ValueError("usage must be a CanonicalUsage instance.")
-        for field_name in ("provider_id", "gateway_model", "provider_model"):
-            _validate_optional_identity(getattr(self, field_name), field_name)
+        _validate_optional_identity(self.provider_id, "provider_id")
+        _validate_optional_identity(self.gateway_model, "gateway_model")
+        _validate_optional_identity(self.provider_model, "provider_model")
         if self.status_code is not None and (
             isinstance(self.status_code, bool)
             or not isinstance(self.status_code, int)
@@ -211,8 +209,9 @@ class UsageFilters:
         object.__setattr__(self, "start", start)
         object.__setattr__(self, "end", end)
         object.__setattr__(self, "group_by", UsageGroupBy(self.group_by))
-        for field_name in ("provider_id", "gateway_model", "provider_model"):
-            _validate_optional_identity(getattr(self, field_name), field_name)
+        _validate_optional_identity(self.provider_id, "provider_id")
+        _validate_optional_identity(self.gateway_model, "gateway_model")
+        _validate_optional_identity(self.provider_model, "provider_model")
 
     def contains(self, value: datetime) -> bool:
         """Match the half-open UTC interval ``[start, end)``."""
@@ -283,8 +282,9 @@ def _validate_event(event: UsageObservation | FinalUsageEvent) -> None:
         raise ValueError("attempt must be a positive integer.")
     if not isinstance(event.usage, CanonicalUsage):
         raise ValueError("usage must be a CanonicalUsage instance.")
-    for field_name in ("provider_id", "gateway_model", "provider_model"):
-        _validate_optional_identity(getattr(event, field_name), field_name)
+    _validate_optional_identity(event.provider_id, "provider_id")
+    _validate_optional_identity(event.gateway_model, "gateway_model")
+    _validate_optional_identity(event.provider_model, "provider_model")
 
 
 def _issue(
@@ -656,7 +656,7 @@ def normalize_gemini_usage(
         and candidates.value is not None
         and (not thoughts.reported or (thoughts.valid and thoughts.value == 0))
     )
-    if output_is_unambiguous:
+    if output_is_unambiguous and candidates.value is not None:
         output_tokens = candidates.value
         if total.valid and total.value is not None:
             if prompt.value is not None and total.value != prompt.value + output_tokens:

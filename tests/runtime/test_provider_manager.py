@@ -1,5 +1,7 @@
 import asyncio
-from typing import cast
+from collections.abc import Mapping
+from pathlib import Path
+from typing import cast, override
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx2
@@ -13,6 +15,7 @@ from free_claude_code.config.api_keys import normalize_api_keys
 from free_claude_code.config.model_catalog_metadata import ModelCatalogMetadata
 from free_claude_code.config.settings import Settings
 from free_claude_code.providers.base import BaseProvider
+from free_claude_code.providers.model_catalog_logos import ModelCatalogLogoStore
 from free_claude_code.providers.model_catalog_source import (
     ModelCatalogCache,
     ModelCatalogSource,
@@ -20,6 +23,7 @@ from free_claude_code.providers.model_catalog_source import (
 from free_claude_code.providers.nvidia_nim import NvidiaNimProvider
 from free_claude_code.providers.runtime import ProviderRuntime
 from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
+from tests.mock_calls import keyword_arguments, positional_arguments
 from tests.runtime.catalog_support import finish_discovery, finish_publication
 
 
@@ -33,9 +37,11 @@ class FakeRuntime(ProviderRuntime):
         self.provider = MagicMock()
         self.provider.list_model_infos = AsyncMock(return_value=frozenset())
 
+    @override
     def is_cached(self, provider_id: str, api_key_number: int = 1) -> bool:
         return provider_id == "cached"
 
+    @override
     async def resolve_provider(
         self, provider_id: str, api_key_number: int = 1
     ) -> BaseProvider:
@@ -43,6 +49,7 @@ class FakeRuntime(ProviderRuntime):
             raise ConnectionError("Local fixture is offline")
         return cast(BaseProvider, self.provider)
 
+    @override
     async def cleanup(self) -> None:
         self.cleanup_calls += 1
         if self.cleanup_started is not None:
@@ -59,7 +66,10 @@ class RuntimeFactory:
         self.error: Exception | None = None
 
     def __call__(
-        self, settings: Settings, admission_registry, history_cache=None
+        self,
+        settings: Settings,
+        admission_registry: object,
+        history_cache: object = None,
     ) -> ProviderRuntime:
         if self.error is not None:
             raise self.error
@@ -111,7 +121,9 @@ async def test_unconfigured_referenced_provider_is_not_discovered() -> None:
 
 
 @pytest.mark.asyncio
-async def test_discovery_error_follows_attempt_and_generation_without_losing_cache():
+async def test_discovery_error_follows_attempt_and_generation_without_losing_cache() -> (
+    None
+):
     factory = RuntimeFactory()
     settings = _settings("nvidia_nim/one")
     manager = ProviderRuntimeManager(settings, runtime_factory=factory)
@@ -186,7 +198,9 @@ async def test_startup_generation_lease_and_shutdown_close_exactly_once() -> Non
 
 
 @pytest.mark.asyncio
-async def test_custom_tail_edit_preserves_metadata_and_first_key_change_evicts_it():
+async def test_custom_tail_edit_preserves_metadata_and_first_key_change_evicts_it() -> (
+    None
+):
     provider_id = "custom_" + "c" * 32
     definition = {
         "provider_id": provider_id,
@@ -195,7 +209,7 @@ async def test_custom_tail_edit_preserves_metadata_and_first_key_change_evicts_i
         "api_keys": ["catalog-first", "catalog-tail"],
     }
 
-    def settings(keys):
+    def settings(keys: list[str]):
         return Settings.model_validate(
             {
                 "FCC_CUSTOM_PROVIDERS": [{**definition, "api_keys": keys}],
@@ -206,7 +220,7 @@ async def test_custom_tail_edit_preserves_metadata_and_first_key_change_evicts_i
     async def held_models():
         await asyncio.Event().wait()
 
-    def factory(config, registry, history_cache=None):
+    def factory(config: Settings, registry: object, history_cache: object = None):
         runtime = FakeRuntime(config)
         runtime.provider.list_model_infos = AsyncMock(side_effect=held_models)
         return runtime
@@ -399,7 +413,7 @@ async def test_catalog_publication_failure_is_warning_only_and_secret_safe() -> 
     log_blob = " ".join(
         str(value)
         for call in warning.call_args_list
-        for value in (*call.args, *call.kwargs.values())
+        for value in (*positional_arguments(call), *keyword_arguments(call).values())
     )
     assert "PermissionError" in log_blob
     assert secret not in log_blob
@@ -683,7 +697,7 @@ async def test_failed_candidate_cleanup_is_retried_at_shutdown() -> None:
     assert factory.runtimes[1].cleanup_calls == 3
     assert manager._unpublished == set()
     assert manager.cached_model_ids() == {}
-    assert manager._closed is True
+    assert manager._closed
 
 
 @pytest.mark.asyncio
@@ -871,7 +885,7 @@ async def test_cancelled_shutdown_reuses_the_same_owned_cleanup_task() -> None:
 
     assert cleanup_calls == 1
     assert manager._retired == {}
-    assert manager._closed is True
+    assert manager._closed
 
 
 @pytest.mark.asyncio
@@ -902,7 +916,7 @@ async def test_failed_shutdown_cleanup_is_retryable() -> None:
     assert factory.runtimes[0].cleanup_calls == 2
     assert manager._retired == {}
     assert manager.cached_model_ids() == {}
-    assert manager._closed is True
+    assert manager._closed
 
 
 @pytest.mark.asyncio
@@ -1036,7 +1050,7 @@ async def test_generation_lifecycle_traces_contain_minimal_correlation_fields() 
 
 @pytest.mark.asyncio
 async def test_model_title_refresh_runs_in_background_without_blocking_reads(
-    tmp_path,
+    tmp_path: Path,
 ) -> None:
     class BlockingSource(ModelCatalogSource):
         def __init__(self) -> None:
@@ -1045,9 +1059,11 @@ async def test_model_title_refresh_runs_in_background_without_blocking_reads(
             self.release = asyncio.Event()
             self.completed = asyncio.Event()
 
+        @override
         def load(self) -> ModelCatalogCache:
             return ModelCatalogCache()
 
+        @override
         async def refresh(self, settings: Settings) -> ModelCatalogCache:
             self.started.set()
             await self.release.wait()
@@ -1057,6 +1073,7 @@ async def test_model_title_refresh_runs_in_background_without_blocking_reads(
                 fetched_at=1.0,
             )
 
+        @override
         def write(self, cache: ModelCatalogCache) -> None:
             return None
 
@@ -1084,7 +1101,7 @@ async def test_model_title_refresh_runs_in_background_without_blocking_reads(
 
 @pytest.mark.asyncio
 async def test_catalog_metadata_is_available_before_logo_refresh_finishes(
-    tmp_path,
+    tmp_path: Path,
 ) -> None:
     metadata = ModelCatalogMetadata(
         canonical_model_id="minimax/MiniMax-M3.1-Flash",
@@ -1093,9 +1110,11 @@ async def test_catalog_metadata_is_available_before_logo_refresh_finishes(
     )
 
     class Source(ModelCatalogSource):
+        @override
         def load(self) -> ModelCatalogCache:
             return ModelCatalogCache()
 
+        @override
         async def refresh(self, settings: Settings) -> ModelCatalogCache:
             return ModelCatalogCache(
                 entries={
@@ -1108,6 +1127,7 @@ async def test_catalog_metadata_is_available_before_logo_refresh_finishes(
                 fetched_at=1.0,
             )
 
+        @override
         def write(self, cache: ModelCatalogCache) -> None:
             return None
 
@@ -1116,7 +1136,10 @@ async def test_catalog_metadata_is_available_before_logo_refresh_finishes(
             self.started = asyncio.Event()
             self.release = asyncio.Event()
 
-        async def refresh(self, _metadata) -> None:
+        async def refresh(
+            self,
+            _metadata: Mapping[tuple[str, str], ModelCatalogMetadata],
+        ) -> None:
             self.started.set()
             await self.release.wait()
 
@@ -1125,7 +1148,7 @@ async def test_catalog_metadata_is_available_before_logo_refresh_finishes(
         _settings("nvidia_nim/minimaxai/minimax-m3.1-flash"),
         runtime_factory=RuntimeFactory(),
         model_title_source=Source(tmp_path / "titles.json"),
-        model_catalog_logos=logos,
+        model_catalog_logos=cast(ModelCatalogLogoStore, logos),
     )
     try:
         manager.start_model_list_refresh()
@@ -1142,14 +1165,16 @@ async def test_catalog_metadata_is_available_before_logo_refresh_finishes(
 
 
 @pytest.mark.asyncio
-async def test_disabled_model_title_source_never_refreshes(tmp_path) -> None:
+async def test_disabled_model_title_source_never_refreshes(tmp_path: Path) -> None:
     class ForbiddenSource(ModelCatalogSource):
         def __init__(self) -> None:
             super().__init__(tmp_path / "titles.json")
 
+        @override
         async def refresh(self, settings: Settings) -> ModelCatalogCache:
             pytest.fail("disabled model title source must not refresh")
 
+        @override
         def write(self, cache: ModelCatalogCache) -> None:
             pytest.fail("disabled model title source must not write")
 

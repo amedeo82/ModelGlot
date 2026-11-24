@@ -1,11 +1,14 @@
+from collections.abc import Callable
 from dataclasses import FrozenInstanceError
 from datetime import UTC, datetime, timedelta, timezone
+from typing import cast
 
 import pytest
 
 from free_claude_code.application.usage_events import (
     CanonicalUsage,
     FinalUsageEvent,
+    NormalizedUsage,
     UsageFilters,
     UsageGroupBy,
     UsageObservation,
@@ -273,7 +276,7 @@ def test_openai_responses_null_counts_are_not_defaults() -> None:
     ],
 )
 def test_openai_malformed_details_emit_issue_without_payload(
-    normalizer, details_field: str
+    normalizer: Callable[[object], NormalizedUsage], details_field: str
 ) -> None:
     result = normalizer({details_field: "private-provider-payload"})
 
@@ -541,7 +544,7 @@ def test_gemini_invalid_counts_are_unknown_and_sanitized(
     ],
 )
 def test_malformed_root_returns_all_unknown_with_sanitized_issue(
-    normalizer, protocol: UsageProtocol
+    normalizer: Callable[[object], NormalizedUsage], protocol: UsageProtocol
 ) -> None:
     result = normalizer("private raw response")
 
@@ -569,7 +572,7 @@ def test_canonical_usage_is_immutable_and_validates_direct_construction() -> Non
     usage = CanonicalUsage(input_tokens=0)
 
     with pytest.raises(FrozenInstanceError):
-        usage.input_tokens = 1
+        usage.__setattr__("input_tokens", 1)
     with pytest.raises(ValueError, match="non-negative integer"):
         CanonicalUsage(input_tokens=True)
     with pytest.raises(ValueError, match="non-negative integer"):
@@ -608,7 +611,7 @@ def test_observation_rejects_invalid_attempt(attempt: object) -> None:
         UsageObservation(
             request_id="request",
             execution_id="execution",
-            attempt=attempt,
+            attempt=cast(int, attempt),
             protocol=UsageProtocol.GEMINI,
             usage=CanonicalUsage(),
             created_at=datetime(2026, 11, 18, tzinfo=UTC),
@@ -626,7 +629,7 @@ def test_usage_filters_use_half_open_utc_interval_and_metadata() -> None:
     filters = UsageFilters(
         start=start,
         end=end,
-        group_by="model",
+        group_by=cast(UsageGroupBy, "model"),
         provider_id="provider-a",
         gateway_model="gateway-a",
     )
@@ -668,7 +671,7 @@ def test_usage_filter_groupings_are_allow_listed(group_by: str) -> None:
     filters = UsageFilters(
         start=start,
         end=start + timedelta(days=1),
-        group_by=group_by,
+        group_by=cast(UsageGroupBy, group_by),
     )
 
     assert filters.group_by is UsageGroupBy(group_by)
@@ -684,5 +687,5 @@ def test_usage_filters_reject_invalid_order_naive_datetimes_and_grouping() -> No
         UsageFilters(
             start=start,
             end=start + timedelta(days=1),
-            group_by="raw_payload",
+            group_by=cast(UsageGroupBy, "raw_payload"),
         )

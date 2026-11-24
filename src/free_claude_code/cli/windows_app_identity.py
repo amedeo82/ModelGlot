@@ -314,7 +314,7 @@ def ensure_start_menu_shortcut(app_user_model_id: str, icon_path: Path) -> bool:
                 check=False,
                 creationflags=_CREATE_NO_WINDOW,
             )
-        except (OSError, subprocess.SubprocessError):
+        except OSError, subprocess.SubprocessError:
             return False
     return result.returncode == 0
 

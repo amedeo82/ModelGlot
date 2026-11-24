@@ -3,8 +3,10 @@ import io
 import json
 import subprocess
 import threading
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TypedDict, cast
 
 import pytest
 
@@ -13,20 +15,38 @@ from free_claude_code.runtime.token_optimization import (
     ExternalTokenOptimizationCollector,
     OutputLimitExceeded,
     ProcessResult,
+    ProcessRunner,
     run_bounded_process,
 )
+from tests.wire_payload import array_payload, object_payload
 
 FIXTURES = Path(__file__).parents[1] / "application" / "fixtures" / "token_optimization"
 
 
-def fixture_bytes(name):
+class ProcessCall(TypedDict):
+    argv: list[str]
+    env: dict[str, str]
+    timeout: float
+    max_output_bytes: int
+
+
+def fixture_bytes(name: str) -> bytes:
     return (FIXTURES / name).read_bytes()
 
 
 def successful_runner(
-    calls, *, rtk="rtk_populated.json", headroom="headroom_zero.json"
-):
-    def run(argv, *, env, timeout, max_output_bytes):
+    calls: list[ProcessCall],
+    *,
+    rtk: str = "rtk_populated.json",
+    headroom: str = "headroom_zero.json",
+) -> ProcessRunner:
+    def run(
+        argv: Sequence[str],
+        *,
+        env: dict[str, str],
+        timeout: float,
+        max_output_bytes: int,
+    ) -> ProcessResult:
         calls.append(
             {
                 "argv": list(argv),
@@ -47,13 +67,15 @@ def successful_runner(
     return run
 
 
-def resolver(name):
+def resolver(name: str) -> str:
     return f"/tools/{name}"
 
 
 @pytest.mark.asyncio
-async def test_collector_uses_fixed_direct_argv_and_sanitized_success_contract():
-    calls = []
+async def test_collector_uses_fixed_direct_argv_and_sanitized_success_contract() -> (
+    None
+):
+    calls: list[ProcessCall] = []
     collector = ExternalTokenOptimizationCollector(
         executable_resolver=resolver,
         process_runner=successful_runner(calls),
@@ -62,9 +84,12 @@ async def test_collector_uses_fixed_direct_argv_and_sanitized_success_contract()
 
     payload = await collector.collect()
 
-    assert payload["optimizations"]["rtk"]["version"] == "0.44.2"
-    assert payload["optimizations"]["headroom"]["state"] == "available"
-    assert len(payload["optimizations"]["rtk"]["daily"]) == 2
+    optimizations = object_payload(payload["optimizations"])
+    rtk = object_payload(optimizations["rtk"])
+    headroom = object_payload(optimizations["headroom"])
+    assert rtk["version"] == "0.44.2"
+    assert headroom["state"] == "available"
+    assert len(array_payload(rtk["daily"])) == 2
     summary_calls = [
         call
         for call in calls
@@ -94,8 +119,8 @@ async def test_collector_uses_fixed_direct_argv_and_sanitized_success_contract()
 
 
 @pytest.mark.asyncio
-async def test_daily_schema_drift_does_not_invalidate_summary():
-    def run(argv, **kwargs):
+async def test_daily_schema_drift_does_not_invalidate_summary() -> None:
+    def run(argv: Sequence[str], **kwargs: object) -> ProcessResult:
         if "--daily" in argv:
             return ProcessResult(0, b"not json", b"")
         if "gain" in argv:
@@ -108,15 +133,16 @@ async def test_daily_schema_drift_does_not_invalidate_summary():
         executable_resolver=resolver, process_runner=run
     )
     payload = await collector.collect()
-    assert payload["optimizations"]["rtk"]["state"] == "available"
-    assert "daily" not in payload["optimizations"]["rtk"]
+    rtk = object_payload(object_payload(payload["optimizations"])["rtk"])
+    assert rtk["state"] == "available"
+    assert "daily" not in rtk
 
 
 @pytest.mark.asyncio
-async def test_resolver_failure_does_not_hide_the_other_tool():
-    calls = []
+async def test_resolver_failure_does_not_hide_the_other_tool() -> None:
+    calls: list[ProcessCall] = []
 
-    def resolve(name):
+    def resolve(name: str) -> str:
         if name == "rtk":
             raise OSError("private resolver path")
         return resolver(name)
@@ -126,20 +152,24 @@ async def test_resolver_failure_does_not_hide_the_other_tool():
         process_runner=successful_runner(calls),
     )
     payload = await collector.collect()
-    assert payload["optimizations"]["rtk"]["state"] == "error"
-    assert payload["optimizations"]["headroom"]["state"] == "available"
+    optimizations = object_payload(payload["optimizations"])
+    assert object_payload(optimizations["rtk"])["state"] == "error"
+    assert object_payload(optimizations["headroom"])["state"] == "available"
     assert "private resolver path" not in json.dumps(payload)
 
 
 @pytest.mark.asyncio
-async def test_missing_tools_have_independent_not_installed_states():
+async def test_missing_tools_have_independent_not_installed_states() -> None:
     collector = ExternalTokenOptimizationCollector(
         executable_resolver=lambda name: None
     )
     payload = await collector.collect()
-    assert payload["optimizations"]["rtk"]["state"] == "not_installed"
-    assert payload["optimizations"]["headroom"]["state"] == "not_installed"
-    assert payload["optimizations"]["rtk"]["message"]
+    optimizations = object_payload(payload["optimizations"])
+    rtk = object_payload(optimizations["rtk"])
+    headroom = object_payload(optimizations["headroom"])
+    assert rtk["state"] == "not_installed"
+    assert headroom["state"] == "not_installed"
+    assert rtk["message"]
 
 
 @pytest.mark.asyncio
@@ -151,8 +181,10 @@ async def test_missing_tools_have_independent_not_installed_states():
         (OSError("private path must not leak"), "error"),
     ],
 )
-async def test_tool_failures_are_stable_and_do_not_hide_the_other_tool(failure, state):
-    def run(argv, **kwargs):
+async def test_tool_failures_are_stable_and_do_not_hide_the_other_tool(
+    failure: BaseException, state: str
+) -> None:
+    def run(argv: Sequence[str], **kwargs: object) -> ProcessResult:
         if "gain" in argv:
             raise failure
         if "--version" in argv:
@@ -163,8 +195,9 @@ async def test_tool_failures_are_stable_and_do_not_hide_the_other_tool(failure, 
         executable_resolver=resolver, process_runner=run
     )
     payload = await collector.collect()
-    assert payload["optimizations"]["rtk"]["state"] == state
-    assert payload["optimizations"]["headroom"]["state"] == "available"
+    optimizations = object_payload(payload["optimizations"])
+    assert object_payload(optimizations["rtk"])["state"] == state
+    assert object_payload(optimizations["headroom"])["state"] == "available"
     assert "private path" not in json.dumps(payload)
 
 
@@ -174,9 +207,9 @@ async def test_tool_failures_are_stable_and_do_not_hide_the_other_tool(failure, 
     [(b"not json", "invalid_output"), (b'{"summary": {}}', "available")],
 )
 async def test_invalid_json_and_missing_fields_have_distinct_semantics(
-    output, expected_state
-):
-    def run(argv, **kwargs):
+    output: bytes, expected_state: str
+) -> None:
+    def run(argv: Sequence[str], **kwargs: object) -> ProcessResult:
         if "gain" in argv:
             return ProcessResult(0, output, b"")
         if "savings" in argv:
@@ -187,12 +220,15 @@ async def test_invalid_json_and_missing_fields_have_distinct_semantics(
         executable_resolver=resolver, process_runner=run
     )
     payload = await collector.collect()
-    assert payload["optimizations"]["rtk"]["state"] == expected_state
+    rtk = object_payload(object_payload(payload["optimizations"])["rtk"])
+    assert rtk["state"] == expected_state
 
 
 @pytest.mark.asyncio
-async def test_nonzero_exit_is_an_error_and_version_failure_does_not_hide_summary():
-    def run(argv, **kwargs):
+async def test_nonzero_exit_is_an_error_and_version_failure_does_not_hide_summary() -> (
+    None
+):
+    def run(argv: Sequence[str], **kwargs: object) -> ProcessResult:
         if "gain" in argv:
             return ProcessResult(2, b"private stdout", b"private stderr")
         if "savings" in argv:
@@ -203,15 +239,16 @@ async def test_nonzero_exit_is_an_error_and_version_failure_does_not_hide_summar
         executable_resolver=resolver, process_runner=run
     )
     payload = await collector.collect()
-    assert payload["optimizations"]["rtk"]["state"] == "error"
-    assert payload["optimizations"]["headroom"]["version"] is None
+    optimizations = object_payload(payload["optimizations"])
+    assert object_payload(optimizations["rtk"])["state"] == "error"
+    assert object_payload(optimizations["headroom"])["version"] is None
     assert "private stdout" not in json.dumps(payload)
     assert "private stderr" not in json.dumps(payload)
 
 
 @pytest.mark.asyncio
-async def test_cache_covers_success_and_ttl_and_returns_defensive_copies():
-    calls = []
+async def test_cache_covers_success_and_ttl_and_returns_defensive_copies() -> None:
+    calls: list[ProcessCall] = []
     monotonic = [0.0]
     collector = ExternalTokenOptimizationCollector(
         executable_resolver=resolver,
@@ -220,9 +257,11 @@ async def test_cache_covers_success_and_ttl_and_returns_defensive_copies():
         cache_ttl_seconds=5,
     )
     first = await collector.collect()
-    first["optimizations"]["rtk"]["state"] = "mutated"
+    first_rtk = object_payload(object_payload(first["optimizations"])["rtk"])
+    first_rtk["state"] = "mutated"
     second = await collector.collect()
-    assert second["optimizations"]["rtk"]["state"] == "available"
+    second_rtk = object_payload(object_payload(second["optimizations"])["rtk"])
+    assert second_rtk["state"] == "available"
     initial_count = len(calls)
     await collector.collect()
     assert len(calls) == initial_count
@@ -232,17 +271,28 @@ async def test_cache_covers_success_and_ttl_and_returns_defensive_copies():
 
 
 @pytest.mark.asyncio
-async def test_force_refresh_coalesces_with_an_existing_flight():
-    calls = []
+async def test_force_refresh_coalesces_with_an_existing_flight() -> None:
+    calls: list[ProcessCall] = []
     started = threading.Event()
     release = threading.Event()
     base = successful_runner(calls)
 
-    def run(argv, **kwargs):
+    def run(
+        argv: Sequence[str],
+        *,
+        env: dict[str, str],
+        timeout: float,
+        max_output_bytes: int,
+    ) -> ProcessResult:
         if "gain" in argv:
             started.set()
             assert release.wait(2)
-        return base(argv, **kwargs)
+        return base(
+            argv,
+            env=env,
+            timeout=timeout,
+            max_output_bytes=max_output_bytes,
+        )
 
     collector = ExternalTokenOptimizationCollector(
         executable_resolver=resolver, process_runner=run
@@ -260,17 +310,28 @@ async def test_force_refresh_coalesces_with_an_existing_flight():
 
 
 @pytest.mark.asyncio
-async def test_cancelling_one_caller_does_not_cancel_shared_collection():
-    calls = []
+async def test_cancelling_one_caller_does_not_cancel_shared_collection() -> None:
+    calls: list[ProcessCall] = []
     started = threading.Event()
     release = threading.Event()
     base = successful_runner(calls)
 
-    def run(argv, **kwargs):
+    def run(
+        argv: Sequence[str],
+        *,
+        env: dict[str, str],
+        timeout: float,
+        max_output_bytes: int,
+    ) -> ProcessResult:
         if "gain" in argv:
             started.set()
             assert release.wait(2)
-        return base(argv, **kwargs)
+        return base(
+            argv,
+            env=env,
+            timeout=timeout,
+            max_output_bytes=max_output_bytes,
+        )
 
     collector = ExternalTokenOptimizationCollector(
         executable_resolver=resolver, process_runner=run
@@ -282,21 +343,33 @@ async def test_cancelling_one_caller_does_not_cancel_shared_collection():
         await cancelled
     release.set()
     result = await collector.collect()
-    assert result["optimizations"]["rtk"]["state"] == "available"
+    rtk = object_payload(object_payload(result["optimizations"])["rtk"])
+    assert rtk["state"] == "available"
 
 
 @pytest.mark.asyncio
-async def test_close_drains_shared_work_and_rejects_new_collection():
-    calls = []
+async def test_close_drains_shared_work_and_rejects_new_collection() -> None:
+    calls: list[ProcessCall] = []
     started = threading.Event()
     release = threading.Event()
     base = successful_runner(calls)
 
-    def run(argv, **kwargs):
+    def run(
+        argv: Sequence[str],
+        *,
+        env: dict[str, str],
+        timeout: float,
+        max_output_bytes: int,
+    ) -> ProcessResult:
         if "gain" in argv:
             started.set()
             assert release.wait(2)
-        return base(argv, **kwargs)
+        return base(
+            argv,
+            env=env,
+            timeout=timeout,
+            max_output_bytes=max_output_bytes,
+        )
 
     collector = ExternalTokenOptimizationCollector(
         executable_resolver=resolver, process_runner=run
@@ -311,10 +384,10 @@ async def test_close_drains_shared_work_and_rejects_new_collection():
 
 
 @pytest.mark.asyncio
-async def test_cache_also_covers_tool_failure():
-    calls = []
+async def test_cache_also_covers_tool_failure() -> None:
+    calls: list[Sequence[str]] = []
 
-    def run(argv, **kwargs):
+    def run(argv: Sequence[str], **kwargs: object) -> ProcessResult:
         calls.append(argv)
         raise OSError("unavailable")
 
@@ -328,31 +401,41 @@ async def test_cache_also_covers_tool_failure():
 
 
 class FakeProcess:
-    def __init__(self, stdout=b"{}", stderr=b"", timeout=False):
+    def __init__(
+        self, stdout: bytes = b"{}", stderr: bytes = b"", timeout: bool = False
+    ) -> None:
         self.stdout = io.BytesIO(stdout)
         self.stderr = io.BytesIO(stderr)
         self.timeout = timeout
         self.killed = False
 
-    def wait(self, timeout=None):
+    def wait(self, timeout: float | None = None) -> int:
         if self.timeout and not self.killed:
-            raise subprocess.TimeoutExpired("fixed", timeout)
+            raise subprocess.TimeoutExpired(
+                "fixed", timeout if timeout is not None else 0.0
+            )
         return 0
 
-    def kill(self):
+    def kill(self) -> None:
         self.killed = True
 
 
-def test_default_runner_passes_shell_false_and_bounded_pipes(monkeypatch):
+def test_default_runner_passes_shell_false_and_bounded_pipes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     process = FakeProcess(stdout=b'{"ok": true}')
-    captured = {}
+    captured: dict[str, object] = {}
 
-    def popen(argv, **kwargs):
+    def popen(argv: Sequence[str], **kwargs: object) -> FakeProcess:
         captured["argv"] = argv
         captured.update(kwargs)
         return process
 
-    monkeypatch.setattr(runtime_module.subprocess, "Popen", popen)
+    monkeypatch.setattr(
+        runtime_module.subprocess,
+        "Popen",
+        cast("Callable[..., subprocess.Popen[bytes]]", popen),
+    )
     result = run_bounded_process(
         ["rtk", "gain"], env={"SAFE": "1"}, timeout=1, max_output_bytes=100
     )
@@ -364,18 +447,29 @@ def test_default_runner_passes_shell_false_and_bounded_pipes(monkeypatch):
     assert captured["stderr"] is subprocess.PIPE
 
 
-def test_default_runner_discards_oversized_output_and_kills_on_timeout(monkeypatch):
+def test_default_runner_discards_oversized_output_and_kills_on_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def popen_oversized(*args: object, **kwargs: object) -> FakeProcess:
+        return FakeProcess(stdout=b"x" * 100)
+
     monkeypatch.setattr(
         runtime_module.subprocess,
         "Popen",
-        lambda *args, **kwargs: FakeProcess(stdout=b"x" * 100),
+        cast("Callable[..., subprocess.Popen[bytes]]", popen_oversized),
     )
     with pytest.raises(OutputLimitExceeded):
         run_bounded_process(["fixed"], env={}, timeout=1, max_output_bytes=10)
 
     process = FakeProcess(timeout=True)
+
+    def popen_timeout(*args: object, **kwargs: object) -> FakeProcess:
+        return process
+
     monkeypatch.setattr(
-        runtime_module.subprocess, "Popen", lambda *args, **kwargs: process
+        runtime_module.subprocess,
+        "Popen",
+        cast("Callable[..., subprocess.Popen[bytes]]", popen_timeout),
     )
     with pytest.raises(subprocess.TimeoutExpired):
         run_bounded_process(["fixed"], env={}, timeout=0.01, max_output_bytes=10)

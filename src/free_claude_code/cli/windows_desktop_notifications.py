@@ -3,20 +3,25 @@
 import ctypes
 import threading
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Protocol, cast
 
 from loguru import logger
 
 from free_claude_code.cli.desktop_assets import export_app_icon
 from free_claude_code.cli.desktop_notifications import (
     APP_USER_MODEL_ID,
+    DesktopIcon,
     DesktopNotification,
     NotificationLevel,
     PystrayDesktopNotifier,
+    WindowsBalloonIcon,
     notification_title,
 )
 from free_claude_code.cli.windows_app_identity import ensure_windows_app_identity
 from free_claude_code.config.paths import config_dir_path
+
+if TYPE_CHECKING:
+    from winrt.windows.ui.notifications import ToastNotifier
 
 _IDENTITY_REPAIR_TIMEOUT_SECONDS = 30.0
 
@@ -39,11 +44,16 @@ _LEVEL_FLAGS = {
 class WindowsDesktopNotifier:
     """Show branded Windows toasts with a native-styled balloon fallback."""
 
-    def __init__(self, icon: Any, *, enable_toast: bool = True) -> None:
+    def __init__(
+        self,
+        icon: DesktopIcon | WindowsBalloonIcon,
+        *,
+        enable_toast: bool = True,
+    ) -> None:
         self._icon = icon
-        self._fallback = PystrayDesktopNotifier(icon)
+        self._fallback = PystrayDesktopNotifier(cast(DesktopIcon, icon))
         self._lock = threading.Lock()
-        self._toast_notifier: Any = None
+        self._toast_notifier: ToastNotifier | None = None
         self._logo_path: Path | None = None
         self._identity_thread: threading.Thread | None = None
         if not enable_toast:
@@ -120,8 +130,11 @@ class WindowsDesktopNotifier:
             from winrt.windows.ui.notifications import NotificationSetting
         except ImportError:
             return False
+        notifier = self._toast_notifier
+        if notifier is None:
+            return False
         try:
-            setting = self._toast_notifier.setting
+            setting = notifier.setting
         except AttributeError, OSError, RuntimeError:
             return True
         return setting == NotificationSetting.ENABLED
@@ -150,12 +163,18 @@ class WindowsDesktopNotifier:
         image.set_attribute("placement", "appLogoOverride")
         image.set_attribute("src", self._logo_path.resolve().as_uri())
         binding.append_child(image)
-        self._toast_notifier.show(ToastNotification(document))
+        notifier = self._toast_notifier
+        if notifier is None:
+            raise RuntimeError("The Windows toast notifier is unavailable")
+        notifier.show(ToastNotification(document))
 
     def _notify_branded(self, notification: DesktopNotification) -> None:
-        send_message = getattr(self._icon, "_message", None)
-        balloon_icon = getattr(self._icon, "_icon_handle", None)
-        if not callable(send_message) or not balloon_icon:
+        if not isinstance(self._icon, WindowsBalloonIcon):
+            self._fallback.notify(notification)
+            return
+        send_message = self._icon._message
+        balloon_icon = self._icon._icon_handle
+        if not balloon_icon:
             self._fallback.notify(notification)
             return
         try:
@@ -177,16 +196,26 @@ class WindowsDesktopNotifier:
             self._fallback.notify(notification)
 
 
-def _create_toast_notifier() -> Any:
+def _create_toast_notifier() -> ToastNotifier:
     from winrt.windows.ui.notifications import ToastNotificationManager
 
     return ToastNotificationManager.create_toast_notifier(APP_USER_MODEL_ID)
 
 
+class _WindowsFunction(Protocol):
+    argtypes: tuple[object, ...]
+    restype: type[object]
+
+    def __call__(self, *arguments: object) -> int: ...
+
+
 def _set_process_app_user_model_id() -> None:
-    set_app_user_model_id = ctypes.WinDLL(
-        "shell32", use_last_error=True
-    ).SetCurrentProcessExplicitAppUserModelID
+    set_app_user_model_id = cast(
+        _WindowsFunction,
+        ctypes.WinDLL(
+            "shell32", use_last_error=True
+        ).SetCurrentProcessExplicitAppUserModelID,
+    )
     set_app_user_model_id.argtypes = (ctypes.c_wchar_p,)
     set_app_user_model_id.restype = ctypes.c_int32
     result = set_app_user_model_id(APP_USER_MODEL_ID)
