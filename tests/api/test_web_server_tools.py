@@ -99,7 +99,7 @@ _PROVIDER_IDS = tuple(PROVIDER_CATALOG)
 
 def test_web_tool_user_agent_reports_installed_package_version() -> None:
     assert {
-        "User-Agent": (f"Mozilla/5.0 compatible; free-claude-code/{package_version()}")
+        "User-Agent": (f"Mozilla/5.0 compatible; modelglot/{package_version()}")
     } == web_tool_constants._WEB_TOOL_HTTP_HEADERS
 
 

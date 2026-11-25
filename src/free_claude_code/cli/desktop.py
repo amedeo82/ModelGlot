@@ -21,7 +21,7 @@ from free_claude_code.core.version import package_version
 def version_text() -> str:
     """Return the user-facing label for the installed package version."""
 
-    return f"Free Claude Code {package_version()}"
+    return f"ModelGlot {package_version()}"
 
 
 class DesktopTray(Protocol):

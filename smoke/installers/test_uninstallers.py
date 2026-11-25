@@ -215,14 +215,16 @@ if [ "${1:-}" = "tool" ] && [ "${2:-}" = "uninstall" ]; then
         echo "permission denied while removing tool" >&2
         exit 42
     fi
-    if [ "$FAIL_STEP" = "missing" ] || [ "$FAIL_STEP" = "stale-entrypoint" ]; then
-        echo 'Tool `free-claude-code` is not installed' >&2
+    if [ "$FAIL_STEP" = "missing" ] || [ "$FAIL_STEP" = "stale-entrypoint" ] ||
+        { [ "$FAIL_STEP" = "legacy-only" ] && [ "${3:-}" = "modelglot" ]; } ||
+        { [ "$FAIL_STEP" = "modelglot-only" ] && [ "${3:-}" = "free-claude-code" ]; }; then
+        printf 'Tool `%s` is not installed\n' "${3:-}" >&2
         exit 2
     fi
     for name in fcc-desktop fcc-server fcc-claude fcc-codex fcc-pi fcc-opencode fcc-cline fcc-hermes fcc-dsh fcc-grok fcc-muse fcc-aider fcc-agy fcc-doctor fcc-update fcc-init free-claude-code; do
         /bin/rm -f "$FAKE_TOOL_BIN/$name"
     done
-    echo "Uninstalled free-claude-code"
+    echo "Uninstalled ${3:-}"
     exit 0
 fi
 exit 43
@@ -286,7 +288,10 @@ def test_uninstall_sh_removes_and_verifies_only_fcc(
     result = posix_uninstall_harness.run()
 
     assert result.returncode == 0, result.stderr
-    assert "Free Claude Code has been removed and verified." in result.stdout
+    assert (
+        "ModelGlot and legacy Free Claude Code have been removed and verified."
+        in result.stdout
+    )
     assert not posix_uninstall_harness.fcc_home.exists()
     assert all(
         not (posix_uninstall_harness.tool_bin / name).exists() for name in FCC_COMMANDS
@@ -325,11 +330,32 @@ def test_uninstall_sh_removes_and_verifies_only_fcc(
     assert posix_uninstall_harness.calls() == [
         "uv:tool dir --bin",
         "doctor:--disconnect-integrations",
+        "uv:tool uninstall modelglot",
         "uv:tool uninstall free-claude-code",
         f"rm:-f {posix_uninstall_harness.home / 'Desktop' / 'Free Claude Code.app'}",
         f"rm:-rf {posix_uninstall_harness.home / 'Applications' / 'Free Claude Code.app'}",
         f"rm:-rf {posix_uninstall_harness.fcc_home}",
     ]
+
+
+@pytest.mark.parametrize("installed_package", ["modelglot", "free-claude-code"])
+def test_uninstall_sh_supports_new_and_legacy_packages_independently(
+    posix_uninstall_harness: PosixUninstallHarness,
+    installed_package: str,
+) -> None:
+    package_state = (
+        "modelglot-only" if installed_package == "modelglot" else "legacy-only"
+    )
+    result = posix_uninstall_harness.run("--keep-integrations", fail_step=package_state)
+
+    assert result.returncode == 0, result.stderr
+    assert not posix_uninstall_harness.fcc_home.exists()
+    assert posix_uninstall_harness.calls()[:3] == [
+        "uv:tool dir --bin",
+        "uv:tool uninstall modelglot",
+        "uv:tool uninstall free-claude-code",
+    ]
+    assert "already absent" in result.stdout
 
 
 def test_uninstall_sh_is_idempotent_when_tool_is_already_absent(
@@ -369,7 +395,10 @@ def test_uninstall_sh_preserves_tool_and_config_when_cleanup_is_unconfirmed(
     assert posix_uninstall_harness.calls() == ["uv:tool dir --bin"] + (
         [] if failure == "missing-helper" else ["doctor:--disconnect-integrations"]
     )
-    assert "Free Claude Code has been removed and verified." not in result.stdout
+    assert (
+        "ModelGlot and legacy Free Claude Code have been removed and verified."
+        not in result.stdout
+    )
 
 
 def test_uninstall_sh_can_explicitly_keep_integrations_without_cleanup_helper(
@@ -382,8 +411,9 @@ def test_uninstall_sh_can_explicitly_keep_integrations_without_cleanup_helper(
     assert all(
         not (posix_uninstall_harness.tool_bin / name).exists() for name in FCC_COMMANDS
     )
-    assert posix_uninstall_harness.calls()[:2] == [
+    assert posix_uninstall_harness.calls()[:3] == [
         "uv:tool dir --bin",
+        "uv:tool uninstall modelglot",
         "uv:tool uninstall free-claude-code",
     ]
     assert not any(
@@ -461,7 +491,10 @@ def test_uninstall_sh_preserves_config_when_tool_removal_is_unconfirmed(
 
     assert result.returncode != 0
     assert posix_uninstall_harness.fcc_home.exists()
-    assert "Free Claude Code has been removed and verified." not in result.stdout
+    assert (
+        "ModelGlot and legacy Free Claude Code have been removed and verified."
+        not in result.stdout
+    )
     assert not any(call.startswith("rm:") for call in posix_uninstall_harness.calls())
 
 
@@ -486,7 +519,10 @@ def test_uninstall_sh_reports_purge_failure_after_verified_tool_removal(
     assert all(
         not (posix_uninstall_harness.tool_bin / name).exists() for name in FCC_COMMANDS
     )
-    assert "Free Claude Code has been removed and verified." not in result.stdout
+    assert (
+        "ModelGlot and legacy Free Claude Code have been removed and verified."
+        not in result.stdout
+    )
 
 
 @pytest.mark.parametrize("include_doctor", [True, False])
@@ -707,17 +743,16 @@ if "%FAIL_STEP%"=="uninstall" (
     echo permission denied while removing tool 1>&2
     exit /b 52
 )
-if "%FAIL_STEP%"=="missing" (
-    echo Tool `free-claude-code` is not installed 1>&2
-    exit /b 2
-)
-if "%FAIL_STEP%"=="stale-entrypoint" (
-    echo Tool `free-claude-code` is not installed 1>&2
-    exit /b 2
-)
+if "%FAIL_STEP%"=="missing" goto missing
+if "%FAIL_STEP%"=="stale-entrypoint" goto missing
+if "%FAIL_STEP%"=="legacy-only" if "%3"=="modelglot" goto missing
+if "%FAIL_STEP%"=="modelglot-only" if "%3"=="free-claude-code" goto missing
 for %%C in ({uv_commands}) do del /q "%FAKE_TOOL_BIN%\%%C.cmd" 2>nul
-echo Uninstalled free-claude-code
+echo Uninstalled %3
 exit /b 0
+:missing
+echo Tool `%3` is not installed 1>&2
+exit /b 2
 """,
         encoding="utf-8",
     )
@@ -726,6 +761,19 @@ exit /b 0
     wrapper.write_text(
         r"""Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+function Test-Path {
+    [CmdletBinding()]
+    param(
+        [string] $LiteralPath,
+        [string] $PathType
+    )
+    $notificationIds = @(
+        "Registry::HKEY_CURRENT_USER\Software\Classes\AppUserModelId\io.github.amedeo82.free-claude-code",
+        "Registry::HKEY_CURRENT_USER\Software\Classes\AppUserModelId\io.github.alishahryar1.free-claude-code"
+    )
+    if ($LiteralPath -in $notificationIds) { return $true }
+    Microsoft.PowerShell.Management\Test-Path @PSBoundParameters
+}
 function Remove-Item {
     [CmdletBinding()]
     param(
@@ -734,6 +782,7 @@ function Remove-Item {
         [switch] $Force
     )
     Add-Content -LiteralPath $env:CALL_LOG -Value "remove:$LiteralPath"
+    if ($LiteralPath.StartsWith("Registry::HKEY_CURRENT_USER\Software\Classes\AppUserModelId\")) { return }
     if (
         $env:FAIL_STEP -eq "purge" -and
         $LiteralPath -eq (Join-Path $env:USERPROFILE ".fcc")
@@ -818,7 +867,10 @@ def test_uninstall_ps1_removes_and_verifies_only_fcc(
     result = powershell_uninstall_harness.run()
 
     assert result.returncode == 0, result.stderr
-    assert "Free Claude Code has been removed and verified." in result.stdout
+    assert (
+        "ModelGlot and legacy Free Claude Code have been removed and verified."
+        in result.stdout
+    )
     assert not powershell_uninstall_harness.fcc_home.exists()
     assert all(
         not (powershell_uninstall_harness.tool_bin / f"{name}.cmd").exists()
@@ -856,9 +908,12 @@ def test_uninstall_ps1_removes_and_verifies_only_fcc(
     assert powershell_uninstall_harness.calls() == [
         "uv:tool dir --bin",
         "doctor:--disconnect-integrations",
+        "uv:tool uninstall modelglot",
         "uv:tool uninstall free-claude-code",
         f"remove:{Path(powershell_uninstall_harness.env['USERPROFILE']) / 'Desktop' / 'Free Claude Code.lnk'}",
         f"remove:{Path(powershell_uninstall_harness.env['APPDATA']) / 'Microsoft' / 'Windows' / 'Start Menu' / 'Programs' / 'Free Claude Code.lnk'}",
+        r"remove:Registry::HKEY_CURRENT_USER\Software\Classes\AppUserModelId\io.github.amedeo82.free-claude-code",
+        r"remove:Registry::HKEY_CURRENT_USER\Software\Classes\AppUserModelId\io.github.alishahryar1.free-claude-code",
         f"remove:{powershell_uninstall_harness.fcc_home}",
     ]
 
@@ -886,6 +941,28 @@ def test_uninstall_ps1_preserves_unowned_desktop_shortcut(
     assert result.returncode == 0, result.stderr
     assert "not managed by Free Claude Code" in result.stdout
     assert desktop_shortcut.read_bytes() == original_shortcut
+
+
+@pytest.mark.parametrize("installed_package", ["modelglot", "free-claude-code"])
+def test_uninstall_ps1_supports_new_and_legacy_packages_independently(
+    powershell_uninstall_harness: PowerShellUninstallHarness,
+    installed_package: str,
+) -> None:
+    package_state = (
+        "modelglot-only" if installed_package == "modelglot" else "legacy-only"
+    )
+    result = powershell_uninstall_harness.run(
+        fail_step=package_state, keep_integrations=True
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert not powershell_uninstall_harness.fcc_home.exists()
+    assert powershell_uninstall_harness.calls()[:3] == [
+        "uv:tool dir --bin",
+        "uv:tool uninstall modelglot",
+        "uv:tool uninstall free-claude-code",
+    ]
+    assert "already absent" in result.stdout
 
 
 def test_uninstall_ps1_is_idempotent_when_tool_is_already_absent(
@@ -929,7 +1006,10 @@ def test_uninstall_ps1_preserves_tool_and_config_when_cleanup_is_unconfirmed(
     assert powershell_uninstall_harness.calls() == ["uv:tool dir --bin"] + (
         [] if failure == "missing-helper" else ["doctor:--disconnect-integrations"]
     )
-    assert "Free Claude Code has been removed and verified." not in result.stdout
+    assert (
+        "ModelGlot and legacy Free Claude Code have been removed and verified."
+        not in result.stdout
+    )
 
 
 def test_uninstall_ps1_can_explicitly_keep_integrations_without_cleanup_helper(
@@ -945,8 +1025,9 @@ def test_uninstall_ps1_can_explicitly_keep_integrations_without_cleanup_helper(
         not (powershell_uninstall_harness.tool_bin / f"{name}.cmd").exists()
         for name in FCC_COMMANDS
     )
-    assert powershell_uninstall_harness.calls()[:2] == [
+    assert powershell_uninstall_harness.calls()[:3] == [
         "uv:tool dir --bin",
+        "uv:tool uninstall modelglot",
         "uv:tool uninstall free-claude-code",
     ]
     assert not any(
@@ -976,7 +1057,10 @@ def test_uninstall_ps1_preserves_config_when_tool_removal_is_unconfirmed(
 
     assert result.returncode != 0
     assert powershell_uninstall_harness.fcc_home.exists()
-    assert "Free Claude Code has been removed and verified." not in result.stdout
+    assert (
+        "ModelGlot and legacy Free Claude Code have been removed and verified."
+        not in result.stdout
+    )
     assert not any(
         call.startswith("remove:") for call in powershell_uninstall_harness.calls()
     )
@@ -1004,7 +1088,10 @@ def test_uninstall_ps1_reports_purge_failure_after_verified_tool_removal(
         not (powershell_uninstall_harness.tool_bin / f"{name}.cmd").exists()
         for name in FCC_COMMANDS
     )
-    assert "Free Claude Code has been removed and verified." not in result.stdout
+    assert (
+        "ModelGlot and legacy Free Claude Code have been removed and verified."
+        not in result.stdout
+    )
 
 
 @pytest.mark.parametrize("include_doctor", [True, False])

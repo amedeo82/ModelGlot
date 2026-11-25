@@ -47,6 +47,7 @@ def runtime(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(macos_app.sysconfig, "get_config_var", variables.get)
 
     def replace_metadata(name: object):
+        assert name == "modelglot"
         return {"Requires-Python": "==3.14.7"}
 
     monkeypatch.setattr(macos_app, "metadata", replace_metadata)

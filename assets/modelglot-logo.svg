@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title">
+  <title id="title">ModelGlot</title>
+  <defs>
+    <linearGradient id="accent" x1="180" y1="180" x2="860" y2="840" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22d3ee"/>
+      <stop offset="1" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="220" fill="#0f172a"/>
+  <g fill="none" stroke="url(#accent)" stroke-linecap="round" stroke-linejoin="round" stroke-width="56">
+    <path d="M220 300h170c24 0 38 9 52 28l130 162c12 15 22 22 46 22h48"/>
+    <path d="M220 512h446"/>
+    <path d="M220 724h170c24 0 38-9 52-28l130-162c12-15 22-22 46-22h48"/>
+    <rect x="648" y="390" width="244" height="244" rx="54"/>
+  </g>
+  <g fill="#22d3ee">
+    <circle cx="220" cy="300" r="62"/>
+    <circle cx="220" cy="512" r="62"/>
+    <circle cx="220" cy="724" r="62"/>
+  </g>
+  <path d="M704 578V446l66 88 66-88v132" fill="none" stroke="#f8fafc" stroke-linecap="round" stroke-linejoin="round" stroke-width="44"/>
+</svg>

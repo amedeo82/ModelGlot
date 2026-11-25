@@ -1,7 +1,8 @@
 #!/bin/sh
 set -eu
 
-PACKAGE_NAME="free-claude-code"
+PACKAGE_NAME="modelglot"
+LEGACY_PACKAGE_NAME="free-claude-code"
 FCC_HOME_DIRNAME=".fcc"
 FCC_MACOS_BUNDLE_IDS="io.github.amedeo82.free-claude-code io.github.alishahryar1.free-claude-code"
 FCC_MACOS_OWNER_FILE=".free-claude-code-owner"
@@ -16,7 +17,7 @@ show_usage() {
     cat <<'USAGE'
 Usage: uninstall.sh [options]
 
-Removes the Free Claude Code uv tool and deletes ~/.fcc/ after removal is verified.
+Removes the ModelGlot and legacy Free Claude Code uv tools, then deletes ~/.fcc/ after removal is verified.
 Does not remove uv, Claude Code, Codex, Pi, OpenCode, Cline, Hermes Agent, DeepSeek Harness, Grok Build, Muse Code, Aider, Antigravity CLI, the uv-managed Python runtime, or shared PATH entries.
 
 Options:
@@ -71,9 +72,11 @@ run() {
 }
 
 is_missing_uv_tool_error() {
-    normalized=$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')
+    output=$1
+    package_name=$2
+    normalized=$(printf '%s' "$output" | tr '[:upper:]' '[:lower:]')
     case "$normalized" in
-        *"$PACKAGE_NAME"*"is not installed"*) return 0 ;;
+        *"$package_name"*"is not installed"*) return 0 ;;
         *) return 1 ;;
     esac
 }
@@ -135,7 +138,7 @@ assert_no_fcc_processes_running() {
     done
 
     if [ -n "$running" ]; then
-        fail "Free Claude Code is still running (${running# }). Stop those processes, then rerun uninstall."
+        fail "ModelGlot or legacy Free Claude Code is still running (${running# }). Stop those processes, then rerun uninstall."
     fi
 }
 
@@ -161,13 +164,14 @@ initialize_uv_context() {
     [ -n "$uv_tool_bin" ] || fail "uv returned an empty tool bin directory; ~/.fcc was not deleted."
 }
 
-uninstall_free_claude_code() {
-    print_command uv tool uninstall "$PACKAGE_NAME"
+uninstall_uv_tool() {
+    package_name=$1
+    print_command uv tool uninstall "$package_name"
     if [ "$dry_run" -eq 1 ]; then
         return 0
     fi
 
-    if output=$(uv tool uninstall "$PACKAGE_NAME" 2>&1); then
+    if output=$(uv tool uninstall "$package_name" 2>&1); then
         if [ -n "$output" ]; then
             printf '%s\n' "$output"
         fi
@@ -176,14 +180,20 @@ uninstall_free_claude_code() {
         status=$?
     fi
 
-    if is_missing_uv_tool_error "$output"; then
-        printf 'Free Claude Code uv tool is already absent; verifying its entry points.\n'
+    if is_missing_uv_tool_error "$output" "$package_name"; then
+        printf '%s uv tool is already absent; continuing with entry point verification.\n' "$package_name"
         return 0
     fi
     if [ -n "$output" ]; then
         printf '%s\n' "$output" >&2
     fi
-    fail "uv tool uninstall $PACKAGE_NAME failed with exit code $status; ~/.fcc was not deleted."
+    fail "uv tool uninstall $package_name failed with exit code $status; ~/.fcc was not deleted."
+}
+
+uninstall_free_claude_code() {
+    # Remove both installations when an upgrade left the legacy uv tool behind.
+    uninstall_uv_tool "$PACKAGE_NAME"
+    uninstall_uv_tool "$LEGACY_PACKAGE_NAME"
 }
 
 disconnect_integrations() {
@@ -306,7 +316,7 @@ parse_args() {
 parse_args "$@"
 [ -n "${HOME:-}" ] || fail "HOME is not set; cannot locate Free Claude Code data."
 
-step "Checking for running Free Claude Code processes"
+step "Checking for running ModelGlot or legacy Free Claude Code processes"
 assert_no_fcc_processes_running
 
 step "Locating the uv-managed Free Claude Code installation"
@@ -315,7 +325,7 @@ initialize_uv_context
 step "Disconnecting FCC editor/app integrations"
 disconnect_integrations
 
-step "Removing the Free Claude Code uv tool"
+step "Removing ModelGlot and legacy Free Claude Code uv tools"
 uninstall_free_claude_code
 
 step "Verifying Free Claude Code entry points were removed"
@@ -330,6 +340,6 @@ purge_fcc_home
 if [ "$dry_run" -eq 1 ]; then
     printf '\nDry run complete. No changes were made.\n'
 else
-    printf '\nFree Claude Code has been removed and verified.\n'
+    printf '\nModelGlot and legacy Free Claude Code have been removed and verified.\n'
     printf 'uv, Claude Code, Codex, Pi, OpenCode, Cline, Hermes Agent, DeepSeek Harness, Grok Build, Muse Code, Aider, the uv-managed Python runtime, and shared PATH entries were left installed.\n'
 fi

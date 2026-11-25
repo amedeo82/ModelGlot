@@ -141,9 +141,7 @@ def test_open_admin_menu_action_opens_admin(tray: TrayFixture) -> None:
     admin_action(icon)
 
     cast(Mock, instance._controller.open_admin).assert_called_once_with()
-    assert icon.notifications == [
-        ("Opening the Free Claude Code Admin UI…", "Free Claude Code")
-    ]
+    assert icon.notifications == [("Opening the ModelGlot Admin UI…", "ModelGlot")]
 
 
 def test_quit_menu_action_stops_desktop(tray: TrayFixture) -> None:
@@ -165,7 +163,7 @@ def test_status_menu_action_updates_visible_status_row(tray: TrayFixture) -> Non
 
     assert instance._server_status_item.text == "● Running"
     assert not instance._server_status_item.enabled
-    assert icon.notifications == [("FCC server is running.", "Free Claude Code")]
+    assert icon.notifications == [("FCC server is running.", "ModelGlot")]
 
 
 @pytest.mark.parametrize(
@@ -241,8 +239,8 @@ def test_restart_menu_action_updates_visible_status_row(tray: TrayFixture) -> No
     assert instance._server_status_item.text == "● Running"
     assert cast(Mock, instance._controller.restart_server).call_count == 1
     assert icon.notifications == [
-        ("Restarting the FCC server…", "Free Claude Code"),
-        ("Server restarted.", "Free Claude Code"),
+        ("Restarting the FCC server…", "ModelGlot"),
+        ("Server restarted.", "ModelGlot"),
     ]
 
 
@@ -418,7 +416,7 @@ def test_update_check_publishes_result_in_menu_and_notification(
     assert instance._update_status_item.text == expected_status
     assert not instance._update_status_item.enabled
     assert instance._update_check_item.enabled is True
-    assert icon.notifications == [(result.message, "Free Claude Code")]
+    assert icon.notifications == [(result.message, "ModelGlot")]
     assert icon.notification_details[0].level is expected_level
     assert icon.update_count == (3 if result.status is UpdateStatus.AVAILABLE else 2)
 
@@ -448,7 +446,7 @@ def test_available_update_prompts_and_declining_preserves_retry(
     cast(Mock, instance._controller.quit).assert_not_called()
     assert instance._update_check_item.enabled is True
     assert instance._update_status_item.text == "● Update available: 1.9.0 → 1.10.0"
-    assert icon.notifications == [(result.message, "Free Claude Code")]
+    assert icon.notifications == [(result.message, "ModelGlot")]
 
 
 def test_accepted_update_launches_detected_release_and_restarts_desktop(
@@ -481,10 +479,10 @@ def test_accepted_update_launches_detected_release_and_restarts_desktop(
     assert not instance._update_check_item.enabled
     assert instance._update_status_item.text == "◌ Installing 1.10.0…"
     assert icon.notifications == [
-        (result.message, "Free Claude Code"),
+        (result.message, "ModelGlot"),
         (
             "Installing FCC 1.10.0. FCC will close and reopen when it finishes.",
-            "Free Claude Code",
+            "ModelGlot",
         ),
     ]
 
@@ -521,7 +519,7 @@ def test_stop_during_update_confirmation_does_not_launch_installer(
 
     launch.assert_not_called()
     cast(Mock, instance._controller.quit).assert_not_called()
-    assert icon.notifications == [(result.message, "Free Claude Code")]
+    assert icon.notifications == [(result.message, "ModelGlot")]
 
 
 def test_stop_before_result_notification_suppresses_notification_and_confirmation(
@@ -576,7 +574,7 @@ def test_update_launch_failure_keeps_desktop_running_and_offers_retry(
     assert instance._update_status_item.text == "● Update available: 1.9.0 → 1.10.0"
     assert icon.notifications[-1] == (
         "Could not start the FCC update. Run fcc-update from a terminal.",
-        "Free Claude Code",
+        "ModelGlot",
     )
     assert icon.notification_details[-1].level is desktop_tray.NotificationLevel.ERROR
 
@@ -599,7 +597,7 @@ def test_failed_update_check_uses_generic_user_feedback(
 
     assert instance._update_status_item.text == "○ Update check failed"
     assert icon.notifications == [
-        ("Could not check for FCC updates. Please retry.", "Free Claude Code")
+        ("Could not check for FCC updates. Please retry.", "ModelGlot")
     ]
 
 
@@ -657,7 +655,7 @@ def test_unexpected_update_check_error_does_not_escape_worker(
     assert instance._update_status_item.text == "○ Update check failed"
     assert instance._update_check_item.enabled is True
     assert icon.notifications == [
-        ("Could not check for FCC updates. Please retry.", "Free Claude Code")
+        ("Could not check for FCC updates. Please retry.", "ModelGlot")
     ]
 
 
@@ -681,7 +679,7 @@ def test_update_worker_start_failure_is_reported(
     assert instance._update_status_item.text == "○ Update check failed"
     assert instance._update_check_item.enabled is True
     assert icon.notifications == [
-        ("Could not check for FCC updates. Please retry.", "Free Claude Code")
+        ("Could not check for FCC updates. Please retry.", "ModelGlot")
     ]
 
 
@@ -727,7 +725,7 @@ def test_tray_menu_exposes_compact_branded_status_and_actions(
     labels = [item.text for item in instance._build_menu()]
 
     assert labels == [
-        "Free Claude Code",
+        "ModelGlot",
         "● Running",
         instance._version_item.text,
         "- - - -",

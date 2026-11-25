@@ -26,7 +26,7 @@ $HermesInstallUrl = "https://hermes-agent.nousresearch.com/install.ps1"
 $DshMinimumVersion = "0.2.0-rc.2"
 $DshPackage = "@deepseek-ai/dsh@latest"
 $GrokInstallUrl = "https://x.ai/cli/install.ps1"
-$MuseInstallUrl = "https://raw.githubusercontent.com/amedeo82/free-claude-code/custom/main/scripts/install-muse.ps1"
+$MuseInstallUrl = "https://raw.githubusercontent.com/amedeo82/ModelGlot/main/scripts/install-muse.ps1"
 $AgyInstallUrl = "https://antigravity.google/cli/install.ps1"
 $AgyMinimumVersion = "1.5.9"
 $RtkVersion = "0.44.2"
@@ -35,8 +35,8 @@ $RtkReleaseBaseUrl = "https://github.com/rtk-ai/rtk/releases/download/v$RtkVersi
 $RtkWindowsAssetName = "rtk-x86_64-pc-windows-msvc.zip"
 $RtkWindowsAssetSha256 = "3a1e114edce9080f8a10663e9c87488363a82f14a5ca8aab2ad416817f89d47c"
 $UvInstallUrl = "https://astral.sh/uv/install.ps1"
-$FccRepository = "https://github.com/amedeo82/free-claude-code"
-$FccRawBase = "https://raw.githubusercontent.com/amedeo82/free-claude-code"
+$FccRepository = "https://github.com/amedeo82/ModelGlot"
+$FccRawBase = "https://raw.githubusercontent.com/amedeo82/ModelGlot"
 $FccGitBase = "$FccRepository.git"
 $script:InstallClaudeCode = $true
 $script:InstallCodex = $true
@@ -64,7 +64,7 @@ elseif ($FccInstallVersion) {
     $FccInstallRef = ""
 }
 else {
-    $FccInstallRef = "custom/main"
+    $FccInstallRef = "main"
 }
 $FccReleasePattern = '\A(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\z'
 $script:InstallLog = ""
@@ -104,7 +104,7 @@ function Show-Usage {
     @"
 Usage: install.ps1 [options]
 
-Installs or updates Free Claude Code and lets you choose which coding agents to install or verify.
+Installs or updates ModelGlot and lets you choose which coding agents to install or verify.
 
 Options:
   -Ref REF                Install from a Git branch or tag in this fork's repository.
@@ -146,7 +146,7 @@ function Initialize-InstallLog {
         $directory = Join-Path $env:USERPROFILE ".fcc\logs"
         [void] [IO.Directory]::CreateDirectory($directory)
         $script:InstallLog = Join-Path $directory ("install-$(Get-Date -Format yyyyMMdd-HHmmss)-$([guid]::NewGuid().ToString('N')).log")
-        Write-InstallLog "Starting Free Claude Code installer"
+        Write-InstallLog "Starting ModelGlot installer"
     }
     catch {
         $script:InstallLogWarning = $true
@@ -182,7 +182,7 @@ function Start-InstallStep {
 function Get-InstallerRetryCommand {
     $options = @()
     $prefix = ""
-    $installerRef = "custom/main"
+    $installerRef = "main"
     if ($FccInstallRef) {
         $installerRef = $FccInstallRef
         $options += @("-Ref", $FccInstallRef)
@@ -573,7 +573,7 @@ function Assert-NoFccProcessesRunning {
     }
 
     if ($running.Count -gt 0) {
-        throw "Free Claude Code is still running ($($running -join ', ')). Stop those processes, then rerun the installer."
+        throw "ModelGlot or legacy Free Claude Code is still running ($($running -join ', ')). Stop those processes, then rerun the installer."
     }
 }
 
@@ -1823,7 +1823,7 @@ function Ensure-Uv {
 }
 
 function Get-PackageSpec {
-    $spec = if ($VoiceLocal) { "free-claude-code[voice_local]" } else { "free-claude-code" }
+    $spec = if ($VoiceLocal) { "modelglot[voice_local]" } else { "modelglot" }
     if ($FccInstallRef) {
         return "$spec @ git+$FccGitBase@$FccInstallRef"
     }
@@ -1840,7 +1840,7 @@ function Install-FreeClaudeCode {
         "install",
         "--force",
         "--refresh-package",
-        "free-claude-code",
+        "modelglot",
         "--python",
         $PythonRequest
     )
@@ -1853,7 +1853,7 @@ function Install-FreeClaudeCode {
     if (-not $DryRun) {
         $uvCommand = Get-ApplicationCommand "uv"
         if (-not $uvCommand) {
-            throw "uv is not available for the Free Claude Code installation."
+            throw "uv is not available for the ModelGlot installation."
         }
         $uvPath = $uvCommand.Source
     }
@@ -1890,7 +1890,7 @@ function Export-FccDesktopIcon {
         throw "Command failed with exit code ${exitCode}: $commandText"
     }
     if (-not (Test-Path -LiteralPath $IconPath -PathType Leaf)) {
-        throw "Free Claude Code did not export its Windows app icon to '$IconPath'."
+        throw "ModelGlot did not export its Windows app icon to '$IconPath'."
     }
 }
 
@@ -1926,7 +1926,7 @@ function Configure-AndConfirmFreeClaudeCode {
     foreach ($commandName in @("fcc-desktop", "fcc-server", "fcc-claude", "fcc-codex", "fcc-pi", "fcc-opencode", "fcc-cline", "fcc-hermes", "fcc-dsh", "fcc-grok", "fcc-muse", "fcc-aider", "fcc-agy", "fcc-doctor", "fcc-update.cmd")) {
         $command = Get-ApplicationCommand $commandName
         if (-not $command) {
-            throw "Free Claude Code installation did not create '$commandName'."
+            throw "ModelGlot installation did not create '$commandName'."
         }
         $commandDirectory = ([IO.Path]::GetFullPath((Split-Path -Parent $command.Source))).TrimEnd(
             [IO.Path]::DirectorySeparatorChar,
@@ -2203,7 +2203,7 @@ function Install-FccDesktopShortcuts {
         $shortcut.TargetPath = $DesktopCommand
         $shortcut.WorkingDirectory = $env:USERPROFILE
         $shortcut.IconLocation = "$IconPath,0"
-        $shortcut.Description = "Run Free Claude Code in the background"
+        $shortcut.Description = "Run ModelGlot in the background"
         $shortcut.Save()
         try {
             Set-ShortcutAppUserModelId `
@@ -2221,9 +2221,9 @@ function Install-FccDesktopShortcuts {
 }
 
 function Show-InstallerNextSteps {
-    Write-Host "`nFree Claude Code is installed and verified."
+    Write-Host "`nModelGlot is installed and verified."
     if ($script:DesktopReady) {
-        Write-Host "Open the Free Claude Code desktop shortcut to run it in the background."
+        Write-Host "Open the ModelGlot desktop shortcut to run it in the background."
     }
     Write-Host "For terminal use, start the proxy with: fcc-server"
     if ($script:InstallClaudeCode) {
@@ -2274,10 +2274,14 @@ function Get-InstalledFccVersion {
         $global:LASTEXITCODE = $null
         $listing = @(& $uv.Source tool list 2>$null)
         if ($LASTEXITCODE -ne 0) { return $null }
+        $legacyVersion = $null
         foreach ($line in $listing) {
-            if ("$line" -cmatch '\Afree-claude-code v(\S+)') { return $Matches[1] }
+            if ("$line" -cmatch '\Amodelglot v(\S+)') { return $Matches[1] }
+            if (-not $legacyVersion -and "$line" -cmatch '\Afree-claude-code v(\S+)') {
+                $legacyVersion = $Matches[1]
+            }
         }
-        return $null
+        return $legacyVersion
     }
     catch { return $null }
     finally {
@@ -2308,22 +2312,22 @@ function Compare-FccVersions {
 
 function Test-FccUpdateNeeded {
     if ($FccInstallRef) {
-        Write-Host "Refreshing FCC from $FccInstallRef."
+        Write-Host "Refreshing ModelGlot from $FccInstallRef."
         return $true
     }
     $installed = Get-InstalledFccVersion
     if (-not $installed) { return $true }
     $comparison = Compare-FccVersions -Installed $installed -Release $FccInstallVersion
     if ($comparison -eq "current") {
-        Write-Host "FCC $installed is already up to date."
+        Write-Host "ModelGlot $installed is already up to date."
         return $false
     }
     if ($comparison -eq "newer") {
-        Write-Host "FCC $installed is newer than the published version $FccInstallVersion. No update needed."
+        Write-Host "ModelGlot $installed is newer than the published version $FccInstallVersion. No update needed."
         return $false
     }
     if ($comparison -eq "older") {
-        Write-Host "FCC update available: $installed -> $FccInstallVersion."
+        Write-Host "ModelGlot update available: $installed -> $FccInstallVersion."
     }
     return $true
 }
@@ -2473,7 +2477,7 @@ try {
     $script:OriginalOpenCodeSearchPath = $env:Path
     Add-KnownBinDirectories
     $script:InstallCline = [bool] ((Get-ApplicationCommand "cline") -or (Get-ApplicationCommand "npm"))
-    Write-Step "Checking for running Free Claude Code processes"
+    Write-Step "Checking for running ModelGlot or legacy Free Claude Code processes"
     Assert-NoFccProcessesRunning
 
     if (-not (Test-InteractiveInstaller)) {
@@ -2516,7 +2520,7 @@ try {
     }
 
     Write-Host "`nInstallation plan:"
-    Write-Host "  Install or update Free Claude Code."
+    Write-Host "  Install or update ModelGlot."
     Write-Host "  Verify or install: $($selectedAgents -join ', ')."
     if ($VoiceLocal) { Write-Host "  Include local voice support." }
     if ($TorchBackend) { Write-Host "  PyTorch backend: $TorchBackend" }
@@ -2531,7 +2535,7 @@ try {
 
     Ensure-SelectedCodingAgents
 
-    Start-InstallStep "FCC package" "Installing or updating Free Claude Code"
+    Start-InstallStep "FCC package" "Installing or updating ModelGlot"
     Install-FreeClaudeCode
 
     Configure-AndConfirmFreeClaudeCode

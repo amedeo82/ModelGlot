@@ -76,6 +76,7 @@ class FakeRemote:
         self.builds = 0
         self.native_builds = []
         self.uploaded = {}
+        self.note_requests = []
         self.real_command = publishing.command
 
     def command(self, args: list[str], *, cwd: Path | None = None):
@@ -96,7 +97,9 @@ class FakeRemote:
             if endpoint.endswith("?per_page=100"):
                 return json.dumps([list(self.releases.values())])
             if endpoint.endswith("/generate-notes"):
-                assert fields["previous_tag_name"] in self.releases
+                self.note_requests.append(fields)
+                if "previous_tag_name" in fields:
+                    assert fields["previous_tag_name"] in self.releases
                 return json.dumps({"body": "Generated release notes"})
             if endpoint.endswith("/releases"):
                 assert fields["draft"] == "true"
@@ -184,6 +187,20 @@ class FakeRemote:
 
     def publisher(self):
         return publishing.Publisher("owner/repo")
+
+
+def modelglot_major(remote: FakeRemote, title: str = "major: Migrate to ModelGlot"):
+    write(
+        remote.repo,
+        "pyproject.toml",
+        '[project]\nname="modelglot"\ndynamic=["version"]\n',
+    )
+    write(
+        remote.repo,
+        "uv.lock",
+        '[[package]]\nname="modelglot"\nsource={editable="."}\n',
+    )
+    return remote.advance(title)
 
 
 def test_nonrelease_never_allocates_or_builds(
@@ -404,3 +421,88 @@ def test_no_release_does_not_wait_for_an_unfinished_release(
     before = remote.builds
     remote.publisher().publish(docs)
     assert remote.builds == before
+
+
+def test_bootstrap_skips_legacy_history_and_publishes_modelglot(
+    releases: tuple[Path, FakeRemote],
+) -> None:
+    repo, remote = releases
+    legacy = remote.advance("patch: Unpublished legacy change")
+    head = modelglot_major(remote)
+
+    with pytest.raises(ValueError, match=legacy):
+        remote.publisher().publish(head)
+
+    remote.publisher().publish(head, bootstrap_version="7.0.0")
+
+    assert git(repo, "rev-parse", "v7.0.0") == head
+    assert not remote.releases["v7.0.0"]["draft"]
+    assert set(remote.uploaded) == set(publishing.distribution_names("7.0.0"))
+    assert remote.note_requests[-1] == {"tag_name": "v7.0.0"}
+
+
+@pytest.mark.parametrize("title", ["patch: ModelGlot", "minor: ModelGlot"])
+def test_bootstrap_requires_a_major_release(
+    releases: tuple[Path, FakeRemote], title: str
+) -> None:
+    _, remote = releases
+    head = modelglot_major(remote, title)
+
+    with pytest.raises(ValueError, match="requires a major release"):
+        remote.publisher().publish(head, bootstrap_version="7.0.0")
+    assert remote.builds == 0
+
+
+def test_bootstrap_rejects_any_other_version(
+    releases: tuple[Path, FakeRemote],
+) -> None:
+    _, remote = releases
+    head = modelglot_major(remote)
+
+    with pytest.raises(ValueError, match=r"must be 7\.0\.0"):
+        remote.publisher().publish(head, bootstrap_version="7.0.1")
+    assert remote.builds == 0
+
+
+def test_bootstrap_requires_modelglot_packaging(
+    releases: tuple[Path, FakeRemote],
+) -> None:
+    repo, remote = releases
+    write(
+        repo,
+        "pyproject.toml",
+        '[project]\nname="free-claude-code"\ndynamic=["version"]\n',
+    )
+    write(
+        repo,
+        "uv.lock",
+        '[[package]]\nname="free-claude-code"\nsource={editable="."}\n',
+    )
+    head = remote.advance("major: Incorrect package identity")
+
+    with pytest.raises(ValueError, match="ModelGlot"):
+        remote.publisher().publish(head, bootstrap_version="7.0.0")
+    assert remote.builds == 0
+
+
+@pytest.mark.parametrize("existing_release", [False, True])
+def test_bootstrap_requires_a_new_tag_and_release(
+    releases: tuple[Path, FakeRemote], existing_release: bool
+) -> None:
+    repo, remote = releases
+    head = modelglot_major(remote)
+    if existing_release:
+        existing: Release = {
+            "id": 2,
+            "tag_name": "v7.0.0",
+            "draft": True,
+            "prerelease": False,
+            "assets": [],
+        }
+        remote.releases["v7.0.0"] = existing
+    else:
+        git(repo, "tag", "v7.0.0", head)
+
+    with pytest.raises(ValueError, match="already exists"):
+        remote.publisher().publish(head, bootstrap_version="7.0.0")
+    assert remote.builds == 0

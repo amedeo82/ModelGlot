@@ -20,7 +20,7 @@ def release(tmp_path: Path):
     repo.mkdir()
     git(repo, "init")
     files = {
-        "pyproject.toml": '[project]\nname="free-claude-code"\ndynamic=["version"]\n[project.scripts]\nfcc-server="free_claude_code.cli:serve"\n[project.gui-scripts]\nfcc-desktop="free_claude_code.desktop:launch"\n',
+        "pyproject.toml": '[project]\nname="modelglot"\ndynamic=["version"]\n[project.scripts]\nfcc-server="free_claude_code.cli:serve"\n[project.gui-scripts]\nfcc-desktop="free_claude_code.desktop:launch"\n',
         "README.md": "readme",
         "LICENSE": "license",
         "scripts/update/fcc-update": "#!/bin/sh\n",
@@ -41,23 +41,21 @@ def release(tmp_path: Path):
         files[f"src/free_claude_code/assets/macos/fcc-desktop-{architecture}"] = (
             architecture
         )
-    metadata = "Name: free-claude-code\nVersion: 1.2.3\n"
+    metadata = "Name: modelglot\nVersion: 1.2.3\n"
     wheel = {
         name.removeprefix("src/"): content
         for name, content in files.items()
         if name.startswith("src/")
     }
     for name in ("fcc-update", "fcc-update.cmd"):
-        wheel[f"free_claude_code-1.2.3.data/scripts/{name}"] = files[
-            f"scripts/update/{name}"
-        ]
-    wheel["free_claude_code-1.2.3.dist-info/METADATA"] = metadata
-    wheel["free_claude_code-1.2.3.dist-info/entry_points.txt"] = (
+        wheel[f"modelglot-1.2.3.data/scripts/{name}"] = files[f"scripts/update/{name}"]
+    wheel["modelglot-1.2.3.dist-info/METADATA"] = metadata
+    wheel["modelglot-1.2.3.dist-info/entry_points.txt"] = (
         "[console_scripts]\nfcc-server=free_claude_code.cli:serve\n"
         "[gui_scripts]\nfcc-desktop=free_claude_code.desktop:launch\n"
     )
-    sdist = {f"free_claude_code-1.2.3/{name}": body for name, body in files.items()}
-    sdist["free_claude_code-1.2.3/PKG-INFO"] = metadata
+    sdist = {f"modelglot-1.2.3/{name}": body for name, body in files.items()}
+    sdist["modelglot-1.2.3/PKG-INFO"] = metadata
     return repo, wheel, sdist
 
 
@@ -66,12 +64,10 @@ def validate(release: tuple[Path, dict[str, str], dict[str, str]], tmp_path: Pat
     dist = tmp_path / "built"
     dist.mkdir()
     (dist / ".gitignore").write_text("*")
-    with zipfile.ZipFile(
-        dist / "free_claude_code-1.2.3-py3-none-any.whl", "w"
-    ) as archive:
+    with zipfile.ZipFile(dist / "modelglot-1.2.3-py3-none-any.whl", "w") as archive:
         for name, body in wheel.items():
             archive.writestr(name, body)
-    with tarfile.open(dist / "free_claude_code-1.2.3.tar.gz", "w:gz") as archive:
+    with tarfile.open(dist / "modelglot-1.2.3.tar.gz", "w:gz") as archive:
         for name, body in sdist.items():
             data = body.encode()
             info = tarfile.TarInfo(name)
@@ -128,7 +124,7 @@ def test_missing_wheel_or_sdist_content_fails(
 def test_wrong_version_or_entrypoint_fails(
     release: tuple[Path, dict[str, str], dict[str, str]], tmp_path: Path
 ) -> None:
-    release[1]["free_claude_code-1.2.3.dist-info/entry_points.txt"] = (
+    release[1]["modelglot-1.2.3.dist-info/entry_points.txt"] = (
         "[console_scripts]\nfcc-server=wrong:command\n"
     )
     result = validate(release, tmp_path)
@@ -139,9 +135,7 @@ def test_wrong_version_or_entrypoint_fails(
 def test_mismatched_metadata_fails(
     release: tuple[Path, dict[str, str], dict[str, str]], tmp_path: Path
 ) -> None:
-    release[2]["free_claude_code-1.2.3/PKG-INFO"] = (
-        "Name: free-claude-code\nVersion: 0.1.0\n"
-    )
+    release[2]["modelglot-1.2.3/PKG-INFO"] = "Name: modelglot\nVersion: 0.1.0\n"
     result = validate(release, tmp_path)
     assert result.returncode != 0
     assert "metadata" in result.stdout.lower()
@@ -162,7 +156,7 @@ def test_mismatched_native_templates_fail(
 def test_native_sources_required_in_sdist(
     release: tuple[Path, dict[str, str], dict[str, str]], tmp_path: Path, name: str
 ) -> None:
-    del release[2][f"free_claude_code-1.2.3/{name}"]
+    del release[2][f"modelglot-1.2.3/{name}"]
     result = validate(release, tmp_path)
     assert result.returncode != 0
     assert "missing" in result.stdout.lower()

@@ -417,7 +417,7 @@ def test_system_role_rejection_names_the_claude_code_version(
     error = _invalid_request_error(response)
     assert error["message"] == (
         "Claude Code 2.1.288 sent a system message inside `messages`, which "
-        "Free Claude Code can't accept. Run `claude update`, then restart "
+        "ModelGlot can't accept. Run `claude update`, then restart "
         "Claude Code."
     )
     assert error["details"] == {"error_code": "mid_conversation_system_not_supported"}

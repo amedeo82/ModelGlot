@@ -12,8 +12,8 @@ from typing import Protocol, override
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-REPOSITORY = "https://github.com/amedeo82/free-claude-code"
-RAW = "https://raw.githubusercontent.com/amedeo82/free-claude-code"
+REPOSITORY = "https://github.com/amedeo82/ModelGlot"
+RAW = "https://raw.githubusercontent.com/amedeo82/ModelGlot"
 
 
 @contextlib.contextmanager

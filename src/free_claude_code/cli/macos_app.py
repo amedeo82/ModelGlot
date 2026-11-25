@@ -32,11 +32,9 @@ def runtime_settings() -> tuple[dict[str, str], str]:
             "The desktop app requires a GIL-enabled CPython release build."
         )
     version = platform.python_version()
-    requirement = metadata("free-claude-code")["Requires-Python"]
+    requirement = metadata("modelglot")["Requires-Python"]
     if not requirement or version not in SpecifierSet(requirement):
-        raise ValueError(
-            "The installed Python version does not match Free Claude Code."
-        )
+        raise ValueError("The installed Python version does not match ModelGlot.")
     architecture = platform.machine()
     if architecture not in {"arm64", "x86_64"}:
         raise ValueError(f"Unsupported macOS Python architecture: {architecture}")
@@ -78,9 +76,7 @@ def install() -> Path:
     home = Path.home()
     app = home / "Applications/Free Claude Code.app"
     if (app.exists() or app.is_symlink()) and not is_owned(app):
-        raise ValueError(
-            f"An app not managed by Free Claude Code already exists at {app}."
-        )
+        raise ValueError(f"An app not managed by ModelGlot already exists at {app}.")
     settings, architecture = runtime_settings()
     template = (
         files("free_claude_code")

@@ -77,7 +77,7 @@ def build_dsh_provider(
         raise ValueError("DeepSeek Harness requires at least one routable FCC model")
 
     return {
-        "displayName": "Free Claude Code",
+        "displayName": "ModelGlot",
         "apiKeyEnv": credential_ref,
         "api": "openai-responses",
         "baseURL": proxy_v1_url(proxy_root_url),

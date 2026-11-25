@@ -13,6 +13,7 @@ from typing import Literal, NotRequired, Protocol, TypedDict, cast, overload
 from .check_version_policy import (
     VERSION,
     changed_paths,
+    check_packaging,
     git,
     next_version,
     release_kind,
@@ -51,7 +52,7 @@ def command(args: list[str], *, cwd: Path | None = None) -> str:
 
 
 def distribution_names(version: str) -> tuple[str, str]:
-    stem = f"free_claude_code-{version}"
+    stem = f"modelglot-{version}"
     return f"{stem}-py3-none-any.whl", f"{stem}.tar.gz"
 
 
@@ -94,7 +95,7 @@ class Publisher:
         )
         return {release["tag_name"]: release for page in pages for release in page}
 
-    def publish(self, target: str) -> None:
+    def publish(self, target: str, *, bootstrap_version: str | None = None) -> None:
         if not re.fullmatch(r"[0-9a-f]{40}", target):
             raise ValueError("Release target must be a full commit SHA")
         command(["git", "fetch", "--tags", "origin", "main"])
@@ -106,6 +107,12 @@ class Publisher:
             raise ValueError(f"Release {withdrawn_tag} was withdrawn")
         title = git("show", "-s", "--format=%s", target)
         kind = release_kind(title, changed_paths(f"{target}^", target))
+        if bootstrap_version is not None:
+            if bootstrap_version != "7.0.0":
+                raise ValueError("ModelGlot bootstrap version must be 7.0.0")
+            if kind != "major":
+                raise ValueError("ModelGlot bootstrap requires a major release")
+            check_packaging(target)
         if kind is None:
             print(f"No release for {target}")
             return
@@ -118,32 +125,38 @@ class Publisher:
             if name.startswith("v") and VERSION.fullmatch(name[1:]):
                 tags[name] = sha
         previous = None
-        for sha in history[history.index(target) + 1 :]:
-            names = [name for name, commit in tags.items() if commit == sha]
-            if names:
-                if len(names) != 1:
-                    raise ValueError(f"Ambiguous release tags at {sha}")
-                previous = names[0]
-                break
-            if release_paths(changed_paths(f"{sha}^", sha)):
+        if bootstrap_version is None:
+            for sha in history[history.index(target) + 1 :]:
+                names = [name for name, commit in tags.items() if commit == sha]
+                if names:
+                    if len(names) != 1:
+                        raise ValueError(f"Ambiguous release tags at {sha}")
+                    previous = names[0]
+                    break
+                if release_paths(changed_paths(f"{sha}^", sha)):
+                    raise ValueError(
+                        f"Earlier release {sha} is unfinished; retry its post-merge run"
+                    )
+            if previous is None:
+                raise ValueError("No baseline release tag found")
+            releases = self.releases()
+            predecessor = releases.get(previous)
+            withdrawn_predecessor = (previous, tags[previous]) == WITHDRAWN_RELEASE
+            if (
+                not predecessor
+                or predecessor["prerelease"]
+                or (predecessor["draft"] and not withdrawn_predecessor)
+            ):
                 raise ValueError(
-                    f"Earlier release {sha} is unfinished; retry its post-merge run"
+                    f"Earlier release {previous} is unfinished; retry its post-merge run"
                 )
-        if previous is None:
-            raise ValueError("No baseline release tag found")
-        releases = self.releases()
-        predecessor = releases.get(previous)
-        withdrawn_predecessor = (previous, tags[previous]) == WITHDRAWN_RELEASE
-        if (
-            not predecessor
-            or predecessor["prerelease"]
-            or (predecessor["draft"] and not withdrawn_predecessor)
-        ):
-            raise ValueError(
-                f"Earlier release {previous} is unfinished; retry its post-merge run"
-            )
-        version = next_version(previous[1:], kind)
+            version = next_version(previous[1:], kind)
+        else:
+            releases = self.releases()
+            version = bootstrap_version
         tag = f"v{version}"
+        if bootstrap_version is not None and (tag in tags or tag in releases):
+            raise ValueError(f"ModelGlot bootstrap tag {tag} already exists")
         if any(sha == target and name != tag for name, sha in tags.items()):
             raise ValueError("Target already has another version")
         if tag in tags and tags[tag] != target:
@@ -160,13 +173,10 @@ class Publisher:
             command(["git", "tag", tag, target])
             command(["git", "push", "origin", f"refs/tags/{tag}"])
         if release is None:
-            notes = self.release_api(
-                "/generate-notes",
-                "-f",
-                f"tag_name={tag}",
-                "-f",
-                f"previous_tag_name={previous}",
-            )
+            note_fields = ["-f", f"tag_name={tag}"]
+            if previous is not None:
+                note_fields += ["-f", f"previous_tag_name={previous}"]
+            notes = self.release_api("/generate-notes", *note_fields)
             release = self.release_api(
                 "",
                 "-f",
@@ -262,16 +272,20 @@ class _TextProcessFailure(Protocol):
 class _Arguments(argparse.Namespace):
     repository: str
     commit: str
+    bootstrap_version: str | None
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repository", required=True)
     parser.add_argument("--commit", required=True)
+    parser.add_argument("--bootstrap-version")
     args = _Arguments()
     parser.parse_args(namespace=args)
     try:
-        Publisher(args.repository).publish(args.commit)
+        Publisher(args.repository).publish(
+            args.commit, bootstrap_version=args.bootstrap_version
+        )
     except (ValueError, KeyError, OSError, subprocess.CalledProcessError) as error:
         print(f"Release failed: {error}", file=sys.stderr)
         if isinstance(error, subprocess.CalledProcessError):

@@ -62,7 +62,7 @@ def test_windows_confirmation_uses_native_yes_no_dialog(
     assert isinstance(call[2], str)
     assert "FCC 2.0.0 is available" in call[1]
     assert "FCC will close" in call[1]
-    assert call[2] == "Free Claude Code update"
+    assert call[2] == "ModelGlot update"
 
 
 def test_macos_confirmation_runs_alert_on_main_queue(

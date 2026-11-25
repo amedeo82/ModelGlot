@@ -38,7 +38,7 @@ def verified_checkout_env_path() -> Path | None:
         project_text = pyproject.read_text(encoding="utf-8")
     except OSError:
         return None
-    if 'name = "free-claude-code"' not in project_text:
+    if 'name = "modelglot"' not in project_text:
         return None
     env_path = checkout / ".env"
     return env_path if env_path.is_file() else None

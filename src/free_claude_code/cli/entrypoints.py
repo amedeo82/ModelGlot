@@ -1,4 +1,4 @@
-"""Lightweight entry points for installed Free Claude Code commands."""
+"""Lightweight entry points for installed ModelGlot commands."""
 
 import sys
 from collections.abc import Sequence
@@ -22,7 +22,7 @@ def _print_version_if_requested(argv: Sequence[str] | None) -> bool:
     args = sys.argv[1:] if argv is None else argv
     if "--version" not in args:
         return False
-    print(f"free-claude-code {package_version()}")
+    print(f"modelglot {package_version()}")
     return True
 
 

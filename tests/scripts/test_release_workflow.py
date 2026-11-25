@@ -23,6 +23,11 @@ def load(name: str) -> Workflow:
 
 def test_post_merge_serializes_and_limits_publish_permissions() -> None:
     config = load("post-merge.yml")
+    workflow_text = (ROOT / ".github/workflows/post-merge.yml").read_text(
+        encoding="utf-8"
+    )
+    assert "bootstrap_version:" in workflow_text
+    assert "Initial ModelGlot version (7.0.0, major releases only)" in workflow_text
     assert config["concurrency"] == {
         "group": "post-merge-main",
         "cancel-in-progress": False,
@@ -59,7 +64,10 @@ def test_post_merge_serializes_and_limits_publish_permissions() -> None:
         assert checkout["with"]["fetch-depth"] == 0
     step = next(s for s in publish["steps"] if s.get("name") == "Publish release")
     assert step["env"]["RELEASE_COMMIT"] == "${{ inputs.release_commit || github.sha }}"
+    assert step["env"]["BOOTSTRAP_VERSION"] == "${{ inputs.bootstrap_version }}"
     assert "-m scripts.publish_release" in step["run"]
+    assert 'if [ -n "$BOOTSTRAP_VERSION" ]' in step["run"]
+    assert '--bootstrap-version "$BOOTSTRAP_VERSION"' in step["run"]
 
 
 def test_title_edits_only_trigger_the_separate_required_check() -> None:

@@ -113,7 +113,7 @@ class BrowserAuthorization:
                     )
                 return _callback_page(
                     "Connected",
-                    "OpenAI is connected to Free Claude Code. You can close this tab.",
+                    "OpenAI is connected to ModelGlot. You can close this tab.",
                     close_window=True,
                 )
 

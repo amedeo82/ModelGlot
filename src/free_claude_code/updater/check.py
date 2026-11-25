@@ -10,8 +10,8 @@ from importlib.metadata import PackageNotFoundError, version
 import httpx
 from packaging.version import Version
 
-RELEASE_URL = "https://github.com/amedeo82/free-claude-code/releases/"
-PYPI_URL = "https://pypi.org/pypi/free-claude-code/{version}/json"
+RELEASE_URL = "https://github.com/amedeo82/ModelGlot/releases/"
+PYPI_URL = "https://pypi.org/pypi/modelglot/{version}/json"
 UPDATE_AVAILABLE = 10
 
 
@@ -40,10 +40,10 @@ def check_for_updates() -> UpdateCheckResult:
 
     installed = None
     try:
-        installed = version("free-claude-code")
+        installed = version("modelglot")
         installed_version = Version(installed)
         if str(installed_version) == "0+unknown":
-            raise ValueError("installed FCC version is unknown")
+            raise ValueError("installed ModelGlot version is unknown")
         latest_version = _latest_stable_version()
     except (
         PackageNotFoundError,
@@ -55,8 +55,8 @@ def check_for_updates() -> UpdateCheckResult:
         return UpdateCheckResult(
             status=UpdateStatus.FAILED,
             installed=installed,
-            message="Could not check for FCC updates. Please retry.",
-            detail=f"Could not check for FCC updates: {exc}. Please retry.",
+            message="Could not check for ModelGlot updates. Please retry.",
+            detail=f"Could not check for ModelGlot updates: {exc}. Please retry.",
         )
 
     latest = str(latest_version)
@@ -65,7 +65,7 @@ def check_for_updates() -> UpdateCheckResult:
             status=UpdateStatus.UP_TO_DATE,
             installed=installed,
             latest=latest,
-            message=f"FCC {installed} is already up to date.",
+            message=f"ModelGlot {installed} is already up to date.",
         )
     if installed_version > latest_version:
         return UpdateCheckResult(
@@ -73,7 +73,7 @@ def check_for_updates() -> UpdateCheckResult:
             installed=installed,
             latest=latest,
             message=(
-                f"FCC {installed} is newer than the published version {latest}. "
+                f"ModelGlot {installed} is newer than the published version {latest}. "
                 "No update needed."
             ),
         )
@@ -81,7 +81,7 @@ def check_for_updates() -> UpdateCheckResult:
         status=UpdateStatus.AVAILABLE,
         installed=installed,
         latest=latest,
-        message=f"FCC update available: {installed} to {latest}.",
+        message=f"ModelGlot update available: {installed} to {latest}.",
     )
 
 
@@ -97,7 +97,7 @@ def _latest_stable_version() -> Version:
             str(response.url),
         )
         if selected is None:
-            raise ValueError("GitHub did not return a canonical FCC release URL")
+            raise ValueError("GitHub did not return a canonical ModelGlot release URL")
         published = selected[1]
         response = client.get(PYPI_URL.format(version=published))
         response.raise_for_status()
@@ -106,13 +106,13 @@ def _latest_stable_version() -> Version:
     if not isinstance(info, dict):
         raise TypeError("PyPI metadata info is not an object")
     if info["version"] != published:
-        raise ValueError("PyPI metadata does not match the selected FCC release")
+        raise ValueError("PyPI metadata does not match the selected ModelGlot release")
     latest = Version(published)
     files = metadata["urls"]
     if not isinstance(files, list) or not any(
         isinstance(file, dict) and file.get("yanked") is False for file in files
     ):
-        raise ValueError("PyPI did not return an available stable FCC release")
+        raise ValueError("PyPI did not return an available stable ModelGlot release")
     return latest
 
 
@@ -136,7 +136,7 @@ def main(argv: list[str] | None = None) -> int:
     output = sys.stderr if print_version else sys.stdout
     if result.status is UpdateStatus.AVAILABLE:
         print(
-            f"FCC update available: {result.installed} to {result.latest}. "
+            f"ModelGlot update available: {result.installed} to {result.latest}. "
             "Running the installer.",
             file=output,
         )

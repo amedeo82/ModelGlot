@@ -286,11 +286,9 @@ def test_admin_loads_current_release_assets_before_rendering_dynamic_content(
     expect(page.locator(".brand p")).to_have_text(
         f"Server Control · v{package_version()}"
     )
-    logo_link = page.get_by_role("link", name="Open Free Claude Code on GitHub")
+    logo_link = page.get_by_role("link", name="Open ModelGlot on GitHub")
     expect(logo_link).to_be_visible()
-    expect(logo_link).to_have_attribute(
-        "href", "https://github.com/amedeo82/free-claude-code"
-    )
+    expect(logo_link).to_have_attribute("href", "https://github.com/amedeo82/ModelGlot")
     expect(logo_link).to_have_attribute("target", "_blank")
     expect(page.locator('link[rel="icon"]')).to_have_attribute(
         "href", f"/admin/assets/{package_version()}/app-icon.svg"

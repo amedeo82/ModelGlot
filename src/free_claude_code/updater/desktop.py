@@ -179,7 +179,7 @@ def _windows_confirmation(message: str) -> bool:
     response = message_box(
         None,
         message,
-        "Free Claude Code update",
+        "ModelGlot update",
         _WINDOWS_YES_NO_QUESTION,
     )
     return response == _WINDOWS_IDYES
@@ -195,7 +195,7 @@ def _macos_confirmation(message: str) -> bool:
         try:
             appkit.NSApplication.sharedApplication().activateIgnoringOtherApps_(True)
             alert = appkit.NSAlert.alloc().init()
-            alert.setMessageText_("Free Claude Code update")
+            alert.setMessageText_("ModelGlot update")
             alert.setInformativeText_(message)
             alert.addButtonWithTitle_("Install")
             alert.addButtonWithTitle_("Cancel")
@@ -259,7 +259,7 @@ if ($updateStatus -ne 0) {{
     Add-Type -AssemblyName System.Windows.Forms
     [void] [System.Windows.Forms.MessageBox]::Show(
         'The FCC update could not be installed. FCC will reopen. Run fcc-update from a terminal for details.',
-        'Free Claude Code update',
+        'ModelGlot update',
         [System.Windows.Forms.MessageBoxButtons]::OK,
         [System.Windows.Forms.MessageBoxIcon]::Error
     )
@@ -292,9 +292,9 @@ def _macos_update_script(
     desktop = shlex.quote(desktop_command)
     error_script = shlex.quote(
         'display dialog "The FCC update could not be completed and FCC could not '
-        "reopen automatically. Open Free Claude Code from Applications or run "
+        "reopen automatically. Open ModelGlot from Applications or run "
         'fcc-update from Terminal for details." buttons {"OK"} '
-        'default button "OK" with icon stop with title "Free Claude Code update"'
+        'default button "OK" with icon stop with title "ModelGlot update"'
     )
     return f"""trap 'rm -f "$0"' EXIT
 parent_pid={parent_pid}

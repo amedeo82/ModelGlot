@@ -14,11 +14,15 @@ from typing import override
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW_URL = "https://raw.githubusercontent.com/amedeo82/free-claude-code"
-REPOSITORY_URL = "https://github.com/amedeo82/free-claude-code"
+RAW_URL = "https://raw.githubusercontent.com/amedeo82/ModelGlot"
+REPOSITORY_URL = "https://github.com/amedeo82/ModelGlot"
 SCRIPTS = ("fcc-update", "fcc-update.cmd")
 INSTALLED = "1.0.0"
-LATEST = {"current": INSTALLED, "newer-installed": "0.9.0"}
+LATEST = {
+    "current": INSTALLED,
+    "newer-installed": "0.9.0",
+    "legacy-current": INSTALLED,
+}
 
 
 @contextlib.contextmanager
@@ -69,13 +73,13 @@ def installer_server(body: str, status: int, latest: str):
         thread.join()
 
 
-def fixture_wheel(area: Path, url: str):
-    wheel = area / f"free_claude_code-{INSTALLED}-py3-none-any.whl"
-    dist = f"free_claude_code-{INSTALLED}"
+def fixture_wheel(area: Path, url: str, package: str = "modelglot"):
+    dist = f"{package.replace('-', '_')}-{INSTALLED}"
+    wheel = area / f"{dist}-py3-none-any.whl"
     with zipfile.ZipFile(wheel, "w") as archive:
         archive.writestr(
             f"{dist}.dist-info/METADATA",
-            f"Metadata-Version: 2.1\nName: free-claude-code\nVersion: {INSTALLED}\n",
+            f"Metadata-Version: 2.1\nName: {package}\nVersion: {INSTALLED}\n",
         )
         archive.writestr(
             f"{dist}.dist-info/WHEEL",
@@ -105,6 +109,7 @@ def fixture_wheel(area: Path, url: str):
         "real-installer",
         "current",
         "newer-installed",
+        "legacy-current",
     ],
 )
 def test_installed_update_delegates_and_survives_replacement(
@@ -128,7 +133,15 @@ def test_installed_update_delegates_and_survives_replacement(
             area / "bin" / ("fcc-update.cmd" if os.name == "nt" else "fcc-update")
         ),
     )
-    real_installer = outcome in {"real-installer", "current", "newer-installed"}
+    real_installer = outcome in {
+        "real-installer",
+        "current",
+        "newer-installed",
+        "legacy-current",
+    }
+    installed_package = (
+        "free-claude-code" if outcome == "legacy-current" else "modelglot"
+    )
     if os.name == "nt":
         powershell = shutil.which("powershell")
         if powershell is None:
@@ -171,7 +184,7 @@ printf 'exit 99\\n' > "$FCC_TEST_LAUNCHER"
     with installer_server(
         body, 503 if outcome == "download-error" else 200, latest
     ) as (url, requests):
-        wheel = fixture_wheel(area, url)
+        wheel = fixture_wheel(area, url, installed_package)
         result = subprocess.run(
             [
                 uv,
@@ -203,7 +216,7 @@ printf 'exit 99\\n' > "$FCC_TEST_LAUNCHER"
         )
         output = result.stdout + result.stderr
         suffix = "ps1" if os.name == "nt" else "sh"
-        main_installer = [f"/custom/main/scripts/install.{suffix}"]
+        main_installer = [f"/main/scripts/install.{suffix}"]
         if not real_installer:
             assert requests == main_installer, output
             if outcome == "download-error":
@@ -231,15 +244,15 @@ printf 'exit 99\\n' > "$FCC_TEST_LAUNCHER"
             else:
                 expected_message = (
                     "is already up to date."
-                    if outcome == "current"
+                    if outcome in {"current", "legacy-current"}
                     else "is newer than the published version"
                 )
                 assert expected_message in output
                 assert "marker:" not in result.stdout, output
-            assert "Refreshing FCC from custom/main." not in output
+            assert "Refreshing ModelGlot from main." not in output
             assert "Installer log:" not in result.stdout
         result = subprocess.run(
-            [uv, "tool", "uninstall", "free-claude-code"],
+            [uv, "tool", "uninstall", installed_package],
             env=env,
             capture_output=True,
             timeout=30,
