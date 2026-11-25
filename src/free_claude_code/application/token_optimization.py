@@ -10,9 +10,9 @@ import math
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from enum import StrEnum
-from typing import Any, NoReturn
+from typing import NoReturn, cast
 
-from free_claude_code.core.json_types import JsonObject
+from free_claude_code.core.json_types import JsonObject, JsonValue
 
 
 class OptimizationState(StrEnum):
@@ -31,10 +31,10 @@ def _invalid(reason: str) -> NoReturn:
     raise OptimizationReportError(reason)
 
 
-def _mapping(value: object, field_name: str) -> dict[str, Any]:
+def _mapping(value: object, field_name: str) -> JsonObject:
     if not isinstance(value, dict):
         _invalid(f"{field_name} must be an object")
-    return value
+    return cast(JsonObject, value)
 
 
 def _optional_int(value: object, field_name: str) -> int | None:
@@ -99,13 +99,13 @@ def parse_tool_version(output: str | bytes) -> str | None:
     return None
 
 
-def _decode_json(payload: str | bytes | dict[str, Any]) -> dict[str, Any]:
+def _decode_json(payload: str | bytes | dict[str, JsonValue]) -> JsonObject:
     if isinstance(payload, dict):
         return payload
     if not isinstance(payload, (str, bytes)):
         _invalid("report must be JSON text or an object")
     try:
-        value = json.loads(
+        value: JsonValue = json.loads(
             payload,
             parse_constant=lambda constant: _invalid(
                 f"non-finite JSON number: {constant}"
@@ -260,7 +260,7 @@ def _parse_rtk_daily(value: object) -> tuple[RTKDailyReport, ...] | None:
 
 
 def parse_rtk_report(
-    payload: str | bytes | dict[str, Any], *, version: str | None = None
+    payload: str | bytes | dict[str, JsonValue], *, version: str | None = None
 ) -> RTKOptimizationReport:
     report = _decode_json(payload)
     summary = _mapping(report.get("summary"), "summary")
@@ -279,7 +279,7 @@ def parse_rtk_report(
 
 
 def parse_headroom_report(
-    payload: str | bytes | dict[str, Any], *, version: str | None = None
+    payload: str | bytes | dict[str, JsonValue], *, version: str | None = None
 ) -> HeadroomOptimizationReport:
     report = _decode_json(payload)
     lifetime = _mapping(report.get("lifetime"), "lifetime")

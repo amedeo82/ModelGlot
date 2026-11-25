@@ -3,8 +3,10 @@
 import asyncio
 import codecs
 import re
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from time import monotonic
+from typing import cast
 
 from loguru import logger
 from starlette.datastructures import Headers
@@ -45,7 +47,7 @@ def _observe_event(event: SSEEvent) -> None:
     error = payload.get("error")
     error = error if isinstance(error, dict) else payload
     reason = error.get("code") or error.get("type")
-    record_request_failure(reason if isinstance(reason, str) else str(kind))
+    record_request_failure(reason if isinstance(reason, str) else kind)
 
 
 class RequestOutcomeMiddleware:
@@ -58,10 +60,11 @@ class RequestOutcomeMiddleware:
         self._usage_sink = usage_sink
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        path: str = scope.get("path", "")
         if (
             scope["type"] != "http"
             or scope.get("method") != "POST"
-            or generation_api(scope.get("path", "")) is None
+            or generation_api(path) is None
         ):
             await self._app(scope, receive, send)
             return
@@ -89,22 +92,23 @@ class RequestOutcomeMiddleware:
                 raise
             if message["type"] == "http.response.start":
                 status_code = message["status"]
+                raw_headers: list[tuple[bytes, bytes]] = message.get("headers", [])
                 if (
-                    Headers(raw=message.get("headers", []))
+                    Headers(raw=raw_headers)
                     .get("content-type", "")
                     .startswith("text/event-stream")
                 ):
                     decoder = AnthropicSSEDecoder(
                         event_names=None
-                        if generation_api(scope["path"]) == "gemini"
+                        if generation_api(path) == "gemini"
                         else _FAILURE_EVENTS
                     )
             elif message["type"] == "http.response.body":
-                completed = not message.get("more_body", False)
+                more_body: bool = message.get("more_body", False)
+                completed = not more_body
                 if decoder is not None:
-                    text = text_decoder.decode(
-                        message.get("body", b""), final=completed
-                    )
+                    body: bytes = message.get("body", b"")
+                    text = text_decoder.decode(body, final=completed)
                     for event in decoder.feed(text):
                         _observe_event(event)
                     if completed:
@@ -155,7 +159,7 @@ class RequestOutcomeMiddleware:
             current_request_outcome.reset(token)
             logger.bind(
                 event="request.completed",
-                wire_api=generation_api(scope["path"]),
+                wire_api=generation_api(path),
                 provider_id=outcome.provider_id,
                 model=outcome.model,
                 status_code=status_code,
@@ -195,23 +199,27 @@ def _final_usage_record(
     )
     usage = (
         winning.usage
-        if route_matches
+        if winning is not None and route_matches
         else CanonicalUsage(estimated_input_tokens=outcome.estimated_input_tokens)
     )
-    request_id = scope.get("state", {}).get("fcc_request_id") or new_request_id()
+    state = cast(Mapping[str, object], scope.get("state", {}))
+    request_id = cast(str, state.get("fcc_request_id")) or new_request_id()
     failure_category = (
         re.sub(r"[^A-Za-z0-9_.-]+", "_", failure_reason)[:64] or "unknown"
         if failure_reason
         else None
     )
+    path = cast(str, scope["path"])
     record = RequestUsageRecord(
         request_id=request_id,
-        wire_api=generation_api(scope["path"]) or "messages",
+        wire_api=generation_api(path) or "messages",
         outcome=result,
         created_at=datetime.now(UTC),
-        execution_id=winning.execution_id if route_matches else None,
-        attempt=winning.attempt if route_matches else None,
-        protocol=winning.protocol if route_matches else None,
+        execution_id=(
+            winning.execution_id if winning is not None and route_matches else None
+        ),
+        attempt=winning.attempt if winning is not None and route_matches else None,
+        protocol=winning.protocol if winning is not None and route_matches else None,
         usage=usage,
         provider_id=outcome.provider_id,
         gateway_model=outcome.gateway_model,

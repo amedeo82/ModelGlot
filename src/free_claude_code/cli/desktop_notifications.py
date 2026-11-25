@@ -4,7 +4,7 @@ import importlib
 import sys
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Protocol, cast
+from typing import Protocol, cast, runtime_checkable
 
 APP_USER_MODEL_ID = "io.github.amedeo82.free-claude-code"
 
@@ -27,12 +27,46 @@ class DesktopNotification:
     level: NotificationLevel = NotificationLevel.INFO
 
 
+class DesktopIcon(Protocol):
+    """Icon operations shared by the portable notification fallback."""
+
+    def notify(self, message: str, title: str) -> None: ...
+
+
+@runtime_checkable
+class WindowsBalloonIcon(Protocol):
+    """Native pystray operations used for Windows shell balloons."""
+
+    _icon_handle: int
+
+    def _message(
+        self,
+        code: int,
+        flags: int,
+        **values: object,
+    ) -> None: ...
+
+
 class DesktopNotifier(Protocol):
     """Display notifications without exposing platform-specific APIs."""
 
     def notify(self, notification: DesktopNotification) -> None: ...
 
     def close(self) -> None: ...
+
+
+class _WindowsDesktopNotifier(Protocol):
+    def notify(self, notification: DesktopNotification) -> None: ...
+
+    def close(self) -> None: ...
+
+
+class _WindowsDesktopNotifierFactory(Protocol):
+    def __call__(self, icon: DesktopIcon) -> _WindowsDesktopNotifier: ...
+
+
+class _WindowsDesktopNotificationsModule(Protocol):
+    WindowsDesktopNotifier: _WindowsDesktopNotifierFactory
 
 
 def notification_title(notification: DesktopNotification) -> str:
@@ -52,7 +86,7 @@ def notification_title(notification: DesktopNotification) -> str:
 class PystrayDesktopNotifier:
     """Portable notification fallback backed by the tray icon."""
 
-    def __init__(self, icon: Any) -> None:
+    def __init__(self, icon: DesktopIcon) -> None:
         self._icon = icon
 
     def notify(self, notification: DesktopNotification) -> None:
@@ -62,13 +96,15 @@ class PystrayDesktopNotifier:
         return None
 
 
-def create_desktop_notifier(icon: Any) -> DesktopNotifier:
+def create_desktop_notifier(icon: DesktopIcon) -> DesktopNotifier:
     """Create the best native notifier available on the current platform."""
 
     if sys.platform == "win32":
-        windows_notifications = importlib.import_module(
-            "free_claude_code.cli.windows_desktop_notifications"
+        module = cast(
+            _WindowsDesktopNotificationsModule,
+            importlib.import_module(
+                "free_claude_code.cli.windows_desktop_notifications"
+            ),
         )
-        notifier_type = cast(Any, windows_notifications).WindowsDesktopNotifier
-        return notifier_type(icon)
+        return module.WindowsDesktopNotifier(icon)
     return PystrayDesktopNotifier(icon)

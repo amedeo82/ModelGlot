@@ -11,7 +11,7 @@ import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
-from typing import Protocol
+from typing import BinaryIO, Protocol
 
 from loguru import logger
 
@@ -54,7 +54,7 @@ class ProcessRunner(Protocol):
 
 
 def _read_bounded(
-    stream, chunks: list[bytes], overflow: list[bool], limit: int
+    stream: BinaryIO, chunks: list[bytes], overflow: list[bool], limit: int
 ) -> None:
     """Drain one pipe while retaining at most ``limit`` bytes in memory."""
 
@@ -73,7 +73,9 @@ def _read_bounded(
         stream.close()
 
 
-def _finish_readers(process: subprocess.Popen, readers: list[threading.Thread]) -> bool:
+def _finish_readers(
+    process: subprocess.Popen[bytes], readers: list[threading.Thread]
+) -> bool:
     """Finish pipe readers without waiting on inherited descendant handles."""
 
     for reader in readers:

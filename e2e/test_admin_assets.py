@@ -1,17 +1,58 @@
 """Rendered contracts for Admin asset generation consistency."""
 
+from typing import TypedDict
 from urllib.parse import urlsplit
 
 import pytest
 from playwright.sync_api import Error, Page, Request, expect
 
 from e2e.form_support import assert_autofill_opt_out
+from e2e.layout import visible_bounds
 from e2e.provider_support import api_key_input, open_provider
 from free_claude_code.core.version import package_version
 
 
+class _Measurements(TypedDict):
+    top: float
+    bottom: float
+    bar: float
+    endGap: float | None
+    headingGap: float
+
+
+class _ModelPickerResult(TypedDict):
+    knownBadges: list[str]
+    unknownBadges: list[str]
+    disabledBadges: list[str]
+    optionText: str
+    optionImages: int
+    optionBadges: int
+    optionCanonical: int
+    customVisible: bool
+    customChildren: int
+
+
+class _CatalogDetailsResult(TypedDict):
+    badges: list[list[str]]
+    conflictBadges: list[list[str]]
+    exact: str
+    summaryText: str
+    summaryHtml: str
+    catalogBadges: int
+    runtimeBadges: int
+    fallbacks: int
+    images: int
+    errorFallback: str
+    errorImages: int
+    context: str
+    output: str
+    release: str
+
+
 @pytest.mark.parametrize("width", [1280, 900, 390])
-def test_admin_page_spacing_matches_visible_action_bar(page, admin_base_url, width):
+def test_admin_page_spacing_matches_visible_action_bar(
+    page: Page, admin_base_url: str, width: int
+):
     page.set_viewport_size({"width": width, "height": 720})
     page.goto(f"{admin_base_url}/admin")
     expect(page.locator("#messageArea")).to_have_text("")
@@ -23,7 +64,7 @@ def test_admin_page_spacing_matches_visible_action_bar(page, admin_base_url, wid
         page.evaluate(
             "() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))"
         )
-        measurements = page.evaluate("""() => {
+        measurements: _Measurements = page.evaluate("""() => {
           const main = document.querySelector('.main');
           const style = getComputedStyle(main);
           const bar = document.querySelector('.action-bar');
@@ -61,12 +102,12 @@ def test_admin_page_spacing_matches_visible_action_bar(page, admin_base_url, wid
         expect(page.locator("#pageTitle")).to_have_text(title)
         assert_spacing()
 
-    original_height = page.locator(".action-bar").bounding_box()["height"]
+    original_height = visible_bounds(page.locator(".action-bar"))["height"]
     page.locator("#messageArea").evaluate(
         "node => node.textContent = 'A longer validation message that wraps onto multiple lines. '.repeat(20)"
     )
     assert_spacing()
-    assert page.locator(".action-bar").bounding_box()["height"] > original_height
+    assert visible_bounds(page.locator(".action-bar"))["height"] > original_height
     page.set_viewport_size({"width": 700 if width > 900 else 1200, "height": 720})
     assert_spacing()
 
@@ -78,7 +119,9 @@ def test_admin_page_spacing_matches_visible_action_bar(page, admin_base_url, wid
     assert_spacing()
 
 
-def test_messaging_settings_follow_selected_platform(page, admin_base_url, monkeypatch):
+def test_messaging_settings_follow_selected_platform(
+    page: Page, admin_base_url: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.delenv("MESSAGING_PLATFORM", raising=False)
     page.goto(f"{admin_base_url}/admin/messaging")
     page.get_by_role("button", name="Messaging", exact=True).click()
@@ -120,7 +163,9 @@ def test_messaging_settings_follow_selected_platform(page, admin_base_url, monke
     expect(page.locator("#dirtyState")).to_have_text("1 unsaved change")
 
 
-def test_settings_text_fields_opt_out_of_autofill(page, admin_base_url):
+def test_settings_text_fields_opt_out_of_autofill(
+    page: Page, admin_base_url: str
+) -> None:
     page.goto(f"{admin_base_url}/admin")
     expect(page.locator("#messageArea")).to_have_text("")
     for title in ("Providers", "Model Config", "Messaging", "Integrations"):
@@ -142,7 +187,7 @@ def test_settings_text_fields_opt_out_of_autofill(page, admin_base_url):
 
 
 def test_selected_admin_tab_survives_refresh_and_browser_navigation(
-    page, admin_base_url
+    page: Page, admin_base_url: str
 ):
     page.goto(f"{admin_base_url}/admin")
     for title, path in (
@@ -164,7 +209,9 @@ def test_selected_admin_tab_survives_refresh_and_browser_navigation(
     expect(page.locator("#pageTitle")).to_have_text("Providers")
 
 
-def test_admin_removes_chat_drafts_and_preserves_other_storage(page, admin_base_url):
+def test_admin_removes_chat_drafts_and_preserves_other_storage(
+    page: Page, admin_base_url: str
+):
     page.add_init_script("""(() => {
       for (let index = 0; index < 16; index++) {
         sessionStorage.setItem(`fcc.chat.draft.${index}`, `old draft ${index}`);
@@ -195,7 +242,7 @@ def test_admin_removes_chat_drafts_and_preserves_other_storage(page, admin_base_
     ).to_be_enabled()
 
 
-def test_admin_storage_denial_keeps_admin_usable(page, admin_base_url):
+def test_admin_storage_denial_keeps_admin_usable(page: Page, admin_base_url: str):
     errors = []
     warnings = []
     page.on("pageerror", lambda error: errors.append(str(error)))
@@ -274,7 +321,7 @@ def test_model_picker_details_enforce_authority_and_safe_text_rendering(
     page.goto(f"{admin_base_url}/admin")
     expect(page.locator('[data-provider="nvidia_nim"]')).to_be_visible()
 
-    result = page.evaluate("""() => {
+    result: _ModelPickerResult = page.evaluate("""() => {
       const helper = window.FccModelPickerDetails;
       const known = helper.viewModel('open_router/known', 'Known', {
         supports_reasoning: true,
@@ -341,7 +388,7 @@ def test_model_picker_catalog_details_keep_provenance_conflicts_and_fallbacks(
     page.goto(f"{admin_base_url}/admin")
     expect(page.locator('[data-provider="nvidia_nim"]')).to_be_visible()
 
-    result = page.evaluate("""() => {
+    result: _CatalogDetailsResult = page.evaluate("""() => {
       const helper = window.FccModelPickerDetails;
       const catalog = {
         source: 'models.dev', source_provider_id: 'nvidia',

@@ -2,7 +2,7 @@
 
 import asyncio
 import json
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Mapping, Sequence
 from typing import Any
 
 import pytest
@@ -13,6 +13,8 @@ from free_claude_code.api.response_streams import (
     openai_responses_sse_streaming_response,
 )
 from free_claude_code.api.stream_delivery import PublicResponseStream
+from free_claude_code.api.stream_publication import PacketPublication
+from free_claude_code.core.json_types import JsonObject, JsonValue
 from free_claude_code.core.stream_output import StreamOutput, completed_output
 from tests.api.test_response_streams import _json_error
 
@@ -49,7 +51,9 @@ def _item(index: int, arguments: str = '{"path":"x"}') -> dict[str, Any]:
     }
 
 
-def _call(wire: str, index: int = 0, arguments: str = '{"path":"x"}'):
+def _call(
+    wire: str, index: int = 0, arguments: str = '{"path":"x"}'
+) -> list[tuple[str, JsonObject]]:
     if wire == "messages":
         return [
             (
@@ -96,7 +100,9 @@ def _call(wire: str, index: int = 0, arguments: str = '{"path":"x"}'):
     ]
 
 
-def _end(wire: str, *, failed: bool = False, output: list | None = None):
+def _end(
+    wire: str, *, failed: bool = False, output: list[JsonObject] | None = None
+) -> list[tuple[str, JsonObject]]:
     if wire == "messages":
         if failed:
             return [("error", {"error": {"type": "api_error", "message": "cut"}})]
@@ -125,7 +131,9 @@ def _end(wire: str, *, failed: bool = False, output: list | None = None):
     ]
 
 
-def _frames(wire: str, events) -> list[str]:
+def _frames(
+    wire: str, events: Sequence[tuple[JsonValue, Mapping[str, JsonValue]]]
+) -> list[str]:
     return [
         f"event: {kind}\ndata: "
         + json.dumps(
@@ -161,7 +169,7 @@ async def _response(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("wire", ["messages", "responses"])
-async def test_complete_packet_is_released_before_response_terminal(wire):
+async def test_complete_packet_is_released_before_response_terminal(wire: str) -> None:
     continue_stream = asyncio.Event()
     closed = []
 
@@ -195,18 +203,22 @@ async def test_complete_packet_is_released_before_response_terminal(wire):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("wire", ["messages", "responses"])
-async def test_late_packet_projection_failure_releases_no_call(wire, monkeypatch):
-    original = PublicResponseStream._finalize_frame
+async def test_late_packet_projection_failure_releases_no_call(
+    wire: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    original = PacketPublication._finalize_frame
 
-    def fail_on_call_delta(self, frame):
+    def fail_on_call_delta(
+        self: PacketPublication, frame: str, *, transition_pending: bool
+    ):
         if (
             "input_json_delta" in frame
             or "response.function_call_arguments.delta" in frame
         ):
             raise ValueError("synthetic late projection failure")
-        return original(self, frame)
+        return original(self, frame, transition_pending=transition_pending)
 
-    monkeypatch.setattr(PublicResponseStream, "_finalize_frame", fail_on_call_delta)
+    monkeypatch.setattr(PacketPublication, "_finalize_frame", fail_on_call_delta)
 
     async def body():
         yield StreamOutput(tuple(_frames(wire, [_start(wire)])))
@@ -217,16 +229,18 @@ async def test_late_packet_projection_failure_releases_no_call(wire, monkeypatch
     try:
         output = "".join([chunk async for chunk in response.body_iterator])
         assert "call_0" not in output
-        assert response.body_iterator.state.prefix is not None
-        assert not response.body_iterator.state.prefix.has_calls
-        assert not response.body_iterator._delivered.items
+        prefix = response.body_iterator.state.prefix
+        assert prefix is not None
+        assert not prefix.has_calls
+        assert prefix.continuation is not None
+        assert not prefix.continuation.items
     finally:
         await response.aclose()
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("wire", ["messages", "responses"])
-async def test_wire_stop_alone_is_not_source_completion_evidence(wire):
+async def test_wire_stop_alone_is_not_source_completion_evidence(wire: str) -> None:
     async def body():
         yield StreamOutput(tuple(_frames(wire, [_start(wire)])))
         yield StreamOutput(tuple(_frames(wire, _call(wire))))

@@ -3,6 +3,7 @@
 import json
 import os
 from pathlib import Path
+from typing import cast
 
 import tomlkit
 from tomlkit.container import OutOfOrderTableProxy
@@ -11,7 +12,7 @@ from tomlkit.items import InlineTable, Table
 from tomlkit.toml_document import TOMLDocument
 
 from free_claude_code.config.server_urls import proxy_v1_url, same_proxy_url
-from free_claude_code.core.json_types import JsonObject
+from free_claude_code.core.json_types import JsonObject, JsonValue
 from free_claude_code.harnesses.codex import (
     PRINT_PROXY_AUTH_TOKEN_FLAG,
     codex_config_values,
@@ -49,7 +50,7 @@ def _child_table(
         if create:
             parent[key] = child
         return child
-    child = parent[key]
+    child: object = parent[key]
     if not isinstance(child, Table | InlineTable | OutOfOrderTableProxy):
         raise ValueError("Codex provider configuration must use TOML tables")
     return child
@@ -133,22 +134,24 @@ def refresh_connected(path: Path, catalog_path: Path, proxy_root_url: str) -> bo
 
 def _catalog_models(catalog_path: Path) -> tuple[bool, int, frozenset[str]]:
     try:
-        payload = json.loads(catalog_path.read_text(encoding="utf-8"))
+        payload = cast(JsonValue, json.loads(catalog_path.read_text(encoding="utf-8")))
     except OSError, UnicodeError, json.JSONDecodeError:
         return False, 0, frozenset()
     if not isinstance(payload, dict):
         return False, 0, frozenset()
-    models = payload.get("models")
+    catalog = cast(JsonObject, payload)
+    models = catalog.get("models")
     if not isinstance(models, list):
         return False, 0, frozenset()
     try:
-        validate_codex_model_catalog(payload)
+        validate_codex_model_catalog(catalog)
     except ValueError:
         return False, 0, frozenset()
     slugs = frozenset(
-        model["slug"]
+        slug
         for model in models
-        if isinstance(model, dict) and isinstance(model.get("slug"), str)
+        if isinstance(model, dict)
+        and isinstance(slug := cast(JsonObject, model).get("slug"), str)
     )
     return True, len(slugs), slugs
 

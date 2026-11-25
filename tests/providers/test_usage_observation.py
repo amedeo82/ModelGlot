@@ -75,5 +75,8 @@ def test_source_usage_retains_chat_cache_reasoning_and_gemini_metadata():
             }
         },
     )
-    assert gemini.usage_snapshot()[1]["totalTokenCount"] == 28
-    assert "promptTokenCount" in gemini.usage_snapshot()[1]
+    snapshot = gemini.usage_snapshot()
+    assert snapshot is not None
+    usage = snapshot[1]
+    assert usage["totalTokenCount"] == 28
+    assert "promptTokenCount" in usage

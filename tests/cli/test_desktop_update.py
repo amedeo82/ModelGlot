@@ -3,6 +3,7 @@
 import base64
 import os
 import shlex
+from collections.abc import Callable
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -12,38 +13,92 @@ import pytest
 from free_claude_code.updater import desktop as desktop_update
 
 
-def test_windows_confirmation_uses_native_yes_no_dialog(monkeypatch) -> None:
-    user32 = SimpleNamespace(MessageBoxW=Mock(return_value=6))
+class FakeMessageBox:
+    def __init__(self) -> None:
+        self.calls: list[tuple[object, ...]] = []
+        self.argtypes: tuple[object, ...] = ()
+        self.restype: type[object] = int
+
+    def __call__(self, *arguments: object) -> int:
+        self.calls.append(arguments)
+        return 6
+
+
+class FakeQueue:
+    def __init__(self) -> None:
+        self.operations: list[Callable[[], None]] = []
+
+    def addOperationWithBlock_(self, operation: Callable[[], None]) -> None:
+        self.operations.append(operation)
+        operation()
+
+
+class FakePopen:
+    def __init__(self) -> None:
+        self.commands: list[list[str]] = []
+        self.kwargs: list[dict[str, object]] = []
+
+    def __call__(self, command: list[str], **kwargs: object) -> None:
+        self.commands.append(command)
+        self.kwargs.append(kwargs)
+
+
+def test_windows_confirmation_uses_native_yes_no_dialog(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    message_box = FakeMessageBox()
+    user32 = SimpleNamespace(MessageBoxW=message_box)
     monkeypatch.setattr(desktop_update.sys, "platform", "win32")
-    monkeypatch.setattr(
-        desktop_update.ctypes, "WinDLL", lambda *_args, **_kwargs: user32
-    )
+
+    def load_user32(*_arguments: object, **_keywords: object) -> SimpleNamespace:
+        return user32
+
+    monkeypatch.setattr(desktop_update.ctypes, "WinDLL", load_user32, raising=False)
 
     assert desktop_update.confirm_update("2.0.0") is True
 
-    call = user32.MessageBoxW.call_args
-    assert "FCC 2.0.0 is available" in call.args[1]
-    assert "FCC will close" in call.args[1]
-    assert call.args[2] == "Free Claude Code update"
+    call = message_box.calls[0]
+    assert isinstance(call[1], str)
+    assert isinstance(call[2], str)
+    assert "FCC 2.0.0 is available" in call[1]
+    assert "FCC will close" in call[1]
+    assert call[2] == "Free Claude Code update"
 
 
-def test_macos_confirmation_runs_alert_on_main_queue(monkeypatch) -> None:
+def test_macos_confirmation_runs_alert_on_main_queue(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     alert = Mock()
     alert.runModal.return_value = 1000
-    queue = Mock()
-    queue.addOperationWithBlock_.side_effect = lambda operation: operation()
+    queue = FakeQueue()
+
+    def activate_ignoring_other_apps(_value: bool) -> None:
+        return None
+
+    def shared_application() -> SimpleNamespace:
+        return SimpleNamespace(activateIgnoringOtherApps_=activate_ignoring_other_apps)
+
+    def allocate_alert() -> SimpleNamespace:
+        def initialize_alert() -> Mock:
+            return alert
+
+        return SimpleNamespace(init=initialize_alert)
+
+    def main_queue() -> FakeQueue:
+        return queue
+
     appkit = SimpleNamespace(
-        NSApplication=SimpleNamespace(
-            sharedApplication=lambda: SimpleNamespace(
-                activateIgnoringOtherApps_=lambda _value: None
-            )
-        ),
-        NSAlert=SimpleNamespace(alloc=lambda: SimpleNamespace(init=lambda: alert)),
+        NSApplication=SimpleNamespace(sharedApplication=shared_application),
+        NSAlert=SimpleNamespace(alloc=allocate_alert),
         NSAlertFirstButtonReturn=1000,
-        NSOperationQueue=SimpleNamespace(mainQueue=lambda: queue),
+        NSOperationQueue=SimpleNamespace(mainQueue=main_queue),
     )
+
+    def import_appkit(_name: str) -> SimpleNamespace:
+        return appkit
+
     monkeypatch.setattr(desktop_update.sys, "platform", "darwin")
-    monkeypatch.setattr(desktop_update.importlib, "import_module", lambda _name: appkit)
+    monkeypatch.setattr(desktop_update.importlib, "import_module", import_appkit)
 
     assert desktop_update.confirm_update("2.0.0") is True
 
@@ -53,53 +108,72 @@ def test_macos_confirmation_runs_alert_on_main_queue(monkeypatch) -> None:
 
 
 def test_windows_launcher_pins_release_and_detaches(
-    monkeypatch, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
-    popen = Mock()
+    popen = FakePopen()
+
+    def find_powershell(_name: str) -> str:
+        return "powershell.exe"
+
+    def installed_commands() -> tuple[str, str]:
+        return (
+            r"C:\Users\Test\.local\bin\fcc-update.cmd",
+            r"C:\Users\Test\.local\bin\fcc-desktop.exe",
+        )
+
     monkeypatch.setattr(desktop_update.sys, "platform", "win32")
+    monkeypatch.setattr(
+        desktop_update.subprocess, "DETACHED_PROCESS", 0x00000008, raising=False
+    )
+    monkeypatch.setattr(
+        desktop_update.subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200, raising=False
+    )
     monkeypatch.setattr(desktop_update.subprocess, "Popen", popen)
-    monkeypatch.setattr(desktop_update.shutil, "which", lambda name: "powershell.exe")
-    monkeypatch.setattr(desktop_update, "config_dir_path", lambda: tmp_path)
+    monkeypatch.setattr(desktop_update.shutil, "which", find_powershell)
     monkeypatch.setattr(
         desktop_update,
         "_installed_commands",
-        lambda: (
-            r"C:\Users\Test\.local\bin\fcc-update.cmd",
-            r"C:\Users\Test\.local\bin\fcc-desktop.exe",
-        ),
+        installed_commands,
     )
 
-    log_path = desktop_update.launch_update("2.0.0")
+    log_path = desktop_update.launch_update("2.0.0", tmp_path / "logs")
 
-    command = popen.call_args.args[0]
+    command = popen.commands[0]
     script = base64.b64decode(command[-1]).decode("utf-16-le")
     assert "$env:FCC_INSTALL_VERSION = '2.0.0'" in script
     assert "$env:FCC_INSTALL_REF = ''" in script
     assert "fcc-update.cmd" in script
     assert "fcc-desktop.exe" in script
     assert f"$parentPid = {os.getpid()}" in script
-    assert popen.call_args.kwargs["creationflags"] != 0
+    assert popen.kwargs[0]["creationflags"] != 0
     assert log_path.parent == tmp_path / "logs"
     assert log_path.is_file()
 
 
-def test_macos_launcher_waits_then_reopens_app(monkeypatch, tmp_path: Path) -> None:
-    popen = Mock()
+def test_macos_launcher_waits_then_reopens_app(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    popen = FakePopen()
+
+    def installed_commands() -> tuple[str, str]:
+        return (
+            "/Users/Test/.local/bin/fcc-update",
+            "/Users/Test/.local/bin/fcc-desktop",
+        )
+
     monkeypatch.setattr(desktop_update.sys, "platform", "darwin")
     monkeypatch.setattr(desktop_update.subprocess, "Popen", popen)
-    monkeypatch.setattr(desktop_update, "config_dir_path", lambda: tmp_path)
     monkeypatch.setattr(
         desktop_update,
         "_installed_commands",
-        lambda: (
-            "/Users/Test/.local/bin/fcc-update",
-            "/Users/Test/.local/bin/fcc-desktop",
-        ),
+        installed_commands,
     )
 
-    desktop_update.launch_update("2.0.0")
+    desktop_update.launch_update("2.0.0", tmp_path / "logs")
 
-    command = popen.call_args.args[0]
+    command = popen.commands[0]
     assert len(command) == 2
     assert command[0] == "/bin/sh"
     helper = Path(command[1])
@@ -111,26 +185,29 @@ def test_macos_launcher_waits_then_reopens_app(monkeypatch, tmp_path: Path) -> N
     assert "kill -0" in script
     assert "/usr/bin/open" in script
     assert shlex.quote("/Users/Test/.local/bin/fcc-desktop") in script
-    assert popen.call_args.kwargs["start_new_session"] is True
+    assert popen.kwargs[0]["start_new_session"] is True
     helper.unlink()
 
 
 def test_macos_launcher_removes_helper_when_spawn_fails(
-    monkeypatch, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
+    def installed_commands() -> tuple[str, str]:
+        return ("/usr/local/bin/fcc-update", "/usr/local/bin/fcc-desktop")
+
     monkeypatch.setattr(desktop_update.sys, "platform", "darwin")
-    monkeypatch.setattr(desktop_update, "config_dir_path", lambda: tmp_path)
     monkeypatch.setattr(
         desktop_update,
         "_installed_commands",
-        lambda: ("/usr/local/bin/fcc-update", "/usr/local/bin/fcc-desktop"),
+        installed_commands,
     )
     monkeypatch.setattr(
         desktop_update.subprocess,
         "Popen",
         Mock(side_effect=OSError("spawn failed")),
     )
-    helpers = []
+    helpers: list[str] = []
     helper_command = desktop_update._macos_helper_command
 
     def record_helper(script: str) -> list[str]:
@@ -141,14 +218,15 @@ def test_macos_launcher_removes_helper_when_spawn_fails(
     monkeypatch.setattr(desktop_update, "_macos_helper_command", record_helper)
 
     with pytest.raises(OSError, match="spawn failed"):
-        desktop_update.launch_update("2.0.0")
+        desktop_update.launch_update("2.0.0", tmp_path / "logs")
 
     assert len(helpers) == 1
     assert not Path(helpers[0]).exists()
 
 
 def test_installed_commands_prefer_update_next_to_desktop(
-    monkeypatch, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     desktop = tmp_path / "fcc-desktop"
     update = tmp_path / "fcc-update"
@@ -161,7 +239,8 @@ def test_installed_commands_prefer_update_next_to_desktop(
 
 
 def test_installed_commands_find_update_in_managed_runtime_without_path(
-    monkeypatch, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     bundle = tmp_path / "Free Claude Code.app/Contents/MacOS"
     bundle.mkdir(parents=True)
@@ -176,12 +255,19 @@ def test_installed_commands_find_update_in_managed_runtime_without_path(
     monkeypatch.setattr(desktop_update.sys, "platform", "darwin")
     monkeypatch.setattr(desktop_update.sys, "argv", [str(desktop)])
     monkeypatch.setattr(desktop_update.sys, "executable", str(python))
-    monkeypatch.setattr(desktop_update.shutil, "which", lambda _name: None)
+
+    def find_command(_name: str) -> None:
+        return None
+
+    monkeypatch.setattr(desktop_update.shutil, "which", find_command)
 
     assert desktop_update._installed_commands() == (str(update), str(desktop))
 
 
 @pytest.mark.parametrize("version", ["", "v2.0.0", "2.0", "2.0.0rc1", "2.0.0;rm"])
-def test_update_launcher_rejects_unsafe_or_nonstable_versions(version: str) -> None:
+def test_update_launcher_rejects_unsafe_or_nonstable_versions(
+    version: str,
+    tmp_path: Path,
+) -> None:
     with pytest.raises(ValueError, match="canonical stable release"):
-        desktop_update.launch_update(version)
+        desktop_update.launch_update(version, tmp_path / "logs")

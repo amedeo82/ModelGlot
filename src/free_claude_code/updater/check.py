@@ -101,8 +101,11 @@ def _latest_stable_version() -> Version:
         published = selected[1]
         response = client.get(PYPI_URL.format(version=published))
         response.raise_for_status()
-        metadata = response.json()
-    if metadata["info"]["version"] != published:
+        metadata: dict[str, object] = response.json()
+    info = metadata["info"]
+    if not isinstance(info, dict):
+        raise TypeError("PyPI metadata info is not an object")
+    if info["version"] != published:
         raise ValueError("PyPI metadata does not match the selected FCC release")
     latest = Version(published)
     files = metadata["urls"]
@@ -113,25 +116,31 @@ def _latest_stable_version() -> Version:
     return latest
 
 
+class _Arguments(argparse.Namespace):
+    print_version: bool = False
+
+
 def main(argv: list[str] | None = None) -> int:
     """Return 10 to authorize installation, 0 to skip, or 1 on check failure."""
 
     parser = argparse.ArgumentParser(prog="_fcc-update-check")
     parser.add_argument("--print-version", action="store_true")
-    arguments = parser.parse_args(argv)
+    arguments = _Arguments()
+    parser.parse_args(argv, namespace=arguments)
+    print_version = arguments.print_version
     result = check_for_updates()
     if result.status is UpdateStatus.FAILED:
         print(result.detail or result.message, file=sys.stderr)
         return 1
 
-    output = sys.stderr if arguments.print_version else sys.stdout
+    output = sys.stderr if print_version else sys.stdout
     if result.status is UpdateStatus.AVAILABLE:
         print(
             f"FCC update available: {result.installed} to {result.latest}. "
             "Running the installer.",
             file=output,
         )
-        if arguments.print_version:
+        if print_version:
             print(result.latest)
         return UPDATE_AVAILABLE
     print(result.message, file=output)

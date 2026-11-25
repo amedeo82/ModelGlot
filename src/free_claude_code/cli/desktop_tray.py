@@ -6,6 +6,7 @@ import threading
 import time
 from collections.abc import Callable
 from io import BytesIO
+from typing import Protocol, cast
 
 from loguru import logger
 from PIL import Image
@@ -22,6 +23,7 @@ from free_claude_code.cli.desktop_notifications import (
     NotificationLevel,
     create_desktop_notifier,
 )
+from free_claude_code.config.paths import config_dir_path
 from free_claude_code.core.version import package_version
 from free_claude_code.updater.check import (
     UpdateCheckResult,
@@ -29,6 +31,22 @@ from free_claude_code.updater.check import (
     check_for_updates,
 )
 from free_claude_code.updater.desktop import confirm_update, launch_update
+
+
+class _MacOSOperationQueue(Protocol):
+    def addOperationWithBlock_(self, operation: Callable[[], None]) -> None: ...
+
+
+class _MacOSOperationQueueFactory(Protocol):
+    def mainQueue(self) -> _MacOSOperationQueue: ...
+
+
+class _AppKit(Protocol):
+    NSOperationQueue: _MacOSOperationQueueFactory
+
+
+def _noop_action(_icon: Icon, _item: MenuItem) -> None:
+    return None
 
 
 class PystrayDesktopTray:
@@ -47,37 +65,54 @@ class PystrayDesktopTray:
         self._update_thread: threading.Thread | None = None
         self._restart_thread: threading.Thread | None = None
         self._status_thread: threading.Thread | None = None
+
+        def server_status_text(_item: MenuItem) -> str:
+            return self._server_status_label
+
+        def version_text(_item: MenuItem) -> str:
+            return self._version_label
+
+        def update_status_text(_item: MenuItem) -> str:
+            return self._update_status_label
+
+        def restart_text(_item: MenuItem) -> str:
+            return "Restarting Server…" if self._restart_active else "Restart Server"
+
+        def update_check_enabled(_item: MenuItem) -> bool:
+            return self._update_check_enabled
+
+        def restart_enabled(_item: MenuItem) -> bool:
+            return not self._restart_active
+
         self._brand_item = MenuItem(
             "Free Claude Code",
-            lambda _icon, _item: None,
+            _noop_action,
             enabled=False,
         )
         self._server_status_item = MenuItem(
-            lambda _item: self._server_status_label,
-            lambda _icon, _item: None,
+            server_status_text,
+            _noop_action,
             enabled=False,
         )
         self._version_item = MenuItem(
-            lambda _item: self._version_label,
-            lambda _icon, _item: None,
+            version_text,
+            _noop_action,
             enabled=False,
         )
         self._update_check_item = MenuItem(
             "Check for Updates",
             self._check_updates,
-            enabled=lambda _item: self._update_check_enabled,
+            enabled=update_check_enabled,
         )
         self._update_status_item = MenuItem(
-            lambda _item: self._update_status_label,
-            lambda _icon, _item: None,
+            update_status_text,
+            _noop_action,
             enabled=False,
         )
         self._restart_item = MenuItem(
-            lambda _item: (
-                "Restarting Server…" if self._restart_active else "Restart Server"
-            ),
+            restart_text,
             self._restart_server,
-            enabled=lambda _item: not self._restart_active,
+            enabled=restart_enabled,
         )
         self._icon = Icon(
             "free-claude-code",
@@ -279,7 +314,7 @@ class PystrayDesktopTray:
             self._update_status_label = f"◌ Installing {latest}…"
         self._refresh_menu()
         try:
-            log_path = launch_update(latest)
+            log_path = launch_update(latest, config_dir_path() / "logs")
         except Exception:
             logger.exception("Could not launch the FCC update installer")
             with self._update_lock:
@@ -339,7 +374,7 @@ class PystrayDesktopTray:
                 return
         try:
             if sys.platform == "darwin":
-                appkit = importlib.import_module("AppKit")
+                appkit = cast(_AppKit, importlib.import_module("AppKit"))
                 appkit.NSOperationQueue.mainQueue().addOperationWithBlock_(
                     self._update_menu_on_main_thread
                 )

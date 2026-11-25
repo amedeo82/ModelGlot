@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Any
 
 import pytest
 
@@ -79,7 +78,7 @@ async def test_logo_refresh_publishes_valid_assets_and_preserves_stale_on_error(
 
     clients: list[Client] = []
 
-    def client_factory(**_kwargs: Any) -> Client:
+    def client_factory(**_kwargs: object) -> Client:
         client = Client()
         clients.append(client)
         return client
@@ -144,9 +143,12 @@ async def test_logo_refresh_rejects_wrong_content_type_and_oversize_stream(
         def stream(self, _method: str, _url: str) -> Response:
             return Response()
 
+    def client_factory(**_kwargs: object) -> Client:
+        return Client()
+
     monkeypatch.setattr(
         "free_claude_code.providers.model_catalog_logos.httpx.AsyncClient",
-        lambda **_kwargs: Client(),
+        client_factory,
     )
     store = ModelCatalogLogoStore(tmp_path / "logos")
 

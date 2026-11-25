@@ -1,5 +1,6 @@
 import json
 import math
+from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -16,12 +17,19 @@ from free_claude_code.application.token_optimization import (
     unavailable_rtk,
     utc_timestamp,
 )
+from free_claude_code.core.json_types import (
+    JsonObject,
+    JsonValue,
+    json_array,
+    json_object,
+    load_json_value,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures" / "token_optimization"
 FORBIDDEN_FIXTURE_KEYS = {"path", "command", "prompt", "authorization", "api_key"}
 
 
-def _walk_keys(value):
+def _walk_keys(value: JsonValue) -> Iterator[str]:
     if isinstance(value, dict):
         for key, child in value.items():
             yield key
@@ -35,7 +43,7 @@ def test_every_json_fixture_is_sanitized_and_valid():
     fixtures = sorted(FIXTURES.glob("*.json"))
     assert fixtures
     for fixture in fixtures:
-        value = json.loads(fixture.read_text(encoding="utf-8"))
+        value = load_json_value(fixture.read_text(encoding="utf-8"))
         assert FORBIDDEN_FIXTURE_KEYS.isdisjoint(_walk_keys(value)), fixture.name
 
 
@@ -47,7 +55,14 @@ def test_every_json_fixture_is_sanitized_and_valid():
         ("rtk_extra_fields.json", 2, 200, 120, 80, 40.0),
     ],
 )
-def test_rtk_observed_reports(fixture, commands, before, after, saved, percent):
+def test_rtk_observed_reports(
+    fixture: str,
+    commands: int,
+    before: int,
+    after: int,
+    saved: int,
+    percent: float,
+) -> None:
     report = parse_rtk_report(
         (FIXTURES / fixture).read_text(encoding="utf-8"), version="0.44.2"
     )
@@ -79,13 +94,15 @@ def test_rtk_missing_values_remain_unknown():
         {"avg_savings_pct": -0.1},
     ],
 )
-def test_rtk_rejects_invalid_counts(summary):
+def test_rtk_rejects_invalid_counts(summary: JsonObject) -> None:
     with pytest.raises(OptimizationReportError):
         parse_rtk_report({"summary": summary})
 
 
 def test_headroom_populated_zero_and_private_fields_are_sanitized():
-    populated = json.loads((FIXTURES / "headroom_populated.json").read_text())
+    populated = json_object(
+        load_json_value((FIXTURES / "headroom_populated.json").read_text())
+    )
     populated.update(
         {
             "path": "C:/private/ledger.jsonl",
@@ -123,7 +140,7 @@ def test_headroom_missing_fields_and_extra_fields_are_tolerated():
 
 
 @pytest.mark.parametrize("tool", ["rtk", "headroom"])
-def test_malformed_json_and_schema_raise_controlled_errors(tool):
+def test_malformed_json_and_schema_raise_controlled_errors(tool: str) -> None:
     with pytest.raises(OptimizationReportError):
         parser = parse_rtk_report if tool == "rtk" else parse_headroom_report
         parser((FIXTURES / f"{tool}_malformed_json.txt").read_bytes())
@@ -133,21 +150,24 @@ def test_malformed_json_and_schema_raise_controlled_errors(tool):
 
 
 @pytest.mark.parametrize("payload", ["NaN", "Infinity", "-Infinity"])
-def test_non_finite_json_constants_are_rejected(payload):
+def test_non_finite_json_constants_are_rejected(payload: str) -> None:
     with pytest.raises(OptimizationReportError):
         parse_rtk_report(payload)
 
 
-def test_daily_trend_is_sorted_validated_and_explicitly_tool_reported():
-    payload = json.loads((FIXTURES / "rtk_daily_populated.json").read_text())
-    payload["daily"].reverse()
+def test_daily_trend_is_sorted_validated_and_explicitly_tool_reported() -> None:
+    payload = json_object(
+        load_json_value((FIXTURES / "rtk_daily_populated.json").read_text())
+    )
+    json_array(payload["daily"]).reverse()
     report = parse_rtk_report(payload)
     assert report.daily is not None
     assert [row.day.isoformat() for row in report.daily] == [
         "2026-11-12",
         "2026-11-13",
     ]
-    assert report.as_dict()["daily"][0]["basis"] == "tool_reported"
+    daily = json_array(report.as_dict()["daily"])
+    assert json_object(daily[0])["basis"] == "tool_reported"
 
     with pytest.raises(OptimizationReportError):
         parse_rtk_report({"summary": {}, "daily": [{"date": "not-a-date"}]})
@@ -163,7 +183,7 @@ def test_daily_trend_is_sorted_validated_and_explicitly_tool_reported():
 def test_daily_trend_is_empty_or_bounded_to_latest_31_days():
     empty = parse_rtk_report((FIXTURES / "rtk_daily_zero.json").read_bytes())
     assert empty.daily == ()
-    payload = {
+    payload: JsonObject = {
         "summary": {},
         "daily": [
             {"date": f"2026-10-{day:02d}", "saved_tokens": day} for day in range(1, 32)
@@ -171,9 +191,11 @@ def test_daily_trend_is_empty_or_bounded_to_latest_31_days():
         + [{"date": "2026-11-01", "saved_tokens": 32}],
     }
     report = parse_rtk_report(payload)
-    assert len(report.daily) == 31
-    assert report.daily[0].day.isoformat() == "2026-10-02"
-    assert report.daily[-1].day.isoformat() == "2026-11-01"
+    daily = report.daily
+    assert daily is not None
+    assert len(daily) == 31
+    assert daily[0].day.isoformat() == "2026-10-02"
+    assert daily[-1].day.isoformat() == "2026-11-01"
 
 
 def test_unavailable_serialization_has_stable_shape_and_safe_message():
@@ -213,6 +235,8 @@ def test_top_level_payload_is_versioned_and_does_not_add_savings():
     )
     assert payload["schema_version"] == 1
     assert payload["generated_at"] == "2026-11-17T12:00:00.000Z"
-    assert set(payload["optimizations"]) == {"rtk", "headroom"}
+    assert set(json_object(payload["optimizations"])) == {"rtk", "headroom"}
     assert "total_tokens_saved" not in payload
-    assert "not additive" in payload["notices"][0]
+    notices = json_array(payload["notices"])
+    assert isinstance(notices[0], str)
+    assert "not additive" in notices[0]

@@ -7,7 +7,15 @@ import pytest
 from playwright.sync_api import Locator, Page, Route, expect
 
 from e2e.provider_support import close_provider, open_provider
+from free_claude_code.core.json_types import JsonValue, load_json_value
 from free_claude_code.core.version import package_version
+from tests.wire_payload import (
+    array_payload,
+    object_array,
+    object_payload,
+    response_object,
+    string_payload,
+)
 
 
 def _open_models(page: Page, admin_base_url: str) -> None:
@@ -30,6 +38,29 @@ def _refresh_openrouter_models(page: Page) -> None:
 def _fallbacks(editor: Locator) -> list[dict[str, str | int]]:
     value = editor.locator("#field-MODEL_FALLBACKS").input_value()
     return json.loads(value) if value else []
+
+
+def _drag_fallback_to_end(page: Page, source: Locator, target: Locator) -> None:
+    source.scroll_into_view_if_needed()
+    target.scroll_into_view_if_needed()
+    source_box = source.bounding_box()
+    target_box = target.bounding_box()
+    assert source_box is not None and target_box is not None
+
+    x = source_box["x"] + source_box["width"] / 2
+    y = source_box["y"] + source_box["height"] / 2
+    page.mouse.move(x, y)
+    page.mouse.down()
+    try:
+        page.mouse.move(x + 8, y + 8, steps=20)
+        page.mouse.move(
+            target_box["x"] + 10,
+            target_box["y"] + target_box["height"] - 2,
+            steps=20,
+        )
+        expect(target).to_have_attribute("data-drop-position", "after")
+    finally:
+        page.mouse.up()
 
 
 def test_model_routing_pairs_five_models_with_effort_and_defaults(
@@ -133,7 +164,7 @@ def _shared_model_catalog() -> dict[str, object]:
                 "provider_label": "Groq",
             },
         },
-        "failed_providers": [],
+        "failed_providers": list[JsonValue](),
     }
 
 
@@ -142,11 +173,13 @@ def test_model_routing_distinguishes_duplicate_titles_by_provider(
 ) -> None:
     def editable_default_config(route: Route) -> None:
         response = route.fetch()
-        payload = response.json()
+        payload = response_object(response)
         model_field = next(
-            field for field in payload["fields"] if field["key"] == "MODEL"
+            field
+            for field in object_array(payload["fields"])
+            if object_payload(field)["key"] == "MODEL"
         )
-        model_field["locked"] = False
+        object_payload(model_field)["locked"] = False
         route.fulfill(response=response, json=payload)
 
     page.route("**/admin/api/config", editable_default_config)
@@ -201,14 +234,16 @@ def test_model_routing_omits_provider_suffix_with_one_configured_provider(
 ) -> None:
     def single_provider_config(route: Route) -> None:
         response = route.fetch()
-        payload = response.json()
-        for provider in payload["provider_status"]:
-            if provider["provider_id"] != "open_router":
-                provider["status"] = "missing_configuration"
+        payload = response_object(response)
+        for provider in object_array(payload["provider_status"]):
+            if object_payload(provider)["provider_id"] != "open_router":
+                object_payload(provider)["status"] = "missing_configuration"
         model_field = next(
-            field for field in payload["fields"] if field["key"] == "MODEL"
+            field
+            for field in object_array(payload["fields"])
+            if object_payload(field)["key"] == "MODEL"
         )
-        model_field["locked"] = False
+        object_payload(model_field)["locked"] = False
         route.fulfill(response=response, json=payload)
 
     page.route("**/admin/api/config", single_provider_config)
@@ -465,7 +500,7 @@ def test_fallback_editor_pairs_match_existing_controls_and_save_effort(
 def test_fallback_drag_and_keyboard_reordering_save_model_effort_pairs(
     page: Page, admin_base_url: str
 ) -> None:
-    page.set_viewport_size({"width": 1280, "height": 1400})
+    page.set_viewport_size({"width": 1280, "height": 2000})
     _open_models(page, admin_base_url)
     editor = page.locator('.field[data-key="MODEL_FALLBACKS"]')
     entries = [
@@ -481,10 +516,10 @@ def test_fallback_drag_and_keyboard_reordering_save_model_effort_pairs(
         )
         editor.get_by_role("button", name="Add fallback", exact=True).click()
     rows = editor.locator(".model-list-row")
-    target_box = rows.nth(3).bounding_box()
-    assert target_box is not None
-    editor.get_by_role("button", name="Move groq/model-a", exact=True).drag_to(
-        rows.nth(3), target_position={"x": 10, "y": target_box["height"] - 5}
+    _drag_fallback_to_end(
+        page,
+        editor.get_by_role("button", name="Move groq/model-a", exact=True),
+        rows.last,
     )
     assert _fallbacks(editor) == [entries[1], entries[2], entries[3], entries[0]]
     handle = editor.get_by_role("button", name="Move groq/model-a", exact=True)
@@ -587,7 +622,7 @@ def test_fallback_drag_indicators_only_offer_unique_positions_that_change_order(
                 steps=20,
             )
             expect(indicators).to_have_count(1)
-            current_y = indicators.evaluate(
+            current_y: float = indicators.evaluate(
                 "el => { const r = el.getBoundingClientRect(); return el.dataset.dropPosition === 'before' ? r.top : r.bottom; }"
             )
             if line_y is None:
@@ -625,7 +660,7 @@ def test_fallback_model_edits_validate_without_losing_saved_configuration(
         editor.get_by_role("button", name="Add fallback", exact=True).click()
     with page.expect_response("**/admin/api/config/apply") as saved:
         page.locator("#applyButton").click()
-    assert saved.value.json()["applied"] is True
+    assert response_object(saved.value)["applied"] is True
     expect(page.locator("#dirtyState")).to_have_text("No changes")
     original = _fallbacks(editor)
     model = editor.get_by_role("combobox", name="Fallback model 1", exact=True)
@@ -634,11 +669,19 @@ def test_fallback_model_edits_validate_without_losing_saved_configuration(
     model.press("Tab")
     with page.expect_response("**/admin/api/config/apply") as rejected:
         page.locator("#applyButton").click()
-    assert rejected.value.json()["applied"] is False
+    assert response_object(rejected.value)["applied"] is False
     expect(model).to_have_value(invalid_model)
-    fields = page.request.get(f"{admin_base_url}/admin/api/config").json()["fields"]
-    persisted = next(field for field in fields if field["key"] == "MODEL_FALLBACKS")
-    assert json.loads(persisted["value"]) == original
+    fields = response_object(page.request.get(f"{admin_base_url}/admin/api/config"))[
+        "fields"
+    ]
+    persisted = next(
+        field
+        for field in array_payload(fields)
+        if object_payload(field)["key"] == "MODEL_FALLBACKS"
+    )
+    assert (
+        load_json_value(string_payload(object_payload(persisted)["value"])) == original
+    )
 
 
 def test_editable_fallbacks_keep_focus_and_live_model_suggestions(
@@ -677,7 +720,7 @@ def test_editable_fallbacks_keep_focus_and_live_model_suggestions(
     assert _fallbacks(editor) == [
         {"model": "open_router/new-model", "reasoning": "client", "api_key_number": 1}
     ]
-    registered = page.evaluate("state.modelComboboxes.size")
+    registered: int = page.evaluate("state.modelComboboxes.size")
     for _ in range(3):
         editor.locator("#field-MODEL_FALLBACKS-add").fill("groq/discarded")
         editor.get_by_role("button", name="Add fallback", exact=True).click()
@@ -760,7 +803,7 @@ def test_model_suggestions_keep_server_order_after_provider_check_and_late_respo
     page.unroute("**/admin/api/models")
     pending = []
 
-    def hold_catalog(route):
+    def hold_catalog(route: Route):
         pending.append(route)
         page.evaluate("count => { window.heldCatalogLoads = count; }", len(pending))
 
@@ -784,11 +827,11 @@ def test_known_model_display_canonical_apply_refresh_and_custom_editing(
 
     def single_nim_config(route: Route) -> None:
         response = route.fetch()
-        payload = response.json()
-        for provider in payload["provider_status"]:
-            provider["status"] = (
+        payload = response_object(response)
+        for provider in object_array(payload["provider_status"]):
+            object_payload(provider)["status"] = (
                 "configured"
-                if provider["provider_id"] == "nvidia_nim"
+                if object_payload(provider)["provider_id"] == "nvidia_nim"
                 else "missing_configuration"
             )
         route.fulfill(response=response, json=payload)
@@ -813,7 +856,7 @@ def test_known_model_display_canonical_apply_refresh_and_custom_editing(
                         "max_output_tokens": None,
                     }
                 },
-                "failed_providers": [],
+                "failed_providers": list[JsonValue](),
             }
         ),
     )
@@ -875,11 +918,11 @@ def test_catalog_enriched_minimax_and_gemma_preserve_authority_layout_and_identi
 
     def single_nim_config(route: Route) -> None:
         response = route.fetch()
-        payload = response.json()
-        for provider in payload["provider_status"]:
-            provider["status"] = (
+        payload = response_object(response)
+        for provider in object_array(payload["provider_status"]):
+            object_payload(provider)["status"] = (
                 "configured"
-                if provider["provider_id"] == "nvidia_nim"
+                if object_payload(provider)["provider_id"] == "nvidia_nim"
                 else "missing_configuration"
             )
         route.fulfill(response=response, json=payload)
@@ -954,7 +997,7 @@ def test_catalog_enriched_minimax_and_gemma_preserve_authority_layout_and_identi
                 },
             ),
         },
-        "failed_providers": [],
+        "failed_providers": list[JsonValue](),
     }
     external_requests: list[str] = []
     page.on(
@@ -970,8 +1013,7 @@ def test_catalog_enriched_minimax_and_gemma_preserve_authority_layout_and_identi
     page.route("**/admin/api/models", lambda route: route.fulfill(json=payload))
     _open_models(page, admin_base_url)
     provider_logo_src = (
-        page.locator('[data-provider="nvidia_nim"] .provider-logo')
-        .get_attribute("src")
+        page.locator('[data-provider="nvidia_nim"] .provider-logo').get_attribute("src")
         or ""
     )
     provider_logo_path = provider_logo_src.removeprefix(admin_base_url)
@@ -1021,7 +1063,9 @@ def test_catalog_enriched_minimax_and_gemma_preserve_authority_layout_and_identi
     expect(summary.locator(".model-picker-logo-fallback")).to_have_count(1)
     expect(summary.locator(".model-picker-canonical")).to_have_count(0)
     expect(summary.locator('[data-icon="video"]')).to_be_visible()
-    expect(summary.locator('[data-stat="context"] [data-icon="context"]')).to_be_visible()
+    expect(
+        summary.locator('[data-stat="context"] [data-icon="context"]')
+    ).to_be_visible()
     with page.expect_response("**/admin/api/config/apply") as saved:
         page.locator("#applyButton").click()
     apply_payload = saved.value.request.post_data_json
@@ -1057,8 +1101,8 @@ def test_known_model_refresh_updates_title_without_changing_canonical_or_dirty_s
     payload = {
         "models": [ref],
         "model_labels": {ref: "Original title"},
-        "model_details": {},
-        "failed_providers": [],
+        "model_details": dict[str, JsonValue](),
+        "failed_providers": list[JsonValue](),
     }
     page.route("**/admin/api/models", lambda route: route.fulfill(json=payload))
     _open_models(page, admin_base_url)
@@ -1087,8 +1131,8 @@ def test_duplicate_display_titles_keep_distinct_accessible_and_canonical_identit
             json={
                 "models": [first, second],
                 "model_labels": {first: "Shared title", second: "Shared title"},
-                "model_details": {},
-                "failed_providers": [],
+                "model_details": dict[str, JsonValue](),
+                "failed_providers": list[JsonValue](),
             }
         ),
     )
@@ -1144,7 +1188,7 @@ def test_long_model_details_wrap_without_horizontal_overflow(
                         "max_output_tokens": 32768,
                     }
                 },
-                "failed_providers": [],
+                "failed_providers": list[JsonValue](),
             }
         ),
     )

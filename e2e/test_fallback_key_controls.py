@@ -6,7 +6,7 @@ import pytest
 from playwright.sync_api import Page, expect
 
 from e2e.provider_support import open_provider
-from e2e.test_admin_models import _fallbacks, _open_models
+from e2e.test_admin_models import _drag_fallback_to_end, _fallbacks, _open_models
 from e2e.test_api_key_lists import add_key
 
 CUSTOM_ID = "custom_" + "a" * 32
@@ -50,10 +50,12 @@ def test_numbered_rows_edit_reorder_save_and_reopen(page: Page, admin_base_url: 
         {"model": "groq/model-b", "reasoning": "low", "api_key_number": 2},
     ]
     assert _fallbacks(editor) == expected
-    editor.locator(".model-list-row").first.get_by_role(
-        "button", name="Move groq/model-a", exact=True
-    ).drag_to(
-        editor.locator(".model-list-row").last, target_position={"x": 10, "y": 38}
+    _drag_fallback_to_end(
+        page,
+        editor.locator(".model-list-row").first.get_by_role(
+            "button", name="Move groq/model-a", exact=True
+        ),
+        editor.locator(".model-list-row").last,
     )
     expected.reverse()
     assert _fallbacks(editor) == expected
