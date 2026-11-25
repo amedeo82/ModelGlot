@@ -176,6 +176,7 @@ preset = "strict"
 min-severity = "warn"
 enabled-ignores = []
 python-version = "3.14"
+python-platform = "all"
 search-path = ["src", "."]
 # Optional voice_local extra: torch, transformers, librosa for local whisper transcription
 ignore-missing-imports = [
@@ -189,7 +190,7 @@ ignore-missing-imports = [
     "pystray.**",
     "PIL",
     "PIL.**",
-    "winrt.**",
+    "winrt.*",
 ]
 
 [tool.pyrefly.errors]

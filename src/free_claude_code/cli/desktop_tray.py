@@ -6,6 +6,7 @@ import threading
 import time
 from collections.abc import Callable
 from io import BytesIO
+from typing import Protocol, cast
 
 from loguru import logger
 from PIL import Image
@@ -30,6 +31,18 @@ from free_claude_code.updater.check import (
     check_for_updates,
 )
 from free_claude_code.updater.desktop import confirm_update, launch_update
+
+
+class _MacOSOperationQueue(Protocol):
+    def addOperationWithBlock_(self, operation: Callable[[], None]) -> None: ...
+
+
+class _MacOSOperationQueueFactory(Protocol):
+    def mainQueue(self) -> _MacOSOperationQueue: ...
+
+
+class _AppKit(Protocol):
+    NSOperationQueue: _MacOSOperationQueueFactory
 
 
 def _noop_action(_icon: Icon, _item: MenuItem) -> None:
@@ -361,7 +374,7 @@ class PystrayDesktopTray:
                 return
         try:
             if sys.platform == "darwin":
-                appkit = importlib.import_module("AppKit")
+                appkit = cast(_AppKit, importlib.import_module("AppKit"))
                 appkit.NSOperationQueue.mainQueue().addOperationWithBlock_(
                     self._update_menu_on_main_thread
                 )

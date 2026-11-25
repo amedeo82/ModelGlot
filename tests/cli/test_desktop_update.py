@@ -53,7 +53,7 @@ def test_windows_confirmation_uses_native_yes_no_dialog(
     def load_user32(*_arguments: object, **_keywords: object) -> SimpleNamespace:
         return user32
 
-    monkeypatch.setattr(desktop_update.ctypes, "WinDLL", load_user32)
+    monkeypatch.setattr(desktop_update.ctypes, "WinDLL", load_user32, raising=False)
 
     assert desktop_update.confirm_update("2.0.0") is True
 
@@ -123,6 +123,12 @@ def test_windows_launcher_pins_release_and_detaches(
         )
 
     monkeypatch.setattr(desktop_update.sys, "platform", "win32")
+    monkeypatch.setattr(
+        desktop_update.subprocess, "DETACHED_PROCESS", 0x00000008, raising=False
+    )
+    monkeypatch.setattr(
+        desktop_update.subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200, raising=False
+    )
     monkeypatch.setattr(desktop_update.subprocess, "Popen", popen)
     monkeypatch.setattr(desktop_update.shutil, "which", find_powershell)
     monkeypatch.setattr(

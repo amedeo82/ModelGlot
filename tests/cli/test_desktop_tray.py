@@ -186,8 +186,10 @@ def test_server_status_text_reflects_each_lifecycle_state(
 
 def test_status_sync_updates_visible_status_row_when_state_changes(
     tray: TrayFixture,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     instance, icon = tray
+    monkeypatch.setattr(desktop_tray.sys, "platform", "linux")
     controller = FakeController(ServerStatus.STOPPED)
     instance._controller = cast(desktop_tray.DesktopController, controller)
 

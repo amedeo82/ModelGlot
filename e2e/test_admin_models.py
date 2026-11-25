@@ -40,6 +40,29 @@ def _fallbacks(editor: Locator) -> list[dict[str, str | int]]:
     return json.loads(value) if value else []
 
 
+def _drag_fallback_to_end(page: Page, source: Locator, target: Locator) -> None:
+    source.scroll_into_view_if_needed()
+    target.scroll_into_view_if_needed()
+    source_box = source.bounding_box()
+    target_box = target.bounding_box()
+    assert source_box is not None and target_box is not None
+
+    x = source_box["x"] + source_box["width"] / 2
+    y = source_box["y"] + source_box["height"] / 2
+    page.mouse.move(x, y)
+    page.mouse.down()
+    try:
+        page.mouse.move(x + 8, y + 8, steps=20)
+        page.mouse.move(
+            target_box["x"] + 10,
+            target_box["y"] + target_box["height"] - 2,
+            steps=20,
+        )
+        expect(target).to_have_attribute("data-drop-position", "after")
+    finally:
+        page.mouse.up()
+
+
 def test_model_routing_pairs_five_models_with_effort_and_defaults(
     page: Page, admin_base_url: str
 ) -> None:
@@ -477,7 +500,7 @@ def test_fallback_editor_pairs_match_existing_controls_and_save_effort(
 def test_fallback_drag_and_keyboard_reordering_save_model_effort_pairs(
     page: Page, admin_base_url: str
 ) -> None:
-    page.set_viewport_size({"width": 1280, "height": 1400})
+    page.set_viewport_size({"width": 1280, "height": 2000})
     _open_models(page, admin_base_url)
     editor = page.locator('.field[data-key="MODEL_FALLBACKS"]')
     entries = [
@@ -493,10 +516,10 @@ def test_fallback_drag_and_keyboard_reordering_save_model_effort_pairs(
         )
         editor.get_by_role("button", name="Add fallback", exact=True).click()
     rows = editor.locator(".model-list-row")
-    target_box = rows.nth(3).bounding_box()
-    assert target_box is not None
-    editor.get_by_role("button", name="Move groq/model-a", exact=True).drag_to(
-        rows.nth(3), target_position={"x": 10, "y": target_box["height"] - 5}
+    _drag_fallback_to_end(
+        page,
+        editor.get_by_role("button", name="Move groq/model-a", exact=True),
+        rows.last,
     )
     assert _fallbacks(editor) == [entries[1], entries[2], entries[3], entries[0]]
     handle = editor.get_by_role("button", name="Move groq/model-a", exact=True)

@@ -7,9 +7,10 @@ import sys
 import traceback
 from collections.abc import Callable, Sequence
 from importlib import import_module
+from multiprocessing.context import DefaultContext
 from multiprocessing.queues import Queue
 from pathlib import Path
-from typing import Never, Protocol
+from typing import Never, Protocol, cast
 from unittest.mock import patch
 
 from free_claude_code.core.json_types import JsonObject
@@ -43,7 +44,7 @@ def subprocess_checks() -> JsonObject:
         selected = asyncio.run(NativeFolderPicker().pick_folder(expected))
     finally:
         del os.environ["FCC_NATIVE_DIALOG_RESULT"]
-    context = multiprocessing.get_context("spawn")
+    context = cast(DefaultContext, multiprocessing.get_context("spawn"))
     queue: Queue[dict[str, str | None]] = context.Queue()
     child = context.Process(target=_spawned_child, args=(queue,))
     child.start()
