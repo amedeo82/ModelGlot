@@ -20,7 +20,7 @@ class CheckRunner(Protocol):
         print_version: bool = False,
         structured: bool = False,
         release_url: str = (
-            "https://github.com/amedeo82/free-claude-code/releases/tag/v1.10.0"
+            "https://github.com/amedeo82/ModelGlot/releases/tag/v1.10.0"
         ),
     ) -> int | update_check.UpdateCheckResult: ...
 
@@ -42,10 +42,11 @@ def check(monkeypatch: pytest.MonkeyPatch) -> CheckRunner:
         print_version: bool = False,
         structured: bool = False,
         release_url: str = (
-            "https://github.com/amedeo82/free-claude-code/releases/tag/v1.10.0"
+            "https://github.com/amedeo82/ModelGlot/releases/tag/v1.10.0"
         ),
     ) -> int | update_check.UpdateCheckResult:
-        def installed_version(_name: str) -> str:
+        def installed_version(name: str) -> str:
+            assert name == "modelglot"
             return installed
 
         monkeypatch.setattr(update_check, "version", installed_version)
@@ -57,9 +58,7 @@ def check(monkeypatch: pytest.MonkeyPatch) -> CheckRunner:
                 return httpx.Response(302, headers={"Location": release_url})
             if str(request.url) == release_url:
                 return httpx.Response(status, text="release")
-            assert (
-                str(request.url) == "https://pypi.org/pypi/free-claude-code/1.10.0/json"
-            )
+            assert str(request.url) == "https://pypi.org/pypi/modelglot/1.10.0/json"
             if body is not None:
                 return httpx.Response(status, content=body)
             return httpx.Response(status, json=payload)
@@ -137,9 +136,9 @@ def test_structured_update_result_contains_failure_detail(
 
     assert isinstance(result, update_check.UpdateCheckResult)
     assert result.status is update_check.UpdateStatus.FAILED
-    assert result.message == "Could not check for FCC updates. Please retry."
+    assert result.message == "Could not check for ModelGlot updates. Please retry."
     assert result.detail is not None
-    assert "Could not check for FCC updates" in result.detail
+    assert "Could not check for ModelGlot updates" in result.detail
 
 
 @pytest.mark.parametrize(
@@ -247,8 +246,7 @@ def test_invalid_github_release_does_not_authorize_installation(
     assert (
         check(
             payload=release(),
-            release_url="https://github.com/amedeo82/free-claude-code/releases/tag/"
-            + suffix,
+            release_url="https://github.com/amedeo82/ModelGlot/releases/tag/" + suffix,
         )
         == 1
     )

@@ -29,7 +29,7 @@ UV_NEWER = ".".join(
     [*UV_MINIMUM.split(".")[:2], str(int(UV_MINIMUM.split(".")[2]) + 1)]
 )
 RELEASE_VERSION = "2.0.0"
-METADATA_URL = f"https://raw.githubusercontent.com/amedeo82/free-claude-code/v{RELEASE_VERSION}/pyproject.toml"
+METADATA_URL = f"https://raw.githubusercontent.com/amedeo82/ModelGlot/v{RELEASE_VERSION}/pyproject.toml"
 
 FCC_COMMANDS = (
     "fcc-desktop",
@@ -159,9 +159,7 @@ def test_install_sh_pins_selected_fcc_release(posix_harness: PosixHarness, voice
         f"voice_local={int(voice)}\nvalidate_args\ninstall_free_claude_code\ninstaller_path=''\nprint_installer_retry"
     )
     assert result.returncode == 0, result.stdout + result.stderr
-    spec = (
-        "free-claude-code[voice_local]==2.0.0" if voice else "free-claude-code==2.0.0"
-    )
+    spec = "modelglot[voice_local]==2.0.0" if voice else "modelglot==2.0.0"
     assert any(call.endswith(spec) for call in posix_harness.calls())
     assert "/v2.0.0/scripts/install.sh" in result.stdout
     assert "FCC_INSTALL_VERSION=" in result.stdout
@@ -178,15 +176,13 @@ def test_install_ps1_pins_selected_fcc_release(
         *(["-VoiceLocal"] if voice else []),
     )
     assert result.returncode == 0, result.stdout + result.stderr
-    spec = (
-        "free-claude-code[voice_local]==2.0.0" if voice else "free-claude-code==2.0.0"
-    )
+    spec = "modelglot[voice_local]==2.0.0" if voice else "modelglot==2.0.0"
     assert any(call.endswith(spec) for call in powershell_harness.calls())
     assert "/v2.0.0/scripts/install.ps1" in result.stdout
     assert "$env:FCC_INSTALL_VERSION = '2.0.0'" in result.stdout
 
 
-def test_install_sh_defaults_to_custom_branch_package(
+def test_install_sh_defaults_to_main_branch_package(
     posix_harness: PosixHarness,
 ) -> None:
     posix_harness.env.pop("FCC_INSTALL_VERSION")
@@ -194,12 +190,12 @@ def test_install_sh_defaults_to_custom_branch_package(
     result = posix_harness.run_functions("package_spec")
     assert result.returncode == 0, result.stdout + result.stderr
     assert (
-        "free-claude-code @ git+https://github.com/amedeo82/free-claude-code.git@custom/main"
+        "modelglot @ git+https://github.com/amedeo82/ModelGlot.git@main"
         in result.stdout
     )
 
 
-def test_install_ps1_defaults_to_custom_branch_package(
+def test_install_ps1_defaults_to_main_branch_package(
     powershell_harness: PowerShellHarness,
 ) -> None:
     powershell_harness.env.pop("FCC_INSTALL_VERSION")
@@ -207,41 +203,48 @@ def test_install_ps1_defaults_to_custom_branch_package(
     result = powershell_harness.run_functions("Get-PackageSpec")
     assert result.returncode == 0, result.stdout + result.stderr
     assert (
-        "free-claude-code @ git+https://github.com/amedeo82/free-claude-code.git@custom/main"
+        "modelglot @ git+https://github.com/amedeo82/ModelGlot.git@main"
         in result.stdout
     )
 
 
 FCC_UPDATE_DECISIONS = [
     pytest.param(None, True, "", id="not-installed"),
-    pytest.param("1.2.2", True, "FCC update available: 1.2.2 -> 1.2.3.", id="older"),
+    pytest.param(
+        "1.2.2", True, "ModelGlot update available: 1.2.2 -> 1.2.3.", id="older"
+    ),
     pytest.param(
         "1.2.3.dev4+gabc",
         True,
-        "FCC update available: 1.2.3.dev4+gabc -> 1.2.3.",
+        "ModelGlot update available: 1.2.3.dev4+gabc -> 1.2.3.",
         id="dev-build",
     ),
     pytest.param(
-        "1.2.3rc1", True, "FCC update available: 1.2.3rc1 -> 1.2.3.", id="pre-release"
+        "1.2.3rc1",
+        True,
+        "ModelGlot update available: 1.2.3rc1 -> 1.2.3.",
+        id="pre-release",
     ),
     pytest.param("not-a-version", True, "", id="unparseable"),
-    pytest.param("1.2.3", False, "FCC 1.2.3 is already up to date.", id="current"),
+    pytest.param(
+        "1.2.3", False, "ModelGlot 1.2.3 is already up to date.", id="current"
+    ),
     pytest.param(
         "1.10.0",
         False,
-        "FCC 1.10.0 is newer than the published version 1.2.3. No update needed.",
+        "ModelGlot 1.10.0 is newer than the published version 1.2.3. No update needed.",
         id="newer",
     ),
     pytest.param(
         "1.2.3+local",
         False,
-        "FCC 1.2.3+local is newer than the published version 1.2.3. No update needed.",
+        "ModelGlot 1.2.3+local is newer than the published version 1.2.3. No update needed.",
         id="local-build",
     ),
     pytest.param(
         "1.2.3.post1",
         False,
-        "FCC 1.2.3.post1 is newer than the published version 1.2.3. No update needed.",
+        "ModelGlot 1.2.3.post1 is newer than the published version 1.2.3. No update needed.",
         id="post-release",
     ),
 ]
@@ -256,7 +259,7 @@ def _assert_update_decision(
     if message:
         assert message in result.stdout, output
     else:
-        assert "FCC " not in result.stdout, output
+        assert "ModelGlot " not in result.stdout, output
     assert "path-changed" not in result.stdout, output
 
 
@@ -272,7 +275,7 @@ def test_install_sh_update_compares_installed_fcc_with_selected_release(
             uv_bin / "uv",
             f"""#!/bin/sh
 [ "$*" = "tool list" ] || exit 35
-printf 'other-tool v9.9.9\\n- other\\nfree-claude-code v{installed}\\n- fcc-server\\n'
+printf 'other-tool v9.9.9\\n- other\\nmodelglot v{installed}\\n- fcc-server\\n'
 """,
         )
     result = posix_harness.run_functions(
@@ -299,7 +302,7 @@ def test_install_ps1_update_compares_installed_fcc_with_selected_release(
             f"""@echo off
 if not "%~1 %~2"=="tool list" exit /b 35
 echo other-tool v9.9.9
-echo free-claude-code v{installed}
+echo modelglot v{installed}
 exit /b 0
 """,
         )
@@ -310,6 +313,47 @@ exit /b 0
         "if ($env:Path -ne $before) { Write-Output 'path-changed' }"
     )
     _assert_update_decision(result, needed, message)
+
+
+def test_install_sh_update_prefers_modelglot_over_legacy_listing(
+    posix_harness: PosixHarness,
+) -> None:
+    uv_bin = Path(posix_harness.env["HOME"]) / ".local/bin"
+    uv_bin.mkdir(parents=True)
+    _write_executable(
+        uv_bin / "uv",
+        """#!/bin/sh
+[ "$*" = "tool list" ] || exit 35
+printf 'free-claude-code v1.2.3\n- legacy\nmodelglot v1.2.2\n- fcc-server\n'
+""",
+    )
+    result = posix_harness.run_functions(
+        "fcc_install_version=1.2.3\n"
+        "if fcc_update_is_needed; then echo decision:install; else echo decision:skip; fi"
+    )
+    _assert_update_decision(result, True, "ModelGlot update available: 1.2.2 -> 1.2.3.")
+
+
+def test_install_ps1_update_prefers_modelglot_over_legacy_listing(
+    powershell_harness: PowerShellHarness,
+) -> None:
+    uv_bin = Path(powershell_harness.env["USERPROFILE"]) / ".local" / "bin"
+    uv_bin.mkdir(parents=True)
+    _write_executable(
+        uv_bin / "uv.cmd",
+        """@echo off
+if not "%~1 %~2"=="tool list" exit /b 35
+echo free-claude-code v1.2.3
+echo modelglot v1.2.2
+exit /b 0
+""",
+    )
+    result = powershell_harness.run_functions(
+        "$FccInstallVersion = '1.2.3'\n"
+        "$decision = if (Test-FccUpdateNeeded) { 'install' } else { 'skip' }\n"
+        'Write-Output "decision:$decision"'
+    )
+    _assert_update_decision(result, True, "ModelGlot update available: 1.2.2 -> 1.2.3.")
 
 
 @pytest.mark.parametrize(
@@ -516,7 +560,7 @@ def _repo_root() -> Path:
 
 def _assert_uv_ready_without_fcc_install(calls: list[str]) -> None:
     assert "uv:--version" in calls
-    assert not any("--refresh-package free-claude-code" in call for call in calls)
+    assert not any("--refresh-package modelglot" in call for call in calls)
 
 
 def _write_executable(path: Path, text: str) -> None:
@@ -915,7 +959,7 @@ while [ "$#" -gt 0 ]; do
     shift
 done
 echo "download:$url" >> "$CALL_LOG"
-if [ "$url" = "https://raw.githubusercontent.com/amedeo82/free-claude-code/v${FCC_INSTALL_VERSION}/pyproject.toml" ]; then
+if [ "$url" = "https://raw.githubusercontent.com/amedeo82/ModelGlot/v${FCC_INSTALL_VERSION}/pyproject.toml" ]; then
     [ "$FAIL_STEP" != "toolchain-download" ] || exit 41
     cat "$FAKE_FIXTURES/pyproject.toml"
     exit 0
@@ -1117,7 +1161,7 @@ if [ "$name" = "fcc-desktop" ] && [ "${1:-}" = "--install-macos-app" ]; then
     [ "$FAIL_STEP" = "macos-app-setup" ] && exit 37
 fi
 if [ "$name" = "fcc-server" ] && [ "${1:-}" = "--version" ]; then
-    echo "free-claude-code 3.5.18"
+    echo "modelglot 3.5.18"
 fi
 """,
     )
@@ -1352,7 +1396,7 @@ def test_install_sh_fresh_install_is_verified(posix_harness: PosixHarness) -> No
     result = posix_harness.run()
 
     assert result.returncode == 0, result.stderr
-    assert "Free Claude Code is installed and verified." in result.stdout
+    assert "ModelGlot is installed and verified." in result.stdout
     calls = posix_harness.calls()
     assert calls.index("claude-install") < calls.index("claude:--version")
     assert calls.index("codex-install:1") < calls.index("codex:--version")
@@ -1375,8 +1419,8 @@ def test_install_sh_fresh_install_is_verified(posix_harness: PosixHarness) -> No
     assert calls.index(aider_install) < calls.index("aider:--version")
     assert any(
         call.startswith(
-            "uv:tool install --force --refresh-package free-claude-code "
-            f"--python {PYTHON_VERSION} free-claude-code=={RELEASE_VERSION}"
+            "uv:tool install --force --refresh-package modelglot "
+            f"--python {PYTHON_VERSION} modelglot=={RELEASE_VERSION}"
         )
         for call in calls
     )
@@ -1436,7 +1480,7 @@ def test_install_sh_stops_when_selected_hermes_install_fails(
     )
 
     assert result.returncode != 0
-    assert "Free Claude Code is installed and verified." not in result.stdout
+    assert "ModelGlot is installed and verified." not in result.stdout
     _assert_uv_ready_without_fcc_install(posix_harness.calls())
 
 
@@ -1498,7 +1542,7 @@ def test_install_sh_stops_when_grok_install_fails(
     )
 
     assert result.returncode != 0
-    assert "Free Claude Code is installed and verified." not in result.stdout
+    assert "ModelGlot is installed and verified." not in result.stdout
     _assert_uv_ready_without_fcc_install(posix_harness.calls())
 
 
@@ -1513,7 +1557,7 @@ def test_install_sh_stops_when_muse_install_fails(
     )
 
     assert result.returncode != 0
-    assert "Free Claude Code is installed and verified." not in result.stdout
+    assert "ModelGlot is installed and verified." not in result.stdout
     _assert_uv_ready_without_fcc_install(posix_harness.calls())
 
 
@@ -1526,14 +1570,14 @@ def test_install_sh_stops_when_aider_install_fails(
     )
 
     assert result.returncode != 0
-    assert "Free Claude Code is installed and verified." not in result.stdout
+    assert "ModelGlot is installed and verified." not in result.stdout
     calls = posix_harness.calls()
     aider_install = (
         "uv:tool install --force --python python3.12 --with pip aider-chat@latest"
     )
     assert calls.index("uv:--version") < calls.index(aider_install)
     assert not any("aider.chat/install" in call for call in calls)
-    assert not any("--refresh-package free-claude-code" in call for call in calls)
+    assert not any("--refresh-package modelglot" in call for call in calls)
 
 
 def test_install_sh_accepts_aider_as_the_only_selected_agent(
@@ -1684,7 +1728,7 @@ def test_install_sh_rejects_incompatible_node_for_selected_dsh(
     result = posix_harness.run_interactive("n\nn\nn\nn\nn\nn\ny\nn\nn\nn\nn\nn\n")
 
     assert result.returncode != 0
-    assert "Free Claude Code is installed and verified." not in result.stdout
+    assert "ModelGlot is installed and verified." not in result.stdout
     assert not any(
         call.startswith(("uv:", "download:", "npm:install"))
         and call != f"download:{METADATA_URL}"
@@ -1715,7 +1759,7 @@ def test_install_sh_stops_when_selected_dsh_install_fails(
     )
 
     assert result.returncode != 0
-    assert "Free Claude Code is installed and verified." not in result.stdout
+    assert "ModelGlot is installed and verified." not in result.stdout
     _assert_uv_ready_without_fcc_install(posix_harness.calls())
 
 
@@ -1847,7 +1891,7 @@ def test_install_sh_stops_when_rtk_setup_fails(
     result = posix_harness.run("--rtk-headroom", fail_step=failure)
 
     assert result.returncode != 0
-    assert "Free Claude Code is installed and verified." in result.stdout
+    assert "ModelGlot is installed and verified." in result.stdout
     assert "fcc-server:--version" in posix_harness.calls()
     assert re.search(r"failed.*RTK configuration", result.stdout, re.IGNORECASE)
 
@@ -1884,7 +1928,7 @@ def test_install_sh_installs_then_updates_only_selected_agent(
     assert [call for call in update_calls if call.startswith("download:")] == [
         f"download:{METADATA_URL}"
     ]
-    assert any("--refresh-package free-claude-code" in call for call in update_calls)
+    assert any("--refresh-package modelglot" in call for call in update_calls)
 
 
 def test_install_sh_rejects_uninstalled_only_selection(
@@ -1912,9 +1956,7 @@ def test_install_sh_delegates_macos_bundle_to_installed_helper(
     assert calls.index("fcc-server:--version") < calls.index(
         "fcc-desktop:--install-macos-app"
     )
-    install = next(
-        call for call in calls if "--refresh-package free-claude-code" in call
-    )
+    install = next(call for call in calls if "--refresh-package modelglot" in call)
     assert "--managed-python" in install and "+gil" in install
 
 
@@ -1942,9 +1984,7 @@ def test_install_sh_macos_python_selection_overrides_only_its_preference(
     result = posix_harness.run_functions("install_free_claude_code")
     assert result.returncode == 0, result.stderr
     calls = posix_harness.calls()
-    install = next(
-        call for call in calls if "--refresh-package free-claude-code" in call
-    )
+    install = next(call for call in calls if "--refresh-package modelglot" in call)
     expected = []
     if system == "Darwin":
         expected.append(
@@ -1991,9 +2031,9 @@ def test_install_sh_stops_if_macos_bundle_setup_fails(
 
     assert result.returncode != 0
     assert "Command failed with exit code 37" in result.stderr
-    assert "Free Claude Code is installed and verified." in result.stdout
+    assert "ModelGlot is installed and verified." in result.stdout
     assert "Start the proxy with: fcc-server" in result.stdout
-    assert "Open Free Claude Code from Applications" not in result.stdout
+    assert "Open ModelGlot from Applications" not in result.stdout
     assert not (
         posix_harness.root / "home" / "Desktop" / "Free Claude Code.app"
     ).exists()
@@ -2266,7 +2306,7 @@ def test_install_sh_stops_without_success_on_each_failure(
     result = posix_harness.run(fail_step=failure)
 
     assert result.returncode != 0
-    assert "Free Claude Code is installed and verified." not in result.stdout
+    assert "ModelGlot is installed and verified." not in result.stdout
     calls = posix_harness.calls()
     if failure == "path-update":
         failure_index = calls.index("uv:tool update-shell")
@@ -2311,7 +2351,7 @@ def test_install_sh_dry_run_never_executes_commands(
     assert result.returncode == 0, result.stderr
     assert posix_harness.calls() == []
     assert "Dry run complete. No changes were made." in result.stdout
-    assert "Free Claude Code is installed and verified." not in result.stdout
+    assert "ModelGlot is installed and verified." not in result.stdout
 
 
 def test_install_sh_rejects_broken_existing_client_without_replacing_it(
@@ -2344,11 +2384,11 @@ def test_install_sh_rejects_unparseable_existing_uv(
 @pytest.mark.parametrize(
     ("args", "package"),
     [
-        ((), "free-claude-code"),
-        (("--voice-local",), "free-claude-code[voice_local]"),
+        ((), "modelglot"),
+        (("--voice-local",), "modelglot[voice_local]"),
         (
             ("--voice-local", "--torch-backend", "cu130"),
-            "free-claude-code[voice_local]",
+            "modelglot[voice_local]",
         ),
     ],
 )
@@ -2363,7 +2403,7 @@ def test_install_sh_voice_flags_only_change_fcc_spec(
     install_calls = [
         call
         for call in posix_harness.calls()
-        if "tool install" in call and "--refresh-package free-claude-code" in call
+        if "tool install" in call and "--refresh-package modelglot" in call
     ]
     assert len(install_calls) == 1
     assert install_calls[0].endswith(f"{package}=={RELEASE_VERSION}")
@@ -2419,7 +2459,7 @@ def test_install_sh_rechecks_for_fcc_process_before_tool_replacement(
     assert result.returncode != 0
     assert "fcc-server (PID 4242)" in result.stderr
     assert not any(
-        "--refresh-package free-claude-code" in call for call in posix_harness.calls()
+        "--refresh-package modelglot" in call for call in posix_harness.calls()
     )
 
 
@@ -2854,7 +2894,7 @@ if "%FCC_NAME%"=="fcc-desktop" if "%1"=="--export-icon" (
     if not exist "%~dp2" mkdir "%~dp2"
     echo fake icon>"%~2"
 )
-if "%FCC_NAME%"=="fcc-server" if "%1"=="--version" echo free-claude-code 3.5.18
+if "%FCC_NAME%"=="fcc-server" if "%1"=="--version" echo modelglot 3.5.18
 exit /b 0
 """,
         encoding="utf-8",
@@ -3013,7 +3053,7 @@ function Invoke-RestMethod {
     }
 
     Add-Content -LiteralPath $env:CALL_LOG -Value "download:$Uri"
-    if ($Uri -eq "https://raw.githubusercontent.com/amedeo82/free-claude-code/v$env:FCC_INSTALL_VERSION/pyproject.toml") {
+    if ($Uri -eq "https://raw.githubusercontent.com/amedeo82/ModelGlot/v$env:FCC_INSTALL_VERSION/pyproject.toml") {
         if ($env:FAIL_STEP -eq "toolchain-download") { throw "simulated metadata failure" }
         return [IO.File]::ReadAllText((Join-Path $env:FAKE_FIXTURES "pyproject.toml"))
     }
@@ -3468,7 +3508,7 @@ def _assert_setup_preserves_other_commands(
         assert not any(call.startswith("stale-uv:tool") for call in calls)
     else:
         assert not any(call.startswith(f"stale-{other}:") for call in calls)
-    assert any("--refresh-package free-claude-code" in call for call in calls)
+    assert any("--refresh-package modelglot" in call for call in calls)
 
 
 @pytest.mark.parametrize(
@@ -3755,7 +3795,7 @@ def test_install_ps1_fresh_install_is_verified(
     result = powershell_harness.run()
 
     assert result.returncode == 0, result.stderr
-    assert "Free Claude Code is installed and verified." in result.stdout
+    assert "ModelGlot is installed and verified." in result.stdout
     calls = powershell_harness.calls()
     assert calls.index("claude-install") < calls.index("claude:--version")
     assert calls.index("codex-install:1") < calls.index("codex:--version")
@@ -3781,9 +3821,9 @@ def test_install_ps1_fresh_install_is_verified(
     assert calls.index(aider_install) < calls.index("aider:--version")
     assert any(
         call.startswith(
-            "uv:tool install --force --refresh-package free-claude-code "
+            "uv:tool install --force --refresh-package modelglot "
             f"--python cpython-{PYTHON_VERSION}-windows-x86_64-none "
-            "free-claude-code"
+            "modelglot"
         )
         for call in calls
     )
@@ -3939,7 +3979,7 @@ def test_install_ps1_stops_when_aider_install_fails(
     )
     assert calls.index("uv:--version") < calls.index(aider_install)
     assert not any("aider.chat/install" in call for call in calls)
-    assert not any("--refresh-package free-claude-code" in call for call in calls)
+    assert not any("--refresh-package modelglot" in call for call in calls)
 
 
 def test_install_ps1_discovers_aider_in_custom_uv_tool_bin(
@@ -4313,9 +4353,9 @@ def test_install_ps1_stops_if_windows_icon_export_fails(
 
     assert result.returncode != 0
     assert "Command failed with exit code 56" in result.stderr
-    assert "Free Claude Code is installed and verified." in result.stdout
+    assert "ModelGlot is installed and verified." in result.stdout
     assert "start the proxy with: fcc-server" in result.stdout
-    assert "Open the Free Claude Code desktop shortcut" not in result.stdout
+    assert "Open the ModelGlot desktop shortcut" not in result.stdout
     home = Path(powershell_harness.env["USERPROFILE"])
     assert not (home / "Desktop" / "Free Claude Code.lnk").exists()
 
@@ -4343,7 +4383,7 @@ def test_install_ps1_preserves_unowned_desktop_shortcut(
     assert result.returncode == 0, result.stderr
     assert "not managed by Free Claude Code" in result.stdout
     assert desktop_shortcut.read_bytes() == original_shortcut
-    assert "Open the Free Claude Code desktop shortcut" not in result.stdout
+    assert "Open the ModelGlot desktop shortcut" not in result.stdout
     assert "start the proxy with: fcc-server" in result.stdout
 
 
@@ -4372,7 +4412,7 @@ def test_install_ps1_preserves_valid_existing_tools(
     assert download_calls == [
         f"download:{METADATA_URL}",
         "download:https://raw.githubusercontent.com/amedeo82/"
-        "free-claude-code/custom/main/scripts/install-muse.ps1",
+        "ModelGlot/main/scripts/install-muse.ps1",
     ]
     assert "muse-install:external" in powershell_harness.calls()
     assert "leaving it unchanged" in result.stdout
@@ -4646,7 +4686,7 @@ def test_install_ps1_stops_without_success_on_each_failure(
         assert "Installer scenario completed." not in result.stdout
 
     assert result.returncode != 0
-    assert "Free Claude Code is installed and verified." not in result.stdout
+    assert "ModelGlot is installed and verified." not in result.stdout
     calls = powershell_harness.calls()
     if failure == "path-update":
         failure_index = calls.index("uv:tool update-shell")
@@ -4685,7 +4725,7 @@ def test_install_ps1_dry_run_never_executes_commands(
     assert result.returncode == 0, result.stderr
     assert powershell_harness.calls() == []
     assert "Dry run complete. No changes were made." in result.stdout
-    assert "Free Claude Code is installed and verified." not in result.stdout
+    assert "ModelGlot is installed and verified." not in result.stdout
 
 
 def test_install_ps1_rejects_broken_existing_client_without_replacing_it(
@@ -4722,11 +4762,11 @@ def test_install_ps1_rejects_unparseable_existing_uv(
 @pytest.mark.parametrize(
     ("args", "package"),
     [
-        ((), "free-claude-code"),
-        (("-VoiceLocal",), "free-claude-code[voice_local]"),
+        ((), "modelglot"),
+        (("-VoiceLocal",), "modelglot[voice_local]"),
         (
             ("-VoiceLocal", "-TorchBackend", "cu130"),
-            "free-claude-code[voice_local]",
+            "modelglot[voice_local]",
         ),
     ],
 )
@@ -4744,7 +4784,7 @@ def test_install_ps1_voice_flags_only_change_fcc_spec(
     install_calls = [
         call
         for call in powershell_harness.calls()
-        if "tool install" in call and "--refresh-package free-claude-code" in call
+        if "tool install" in call and "--refresh-package modelglot" in call
     ]
     assert len(install_calls) == 1
     assert install_calls[0].endswith(f"{package}=={RELEASE_VERSION}")
@@ -4808,8 +4848,7 @@ def test_install_ps1_rechecks_for_fcc_process_before_tool_replacement(
     assert result.returncode != 0
     assert "fcc-server (PID 4242)" in result.stderr
     assert not any(
-        "--refresh-package free-claude-code" in call
-        for call in powershell_harness.calls()
+        "--refresh-package modelglot" in call for call in powershell_harness.calls()
     )
 
 
@@ -4826,6 +4865,9 @@ def test_install_ps1_ignores_similarly_named_process(
 def test_installers_use_native_clients_and_single_python_selection() -> None:
     shell = (_repo_root() / "scripts" / "install.sh").read_text(encoding="utf-8")
     powershell = (_repo_root() / "scripts" / "install.ps1").read_text(encoding="utf-8")
+    muse_launcher = (
+        _repo_root() / "src/free_claude_code/cli/launchers/muse.py"
+    ).read_text(encoding="utf-8")
 
     for text in (shell, powershell):
         for command_name in FCC_COMMANDS:
@@ -4833,26 +4875,31 @@ def test_installers_use_native_clients_and_single_python_selection() -> None:
         assert "@anthropic-ai/claude-code" not in text
         assert "@openai/codex" not in text
         assert "@earendil-works/pi-coding-agent" not in text
-        assert "git+" not in text
+        assert "https://github.com/amedeo82/ModelGlot" in text
+        assert "https://raw.githubusercontent.com/amedeo82/ModelGlot" in text
+        assert "amedeo82/free-claude-code" not in text
+        assert "custom/main" not in text
         assert "git --version" not in text
         assert (
-            "https://github.com/amedeo82/free-claude-code/archive/refs/heads/main.zip"
+            "https://github.com/amedeo82/ModelGlot/archive/refs/heads/main.zip"
             not in text
         )
-        assert "python install" not in text
         assert "--refresh-package" in text
         assert "tool update-shell" in text
         assert "--python" in text
 
+    assert "python install" not in powershell
     assert "https://pi.dev/install.sh" in shell
     assert "https://pi.dev/install.ps1" in powershell
     assert "https://x.ai/cli/install.sh" in shell
     assert "https://x.ai/cli/install.ps1" in powershell
     assert "https://dev.meta.ai/install.sh" in shell
     assert (
-        "https://raw.githubusercontent.com/amedeo82/free-claude-code/"
-        "custom/main/scripts/install-muse.ps1"
+        "https://raw.githubusercontent.com/amedeo82/ModelGlot/"
+        "main/scripts/install-muse.ps1"
     ) in powershell
+    assert "amedeo82/ModelGlot/main/scripts/install-muse.ps1" in muse_launcher
+    assert "amedeo82/free-claude-code" not in muse_launcher
 
 
 def test_install_ps1_uses_x64_python_for_windows_arm_compatibility() -> None:
@@ -4908,7 +4955,7 @@ def test_install_ps1_installs_then_updates_only_selected_agent(
     assert [call for call in update_calls if call.startswith("download:")] == [
         f"download:{METADATA_URL}"
     ]
-    assert any("--refresh-package free-claude-code" in call for call in update_calls)
+    assert any("--refresh-package modelglot" in call for call in update_calls)
 
 
 @pytest.mark.parametrize("powershell", _powershells())
@@ -6026,7 +6073,7 @@ def _assert_installer_recovers_after_verification_failure(
     assert failed.returncode != 0
     assert not any(call.startswith("rtk:init") for call in harness.calls())
     assert not (home / "Desktop" / "Free Claude Code.lnk").exists()
-    assert "Free Claude Code is installed and verified." not in failed.stdout
+    assert "ModelGlot is installed and verified." not in failed.stdout
     assert re.search(r"completed.*FCC package", failed.stdout, re.IGNORECASE)
     assert re.search(r"failed.*FCC verification", failed.stdout, re.IGNORECASE)
     assert re.search(r"not attempted.*RTK", failed.stdout, re.IGNORECASE)
@@ -6044,7 +6091,7 @@ def _assert_installer_recovers_after_verification_failure(
     recovered = harness.run(*options)
 
     assert recovered.returncode == 0, recovered.stderr
-    assert "Free Claude Code is installed and verified." in recovered.stdout
+    assert "ModelGlot is installed and verified." in recovered.stdout
     retry_calls = harness.calls()[calls_before_retry:]
     assert "claude-install" not in retry_calls
     assert "codex-install:1" not in retry_calls
@@ -6237,7 +6284,7 @@ def test_install_ps1_preview_creates_no_log_or_probe(
     assert not (Path(powershell_harness.env["USERPROFILE"]) / ".fcc/logs").exists()
     if option == "-DryRun":
         assert (
-            "free-claude-code @ git+https://github.com/amedeo82/free-claude-code.git@custom/main"
+            "modelglot @ git+https://github.com/amedeo82/ModelGlot.git@main"
             in result.stdout
         )
 
@@ -6254,7 +6301,7 @@ def test_install_sh_preview_creates_no_log_or_probe(
     assert not (Path(posix_harness.env["HOME"]) / ".fcc/logs").exists()
     if option == "--dry-run":
         assert (
-            "free-claude-code @ git+https://github.com/amedeo82/free-claude-code.git@custom/main"
+            "modelglot @ git+https://github.com/amedeo82/ModelGlot.git@main"
             in result.stdout
         )
 
@@ -6336,7 +6383,7 @@ def test_install_sh_piped_failure_retries_downloaded_installer(
         line for line in result.stdout.splitlines() if line.startswith("Retry:")
     )
     assert (
-        f"https://raw.githubusercontent.com/amedeo82/free-claude-code/v{RELEASE_VERSION}/scripts/install.sh"
+        f"https://raw.githubusercontent.com/amedeo82/ModelGlot/v{RELEASE_VERSION}/scripts/install.sh"
         in retry
     )
     assert f"| FCC_INSTALL_VERSION='{RELEASE_VERSION}' sh -s --" in retry
@@ -6396,7 +6443,7 @@ def _assert_installer_keeps_launch_instructions_after_rtk_failure(
         "-RtkHeadroom" if windows else "--rtk-headroom", fail_step="rtk-init-claude"
     )
     assert result.returncode != 0
-    assert "Free Claude Code is installed and verified." in result.stdout
+    assert "ModelGlot is installed and verified." in result.stdout
     assert "Run Claude Code with: fcc-claude" in result.stdout
     assert "Failed: RTK configuration" in result.stdout
     assert "Retry:" in result.stdout

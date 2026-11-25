@@ -29,7 +29,7 @@ def reject_inline_system_turns(
     if match := _CLAUDE_CODE_VERSION.search(user_agent):
         raise InvalidRequestError(
             f"Claude Code {match.group(1)} sent a system message inside `messages`, "
-            "which Free Claude Code can't accept. Run `claude update`, then "
+            "which ModelGlot can't accept. Run `claude update`, then "
             "restart Claude Code.",
             error_code=MID_CONVERSATION_SYSTEM_NOT_SUPPORTED,
         )

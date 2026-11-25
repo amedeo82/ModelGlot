@@ -370,4 +370,4 @@ def test_version_text_reports_installed_package_version(
 
     monkeypatch.setattr(desktop, "package_version", lambda: "9.8.7")
 
-    assert desktop.version_text() == "Free Claude Code 9.8.7"
+    assert desktop.version_text() == "ModelGlot 9.8.7"

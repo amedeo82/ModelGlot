@@ -47,7 +47,7 @@ from .endpoint import CodexEndpointContext
 from .login import OPENAI_CODEX_ORIGINATOR
 
 try:
-    FCC_VERSION = version("free-claude-code")
+    FCC_VERSION = version("modelglot")
 except PackageNotFoundError:
     FCC_VERSION = "dev"
 

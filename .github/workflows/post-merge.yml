@@ -11,6 +11,10 @@ on:
         description: Full main commit SHA to retry (defaults to this workflow commit)
         required: false
         type: string
+      bootstrap_version:
+        description: Initial ModelGlot version (7.0.0, major releases only)
+        required: false
+        type: string
   push:
     branches: [main]
 
@@ -105,7 +109,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_REPOSITORY: ${{ github.repository }}
           RELEASE_COMMIT: ${{ inputs.release_commit || github.sha }}
+          BOOTSTRAP_VERSION: ${{ inputs.bootstrap_version }}
           CI_PYTHON: ${{ steps.environment.outputs.python-version }}
         run: |
+          release_args=(--repository "$RELEASE_REPOSITORY" --commit "$RELEASE_COMMIT")
+          if [ -n "$BOOTSTRAP_VERSION" ]; then
+            release_args+=(--bootstrap-version "$BOOTSTRAP_VERSION")
+          fi
           uv run --no-project --python "$CI_PYTHON" python -m scripts.publish_release \
-            --repository "$RELEASE_REPOSITORY" --commit "$RELEASE_COMMIT"
+            "${release_args[@]}"

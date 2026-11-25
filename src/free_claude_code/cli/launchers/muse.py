@@ -13,7 +13,7 @@ from .runner import HarnessSpec, LaunchContext, launch_harness, version_at_least
 _INSTALL_HINT = (
     "Install Muse Code on native Windows with "
     '`& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/'
-    'amedeo82/free-claude-code/custom/main/scripts/install-muse.ps1")))`, '
+    'amedeo82/ModelGlot/main/scripts/install-muse.ps1")))`, '
     "or on macOS/Linux/WSL with "
     "`curl -fsSL https://dev.meta.ai/install.sh | bash`."
 )

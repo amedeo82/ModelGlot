@@ -91,21 +91,25 @@ def check_packaging(head: str) -> None:
         "project"
     ]
     if (
-        project["name"] != "free-claude-code"
+        project["name"] != "modelglot"
         or "version" in project
         or "version" not in project.get("dynamic", [])
     ):
-        raise ValueError("FCC must declare a dynamic version without project.version")
+        raise ValueError(
+            "ModelGlot must declare a dynamic version without project.version"
+        )
     packages: list[_LockedPackage] = tomllib.loads(git("show", f"{head}:uv.lock"))[
         "package"
     ]
     roots = [
         p
         for p in packages
-        if p["name"] == "free-claude-code" and p.get("source") == {"editable": "."}
+        if p["name"] == "modelglot" and p.get("source") == {"editable": "."}
     ]
     if len(roots) != 1 or "version" in roots[0]:
-        raise ValueError("uv.lock must have one editable FCC package without a version")
+        raise ValueError(
+            "uv.lock must have one editable ModelGlot package without a version"
+        )
 
 
 def check(base: str, head: str, title: str) -> None:

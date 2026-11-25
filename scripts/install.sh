@@ -19,8 +19,8 @@ RTK_VERSION="0.44.2"
 HEADROOM_PACKAGE="headroom-ai[mcp]==0.40.0"
 RTK_RELEASE_BASE_URL="https://github.com/rtk-ai/rtk/releases/download/v$RTK_VERSION"
 UV_INSTALL_URL="https://astral.sh/uv/install.sh"
-FCC_REPOSITORY="https://github.com/amedeo82/free-claude-code"
-FCC_RAW_BASE="https://raw.githubusercontent.com/amedeo82/free-claude-code"
+FCC_REPOSITORY="https://github.com/amedeo82/ModelGlot"
+FCC_RAW_BASE="https://raw.githubusercontent.com/amedeo82/ModelGlot"
 FCC_GIT_BASE="$FCC_REPOSITORY.git"
 # Include retired entry points so updates reject older FCC processes before replacement.
 FCC_COMMANDS="fcc-desktop fcc-server fcc-claude fcc-codex fcc-pi fcc-opencode fcc-cline fcc-hermes fcc-dsh fcc-grok fcc-muse fcc-aider fcc-agy fcc-doctor fcc-update fcc-init free-claude-code"
@@ -32,7 +32,7 @@ fcc_install_version=${FCC_INSTALL_VERSION:-}
 if [ -n "$fcc_install_version" ] && [ -z "${FCC_INSTALL_REF+x}" ]; then
     fcc_install_ref=""
 else
-    fcc_install_ref=${FCC_INSTALL_REF-custom/main}
+    fcc_install_ref=${FCC_INSTALL_REF-main}
 fi
 install_claude=1
 install_codex=1
@@ -75,7 +75,7 @@ show_usage() {
     cat <<'USAGE'
 Usage: install.sh [options]
 
-Installs or updates Free Claude Code and lets you choose which coding agents to install or verify.
+Installs or updates ModelGlot and lets you choose which coding agents to install or verify.
 
 Options:
   --ref REF                Install from a Git branch or tag in this fork's repository.
@@ -111,7 +111,7 @@ initialize_install_log() {
     log_timestamp=$(date '+%Y%m%d-%H%M%S' 2>/dev/null) || log_timestamp=unknown
     install_log="${HOME:-}/.fcc/logs/install-$log_timestamp-$$.log"
     if [ -n "${HOME:-}" ] && (umask 077; mkdir -p "$HOME/.fcc/logs" && set -C && : >"$install_log") 2>/dev/null; then
-        write_install_log "Starting Free Claude Code installer"
+        write_install_log "Starting ModelGlot installer"
     else
         install_log=""
         install_log_warning=1
@@ -159,7 +159,7 @@ print_installer_retry() {
         printf 'sh '
         shell_quote "$installer_path"
     else
-        installer_source_ref=custom/main
+        installer_source_ref=main
         if [ -n "$fcc_install_ref" ]; then
             installer_source_ref=$fcc_install_ref
         elif [ -n "$fcc_install_version" ]; then
@@ -545,7 +545,7 @@ assert_no_fcc_processes_running() {
     done
 
     if [ -n "$running" ]; then
-        fail "Free Claude Code is still running ($running). Stop those processes, then rerun the installer."
+        fail "ModelGlot is still running ($running). Stop those processes, then rerun the installer."
     fi
 }
 
@@ -1669,19 +1669,14 @@ validate_args() {
 }
 
 package_spec() {
+    if [ "$voice_local" -eq 1 ]; then
+        printf '%s' 'modelglot[voice_local]'
+    else
+        printf '%s' 'modelglot'
+    fi
     if [ -n "$fcc_install_ref" ]; then
-        if [ "$voice_local" -eq 1 ]; then
-            printf '%s' 'free-claude-code[voice_local]'
-        else
-            printf '%s' 'free-claude-code'
-        fi
         printf ' @ git+%s@%s' "$FCC_GIT_BASE" "$fcc_install_ref"
         return 0
-    fi
-    if [ "$voice_local" -eq 1 ]; then
-        printf '%s' 'free-claude-code[voice_local]'
-    else
-        printf '%s' 'free-claude-code'
     fi
     if [ -n "$fcc_install_version" ]; then
         printf '==%s' "$fcc_install_version"
@@ -1694,7 +1689,7 @@ install_free_claude_code() {
     assert_no_fcc_processes_running
     spec=$(package_spec)
 
-    set -- uv tool install --force --refresh-package free-claude-code
+    set -- uv tool install --force --refresh-package modelglot
     if [ "$(uname -s)" = "Darwin" ]; then
         # Keep interpreter discovery outside the caller's project. uv can select
         # an installed +gil build but needs the plain version to download it.
@@ -1727,7 +1722,7 @@ configure_and_verify_free_claude_code() {
     start_install_step "FCC verification"
 
     for command_name in fcc-desktop fcc-server fcc-claude fcc-codex fcc-pi fcc-opencode fcc-cline fcc-hermes fcc-dsh fcc-grok fcc-muse fcc-aider fcc-agy fcc-doctor fcc-update; do
-        [ -x "$tool_bin/$command_name" ] || fail "Free Claude Code installation did not create $tool_bin/$command_name."
+        [ -x "$tool_bin/$command_name" ] || fail "ModelGlot installation did not create $tool_bin/$command_name."
     done
 
     run "$tool_bin/fcc-server" --version
@@ -1750,10 +1745,10 @@ install_macos_desktop_app() {
 
 show_installer_next_steps() {
     if [ "$desktop_ready" -eq 1 ]; then
-        printf '\nFree Claude Code is installed and verified. Open Free Claude Code from Applications or the desktop to run it in the background.\n'
+        printf '\nModelGlot is installed and verified. Open ModelGlot from Applications or the desktop to run it in the background.\n'
         printf 'For terminal use, start the proxy with: fcc-server\n'
     else
-        printf '\nFree Claude Code is installed and verified. Start the proxy with: fcc-server\n'
+        printf '\nModelGlot is installed and verified. Start the proxy with: fcc-server\n'
     fi
     if [ "$install_claude" -eq 1 ]; then
         printf 'Run Claude Code with: fcc-claude\n'
@@ -1797,7 +1792,14 @@ installed_fcc_version() {
         command -v uv >/dev/null 2>&1 || exit 1
         uv tool list 2>/dev/null
     ) || return 1
-    version=$(printf '%s\n' "$listing" | awk '$1 == "free-claude-code" && $2 ~ /^v/ { print substr($2, 2); exit }')
+    version=$(printf '%s\n' "$listing" | awk '
+        $1 == "modelglot" && $2 ~ /^v/ { current = substr($2, 2) }
+        $1 == "free-claude-code" && $2 ~ /^v/ && legacy == "" { legacy = substr($2, 2) }
+        END {
+            if (current != "") print current
+            else if (legacy != "") print legacy
+        }
+    ')
     [ -n "$version" ] || return 1
     printf '%s\n' "$version"
 }
@@ -1827,22 +1829,22 @@ compare_fcc_versions() {
 
 fcc_update_is_needed() {
     if [ -n "$fcc_install_ref" ]; then
-        printf 'Refreshing FCC from %s.\n' "$fcc_install_ref"
+        printf 'Refreshing ModelGlot from %s.\n' "$fcc_install_ref"
         return 0
     fi
     installed=$(installed_fcc_version) || return 0
     comparison=$(compare_fcc_versions "$installed" "$fcc_install_version") || return 0
     case "$comparison" in
         current)
-            printf 'FCC %s is already up to date.\n' "$installed"
+            printf 'ModelGlot %s is already up to date.\n' "$installed"
             return 1
             ;;
         newer)
-            printf 'FCC %s is newer than the published version %s. No update needed.\n' "$installed" "$fcc_install_version"
+            printf 'ModelGlot %s is newer than the published version %s. No update needed.\n' "$installed" "$fcc_install_version"
             return 1
             ;;
     esac
-    printf 'FCC update available: %s -> %s.\n' "$installed" "$fcc_install_version"
+    printf 'ModelGlot update available: %s -> %s.\n' "$installed" "$fcc_install_version"
 }
 
 dispatch_release() {
@@ -1949,7 +1951,7 @@ fi
 if ! command -v hermes >/dev/null 2>&1 && ! hermes_platform_is_supported; then
     install_hermes=0
 fi
-step "Checking for running Free Claude Code processes"
+step "Checking for running ModelGlot processes"
 assert_no_fcc_processes_running
 
 if ! installer_is_interactive && ! command -v dsh >/dev/null 2>&1; then
@@ -1978,7 +1980,7 @@ pending_steps=$(
     [ "$install_aider" -eq 0 ] || printf 'Aider\n'
     [ "$install_agy" -eq 0 ] || printf 'Antigravity CLI\n'
 )
-printf '\nInstallation plan:\n  Install or update Free Claude Code.\n  Verify or install: '
+printf '\nInstallation plan:\n  Install or update ModelGlot.\n  Verify or install: '
 printf '%s\n' "$pending_steps" | while IFS= read -r agent; do
     printf '%s%s' "${separator:-}" "$agent"
     separator=', '
@@ -2028,13 +2030,13 @@ ensure_uv
 
 ensure_selected_coding_agents
 
-start_install_step "FCC package" "Installing or updating Free Claude Code"
+start_install_step "FCC package" "Installing or updating ModelGlot"
 install_free_claude_code
 
 configure_and_verify_free_claude_code
 
 if [ "$(uname -s)" = "Darwin" ]; then
-    start_install_step "Desktop integration" "Installing the Free Claude Code desktop launcher"
+    start_install_step "Desktop integration" "Installing the ModelGlot desktop launcher"
     install_macos_desktop_app
     desktop_ready=1
 fi

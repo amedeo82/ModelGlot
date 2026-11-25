@@ -13,5 +13,5 @@ _MAX_WEB_FETCH_REDIRECTS = 10
 _WEB_FETCH_REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 
 _WEB_TOOL_HTTP_HEADERS = {
-    "User-Agent": f"Mozilla/5.0 compatible; free-claude-code/{package_version()}",
+    "User-Agent": f"Mozilla/5.0 compatible; modelglot/{package_version()}",
 }

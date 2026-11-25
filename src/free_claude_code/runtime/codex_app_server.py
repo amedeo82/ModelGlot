@@ -114,7 +114,7 @@ class CodexAppServer:
                 {
                     "clientInfo": {
                         "name": "free_claude_code",
-                        "title": "Free Claude Code",
+                        "title": "ModelGlot",
                         "version": package_version(),
                     },
                     "capabilities": {

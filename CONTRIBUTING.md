@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping improve Free Claude Code. Keep changes focused, test the behavior you change, and preserve the public Claude Code and Codex workflows.
+Thanks for helping improve ModelGlot. Keep changes focused, test the behavior you change, and preserve the public Claude Code and Codex workflows.
 
 ## Before Opening A Pull Request
 
@@ -21,8 +21,8 @@ PRs without changes to those paths must not use a release prefix. Do not edit ve
 Install [uv](https://docs.astral.sh/uv/), then run directly from the checkout. uv automatically installs the Python version required by the project.
 
 ```bash
-git clone --branch custom/main https://github.com/amedeo82/free-claude-code.git
-cd free-claude-code
+git clone --branch main https://github.com/amedeo82/ModelGlot.git
+cd ModelGlot
 uv run fcc-server
 ```
 

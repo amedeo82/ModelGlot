@@ -112,7 +112,7 @@ def launch_harness(spec: HarnessSpec, argv: Sequence[str] | None = None) -> None
         settings = get_settings()
         auth_token = settings.proxy_auth_token.strip()
         if not auth_token:
-            raise LaunchError("Free Claude Code proxy authentication token is empty.")
+            raise LaunchError("ModelGlot proxy authentication token is empty.")
         proxy_root_url = local_proxy_root_url(settings)
         if error := ensure_proxy_available(proxy_root_url, env=base_env):
             raise LaunchError(error)

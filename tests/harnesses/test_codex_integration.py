@@ -47,7 +47,7 @@ def test_connect_disconnect_preserve_model_comments_and_other_providers(
     catalog_path: str = data["model_catalog_json"]
     assert Path(catalog_path) == tmp_path / "catalog.json"
     assert data["model_providers"]["fcc"] == {
-        "name": "Free Claude Code",
+        "name": "ModelGlot",
         "base_url": URL + "/v1",
         "wire_api": "responses",
         "stream_idle_timeout_ms": 2147483647,

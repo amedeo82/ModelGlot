@@ -43,7 +43,7 @@ async def test_search_request_parsing_limit_and_client_closure(
     def handle(request: httpx.Request):
         assert str(request.url).startswith("https://lite.duckduckgo.com/lite/")
         assert request.url.params["q"] == "query & details"
-        assert "free-claude-code/" in request.headers["User-Agent"]
+        assert "modelglot/" in request.headers["User-Agent"]
         links = [
             f'<a href="/l/?uddg=https%3A%2F%2Fexample.com%2F{index}">Title {index}</a>'
             for index in range(12)

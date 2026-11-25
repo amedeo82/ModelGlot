@@ -58,6 +58,22 @@ def test_cli_scripts_are_registered() -> None:
     }
 
 
+def test_distribution_metadata_targets_modelglot() -> None:
+    pyproject = tomllib.loads(
+        (Path(__file__).resolve().parents[2] / "pyproject.toml").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert pyproject["project"]["name"] == "modelglot"
+    assert pyproject["project"]["urls"] == {
+        "Homepage": "https://github.com/amedeo82/ModelGlot",
+        "Repository": "https://github.com/amedeo82/ModelGlot",
+        "Issues": "https://github.com/amedeo82/ModelGlot/issues",
+        "Releases": "https://github.com/amedeo82/ModelGlot/releases",
+    }
+
+
 @pytest.mark.parametrize(
     "argv",
     [("--version",), ("--version", "--help"), ("--help", "--version")],
@@ -71,7 +87,7 @@ def test_fcc_server_reports_version_without_side_effects(
     with patch.object(entrypoints, "package_version", return_value="9.8.7"):
         entrypoints.serve(argv)
 
-    assert capsys.readouterr() == ("free-claude-code 9.8.7\n", "")
+    assert capsys.readouterr() == ("modelglot 9.8.7\n", "")
 
 
 def test_version_entrypoint_does_not_import_command_runtime() -> None:

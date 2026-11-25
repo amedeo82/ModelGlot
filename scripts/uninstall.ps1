@@ -9,7 +9,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$PackageName = "free-claude-code"
+$PackageName = "modelglot"
+$LegacyPackageName = "free-claude-code"
 $FccHomeDirname = ".fcc"
 $FccAppUserModelIds = @(
     "io.github.amedeo82.free-claude-code",
@@ -42,7 +43,7 @@ function Show-Usage {
     @"
 Usage: uninstall.ps1 [options]
 
-Removes the Free Claude Code uv tool and deletes ~/.fcc/ after removal is verified.
+Removes the ModelGlot and legacy Free Claude Code uv tools, then deletes ~/.fcc/ after removal is verified.
 Does not remove uv, Claude Code, Codex, Pi, OpenCode, Cline, Hermes Agent, DeepSeek Harness, Grok Build, Muse Code, Aider, Antigravity CLI, the uv-managed Python runtime, or shared PATH entries.
 
 Options:
@@ -110,7 +111,10 @@ function Invoke-NativeResult {
 }
 
 function Test-MissingUvToolError {
-    param([string] $Output)
+    param(
+        [string] $Output,
+        [string] $PackageName
+    )
 
     $normalized = $Output.ToLowerInvariant()
     return $normalized.Contains($PackageName) -and $normalized.Contains("is not installed")
@@ -146,7 +150,7 @@ function Assert-NoFccProcessesRunning {
         }
     }
     if ($running.Count -gt 0) {
-        throw "Free Claude Code is still running ($($running -join ', ')). Stop those processes, then rerun uninstall."
+        throw "ModelGlot or legacy Free Claude Code is still running ($($running -join ', ')). Stop those processes, then rerun uninstall."
     }
 }
 
@@ -179,7 +183,9 @@ function Initialize-UvContext {
     }
 }
 
-function Uninstall-FreeClaudeCode {
+function Uninstall-UvTool {
+    param([string] $PackageName)
+
     Write-Host "+ uv tool uninstall $PackageName"
     if ($DryRun) {
         return
@@ -196,14 +202,20 @@ function Uninstall-FreeClaudeCode {
         }
         return
     }
-    if (Test-MissingUvToolError -Output $result.Output) {
-        Write-Host "Free Claude Code uv tool is already absent; verifying its entry points."
+    if (Test-MissingUvToolError -Output $result.Output -PackageName $PackageName) {
+        Write-Host "$PackageName uv tool is already absent; continuing with entry point verification."
         return
     }
     if (-not [string]::IsNullOrWhiteSpace($result.Output)) {
         [Console]::Error.WriteLine($result.Output)
     }
     throw "uv tool uninstall $PackageName failed with exit code $($result.ExitCode); ~/.fcc was not deleted."
+}
+
+function Uninstall-FreeClaudeCode {
+    # Remove both installations when an upgrade left the legacy uv tool behind.
+    Uninstall-UvTool -PackageName $PackageName
+    Uninstall-UvTool -PackageName $LegacyPackageName
 }
 
 function Disconnect-FccIntegrations {
@@ -367,7 +379,7 @@ if ([string]::IsNullOrWhiteSpace($env:USERPROFILE)) {
     throw "USERPROFILE is not set; cannot locate Free Claude Code data."
 }
 
-Write-Step "Checking for running Free Claude Code processes"
+Write-Step "Checking for running ModelGlot or legacy Free Claude Code processes"
 Assert-NoFccProcessesRunning
 
 Write-Step "Locating the uv-managed Free Claude Code installation"
@@ -376,7 +388,7 @@ Initialize-UvContext
 Write-Step "Disconnecting FCC editor/app integrations"
 Disconnect-FccIntegrations
 
-Write-Step "Removing the Free Claude Code uv tool"
+Write-Step "Removing ModelGlot and legacy Free Claude Code uv tools"
 Uninstall-FreeClaudeCode
 
 Write-Step "Verifying Free Claude Code entry points were removed"
@@ -396,6 +408,6 @@ if ($DryRun) {
     Write-Host "Dry run complete. No changes were made."
 }
 else {
-    Write-Host "Free Claude Code has been removed and verified."
+    Write-Host "ModelGlot and legacy Free Claude Code have been removed and verified."
     Write-Host "uv, Claude Code, Codex, Pi, OpenCode, Cline, Hermes Agent, DeepSeek Harness, Grok Build, Muse Code, Aider, the uv-managed Python runtime, and shared PATH entries were left installed."
 }

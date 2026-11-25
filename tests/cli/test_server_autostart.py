@@ -148,7 +148,7 @@ def test_missing_server_is_started_once_and_awaited(
         assert kwargs["creationflags"]
     else:
         assert kwargs["start_new_session"] is True
-    assert "Starting Free Claude Code" in capsys.readouterr().err
+    assert "Starting ModelGlot" in capsys.readouterr().err
     # The startup lock is released for the next launcher.
     lock = InterprocessFileLock(server_startup_lock_path())
     assert lock.acquire()
@@ -811,7 +811,7 @@ def test_launcher_starts_the_server_then_runs_the_client(
     assert [command[-1] for command in launch_capture.commands] == ["--help"]
     health = [r for r in launch_capture.requests if r.full_url.endswith("/health")]
     assert len(health) >= 3
-    assert "Starting Free Claude Code" in capsys.readouterr().err
+    assert "Starting ModelGlot" in capsys.readouterr().err
     assert server_startup_lock_path().exists()
 
 

@@ -2,12 +2,12 @@
 
 <h1>
   <picture>
-    <source media="(prefers-color-scheme: light)" srcset="assets/free-claude-code-wordmark-light.svg">
-    <img src="assets/free-claude-code-wordmark-dark.svg" alt="Free Claude Code" width="610">
+    <source media="(prefers-color-scheme: light)" srcset="assets/modelglot-wordmark-light.svg">
+    <img src="assets/modelglot-wordmark-dark.svg" alt="ModelGlot" width="610">
   </picture>
 </h1>
 
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-2e7d32.svg?style=for-the-badge)](https://github.com/amedeo82/free-claude-code/blob/custom/main/LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-2e7d32.svg?style=for-the-badge)](https://github.com/amedeo82/ModelGlot/blob/main/LICENSE)
 [![Python 3.14](https://img.shields.io/badge/python-3.14-3776ab.svg?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![Package Manager: uv](assets/package-manager-uv.svg)](https://github.com/astral-sh/uv)
 [![Testing: Pytest](https://img.shields.io/badge/Testing-Pytest-ad1457.svg?style=for-the-badge)](https://github.com/pytest-dev/pytest)
@@ -32,10 +32,10 @@
 - Use any model through any of four APIs: [Anthropic Messages](https://platform.claude.com/docs/en/api/messages) (`/v1/messages`), [OpenAI Chat Completions](https://platform.openai.com/docs/api-reference/chat/create) (`/v1/chat/completions`), [OpenAI Responses](https://platform.openai.com/docs/api-reference/responses/create) (`/v1/responses`), or [Gemini](https://ai.google.dev/api/generate-content) (`generateContent`). See [Use The API Directly](#use-the-api-directly).
 - 61 supported providers, including free, paid, subscription, and local providers.
   - 1.3B+ free tokens per month.
-  - FCC follows provider TOS and removes integrations if they stop being allowed.
+  - ModelGlot follows provider TOS and removes integrations if they stop being allowed.
 - Use through the terminal, desktop apps ([ChatGPT Desktop](https://learn.chatgpt.com/docs/app) with local Codex, [Claude Desktop](https://claude.ai/download), and [DeepSeek Desktop](https://github.com/deepseek-ai/deepseek-harness)), IDE extensions ([VS Code](https://code.visualstudio.com/) and [JetBrains](https://www.jetbrains.com/)), [your phone](#use-from-your-phone) ([Discord](https://discord.com/) and [Telegram](https://telegram.org/)), or your browser through native Code sessions.
   - Voice notes supported for Discord and Telegram using local [Whisper](https://github.com/openai/whisper) or [NVIDIA NIM](https://docs.nvidia.com/nim/speech/latest/asr/deploy-asr-models/whisper.html).
-- Run Claude Code's supported `web_search` and forced `web_fetch` requests through FCC with SSRF-protected local web access.
+- Run Claude Code's supported `web_search` and forced `web_fetch` requests through ModelGlot with SSRF-protected local web access.
 - Manage persistent Codex projects in the browser through [Code sessions](#code-sessions).
 - Up to 90% lower token usage using [RTK](https://github.com/rtk-ai/rtk) and [Headroom](https://github.com/headroomlabs-ai/headroom).
 - State-of-the-art reliability features so you can keep coding through provider outages:
@@ -48,13 +48,13 @@
 Free-tier availability and limits are controlled by each provider and may change.
 
 <div align="center">
-  <img src="assets/pic.png" alt="Claude Code running with Free Claude Code" width="700">
-  <p><em>Claude Code running with FCC.</em></p>
+  <img src="assets/pic.png" alt="Claude Code running with ModelGlot" width="700">
+  <p><em>Claude Code running with ModelGlot.</em></p>
 </div>
 
 <div align="center">
-  <img src="assets/browser-code-session.png" alt="Native Codex browser session in FCC, showing model controls and a repository exploration" width="700">
-  <p><em>A native Codex session in FCC's browser UI.</em></p>
+  <img src="assets/browser-code-session.png" alt="Native Codex browser session in ModelGlot, showing model controls and a repository exploration" width="700">
+  <p><em>A native Codex session in ModelGlot's browser UI.</em></p>
 </div>
 
 ## Token optimization and provider usage
@@ -62,9 +62,9 @@ Free-tier availability and limits are controlled by each provider and may change
 Open **Admin UI → Token optimization** for a local-only, read-only dashboard with no Apply action.
 
 - **RTK and Headroom remain separate.** RTK summaries and UTC daily trends come from bounded executions of `rtk gain --format json`, `rtk gain --daily --format json`, and `rtk --version`. Headroom summaries come from `headroom savings --json` and `headroom --version`. Missing tools, timeouts, invalid output, and zero reports have distinct states and do not prove tool inactivity. All values are `tool_reported`; savings are never added across tools or presented as provider usage, billing, or monetary savings.
-- **FCC usage uses provider observations.** A logical client request is finalized once, using its winning terminal attempt; retries, fallback attempts, failed-attempt tokens, and pre-flight input estimates remain separate. Missing provider values stay unknown rather than becoming zero. The dashboard can group retained usage by model, provider, or UTC day over a bounded interval of at most 31 days.
+- **ModelGlot usage uses provider observations.** A logical client request is finalized once, using its winning terminal attempt; retries, fallback attempts, failed-attempt tokens, and pre-flight input estimates remain separate. Missing provider values stay unknown rather than becoming zero. The dashboard can group retained usage by model, provider, or UTC day over a bounded interval of at most 31 days.
 - **Context populations are not combined.** Provider-reported request input and current Code session occupancy have separate rows, averages, maxima, coverage, and stale/unknown states. Percentages appear only with a positive provider-confirmed context limit and a sample timestamp; the 200k client default is not treated as a confirmed limit.
-- **Retention and export are explicit.** Production usage metadata shares FCC's SQLite database, with 30-day retention and a 50,000-row cap. Coverage and storage provenance are shown in Admin. In-memory embeddings are labeled as resetting on restart. CSV export contains the same filtered aggregate rows visible in the table (up to 5,000 rows), their basis and coverage, and no additional totals or hidden records.
+- **Retention and export are explicit.** Production usage metadata shares ModelGlot's SQLite database, with 30-day retention and a 50,000-row cap. Coverage and storage provenance are shown in Admin. In-memory embeddings are labeled as resetting on restart. CSV export contains the same filtered aggregate rows visible in the table (up to 5,000 rows), their basis and coverage, and no additional totals or hidden records.
 - **Only minimal metadata is retained.** No prompts, completions, tool arguments, credentials, local ledger paths, or raw subprocess output are stored or returned. Admin pages and APIs remain loopback-only and `Cache-Control: no-store`.
 
 Approximate cost estimation is not enabled. External tool installation and optimization policy are unchanged.
@@ -78,16 +78,16 @@ Approximate cost estimation is not enabled. External tool installation and optim
 macOS/Linux:
 
 ```bash
-curl -fsSL "https://raw.githubusercontent.com/amedeo82/free-claude-code/custom/main/scripts/install.sh" | sh -s -- --ref custom/main
+curl -fsSL "https://raw.githubusercontent.com/amedeo82/ModelGlot/main/scripts/install.sh" | sh -s -- --ref main
 ```
 
 Windows PowerShell:
 
 ```powershell
-& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/amedeo82/free-claude-code/custom/main/scripts/install.ps1"))) -Ref custom/main
+& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/amedeo82/ModelGlot/main/scripts/install.ps1"))) -Ref main
 ```
 
-These commands install the current commit from the `custom/main` branch. The installed version includes the VCS build identifier; run `fcc-server --version` to display it.
+These commands install the current commit from the `main` branch. The installed version includes the VCS build identifier; run `fcc-server --version` to display it.
 
 When prompted, choose at least one coding agent and optionally enable [RTK](https://github.com/rtk-ai/rtk) + [Headroom](https://github.com/headroomlabs-ai/headroom) token optimization for supported agents.
 
@@ -95,22 +95,22 @@ The installers also accept these options:
 
 | macOS/Linux | Windows | Effect |
 | --- | --- | --- |
-| `--ref REF` | `-Ref REF` | Install from a branch or tag. The commands above use `custom/main`. |
+| `--ref REF` | `-Ref REF` | Install from a branch or tag. The commands above use `main`. |
 | `--rtk-headroom` | `-RtkHeadroom` | Install and configure RTK + Headroom without the interactive prompt. |
 | `--voice-local` | `-VoiceLocal` | Install local Whisper transcription support. |
 | `--torch-backend VALUE` | `-TorchBackend VALUE` | Select a uv PyTorch backend, such as `cu130`. Requires local voice. |
-| `--update` | `-Update` | Skip when the installed FCC version is already current. |
+| `--update` | `-Update` | Skip when the installed ModelGlot version is already current. |
 | `--dry-run` | `-DryRun` | Print the installation commands without changing the system. |
 
-### 2. Start FCC
+### 2. Start ModelGlot
 
 #### Windows
 
-Open **Free Claude Code** from your desktop or Start menu.
+Open **ModelGlot** from your desktop or Start menu.
 
 #### macOS
 
-Open **Free Claude Code** from your desktop or Applications folder.
+Open **ModelGlot** from your desktop or Applications folder.
 
 #### Linux
 
@@ -120,11 +120,11 @@ Run:
 fcc-server
 ```
 
-FCC opens the Admin UI after starting. On Windows and macOS, use the tray or
+ModelGlot opens the Admin UI after starting. On Windows and macOS, use the tray or
 menu-bar icon to open Admin, check the server status or installed version, check
 for project updates, restart, or quit. **Check for Updates** runs the release
 check in the background and shows the installed and latest stable versions in a
-native notification and in the tray menu. If an update is available, FCC asks
+native notification and in the tray menu. If an update is available, ModelGlot asks
 for confirmation before closing, installing it, and reopening. When using
 `fcc-server`, keep its terminal open.
 
@@ -148,7 +148,7 @@ To protect the local proxy with a bearer token, enable **Proxy Authentication**
 in Admin.
 
 <div align="center">
-  <img src="assets/admin-page.png" alt="Free Claude Code Admin UI" width="700">
+  <img src="assets/admin-page.png" alt="ModelGlot Admin UI" width="700">
 </div>
 
 ### 4. Run Your Coding Agent
@@ -219,27 +219,27 @@ Antigravity CLI:
 fcc-agy
 ```
 
-Pressing `Ctrl+C` while a native client is running exits that client and its FCC launcher
-cleanly, without a Python traceback. The local FCC proxy keeps running and remains available
+Pressing `Ctrl+C` while a native client is running exits that client and its ModelGlot launcher
+cleanly, without a Python traceback. The local ModelGlot proxy keeps running and remains available
 for the next client session.
 
-Other clients and SDKs can call FCC directly. See [Use The API Directly](#use-the-api-directly).
+Other clients and SDKs can call ModelGlot directly. See [Use The API Directly](#use-the-api-directly).
 
 <a id="model-picker"></a>
 
 <div align="center">
-  <img src="assets/cc-model-picker.png" alt="Claude Code model picker showing FCC models" width="700">
-  <p><em>Select an FCC model from Claude Code's native <code>/model</code> picker.</em></p>
+  <img src="assets/cc-model-picker.png" alt="Claude Code model picker showing ModelGlot models" width="700">
+  <p><em>Select an ModelGlot model from Claude Code's native <code>/model</code> picker.</em></p>
 </div>
 
 <a id="code-sessions"></a>
 
 ## Code Sessions
 
-FCC includes a browser workspace for running Codex against a local project folder. Open
+ModelGlot includes a browser workspace for running Codex against a local project folder. Open
 **Admin UI → Code sessions**, select **New code session**, and choose an existing folder or
 enter its absolute path. Each session persists its title, model, reasoning effort, permission
-mode, turns, and transcript in FCC's local SQLite database.
+mode, turns, and transcript in ModelGlot's local SQLite database.
 
 Codex must be installed separately and available on `PATH`:
 
@@ -250,10 +250,10 @@ npm install -g @openai/codex
 The session controls include the provider, model, reasoning effort, and Codex permission
 mode: **Use config**, **Ask**, **Auto-review**, or **Full access**. The browser receives live
 turn and tool events over Server-Sent Events. Use **Stop** to cancel the active turn and
-**Delete** to remove both the FCC session and its native Codex conversation.
+**Delete** to remove both the ModelGlot session and its native Codex conversation.
 
 <div align="center">
-  <img src="assets/admin-code-sessions-mockup.svg" alt="Mockup of the Free Claude Code Code sessions interface" width="900">
+  <img src="assets/admin-code-sessions-mockup.svg" alt="Mockup of the ModelGlot Code sessions interface" width="900">
   <p><em>Code sessions interface mockup.</em></p>
 </div>
 
@@ -399,7 +399,7 @@ For another API endpoint, open **Providers → Custom providers → Add provider
 <details>
 <summary><strong>Local provider setup</strong></summary>
 
-FCC automatically discovers models from running local servers at startup. If you start a server later, click **Refresh models** in Admin to add its models to the picker.
+ModelGlot automatically discovers models from running local servers at startup. If you start a server later, click **Refresh models** in Admin to add its models to the picker.
 
 ### LM Studio
 
@@ -427,11 +427,11 @@ Provider cards show the checked endpoint and response time, with a useful messag
 
 `MODEL` is the fallback for every request. Select a model for `MODEL_FABLE`, `MODEL_OPUS`, `MODEL_SONNET`, or `MODEL_HAIKU` to override an individual Claude Code tier. Select **None** to use `MODEL`.
 
-In **Admin UI → Model Config**, add **Fallback Models** in the order FCC should try them if the selected model fails. Each fallback has its own reasoning effort: **Inherit**, **Off**, **From client**, **Low**, **Medium**, **High**, **X-High**, or **Max**.
+In **Admin UI → Model Config**, add **Fallback Models** in the order ModelGlot should try them if the selected model fails. Each fallback has its own reasoning effort: **Inherit**, **Off**, **From client**, **Low**, **Medium**, **High**, **X-High**, or **Max**.
 
 Choose a model, effort, and API key number in the bottom row, then click **+**. **Key 1**, **Key 2**, and so on refer to the current numbered keys in that provider's settings. The primary route always uses key 1, so a fallback row is required to rotate to another key. Edit the selections in place, drag the handle to change the order, or click the red trash button to remove a fallback.
 
-The Admin model picker displays a readable title, provider, optional attributed description, and the canonical provider/model reference. It saves only the canonical reference; entering an unlisted reference manually remains supported. Solid capability and token-limit badges are provider/FCC-confirmed facts. Dashed badges labeled **Catalog** are provider-scoped models.dev declarations, not runtime guarantees; audio/video/PDF never appear as FCC-supported runtime modalities. The selected detail card shows exact limits, source, scope, and freshness. Catalog descriptions remain editorial text and are never parsed into numeric limits.
+The Admin model picker displays a readable title, provider, optional attributed description, and the canonical provider/model reference. It saves only the canonical reference; entering an unlisted reference manually remains supported. Solid capability and token-limit badges are provider/ModelGlot-confirmed facts. Dashed badges labeled **Catalog** are provider-scoped models.dev declarations, not runtime guarantees; audio/video/PDF never appear as ModelGlot-supported runtime modalities. The selected detail card shows exact limits, source, scope, and freshness. Catalog descriptions remain editorial text and are never parsed into numeric limits.
 
 **Inherit** keeps the original request's resolved reasoning setting. **From client** uses the effort or token budget sent by your coding agent, bypassing the global or tier setting. You can select the same model with another key number.
 
@@ -456,37 +456,37 @@ Open **Admin UI → Model Config → Model Routing** and choose an effort beside
 
 ## Integrations
 
-FCC launchers automatically start the server.
+ModelGlot launchers automatically start the server.
 
-For editor and app integrations, install the client, start FCC, then open
+For editor and app integrations, install the client, start ModelGlot, then open
 **Admin UI → Integrations** and click **Connect** on its card.
 
 - **Claude Code in VS Code**: Install the [Claude Code extension](https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code).
-- **VS Code Chat**: Install the latest [VS Code](https://code.visualstudio.com/), connect, and select an FCC model in its built-in Chat model picker.
-- **Claude Desktop**: Install [Claude Desktop](https://claude.ai/download). Fully quit it before connecting or disconnecting, then reopen it. The dedicated [FCC 3P profile](docs/claude-desktop-fcc-profile.md) adds 1M-context metadata, official Anthropic plugin marketplaces, sealed-key continuity, and preserves custom model overrides. When the FCC profile is active, Disconnect removes it and returns Desktop to the normal Claude sign-in path; it does not restore a previously active native profile.
-- **Codex CLI, IDE & ChatGPT Desktop**: Install Codex CLI, the [Codex extension](https://marketplace.visualstudio.com/items?itemName=openai.chatgpt), or [ChatGPT Desktop](https://learn.chatgpt.com/docs/app), then connect. Select an FCC model in the local Codex model picker and restart the client. FCC routes only the local Codex workspace; Chat and cloud features continue to use OpenAI services.
-- **DeepSeek Harness Desktop**: Install and open the app once before connecting. Start a new session to use FCC models.
-- **Claude Code in JetBrains ACP**: Install Claude Agent in JetBrains AI Assistant and start it once, then click **Connect** in FCC. Reopen the IDE, select **Claude Code (FCC)**, and start a new chat. After JetBrains updates the agent, restart FCC before starting a new chat. Requires a local IDE in its standard installation locations.
+- **VS Code Chat**: Install the latest [VS Code](https://code.visualstudio.com/), connect, and select an ModelGlot model in its built-in Chat model picker.
+- **Claude Desktop**: Install [Claude Desktop](https://claude.ai/download). Fully quit it before connecting or disconnecting, then reopen it. The dedicated [ModelGlot 3P profile](docs/claude-desktop-fcc-profile.md) adds 1M-context metadata, official Anthropic plugin marketplaces, sealed-key continuity, and preserves custom model overrides. When the ModelGlot profile is active, Disconnect removes it and returns Desktop to the normal Claude sign-in path; it does not restore a previously active native profile.
+- **Codex CLI, IDE & ChatGPT Desktop**: Install Codex CLI, the [Codex extension](https://marketplace.visualstudio.com/items?itemName=openai.chatgpt), or [ChatGPT Desktop](https://learn.chatgpt.com/docs/app), then connect. Select an ModelGlot model in the local Codex model picker and restart the client. ModelGlot routes only the local Codex workspace; Chat and cloud features continue to use OpenAI services.
+- **DeepSeek Harness Desktop**: Install and open the app once before connecting. Start a new session to use ModelGlot models.
+- **Claude Code in JetBrains ACP**: Install Claude Agent in JetBrains AI Assistant and start it once, then click **Connect** in ModelGlot. Reopen the IDE, select **Claude Code (ModelGlot)**, and start a new chat. After JetBrains updates the agent, restart ModelGlot before starting a new chat. Requires a local IDE in its standard installation locations.
 
-Reload VS Code or restart the app/IDE after connecting. In Codex and Claude Desktop, select an FCC
-model from the model picker. Reload or restart the client when FCC reports updated settings. Use
+Reload VS Code or restart the app/IDE after connecting. In Codex and Claude Desktop, select a ModelGlot
+model from the model picker. Reload or restart the client when ModelGlot reports updated settings. Use
 **Disconnect** on the same card to remove the integration.
 
 To complete Claude Code onboarding separately, open **Admin UI → Integrations →
 Claude Code onboarding** and click **Complete onboarding**. Connecting Claude Code
 in VS Code also completes onboarding.
 
-Run FCC on the same computer and in the same user environment as the client you
+Run ModelGlot on the same computer and in the same user environment as the client you
 are configuring.
 
 <a id="use-the-api-directly"></a>
 
 ## Use The API Directly
 
-Any client or SDK for these APIs can call FCC. Set the base URL to
+Any client or SDK for these APIs can call ModelGlot. Set the base URL to
 `http://127.0.0.1:8082/v1` for OpenAI clients and `http://127.0.0.1:8082` for
 Anthropic and Gemini clients.
-Every FCC model works on every endpoint. If Proxy Authentication is enabled, use its token as the client's API key and send it as `Authorization: Bearer <token>`. Anthropic Messages and token-count requests also accept `x-api-key: <token>`. Gemini endpoints accept the token through `Authorization`, `x-goog-api-key`, or the `key` query parameter. The model-list endpoint uses Bearer authentication.
+Every ModelGlot model works on every endpoint. If Proxy Authentication is enabled, use its token as the client's API key and send it as `Authorization: Bearer <token>`. Anthropic Messages and token-count requests also accept `x-api-key: <token>`. Gemini endpoints accept the token through `Authorization`, `x-goog-api-key`, or the `key` query parameter. The model-list endpoint uses Bearer authentication.
 
 List the available models with `curl "http://127.0.0.1:8082/v1/models?view=messages"`. Check server liveness with `curl "http://127.0.0.1:8082/health"`.
 
@@ -551,7 +551,7 @@ Responses replies always stream. To stream Messages or Chat Completions replies,
 
 ## Web Tools
 
-FCC can execute the Anthropic server-tool shapes used by Claude Code:
+ModelGlot can execute the Anthropic server-tool shapes used by Claude Code:
 
 - `web_search_20250305` for Claude Code's automatic web search;
 - `web_fetch_20250910` when the client explicitly forces a `web_fetch` tool.
@@ -562,7 +562,7 @@ mixed tools, automatic `web_fetch`, and other Anthropic server-tool choices are 
 with a clear error.
 
 <div align="center">
-  <img src="assets/admin-web-tools.png" alt="Free Claude Code Admin UI showing the Web Tools configuration" width="900">
+  <img src="assets/admin-web-tools.png" alt="ModelGlot Admin UI showing the Web Tools configuration" width="900">
   <p><em>Web Tools configuration in the Admin UI.</em></p>
 </div>
 
@@ -620,7 +620,7 @@ in **Admin UI → Messaging**, then click **Apply**.
 | `/stats` | Show session state. |
 | Standalone `/stop` | Cancel all work. |
 | Reply with `/stop` | Cancel only the selected request while other queued requests continue. |
-| Standalone `/clear` | Clear all FCC conversations and their messages in this chat. |
+| Standalone `/clear` | Clear all ModelGlot conversations and their messages in this chat. |
 | Reply with `/clear` | Delete the selected message and the chain of replies to it. Keep other conversations. |
 
 <details>
@@ -635,13 +635,13 @@ macOS/Linux:
 Local Whisper on CPU or CUDA:
 
 ```bash
-curl -fsSL "https://raw.githubusercontent.com/amedeo82/free-claude-code/custom/main/scripts/install.sh" | sh -s -- --ref custom/main --voice-local
+curl -fsSL "https://raw.githubusercontent.com/amedeo82/ModelGlot/main/scripts/install.sh" | sh -s -- --ref main --voice-local
 ```
 
 Local Whisper with CUDA 13.0:
 
 ```bash
-curl -fsSL "https://raw.githubusercontent.com/amedeo82/free-claude-code/custom/main/scripts/install.sh" | sh -s -- --ref custom/main --voice-local --torch-backend cu130
+curl -fsSL "https://raw.githubusercontent.com/amedeo82/ModelGlot/main/scripts/install.sh" | sh -s -- --ref main --voice-local --torch-backend cu130
 ```
 
 Windows PowerShell:
@@ -649,13 +649,13 @@ Windows PowerShell:
 Local Whisper on CPU or CUDA:
 
 ```powershell
-& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/amedeo82/free-claude-code/custom/main/scripts/install.ps1"))) -Ref custom/main -VoiceLocal
+& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/amedeo82/ModelGlot/main/scripts/install.ps1"))) -Ref main -VoiceLocal
 ```
 
 Local Whisper with CUDA 13.0:
 
 ```powershell
-& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/amedeo82/free-claude-code/custom/main/scripts/install.ps1"))) -Ref custom/main -VoiceLocal -TorchBackend cu130
+& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/amedeo82/ModelGlot/main/scripts/install.ps1"))) -Ref main -VoiceLocal -TorchBackend cu130
 ```
 
 After installing local support, restart `fcc-server`. In **Admin UI → Messaging → Voice**, enable voice notes, select `cpu` or `cuda`, and choose the Whisper model. Local gated models need `HUGGINGFACE_API_KEY`.
@@ -664,10 +664,10 @@ After installing local support, restart `fcc-server`. In **Admin UI → Messagin
 
 ## Model Display Names
 
-FCC model discovery shows descriptive titles while keeping every advertised model ID and routing
+ModelGlot model discovery shows descriptive titles while keeping every advertised model ID and routing
 reference unchanged. Titles are resolved in this order:
 
-1. Curated FCC titles, such as `Nemotron 3 Ultra 550B A55B` and `MiniMax-M3.1-Flash`.
+1. Curated ModelGlot titles, such as `Nemotron 3 Ultra 550B A55B` and `MiniMax-M3.1-Flash`.
 2. The shared models.dev catalog, refreshed in the background and cached for 24 hours.
 3. A deterministic title derived from the model ID.
 4. The original provider/model reference when no readable title can be derived.
@@ -693,7 +693,7 @@ for the implementation contract.
 
 ### Claude Code Terminal
 
-Claude Code Terminal and Claude Desktop use the same FCC model catalog and descriptive-title
+Claude Code Terminal and Claude Desktop use the same ModelGlot model catalog and descriptive-title
 resolver. The Terminal discovers them through `GET /v1/models` and uses `display_name` as the
 picker title and `description` as the secondary provider label.
 
@@ -710,13 +710,13 @@ export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY="1"
 Claude Code owns the discovered-model cache at `~/.claude/cache/gateway-models.json` on
 Unix-like systems and `%USERPROFILE%\.claude\cache\gateway-models.json` on Windows. Set
 `CLAUDE_CONFIG_DIR` to use another location. Claude Code refreshes the cache at startup; a
-session that was already running when FCC titles changed can continue to show the previous
+session that was already running when ModelGlot titles changed can continue to show the previous
 labels. Restart Claude Code to refresh it. If the cache is still stale and no other Claude
 Code session is using it, remove that cache file and start Claude Code again.
 
 Run `claude --debug` and inspect the `[gatewayDiscovery]` lines under `~/.claude/debug/` to
 confirm whether discovery ran. A user-defined `modelPicker` with
-`replaceBuiltInOptions: true` can hide gateway-discovered rows; FCC does not generate or
+`replaceBuiltInOptions: true` can hide gateway-discovered rows; ModelGlot does not generate or
 overwrite that setting.
 
 The Terminal discovery analysis and follow-up implementation plan are documented in
@@ -726,30 +726,30 @@ and
 
 ## Manage Your Installation
 
-Run `fcc-server --version` to check the installed version without starting FCC.
+Run `fcc-server --version` to check the installed version without starting ModelGlot.
 
 ### Update
 
-On Windows and macOS, select **Check for Updates** from the FCC tray or
+On Windows and macOS, select **Check for Updates** from the ModelGlot tray or
 menu-bar icon to check whether a newer stable release is available. When one is
-found, FCC displays a system notification and asks whether to install it. If you
-confirm, FCC closes, installs the detected release, and reopens automatically.
+found, ModelGlot displays a system notification and asks whether to install it. If you
+confirm, ModelGlot closes, installs the detected release, and reopens automatically.
 Declining leaves the current installation running and lets you retry later.
 
 To check and install the latest stable release from a terminal instead, stop all
-running FCC commands, then run:
+running ModelGlot commands, then run:
 
 ```sh
 fcc-update
 ```
 
 Both the tray and `fcc-update` use the same stable-release channel. After an
-update attempt, FCC tries to reopen automatically and reports startup failures;
+update attempt, ModelGlot tries to reopen automatically and reports startup failures;
 desktop updater output is stored in `~/.fcc/logs/desktop-update-*.log`. If
 `fcc-update` is unavailable or fails, try running the [install command](#install)
 again.
 
-To reinstall FCC or change optional components while already up to date, run the [installer](#install) directly.
+To reinstall ModelGlot or change optional components while already up to date, run the [installer](#install) directly.
 
 For local voice support, include `--voice-local` (macOS/Linux) or `-VoiceLocal` (Windows), plus your `--torch-backend` or `-TorchBackend` option if used.
 
@@ -758,24 +758,24 @@ For local voice support, include `--voice-local` (macOS/Linux) or `-VoiceLocal` 
 To install or update only Muse Code:
 
 ```powershell
-& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/amedeo82/free-claude-code/custom/main/scripts/install-muse.ps1")))
+& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/amedeo82/ModelGlot/main/scripts/install-muse.ps1")))
 ```
 
-To remove the Muse Code copy installed by FCC, keeping its data:
+To remove the Muse Code copy installed by ModelGlot, keeping its data:
 
 ```powershell
-& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/amedeo82/free-claude-code/custom/main/scripts/uninstall-muse.ps1")))
+& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/amedeo82/ModelGlot/main/scripts/uninstall-muse.ps1")))
 ```
 
-Uninstalling FCC leaves Muse Code installed.
+Uninstalling ModelGlot leaves Muse Code installed.
 
 ### Uninstall
 
-Stop every running FCC command and quit connected desktop/editor apps before uninstalling.
+Stop every running ModelGlot command and quit connected desktop/editor apps before uninstalling.
 
 **Removes**
 
-- Free Claude Code, including its desktop launcher and commands
+- ModelGlot, including its desktop launcher and commands
 - `~/.fcc/`
 
 **Keeps**
@@ -786,13 +786,13 @@ Stop every running FCC command and quit connected desktop/editor apps before uni
 macOS/Linux:
 
 ```bash
-curl -fsSL "https://raw.githubusercontent.com/amedeo82/free-claude-code/custom/main/scripts/uninstall.sh" | sh
+curl -fsSL "https://raw.githubusercontent.com/amedeo82/ModelGlot/main/scripts/uninstall.sh" | sh
 ```
 
 Windows PowerShell:
 
 ```powershell
-& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/amedeo82/free-claude-code/custom/main/scripts/uninstall.ps1")))
+& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/amedeo82/ModelGlot/main/scripts/uninstall.ps1")))
 ```
 
 ## Project Links
@@ -803,8 +803,8 @@ For a problem after installation, run the command below and paste its output int
 fcc-doctor
 ```
 
-- [Report bugs or request features](https://github.com/amedeo82/free-claude-code/issues)
-- [Releases](https://github.com/amedeo82/free-claude-code/releases)
+- [Report bugs or request features](https://github.com/amedeo82/ModelGlot/issues)
+- [Releases](https://github.com/amedeo82/ModelGlot/releases)
 - [Contributing guide](CONTRIBUTING.md)
 
 ## Maintainers

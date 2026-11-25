@@ -49,12 +49,12 @@ def history_template(tmp_path_factory: pytest.TempPathFactory):
     write(
         tmp_path,
         "pyproject.toml",
-        '[project]\nname="free-claude-code"\ndynamic=["version"]\n',
+        '[project]\nname="modelglot"\ndynamic=["version"]\n',
     )
     write(
         tmp_path,
         "uv.lock",
-        '[[package]]\nname="free-claude-code"\nsource={editable="."}\n',
+        '[[package]]\nname="modelglot"\nsource={editable="."}\n',
     )
     write(tmp_path, "src/file.py", "original\n")
     return tmp_path, commit(tmp_path)
@@ -194,9 +194,7 @@ def test_title_is_data_and_multiple_commits_have_one_intent(
 
 def test_manual_version_is_rejected(history: tuple[Path, str]) -> None:
     repo, base = history
-    write(
-        repo, "pyproject.toml", '[project]\nname="free-claude-code"\nversion="1.2.3"\n'
-    )
+    write(repo, "pyproject.toml", '[project]\nname="modelglot"\nversion="1.2.3"\n')
     commit(repo)
     assert check(repo, base, "patch: Manual version").returncode != 0
 

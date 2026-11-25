@@ -291,10 +291,10 @@ def test_admin_page_uses_installed_version(
 
     assert response.status_code == 200
     assert "<p>Server Control · v9.8.7</p>" in response.text
-    assert 'href="https://github.com/amedeo82/free-claude-code"' in response.text
+    assert 'href="https://github.com/amedeo82/ModelGlot"' in response.text
     assert 'target="_blank"' in response.text
     assert 'rel="noopener noreferrer"' in response.text
-    assert 'aria-label="Open Free Claude Code on GitHub"' in response.text
+    assert 'aria-label="Open ModelGlot on GitHub"' in response.text
     assert 'href="/admin/assets/9.8.7/app-icon.svg"' in response.text
     assert 'src="/admin/assets/9.8.7/app-icon.svg"' in response.text
     assert 'href="/admin/assets/9.8.7/admin.css"' in response.text

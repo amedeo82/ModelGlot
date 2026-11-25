@@ -85,7 +85,7 @@ class PystrayDesktopTray:
             return not self._restart_active
 
         self._brand_item = MenuItem(
-            "Free Claude Code",
+            "ModelGlot",
             _noop_action,
             enabled=False,
         )
@@ -117,7 +117,7 @@ class PystrayDesktopTray:
         self._icon = Icon(
             "free-claude-code",
             _create_icon(),
-            "Free Claude Code",
+            "ModelGlot",
             self._build_menu(),
         )
         self._notifier = create_desktop_notifier(self._icon)
@@ -198,7 +198,7 @@ class PystrayDesktopTray:
     def _open_admin(self, _icon: Icon, _item: MenuItem) -> None:
         self._controller.open_admin()
         self._notify(
-            "Opening the Free Claude Code Admin UI…",
+            "Opening the ModelGlot Admin UI…",
             level=NotificationLevel.INFO,
         )
 
@@ -353,7 +353,7 @@ class PystrayDesktopTray:
         try:
             self._notifier.notify(
                 DesktopNotification(
-                    title="Free Claude Code",
+                    title="ModelGlot",
                     message=message,
                     level=level,
                 )

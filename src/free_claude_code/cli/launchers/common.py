@@ -222,7 +222,7 @@ def _stop_owned_process(process: subprocess.Popen[bytes]) -> None:
 def _unreachable_message(proxy_root_url: str, probe: ProxyProbe, detail: str) -> str:
     name = "fcc-desktop" if sys.platform in {"win32", "darwin"} else "fcc-server"
     return (
-        f"Free Claude Code proxy is not reachable at {proxy_root_url}: {probe.error}\n"
+        f"ModelGlot proxy is not reachable at {proxy_root_url}: {probe.error}\n"
         f"{detail}\n"
         f"Start it manually with: {name}"
     )
@@ -267,7 +267,7 @@ def _wait_for_server(
         if remaining > 0:
             time.sleep(min(SERVER_STARTUP_POLL_SECONDS, remaining))
     return (
-        "Free Claude Code did not become ready within "
+        "ModelGlot did not become ready within "
         f"{SERVER_STARTUP_TIMEOUT_SECONDS:g} seconds. If FCC is already running, "
         "check its configured port or restart it."
     )
@@ -336,7 +336,7 @@ def ensure_proxy_available(
                     proxy_root_url, probe, f"Could not start FCC: {exc}"
                 )
             print(
-                f"Starting Free Claude Code at {proxy_root_url} "
+                f"Starting ModelGlot at {proxy_root_url} "
                 "(it keeps running after this client exits).",
                 file=sys.stderr,
             )
