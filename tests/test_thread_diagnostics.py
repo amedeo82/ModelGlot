@@ -98,7 +98,9 @@ def _diagnostic_probe():
             assert "_diagnostic_probe" in output.getvalue()
             print("diagnostic: joining", flush=True)
         print("diagnostic: joined", flush=True)
-        assert not any(t.name == "fcc-test-diagnostics" for t in threading.enumerate())
+        assert not any(
+            t.name == "modelglot-test-diagnostics" for t in threading.enumerate()
+        )
 
 
 def test_slow_test_reports_stacks_without_interrupting_execution() -> None:
@@ -125,6 +127,6 @@ def test_completion_cancels_and_joins_pending_diagnostic(fails: bool) -> None:
         assert fails and str(error) == "original failure"
     assert output.getvalue() == ""
     assert not any(
-        t.name == "fcc-test-diagnostics" and t not in existing_threads
+        t.name == "modelglot-test-diagnostics" and t not in existing_threads
         for t in threading.enumerate()
     )

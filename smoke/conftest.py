@@ -23,7 +23,9 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     if SmokeConfig.load().live:
         return
-    skip = pytest.mark.skip(reason="set FCC_LIVE_SMOKE=1 to run local smoke tests")
+    skip = pytest.mark.skip(
+        reason="set MODELGLOT_LIVE_SMOKE=1 to run local smoke tests"
+    )
     for item in items:
         item.add_marker(skip)
 
@@ -90,7 +92,9 @@ def smoke_headers() -> dict[str, str]:
 def provider_model_params(config: SmokeConfig) -> list[ParameterSet]:
     """Return provider params grouped for pytest-xdist ``--dist=loadgroup``."""
     if not config.live:
-        return [_disabled_provider_param("set FCC_LIVE_SMOKE=1 to run provider smoke")]
+        return [
+            _disabled_provider_param("set MODELGLOT_LIVE_SMOKE=1 to run provider smoke")
+        ]
 
     models = config.provider_smoke_models()
     if not models:

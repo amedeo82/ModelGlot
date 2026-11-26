@@ -1,4 +1,4 @@
-"""One-time, best-effort import of FCC's retired messaging JSON file."""
+"""One-time, best-effort import of ModelGlot's retired messaging JSON file."""
 
 import sqlite3
 from collections.abc import Callable
@@ -197,7 +197,7 @@ def _import_legacy(database: SQLiteDatabase, path: Path) -> str | None:
             if temporary.is_file() and not temporary.is_symlink():
                 temporary.unlink()
     except OSError:
-        warning = f"Messaging history was migrated. Old files at {path.parent} could not be removed yet. FCC will retry cleanup at startup."
+        warning = f"Messaging history was migrated. Old files at {path.parent} could not be removed yet. ModelGlot will retry cleanup at startup."
     else:
         database.execute(
             lambda connection: connection.execute(

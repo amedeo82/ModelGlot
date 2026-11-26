@@ -47,7 +47,7 @@ def credential_revision(
     owner: str, keys: ApiKeyList, source: str, signing_key: bytes
 ) -> str:
     payload = json.dumps(
-        ["fcc-api-keys-v1", owner, source, api_key_values(keys)],
+        ["modelglot-api-keys-v1", owner, source, api_key_values(keys)],
         ensure_ascii=False,
         separators=(",", ":"),
     ).encode("utf-8")

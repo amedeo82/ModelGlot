@@ -1,4 +1,4 @@
-"""Manage FCC's own saved Claude Desktop gateway configuration."""
+"""Manage ModelGlot's own saved Claude Desktop gateway configuration."""
 
 import getpass
 import hashlib
@@ -16,14 +16,12 @@ from free_claude_code.config.server_urls import same_proxy_url
 from free_claude_code.core.json_types import JsonObject
 from free_claude_code.harnesses.config_file import atomic_write_text, decode_json
 
-_IDENTITY = (
-    "https://github.com/Alishahryar1/free-claude-code/integrations/claude-desktop"
-)
-FCC_ID = str(uuid5(NAMESPACE_URL, _IDENTITY))
+_IDENTITY = "https://github.com/amedeo82/ModelGlot/integrations/claude-desktop"
+MODELGLOT_ID = str(uuid5(NAMESPACE_URL, _IDENTITY))
 DEFAULT_ID = str(uuid5(NAMESPACE_URL, _IDENTITY + "/default"))
-_VIEW_HEADER = "X-FCC-Model-View"
+_VIEW_HEADER = "X-ModelGlot-Model-View"
 _KEY = "inferenceGatewayApiKey"
-# Desktop may encrypt the key in place, so FCC can no longer compare it.
+# Desktop may encrypt the key in place, so ModelGlot can no longer compare it.
 _SEALED_PREFIX = "__sealed__:"
 _OFFICIAL_MARKETPLACES: tuple[tuple[str, str], ...] = (
     ("anthropics/claude-plugins-official", "claude-plugins-official"),
@@ -40,7 +38,7 @@ class PendingDisconnectError(ValueError):
 
 
 class PendingMigrationError(ValueError):
-    """Desktop must move its legacy Windows data before FCC creates the new root."""
+    """Desktop must move its legacy Windows data before ModelGlot creates the new root."""
 
 
 def config_root() -> Path:
@@ -161,7 +159,7 @@ class _Library:
 
     @property
     def profile_path(self) -> Path:
-        return self.file(f"configLibrary/{FCC_ID}.json")
+        return self.file(f"configLibrary/{MODELGLOT_ID}.json")
 
     @property
     def metadata_path(self) -> Path:
@@ -177,7 +175,9 @@ class _Library:
 
     @property
     def selected(self) -> bool:
-        return self.metadata is not None and self.metadata.get("appliedId") == FCC_ID
+        return (
+            self.metadata is not None and self.metadata.get("appliedId") == MODELGLOT_ID
+        )
 
     @property
     def active(self) -> bool:
@@ -229,8 +229,8 @@ def _load(root: Path) -> _Library:
             entry_id = entry["id"]
             if not re.fullmatch(r"[a-f0-9-]{36}", entry_id) or entry_id in ids:
                 raise ValueError("Invalid or duplicate Desktop entry ID")
-            if entry_id == FCC_ID and entry["name"] != "FCC":
-                raise ValueError("FCC profile ID is already used")
+            if entry_id == MODELGLOT_ID and entry["name"] != "ModelGlot":
+                raise ValueError("ModelGlot profile ID is already used")
             ids.add(entry_id)
         applied_id = library.metadata.get("appliedId")
         if not isinstance(applied_id, str) or applied_id not in ids:
@@ -238,11 +238,11 @@ def _load(root: Path) -> _Library:
         library.entries = cast(list[JsonObject], entries)
     if library.profile is not None:
         _headers(library.profile)
-        registered = any(entry["id"] == FCC_ID for entry in library.entries)
+        registered = any(entry["id"] == MODELGLOT_ID for entry in library.entries)
         if library.profile.get("inferenceProvider") != "gateway" or (
             not registered and not _owned(library.profile)
         ):
-            raise ValueError("FCC profile ID is already used")
+            raise ValueError("ModelGlot profile ID is already used")
     return library
 
 
@@ -274,7 +274,7 @@ def _values(url: str, token: str) -> JsonObject:
 
 
 def _token_path(disconnect_path: Path) -> Path:
-    """Return where FCC remembers which token it last gave Desktop."""
+    """Return where ModelGlot remembers which token it last gave Desktop."""
     return disconnect_path.with_name("claude-desktop-token.json")
 
 
@@ -415,7 +415,7 @@ def _empty_profile(path: Path) -> bool:
 
 
 def _disconnect(library: _Library, path: Path, intent: bool | None) -> None:
-    has_entry = any(entry["id"] == FCC_ID for entry in library.entries)
+    has_entry = any(entry["id"] == MODELGLOT_ID for entry in library.entries)
     if not has_entry and library.profile is None and intent is None:
         return
     if library.selected:
@@ -444,14 +444,14 @@ def _disconnect(library: _Library, path: Path, intent: bool | None) -> None:
     # was changed. A retry after unlink safely accepts the missing profile.
     library.profile_path.unlink(missing_ok=True)
     library = _load(library.root)
-    entries = [entry for entry in library.entries if entry["id"] != FCC_ID]
+    entries = [entry for entry in library.entries if entry["id"] != MODELGLOT_ID]
     if len(entries) != len(library.entries):
         metadata = dict(library.metadata or {})
         metadata["entries"] = entries
         _write(library.metadata_path, metadata)
     remaining = _load(library.root)
     if remaining.profile is not None or any(
-        entry["id"] == FCC_ID for entry in remaining.entries
+        entry["id"] == MODELGLOT_ID for entry in remaining.entries
     ):
         raise ValueError("Desktop disconnect cleanup is incomplete")
     path.unlink(missing_ok=True)
@@ -491,10 +491,10 @@ def configure(
             library.validate_default()
             library.entries = [library.ensure_default()]
         _update_profile(library, values, token_path)
-        entries = [entry for entry in library.entries if entry["id"] != FCC_ID]
-        entries.append({"id": FCC_ID, "name": "FCC"})
+        entries = [entry for entry in library.entries if entry["id"] != MODELGLOT_ID]
+        entries.append({"id": MODELGLOT_ID, "name": "ModelGlot"})
         metadata = dict(library.metadata or {})
-        metadata.update({"entries": entries, "appliedId": FCC_ID})
+        metadata.update({"entries": entries, "appliedId": MODELGLOT_ID})
         metadata.pop("hybridPointer", None)
         _write(library.metadata_path, metadata)
         _write(library.mode_path, library.mode | {"deploymentMode": "3p"})

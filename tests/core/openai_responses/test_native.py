@@ -180,7 +180,9 @@ def test_native_request_preserves_ids_outside_known_call_mismatches(
     assert body["input"] == [item]
 
 
-def test_native_request_preserves_reasoning_when_fcc_did_not_override_it() -> None:
+def test_native_request_preserves_reasoning_when_modelglot_did_not_override_it() -> (
+    None
+):
     request = OpenAIResponsesRequest.model_validate(
         {
             "model": "gateway-model",
@@ -218,7 +220,7 @@ def test_native_request_preserves_reasoning_when_fcc_did_not_override_it() -> No
         ),
     ),
 )
-def test_native_request_applies_fcc_reasoning_override(
+def test_native_request_applies_modelglot_reasoning_override(
     reasoning: ReasoningPolicy,
     expected: dict[str, str],
 ) -> None:

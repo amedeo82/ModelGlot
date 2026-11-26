@@ -228,7 +228,7 @@ class PersistentlyFailingMessagingRuntime(TrackingMessagingRuntime):
             raise RuntimeError("quiesce failed")
 
 
-def _settings(model: str, *, port: int = 8082) -> Settings:
+def _settings(model: str, *, port: int = 16969) -> Settings:
     return Settings().model_copy(update={"model": model, "port": port})
 
 
@@ -509,7 +509,7 @@ async def test_restart_required_apply_commits_without_hot_publication(
     prepared = _prepared(
         _settings("nvidia_nim/old", port=9090),
         tmp_path,
-        pending_fields=("PORT",),
+        pending_fields=("MODELGLOT_PORT",),
     )
     with patch.object(
         runtime._configuration, "admin_values", AsyncMock(return_value={})
@@ -525,10 +525,10 @@ async def test_restart_required_apply_commits_without_hot_publication(
         patch.object(
             runtime._configuration,
             "commit",
-            return_value=_applied_response(("PORT",)),
+            return_value=_applied_response(("MODELGLOT_PORT",)),
         ) as commit,
     ):
-        result = await runtime.apply_admin_config({"PORT": "9090"})
+        result = await runtime.apply_admin_config({"MODELGLOT_PORT": "9090"})
 
     commit.assert_called_once_with(prepared)
     assert manager.current_generation_id == 1
@@ -537,7 +537,7 @@ async def test_restart_required_apply_commits_without_hot_publication(
         "required": True,
         "automatic": True,
         "admin_url": "http://127.0.0.1:9090/admin",
-        "fields": ["PORT"],
+        "fields": ["MODELGLOT_PORT"],
         "instance_id": instance_id,
     }
     restart.assert_called_once_with()
@@ -545,7 +545,7 @@ async def test_restart_required_apply_commits_without_hot_publication(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("pending", [(), ("PORT",)])
+@pytest.mark.parametrize("pending", [(), ("MODELGLOT_PORT",)])
 @pytest.mark.parametrize("status", list(CredentialStatus))
 async def test_credential_checks_gate_both_apply_paths(
     tmp_path: Path, pending: tuple[str, ...], status: CredentialStatus
@@ -1408,7 +1408,7 @@ async def test_composition_publishes_startup_notice_after_runtime_and_repair() -
     ]
     workflow.publish_startup_notice.assert_awaited_once_with(notice)
     assert manager_constructor.call_args.kwargs["proxy_root_url"] == (
-        "http://127.0.0.1:8082"
+        "http://127.0.0.1:16969"
     )
     assert "api_url" not in manager_constructor.call_args.kwargs
     assert "plans_directory" not in manager_constructor.call_args.kwargs

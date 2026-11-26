@@ -212,7 +212,7 @@ async def test_custom_tail_edit_preserves_metadata_and_first_key_change_evicts_i
     def settings(keys: list[str]):
         return Settings.model_validate(
             {
-                "FCC_CUSTOM_PROVIDERS": [{**definition, "api_keys": keys}],
+                "MODELGLOT_CUSTOM_PROVIDERS": [{**definition, "api_keys": keys}],
                 "MODEL": f"{provider_id}/one",
             }
         )

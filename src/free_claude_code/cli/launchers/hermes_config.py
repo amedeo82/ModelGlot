@@ -1,4 +1,4 @@
-"""Process-local Hermes configuration for FCC model routing."""
+"""Process-local Hermes configuration for ModelGlot model routing."""
 
 from dataclasses import dataclass, field
 
@@ -10,8 +10,8 @@ from free_claude_code.config.server_urls import proxy_v1_url
 from free_claude_code.core.json_types import JsonObject
 from free_claude_code.core.model_capabilities import ModelInputModality
 
-HERMES_PROVIDER_PREFIX = "fcc-"
-HERMES_KEY_ENV_PREFIX = "FCC_HERMES_"
+HERMES_PROVIDER_PREFIX = "modelglot-"
+HERMES_KEY_ENV_PREFIX = "MODELGLOT_HERMES_"
 
 _AUXILIARY_TASKS = (
     "vision",
@@ -52,10 +52,10 @@ def build_hermes_managed_config(
     proxy_root_url: str,
     nonce: str,
 ) -> HermesManagedConfig:
-    """Translate an FCC catalog into one invocation-specific Hermes overlay."""
+    """Translate an ModelGlot catalog into one invocation-specific Hermes overlay."""
 
     if not models:
-        raise ValueError("Hermes requires at least one routable FCC model")
+        raise ValueError("Hermes requires at least one routable ModelGlot model")
     if not nonce or not nonce.isalnum():
         raise ValueError("Hermes configuration nonce must be alphanumeric")
 
@@ -94,7 +94,7 @@ def build_hermes_managed_config(
             "base_url": "",
             "api_key": "",
             "api_mode": "codex_responses",
-            "default_headers": {"x-fcc-launch-id": nonce},
+            "default_headers": {"x-modelglot-launch-id": nonce},
         },
         "fallback_providers": [],
         "fallback_model": [],

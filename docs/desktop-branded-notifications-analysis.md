@@ -2,7 +2,7 @@
 
 Status: partially implemented
 Date: 2026-11-15; aligned with `custom/main` on 2026-11-16
-Scope: `free-claude-code` on branch `custom/main`
+Scope: `modelglot` on branch `custom/main`
 Audience: maintainers and contributors
 
 This document preserves the original analysis of desktop notification branding and records
@@ -21,9 +21,9 @@ implementation of this analysis must satisfy.
 
 ## 1. Executive Summary
 
-FCC owns valid branded artwork for its desktop shell. The packaged PNG is 1024×1024, the
+ModelGlot owns valid branded artwork for its desktop shell. The packaged PNG is 1024×1024, the
 ICO contains frames from 16 through 256 pixels, and the macOS bundle uses the packaged
-ICNS. The Windows installer exports the packaged assets to `%USERPROFILE%\.fcc` and assigns
+ICNS. The Windows installer exports the packaged assets to `%USERPROFILE%\.modelglot` and assigns
 the icon to the desktop and Start-menu shortcuts.
 
 The current Windows implementation no longer sends notifications directly through
@@ -43,7 +43,7 @@ macOS still uses the portable `pystray` fallback. It does not yet use
 does not guarantee bundle-backed notification branding.
 
 The mutable-`MenuItem` issue reported in the original analysis is resolved: the tray reads
-dynamic text and enabled state through constructor callables and refreshes its FCC-owned
+dynamic text and enabled state through constructor callables and refreshes its modelglot-owned
 menu state. The remaining work is the macOS native backend and final platform-specific
 acceptance coverage.
 
@@ -80,7 +80,7 @@ uncommitted update-check changes.
 | --- | --- |
 | `uv run pytest tests/cli/test_desktop_tray.py tests/cli/test_update_check.py -q --tb=short` | 50 passed |
 | `uv run ty check` | passed; 0 diagnostics |
-| `Get-StartApps` | `Free Claude Code` maps to `C:\Users\...\ .local\bin\fcc-desktop.exe` |
+| `Get-StartApps` | `ModelGlot` maps to `C:\Users\...\ .local\bin\modelglot-desktop.exe` |
 | Installed executable version resources | no `FileDescription`, `ProductName`, or `CompanyName` |
 
 The current checkout therefore has a green focused baseline. This does not invalidate the
@@ -104,7 +104,7 @@ already constructs the two dynamic items as follows:
 - `src/free_claude_code/cli/desktop_tray.py:37` uses a callable for the status label's
   text;
 - `src/free_claude_code/cli/desktop_tray.py:86` and
-  `src/free_claude_code/cli/desktop_tray.py:122` mutate FCC-owned state and then ask the
+  `src/free_claude_code/cli/desktop_tray.py:122` mutate modelglot-owned state and then ask the
   backend to rebuild the menu.
 
 The remaining implementation work therefore treats the immutable-`MenuItem` finding as a
@@ -182,7 +182,7 @@ The menu currently contains:
 - Restart Server;
 - Quit.
 
-Menu changes are performed by changing FCC-owned state and calling
+Menu changes are performed by changing modelglot-owned state and calling
 `Icon.update_menu()`. On macOS, `_refresh_menu()` dispatches the rebuild to the main
 queue at `src/free_claude_code/cli/desktop_tray.py:131`, which is required because
 `pystray` creates native AppKit menu state. The current implementation uses the semantic
@@ -200,7 +200,7 @@ severity, identifier, activation data, or platform-specific native payload.
 
 This made the original path text-only. It also coupled business events to `pystray`,
 even though `pystray` is intended primarily as a tray/menu library and does not expose
-the native notification features required by FCC.
+the native notification features required by ModelGlot.
 
 ### 3.4 Update-check integration state
 
@@ -224,11 +224,11 @@ therefore be safe from a worker thread and must not block the tray event loop.
 
 The Windows installer now:
 
-1. exports the packaged ICO to `%USERPROFILE%\.fcc\app-icon.ico` at
+1. exports the packaged ICO to `%USERPROFILE%\.modelglot\app-icon.ico` at
    `scripts/install.ps1:1899`;
 2. creates desktop and Start-menu shortcuts through
-   `Install-FccDesktopShortcuts` at `scripts/install.ps1:2168`;
-3. sets the shortcut target to `fcc-desktop.exe`;
+   `Install-ModelGlotDesktopShortcuts` at `scripts/install.ps1:2168`;
+3. sets the shortcut target to `modelglot-desktop.exe`;
 4. sets the shortcut icon to the exported ICO;
 5. writes the explicit `System.AppUserModel.ID` to the shortcuts at
    `scripts/install.ps1:2115`-`:2116` and `:2215`.
@@ -238,14 +238,14 @@ toasts. The Windows notifier uses the same AUMID when creating its toast notifie
 setting the current-process identity.
 
 The executable is produced by `uv` as a GUI-script launcher. Its PE resources are not an
-FCC-owned packaging surface and may be replaced during upgrades. The implementation
-therefore does not depend on embedding version resources into `fcc-desktop.exe`.
+modelglot-owned packaging surface and may be replaced during upgrades. The implementation
+therefore does not depend on embedding version resources into `modelglot-desktop.exe`.
 
 ### 3.6 macOS bundle identity
 
 The macOS bundle already establishes the required native identity:
 
-- `BUNDLE_ID` is the stable FCC application bundle identifier declared in
+- `BUNDLE_ID` is the stable ModelGlot application bundle identifier declared in
   `src/free_claude_code/cli/macos_app.py:19`;
 - `AppIcon.icns` is copied into `Contents/Resources` at
   `src/free_claude_code/cli/macos_app.py:99`;
@@ -254,8 +254,8 @@ The macOS bundle already establishes the required native identity:
 - the bundle is ad-hoc signed at `src/free_claude_code/cli/macos_app.py:118`.
 
 This is a stronger foundation than the current Windows identity. The notification backend
-must, however, verify that the running process is launched from the FCC bundle. A raw
-`fcc-desktop` process does not inherit the bundle identifier and cannot be assumed to
+must, however, verify that the running process is launched from the ModelGlot bundle. A raw
+`modelglot-desktop` process does not inherit the bundle identifier and cannot be assumed to
 produce bundle-branded notifications.
 
 ---
@@ -283,7 +283,7 @@ fallback when the WinRT toast path is unavailable.
 
 ### 4.3 Original Windows identity gap — resolved
 
-The installer now writes the explicit FCC AUMID to the Start-menu shortcut, and the Windows
+The installer now writes the explicit ModelGlot AUMID to the Start-menu shortcut, and the Windows
 notification backend uses that same identity for `CreateToastNotifier(AUMID)` and
 `SetCurrentProcessExplicitAppUserModelID(AUMID)`. The identity is no longer dependent on
 the `uv` launcher path.
@@ -299,11 +299,11 @@ dependency; the source contains a concrete `_notify()` implementation and no
 The real limitations of that path are different:
 
 - it is not `UNUserNotificationCenter`;
-- it does not use the FCC bundle identity or bundle icon;
+- it does not use the ModelGlot bundle identity or bundle icon;
 - it introduces a subprocess for every notification;
-- it inherits AppleScript display-notification behavior rather than FCC-controlled
+- it inherits AppleScript display-notification behavior rather than modelglot-controlled
   notification content;
-- it does not provide FCC-controlled authorization-state handling.
+- it does not provide modelglot-controlled authorization-state handling.
 
 Native macOS notifications remain the recommended implementation, but the migration
 rationale must be based on branding, identity, and control rather than on an incorrect
@@ -335,7 +335,7 @@ reported pre-notification failure.
 
 | Capability | Windows current path | Windows native option | macOS current path | macOS native option |
 | --- | --- | --- | --- | --- |
-| Branded notification icon | Yes: WinRT logo or `hBalloonIcon` | Yes | No reliable FCC identity | Yes: bundle identity/icon |
+| Branded notification icon | Yes: WinRT logo or `hBalloonIcon` | Yes | No reliable ModelGlot identity | Yes: bundle identity/icon |
 | Stable application identity | Yes: explicit AUMID | Yes | Bundle only when launched from `.app` | Yes: bundle identifier |
 | Informative severity | Exact with Win32 balloon; approximate with WinRT toast | Yes | No | Application-level mapping |
 | Notification Center history | Yes through WinRT toast | Yes | Via `osascript` | Yes |
@@ -369,7 +369,7 @@ every supported environment.
 `NOTIFYICONDATAW` remains useful as a fallback because it:
 
 - works without WinRT projection packages;
-- supports FCC's exact icon;
+- supports ModelGlot's exact icon;
 - supports native `NIIF_INFO`, `NIIF_WARNING`, and `NIIF_ERROR` styles.
 
 The dedicated adapter owns a small notification-anchor window and uses
@@ -390,7 +390,7 @@ Center behavior. It should be a compatibility path, not the primary branding mec
 4. creating a `UNNotificationRequest`;
 5. adding the request to the center.
 
-Apple requires explicit user authorization for alerts, sound, or badge interactions. FCC
+Apple requires explicit user authorization for alerts, sound, or badge interactions. ModelGlot
 does not need badge behavior. It should request only `alert` and, if the product decision
 requires it, `sound`.
 
@@ -454,7 +454,7 @@ business logic.
 
 ### 6.3 Preserve the update-check state model
 
-`pystray.MenuItem` must remain immutable. FCC-owned state may change, but the items must
+`pystray.MenuItem` must remain immutable. modelglot-owned state may change, but the items must
 read that state through constructor callables.
 
 The implementation should expose or test the following transitions:
@@ -491,10 +491,10 @@ equivalent for every level. In particular:
 
 ### 6.5 Make Windows branding independent of the launcher executable
 
-The Windows implementation must not rely on `fcc-desktop.exe` containing a branded PE
+The Windows implementation must not rely on `modelglot-desktop.exe` containing a branded PE
 resource. Instead:
 
-1. export the ICO to the installer-owned `.fcc` directory;
+1. export the ICO to the installer-owned `.modelglot` directory;
 2. export a PNG for a toast logo override if the WinRT rendering requires it;
 3. assign the ICO to the Start-menu shortcut;
 4. write `System.AppUserModel.ID` to the Start-menu shortcut;
@@ -507,7 +507,7 @@ The explicit shortcut identity remains correct if the `uv` tool launcher is repl
 
 The macOS native adapter should check `NSBundle.mainBundle().bundleIdentifier()` before
 using the bundle-backed notification path. If the application is not running from the
-FCC bundle, it should use an explicitly documented fallback or report that native
+ModelGlot bundle, it should use an explicitly documented fallback or report that native
 branding is unavailable. It must not silently claim bundle branding.
 
 ### 6.7 Treat authorization and OS policy as normal outcomes
@@ -529,18 +529,18 @@ The adapter should:
 
 After implementation:
 
-1. The user launches FCC from the branded shortcut.
+1. The user launches ModelGlot from the branded shortcut.
 2. The tray icon remains branded on Windows and macOS.
 3. Selecting “Check Server Status” or “Check for Updates” produces a native notification
-   carrying the FCC application identity and icon.
+   carrying the ModelGlot application identity and icon.
 4. Update failures are visibly distinguishable from ordinary status information.
 5. On macOS, the first user-initiated notification action may request notification
    permission in context.
-6. If notifications are denied or unavailable, the menu still updates and FCC remains
+6. If notifications are denied or unavailable, the menu still updates and ModelGlot remains
    fully usable.
-7. On Windows, `Get-StartApps` identifies Free Claude Code by the explicit AUMID rather
+7. On Windows, `Get-StartApps` identifies ModelGlot by the explicit AUMID rather
    than only by the `uv` launcher path.
-8. Reinstalling or upgrading FCC preserves the same Windows application identity and
+8. Reinstalling or upgrading ModelGlot preserves the same Windows application identity and
    macOS bundle identifier.
 
 ---
@@ -559,7 +559,7 @@ After implementation:
 | Installer changes the launcher path | Windows identity appears to regress | Bind to an explicit AUMID rather than the executable path |
 | Native dependencies increase package size or install complexity | Platform packaging regressions | Add platform markers, verify wheel contents, and run separate Windows/macOS packaging tests |
 | `pystray` and native backends both attempt to own notification state | Duplicate or conflicting notifications | Remove production calls to `Icon.notify()` after the native adapter is active |
-| Severity conventions differ across platforms | Inconsistent user meaning | Keep a semantic level in FCC and document the platform-specific rendering explicitly |
+| Severity conventions differ across platforms | Inconsistent user meaning | Keep a semantic level in ModelGlot and document the platform-specific rendering explicitly |
 
 ---
 
@@ -568,11 +568,11 @@ After implementation:
 The analysis is implemented successfully when:
 
 - all branded desktop assets remain valid and packaged;
-- the Windows shortcut carries the stable FCC AUMID;
-- `Get-StartApps` resolves the registered Free Claude Code identity consistently;
-- Windows notifications display the FCC icon through the primary native path;
-- the Win32 balloon fallback displays the FCC icon and native severity flags;
-- macOS bundle notifications use `UNUserNotificationCenter` and the FCC bundle identity;
+- the Windows shortcut carries the stable ModelGlot AUMID;
+- `Get-StartApps` resolves the registered ModelGlot identity consistently;
+- Windows notifications display the ModelGlot icon through the primary native path;
+- the Win32 balloon fallback displays the ModelGlot icon and native severity flags;
+- macOS bundle notifications use `UNUserNotificationCenter` and the ModelGlot bundle identity;
 - macOS notification authorization is requested only in a user-visible context;
 - update and server-status notifications use semantic levels;
 - the tray never calls `pystray.Icon.notify()` directly;

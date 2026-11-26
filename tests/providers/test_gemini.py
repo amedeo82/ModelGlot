@@ -414,7 +414,7 @@ async def test_explicit_off_hides_native_thoughts_but_keeps_signed_replay(
             ),
         )
         assert "hidden thought" not in json.dumps(result)
-        assert "fcc:history:" in json.dumps(result)
+        assert "modelglot:history:" in json.dumps(result)
     finally:
         await provider.cleanup()
 

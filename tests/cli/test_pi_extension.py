@@ -18,15 +18,15 @@ from tests.providers.test_github_copilot_provider import Harness, collect
 from tests.wire_payload import decode_object, object_array, object_payload
 
 
-def test_pi_sends_current_conversation_id_only_on_fcc_requests() -> None:
+def test_pi_sends_current_conversation_id_only_on_modelglot_requests() -> None:
     node = shutil.which("node")
     if node is None:
         pytest.skip("Node.js is not installed")
     script = """
 const { default: extension } = await import(process.argv[1]);
 const handlers = new Map();
-process.env.FCC_PI_BASE_URL = "http://fcc.invalid";
-process.env.FCC_PI_API_KEY = "test-key";
+process.env.MODELGLOT_PI_BASE_URL = "http://modelglot.invalid";
+process.env.MODELGLOT_PI_API_KEY = "test-key";
 globalThis.fetch = async () => new Response(JSON.stringify({
     object: "list",
     data: [{ id: "opencode_zen/test", provider_model_ref: "opencode_zen/test", contextWindow: 200000 }],
@@ -37,10 +37,10 @@ await extension({
 });
 const results = [];
 for (const [provider, session] of [
-    ["free-claude-code", "conversation-a"],
-    ["free-claude-code", "conversation-a"],
-    ["free-claude-code", "conversation-b"],
-    ["free-claude-code", "conversation-a"],
+    ["modelglot", "conversation-a"],
+    ["modelglot", "conversation-a"],
+    ["modelglot", "conversation-b"],
+    ["modelglot", "conversation-a"],
     ["another-provider", "another-session"],
 ]) {
     const headers = { "x-existing": "preserve" };
@@ -86,8 +86,8 @@ def _pi_request_payloads(cases: list[dict[str, object]]) -> list[dict[str, objec
 const { default: extension } = await import(process.argv[1]);
 const handlers = new Map();
 let level;
-process.env.FCC_PI_BASE_URL = "http://fcc.invalid";
-process.env.FCC_PI_API_KEY = "test-key";
+process.env.MODELGLOT_PI_BASE_URL = "http://modelglot.invalid";
+process.env.MODELGLOT_PI_API_KEY = "test-key";
 globalThis.fetch = async () => new Response(JSON.stringify({
     object: "list",
     data: [{ id: "github_copilot/gpt-5.6-luna", provider_model_ref: "github_copilot/gpt-5.6-luna", contextWindow: 200000 }],
@@ -132,7 +132,7 @@ def test_pi_sends_selected_effort_without_an_exact_budget_or_native_thinking_mod
 ):
     model = {
         "id": "github_copilot/gpt-5.6-luna",
-        "provider": "free-claude-code",
+        "provider": "modelglot",
         "api": "anthropic-messages",
         "reasoning": True,
     }
@@ -160,7 +160,7 @@ def test_pi_preserves_disabled_thinking_and_requests_outside_its_budget_translat
 ):
     model = {
         "id": "github_copilot/gpt-5.6-luna",
-        "provider": "free-claude-code",
+        "provider": "modelglot",
         "api": "anthropic-messages",
         "reasoning": True,
     }
@@ -222,7 +222,7 @@ async def test_pi_named_effort_reaches_each_copilot_transport(
             {
                 "model": {
                     "id": model_id,
-                    "provider": "free-claude-code",
+                    "provider": "modelglot",
                     "api": "anthropic-messages",
                     "reasoning": True,
                 },
@@ -287,7 +287,7 @@ def test_pi_extension_projects_known_capabilities_and_preserves_unknown_defaults
                 "maxCompletionTokens": 8192,
             },
             {
-                "id": "claude-3-freecc-no-thinking/provider/text-only",
+                "id": "claude-3-modelglot-no-thinking/provider/text-only",
                 "provider_model_ref": "provider/text-only",
                 "supportsReasoning": False,
                 "inputModalities": ["text"],
@@ -301,9 +301,9 @@ def test_pi_extension_projects_known_capabilities_and_preserves_unknown_defaults
         ],
     }
     script = """
-const { projectFccModels } = await import(process.argv[1]);
+const { projectModelGlotModels } = await import(process.argv[1]);
 const payload = JSON.parse(process.argv[2]);
-console.log(JSON.stringify(projectFccModels(payload)));
+console.log(JSON.stringify(projectModelGlotModels(payload)));
 """
 
     result = subprocess.run(
@@ -328,7 +328,7 @@ console.log(JSON.stringify(projectFccModels(payload)));
     projected = load_json_value(result.stdout)
     assert [object_payload(model)["id"] for model in object_array(projected)] == [
         "provider/vision-reasoning",
-        "claude-3-freecc-no-thinking/provider/text-only",
+        "claude-3-modelglot-no-thinking/provider/text-only",
         "provider/unknown ",
     ]
     assert object_array(projected)[-1]["name"] == "provider/unknown "

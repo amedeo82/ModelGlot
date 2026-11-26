@@ -140,7 +140,9 @@ def test_responses_probe_endpoints_return_204(
     assert client.options("/v1/responses").status_code == 204
 
 
-@pytest.mark.parametrize("prefix", ["", "anthropic/", "claude-3-freecc-no-thinking/"])
+@pytest.mark.parametrize(
+    "prefix", ["", "anthropic/", "claude-3-modelglot-no-thinking/"]
+)
 @pytest.mark.parametrize(
     "ref,upstream",
     [
@@ -164,7 +166,7 @@ def test_retired_response_id_uses_replacement(
     assert "response.completed" in response.text
     assert provider.requests[0].model == upstream
     assert provider.stream_kwargs[0]["response_model"] == original
-    if prefix == "claude-3-freecc-no-thinking/":
+    if prefix == "claude-3-modelglot-no-thinking/":
         assert provider.stream_kwargs[0]["reasoning"] == ReasoningPolicy.off()
 
 
@@ -453,7 +455,7 @@ def test_create_response_relays_interleaved_reasoning_order() -> None:
             "status": "completed",
             "call_id": "call_1",
             "name": "echo",
-            "arguments": '{"value":"FCC"}',
+            "arguments": '{"value":"MODELGLOT"}',
         },
         {
             "id": "rs_2",
@@ -514,7 +516,7 @@ def test_create_response_relays_function_call() -> None:
         "status": "completed",
         "call_id": "toolu_1",
         "name": "echo",
-        "arguments": '{"value":"FCC"}',
+        "arguments": '{"value":"MODELGLOT"}',
     }
     provider = FakeProvider(
         [_created_event(), _terminal_event("completed", output=[call])]

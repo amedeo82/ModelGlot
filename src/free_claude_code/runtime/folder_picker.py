@@ -29,12 +29,12 @@ class NativeFolderPicker:
 
     async def pick_folder(self, initial_path: str | None) -> str | None:
         if self._closed:
-            raise ApplicationUnavailableError("FCC is shutting down.")
+            raise ApplicationUnavailableError("ModelGlot is shutting down.")
         if self._active is not None:
             raise ApplicationUnavailableError("A folder picker is already open")
         self._stop = asyncio.Event()
         task = self._active = asyncio.create_task(
-            self._select(initial_path, self._stop), name="fcc-folder-picker"
+            self._select(initial_path, self._stop), name="modelglot-folder-picker"
         )
         try:
             return await self._join(task)

@@ -23,7 +23,7 @@ def build() -> None:
     destination = ROOT / "src/free_claude_code/assets/macos"
     destination.mkdir(parents=True, exist_ok=True)
     for architecture, minimum in TARGETS.items():
-        output = destination / f"fcc-desktop-{architecture}"
+        output = destination / f"modelglot-desktop-{architecture}"
         subprocess.run(
             [
                 "xcrun",
@@ -36,7 +36,7 @@ def build() -> None:
                 "-Wall",
                 "-Wextra",
                 "-Werror",
-                f'-DFCC_PYTHON_VERSION="{version}"',
+                f'-DMODELGLOT_PYTHON_VERSION="{version}"',
                 "-framework",
                 "AppKit",
                 "-framework",

@@ -21,8 +21,8 @@ from ..history_replay import (
 from ..json_types import JsonObject
 from .errors import GeminiConversionError
 
-_PREFIX = b"fcc:gemini-replay:v1:"
-_PROTECTED_PREFIX = b"fcc:gemini-replay:v2:"
+_PREFIX = b"modelglot:gemini-replay:v1:"
+_PROTECTED_PREFIX = b"modelglot:gemini-replay:v2:"
 
 
 @dataclass(frozen=True, slots=True)

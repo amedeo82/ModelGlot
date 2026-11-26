@@ -35,17 +35,17 @@ _STRIPPED_CODEX_ENV_KEYS = frozenset(
 def codex_config_values(
     *, api_url: str, model: str | None = None
 ) -> dict[str, str | int | list[str]]:
-    """Shared configuration for the FCC Responses provider."""
+    """Shared configuration for the ModelGlot Responses provider."""
 
     values: dict[str, str | int | list[str]] = {
-        "model_provider": "fcc",
-        "model_providers.fcc.name": "ModelGlot",
-        "model_providers.fcc.base_url": proxy_v1_url(api_url),
-        "model_providers.fcc.auth.command": "fcc-codex",
-        "model_providers.fcc.auth.args": [PRINT_PROXY_AUTH_TOKEN_FLAG],
-        "model_providers.fcc.wire_api": "responses",
-        # Wait about 25 days for FCC recovery; zero would time out immediately.
-        "model_providers.fcc.stream_idle_timeout_ms": 2_147_483_647,
+        "model_provider": "modelglot",
+        "model_providers.modelglot.name": "ModelGlot",
+        "model_providers.modelglot.base_url": proxy_v1_url(api_url),
+        "model_providers.modelglot.auth.command": "modelglot-codex",
+        "model_providers.modelglot.auth.args": [PRINT_PROXY_AUTH_TOKEN_FLAG],
+        "model_providers.modelglot.wire_api": "responses",
+        # Wait about 25 days for ModelGlot recovery; zero would time out immediately.
+        "model_providers.modelglot.stream_idle_timeout_ms": 2_147_483_647,
     }
     if model:
         values["model"] = model
@@ -53,7 +53,7 @@ def codex_config_values(
 
 
 def codex_config_args(*, api_url: str, model: str | None = None) -> list[str]:
-    """Build native TOML overrides for the FCC Responses provider."""
+    """Build native TOML overrides for the ModelGlot Responses provider."""
     values = codex_config_values(api_url=api_url, model=model)
     return [
         arg

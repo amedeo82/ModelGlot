@@ -1,5 +1,5 @@
 (() => {
-  class FccModelCombobox {
+  class ModelGlotModelCombobox {
     static canonicalValue(input) {
       return input.dataset.canonicalValue ?? input.value;
     }
@@ -120,7 +120,7 @@
 
     updateSummary() {
       if (!this.summary) return;
-      const helper = window.FccModelPickerDetails;
+      const helper = window.ModelGlotModelPickerDetails;
       const visible = helper
         ? helper.renderSummary(
             this.summary,
@@ -171,7 +171,7 @@
       this.query = query;
       const normalizedQuery = query.trim().toLocaleLowerCase();
       const allValues = this.getValues();
-      const helper = window.FccModelPickerDetails;
+      const helper = window.ModelGlotModelPickerDetails;
       const values = normalizedQuery
         ? allValues.filter((value) => {
             const searchText = helper
@@ -210,7 +210,7 @@
         }
         this.listbox.appendChild(optionEl);
       });
-      const selectedIndex = values.indexOf(FccModelCombobox.canonicalValue(this.input));
+      const selectedIndex = values.indexOf(ModelGlotModelCombobox.canonicalValue(this.input));
       this.setActive(selectedIndex >= 0 ? selectedIndex : 0, false);
     }
 
@@ -270,5 +270,5 @@
     }
   }
 
-  window.FccModelCombobox = FccModelCombobox;
+  window.ModelGlotModelCombobox = ModelGlotModelCombobox;
 })();

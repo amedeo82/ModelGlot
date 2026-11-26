@@ -169,7 +169,7 @@ def test_execution_failure_format_uses_semantic_category_and_request_id() -> Non
     ],
     ids=["problem-details", "provider-type", "model-words"],
 )
-def test_category_is_fcc_failure_kind_not_provider_label(
+def test_category_is_modelglot_failure_kind_not_provider_label(
     body: dict[str, object],
 ) -> None:
     response = Response(

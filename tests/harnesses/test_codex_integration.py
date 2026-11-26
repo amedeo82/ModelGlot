@@ -9,7 +9,7 @@ from free_claude_code.harnesses import codex_integration
 from free_claude_code.harnesses.codex_integration import config_path
 from tests.wire_payload import object_payload
 
-URL = "http://127.0.0.1:8082"
+URL = "http://127.0.0.1:16969"
 
 
 def operate(path: Path, connected: bool | None = None):
@@ -43,15 +43,15 @@ def test_connect_disconnect_preserve_model_comments_and_other_providers(
     assert '# My preferences\nmodel = "my-choice" # Keep this' in saved
     data = tomllib.loads(saved)
     assert data["model"] == "my-choice"
-    assert data["model_provider"] == "fcc"
+    assert data["model_provider"] == "modelglot"
     catalog_path: str = data["model_catalog_json"]
     assert Path(catalog_path) == tmp_path / "catalog.json"
-    assert data["model_providers"]["fcc"] == {
+    assert data["model_providers"]["modelglot"] == {
         "name": "ModelGlot",
         "base_url": URL + "/v1",
         "wire_api": "responses",
         "stream_idle_timeout_ms": 2147483647,
-        "auth": {"command": "fcc-codex", "args": ["--print-proxy-auth-token"]},
+        "auth": {"command": "modelglot-codex", "args": ["--print-proxy-auth-token"]},
     }
     assert not (tmp_path / "catalog.json").exists()
     assert operate(path, False)["connected"] is False
@@ -70,7 +70,7 @@ def test_missing_file_noops_and_unset_model(tmp_path: Path) -> None:
     result = operate(path, True)
     assert result["connected"] is True
     assert result["paths"] == {"codex_config": str(path.resolve())}
-    assert result["provider"] == "fcc"
+    assert result["provider"] == "modelglot"
     assert result["selected_model"] is None
     assert result["catalog_available"] is False
     assert result["catalog_schema_version"] == 1
@@ -100,15 +100,15 @@ def test_status_reports_catalog_and_selected_model_without_secrets(
     operate(path, True)
     path.write_text(
         path.read_text().replace(
-            'model_provider = "fcc"',
-            'model = "fcc/model"\nmodel_provider = "fcc"',
+            'model_provider = "modelglot"',
+            'model = "modelglot/model"\nmodel_provider = "modelglot"',
         )
     )
     catalog_path.write_text(
         json.dumps(
             {
                 "models": [
-                    _catalog_entry("fcc/model"),
+                    _catalog_entry("modelglot/model"),
                     _catalog_entry("other/model", 1),
                 ]
             }
@@ -119,8 +119,8 @@ def test_status_reports_catalog_and_selected_model_without_secrets(
     result = operate(path)
 
     assert result["connected"] is True
-    assert result["provider"] == "fcc"
-    assert result["selected_model"] == "fcc/model"
+    assert result["provider"] == "modelglot"
+    assert result["selected_model"] == "modelglot/model"
     assert result["catalog_available"] is True
     assert result["selected_model_available"] is True
     assert result["model_count"] == 2
@@ -133,27 +133,29 @@ def test_status_warns_when_selected_model_is_not_in_catalog(tmp_path: Path) -> N
     operate(path, True)
     path.write_text(
         path.read_text().replace(
-            'model_provider = "fcc"',
-            'model = "external/model"\nmodel_provider = "fcc"',
+            'model_provider = "modelglot"',
+            'model = "external/model"\nmodel_provider = "modelglot"',
         )
     )
-    catalog_path.write_text(json.dumps({"models": [_catalog_entry("fcc/model")]}))
+    catalog_path.write_text(json.dumps({"models": [_catalog_entry("modelglot/model")]}))
 
     result = operate(path)
 
     assert result["selected_model_available"] is False
-    assert any("not in the FCC catalog" in warning for warning in result["warnings"])
+    assert any(
+        "not in the ModelGlot catalog" in warning for warning in result["warnings"]
+    )
 
 
 def test_inline_tables_merge_without_losing_extra_values(tmp_path: Path) -> None:
     path = tmp_path / "config.toml"
     path.write_text(
-        'model_providers = {fcc = {name = "Old", extra = 7, auth = {command = "old", keep = true}}, other = {name = "Other"}} # Keep comment\n'
+        'model_providers = {modelglot = {name = "Old", extra = 7, auth = {command = "old", keep = true}}, other = {name = "Other"}} # Keep comment\n'
     )
     operate(path, True)
     data = tomllib.loads(path.read_text())
-    assert data["model_providers"]["fcc"]["extra"] == 7
-    assert data["model_providers"]["fcc"]["auth"]["keep"] is True
+    assert data["model_providers"]["modelglot"]["extra"] == 7
+    assert data["model_providers"]["modelglot"]["auth"]["keep"] is True
     assert "# Keep comment" in path.read_text()
     assert operate(path)["connected"] is True
     operate(path, False)
@@ -163,7 +165,7 @@ def test_inline_tables_merge_without_losing_extra_values(tmp_path: Path) -> None
 
 
 @pytest.mark.parametrize("previous_timeout", [None, 300000])
-def test_refresh_extends_fcc_waiting_and_preserves_retry_and_other_provider_settings(
+def test_refresh_extends_modelglot_waiting_and_preserves_retry_and_other_provider_settings(
     tmp_path: Path, previous_timeout: int | None
 ) -> None:
     path = tmp_path / "config.toml"
@@ -173,8 +175,8 @@ def test_refresh_extends_fcc_waiting_and_preserves_retry_and_other_provider_sett
         else ""
     )
     path.write_text(
-        'model = "my-choice"\nmodel_provider = "fcc"\n'
-        f'[model_providers.fcc]\nbase_url = "{URL}/v1"\n'
+        'model = "my-choice"\nmodel_provider = "modelglot"\n'
+        f'[model_providers.modelglot]\nbase_url = "{URL}/v1"\n'
         f"{timeout}request_max_retries = 3\nstream_max_retries = 2\n"
         '[model_providers.other]\nname = "Other"\nstream_idle_timeout_ms = 1000\n'
         "request_max_retries = 7\nstream_max_retries = 4\n"
@@ -186,7 +188,7 @@ def test_refresh_extends_fcc_waiting_and_preserves_retry_and_other_provider_sett
 
     saved = tomllib.loads(path.read_text())
     providers: JsonObject = saved["model_providers"]
-    provider = object_payload(providers["fcc"])
+    provider = object_payload(providers["modelglot"])
     assert provider["stream_idle_timeout_ms"] == 2147483647
     assert provider["request_max_retries"] == 3
     assert provider["stream_max_retries"] == 2
@@ -198,10 +200,10 @@ def test_refresh_extends_fcc_waiting_and_preserves_retry_and_other_provider_sett
 def test_manual_connection_ignores_model_and_display_name(tmp_path: Path) -> None:
     path = tmp_path / "config.toml"
     path.write_text(
-        'model = "another-model"\nmodel_provider = "fcc"\n'
+        'model = "another-model"\nmodel_provider = "modelglot"\n'
         f'model_catalog_json = "{(tmp_path / "catalog.json").as_posix()}"\n'
-        '[model_providers.fcc]\nname = "My FCC"\nbase_url = "http://localhost:8082/v1/"\nwire_api = "responses"\n'
-        '[model_providers.fcc.auth]\ncommand = "fcc-codex"\nargs = ["--print-proxy-auth-token"]\n'
+        '[model_providers.modelglot]\nname = "My ModelGlot"\nbase_url = "http://localhost:16969/v1/"\nwire_api = "responses"\n'
+        '[model_providers.modelglot.auth]\ncommand = "modelglot-codex"\nargs = ["--print-proxy-auth-token"]\n'
     )
     before = path.read_bytes()
     assert operate(path)["connected"] is True
@@ -212,8 +214,8 @@ def test_manual_connection_ignores_model_and_display_name(tmp_path: Path) -> Non
     "content",
     [
         "model_providers = {}\n",
-        'model_providers = {fcc = {name = "Old"}}\n',
-        '[model_providers.fcc]\nname = "Old"\n[other]\nkeep = true\n[model_providers.other]\nname = "Other"\n[model_providers.fcc.auth]\ncommand = "old"\n',
+        'model_providers = {modelglot = {name = "Old"}}\n',
+        '[model_providers.modelglot]\nname = "Old"\n[other]\nkeep = true\n[model_providers.other]\nname = "Other"\n[model_providers.modelglot.auth]\ncommand = "old"\n',
     ],
 )
 def test_valid_table_layouts_can_be_updated(tmp_path: Path, content: str) -> None:
@@ -221,7 +223,7 @@ def test_valid_table_layouts_can_be_updated(tmp_path: Path, content: str) -> Non
     path.write_text(content)
     original = tomllib.loads(content)
     assert operate(path, True)["connected"] is True
-    assert tomllib.loads(path.read_text())["model_providers"]["fcc"]["auth"][
+    assert tomllib.loads(path.read_text())["model_providers"]["modelglot"]["auth"][
         "args"
     ] == ["--print-proxy-auth-token"]
     assert operate(path, False)["connected"] is False
@@ -236,13 +238,13 @@ def test_valid_table_layouts_can_be_updated(tmp_path: Path, content: str) -> Non
 @pytest.mark.parametrize(
     "old,new",
     [
-        ('model_provider = "fcc"', 'model_provider = "other"'),
+        ('model_provider = "modelglot"', 'model_provider = "other"'),
         ('wire_api = "responses"', 'wire_api = "chat"'),
         (
-            'base_url = "http://127.0.0.1:8082/v1"',
+            'base_url = "http://127.0.0.1:16969/v1"',
             'base_url = "http://127.0.0.1:8083/v1"',
         ),
-        ('command = "fcc-codex"', 'command = "other"'),
+        ('command = "modelglot-codex"', 'command = "other"'),
         ("--print-proxy-auth-token", "--other"),
         ("catalog.json", "another-catalog.json"),
     ],
@@ -265,7 +267,7 @@ def test_disconnect_keeps_global_selections_for_another_provider(
     operate(path, True)
     path.write_text(
         path.read_text()
-        .replace('model_provider = "fcc"', 'model_provider = "other"')
+        .replace('model_provider = "modelglot"', 'model_provider = "other"')
         .replace("catalog.json", "other.json")
     )
     operate(path, False)
@@ -273,17 +275,17 @@ def test_disconnect_keeps_global_selections_for_another_provider(
     assert data["model_provider"] == "other"
     catalog_path: str = data["model_catalog_json"]
     assert Path(catalog_path) == tmp_path / "other.json"
-    assert "fcc" not in data.get("model_providers", {})
+    assert "modelglot" not in data.get("model_providers", {})
 
 
 @pytest.mark.parametrize(
     "content",
     [
         "[invalid",
-        'model_provider="fcc"\nmodel_provider="other"',
+        'model_provider="modelglot"\nmodel_provider="other"',
         'model_providers = "bad"',
-        "[model_providers]\nfcc = []",
-        '[model_providers.fcc]\nauth = "bad"',
+        "[model_providers]\nmodelglot = []",
+        '[model_providers.modelglot]\nauth = "bad"',
     ],
 )
 def test_invalid_documents_are_not_rewritten(tmp_path: Path, content: str) -> None:

@@ -13,7 +13,7 @@ from free_claude_code.core.json_types import JsonObject, JsonValue
 from free_claude_code.core.model_capabilities import ModelInputModality
 from free_claude_code.harnesses.config_file import atomic_write_text
 
-_LABEL_PREFIX = "FCC: "
+_LABEL_PREFIX = "ModelGlot: "
 _MODEL_PREFIX = "gemini-api://models/"
 _NATIVE_TOOLS = "TOOL_FORMATTER_TYPE_NONE"
 
@@ -103,7 +103,9 @@ def _connection(state: Path, path: Path) -> _Connection | None:
 def _locked(state: Path) -> Generator[None]:
     lock = InterprocessFileLock(state.with_suffix(".lock"))
     if not lock.acquire(wait=True, timeout=5):
-        raise ValueError("Another FCC process is updating Antigravity; retry shortly")
+        raise ValueError(
+            "Another ModelGlot process is updating Antigravity; retry shortly"
+        )
     try:
         yield
     finally:
@@ -139,7 +141,7 @@ def session_settings(catalog: ModelCatalog) -> JsonObject:
 
 def _catalog_models(catalog: ModelCatalog) -> JsonObject:
     if not catalog.models:
-        raise ValueError("Antigravity requires at least one routable FCC model")
+        raise ValueError("Antigravity requires at least one routable ModelGlot model")
     # AGY 1.4.7 has no custom output limit, and small maxTokens values prevent
     # startup. Keep native capacity defaults rather than inventing model limits.
     return {
@@ -162,7 +164,7 @@ def _catalog_models(catalog: ModelCatalog) -> JsonObject:
 
 
 def cleanup_previous_connection(path: Path, state: Path) -> bool:
-    """Remove recognized FCC models and restore only the still-selected FCC mode."""
+    """Remove recognized ModelGlot models and restore only the still-selected ModelGlot mode."""
     path, state = path.resolve(), state.resolve()
     try:
         state.stat()

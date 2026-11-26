@@ -398,8 +398,8 @@ def test_loading_does_not_block_admin_and_concurrent_refreshes_coalesce(
 
     same_flight: bool = page.evaluate(
         """() => {
-          const first = window.fccTokenOptimization.refresh();
-          const second = window.fccTokenOptimization.refresh();
+          const first = window.modelglotTokenOptimization.refresh();
+          const second = window.modelglotTokenOptimization.refresh();
           return first === second;
         }"""
     )
@@ -634,7 +634,9 @@ def test_usage_context_trends_filters_and_csv_download(
         route.fulfill(
             body="day,output_tokens\r\n2026-11-17,40\r\n",
             content_type="text/csv",
-            headers={"Content-Disposition": 'attachment; filename="fcc-usage.csv"'},
+            headers={
+                "Content-Disposition": 'attachment; filename="modelglot-usage.csv"'
+            },
         )
 
     page.route("**/admin/api/usage/export?**", usage_export_response)
@@ -646,7 +648,7 @@ def test_usage_context_trends_filters_and_csv_download(
     expect(page.locator("#codeContextRows")).to_contain_text("50%")
     expect(page.locator("#requestContextSummary")).to_contain_text("Average 25%")
     expect(page.locator("#codeContextSummary")).to_contain_text("Average 50%")
-    expect(page.locator("#fccTrendValues")).to_contain_text("2026-11-17: 40")
+    expect(page.locator("#modelglotTrendValues")).to_contain_text("2026-11-17: 40")
     expect(page.locator("#rtkTrendValues")).to_contain_text("2026-11-17: 60")
     expect(page.locator("#usageCoverage")).to_contain_text("SQLite durable usage")
     expect(page.locator("#usageCoverage")).to_contain_text("Retention 30 days")
@@ -660,7 +662,7 @@ def test_usage_context_trends_filters_and_csv_download(
 
     with page.expect_download() as download_info:
         page.locator("#usageExport").click()
-    assert download_info.value.suggested_filename == "fcc-usage.csv"
+    assert download_info.value.suggested_filename == "modelglot-usage.csv"
 
 
 def test_usage_failure_does_not_hide_external_or_previous_usage(

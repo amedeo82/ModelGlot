@@ -57,7 +57,7 @@ async def test_admin_storage_wait_allows_health_and_authenticated_requests(
             ):
                 if path == "config/apply":
                     response = await client.post(
-                        f"/admin/api/{path}", json={"values": {"PORT": None}}
+                        f"/admin/api/{path}", json={"values": {"MODELGLOT_PORT": None}}
                     )
                 else:
                     response = await client.get(f"/admin/api/{path}")

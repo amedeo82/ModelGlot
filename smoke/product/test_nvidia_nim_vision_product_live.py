@@ -10,7 +10,7 @@ from smoke.lib.e2e import ConversationDriver, SmokeServerDriver, assert_product_
 
 pytestmark = [pytest.mark.live, pytest.mark.smoke_target("nvidia_nim_vision")]
 
-_FIXTURE = Path(__file__).resolve().parents[1] / "assets" / "vision-fcc.png"
+_FIXTURE = Path(__file__).resolve().parents[1] / "assets" / "vision-modelglot.png"
 _VISIBLE_TOKEN = "K7P4"
 
 
@@ -20,7 +20,7 @@ def test_nvidia_nim_vision_tool_result_e2e(smoke_config: SmokeConfig) -> None:
         pytest.skip("missing_env: NVIDIA_NIM_API_KEY is not configured")
     provider_model = smoke_config.nvidia_nim_vision_model()
     if provider_model is None:
-        pytest.skip("missing_env: FCC_SMOKE_MODEL_NVIDIA_NIM_VISION is required")
+        pytest.skip("missing_env: MODELGLOT_SMOKE_MODEL_NVIDIA_NIM_VISION is required")
 
     image_data = base64.b64encode(_FIXTURE.read_bytes()).decode("ascii")
     payload = {
@@ -34,7 +34,7 @@ def test_nvidia_nim_vision_tool_result_e2e(smoke_config: SmokeConfig) -> None:
                         "type": "tool_use",
                         "id": "call_read_image",
                         "name": "Read",
-                        "input": {"file_path": "vision-fcc.png"},
+                        "input": {"file_path": "vision-modelglot.png"},
                     }
                 ],
             },
@@ -90,7 +90,7 @@ def test_nvidia_nim_vision_function_output_e2e(smoke_config: SmokeConfig) -> Non
         pytest.skip("missing_env: NVIDIA_NIM_API_KEY is not configured")
     provider_model = smoke_config.nvidia_nim_vision_model()
     if provider_model is None:
-        pytest.skip("missing_env: FCC_SMOKE_MODEL_NVIDIA_NIM_VISION is required")
+        pytest.skip("missing_env: MODELGLOT_SMOKE_MODEL_NVIDIA_NIM_VISION is required")
 
     image_data = base64.b64encode(_FIXTURE.read_bytes()).decode("ascii")
     payload = {
@@ -100,7 +100,7 @@ def test_nvidia_nim_vision_function_output_e2e(smoke_config: SmokeConfig) -> Non
                 "type": "function_call",
                 "call_id": "call_read_image",
                 "name": "Read",
-                "arguments": '{"file_path":"vision-fcc.png"}',
+                "arguments": '{"file_path":"vision-modelglot.png"}',
             },
             {
                 "type": "function_call_output",

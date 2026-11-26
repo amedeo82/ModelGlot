@@ -21,8 +21,8 @@ described here must satisfy.
 
 ## 1. Problem Statement
 
-Before the implementation, clients that discovered models through Free Claude Code (FCC)
-rendered one row per advertised model with the exact FCC routing reference, for example
+Before the implementation, clients that discovered models through ModelGlot
+rendered one row per advertised model with the exact ModelGlot routing reference, for example
 `nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b` or `minimax/MiniMax-M3.1-Flash`. The shipped
 presentation now uses a human-readable title such as `Nemotron 3 Ultra 550B A55B` (provider
 `NVIDIA NIM`) or `MiniMax-M3.1-Flash` (provider `MiniMax`), while the routing identity,
@@ -77,8 +77,8 @@ so the field is additive and safe for clients that ignore it.
 | Concern | Location | Invariant |
 | --- | --- | --- |
 | Claude Code id | `core/gateway_model_ids.py:27` | `anthropic/<provider/model>` |
-| Claude Code no-thinking id | `core/gateway_model_ids.py:32` | `claude-3-freecc-no-thinking/<provider/model>` |
-| Claude Desktop id | `core/gateway_model_ids.py:15` | `claude-fcc/<hex(provider/model)>` |
+| Claude Code no-thinking id | `core/gateway_model_ids.py:32` | `claude-3-modelglot-no-thinking/<provider/model>` |
+| Claude Desktop id | `core/gateway_model_ids.py:15` | `claude-modelglot/<hex(provider/model)>` |
 | Reference parsing | `config/model_refs.py:167` | `split_provider_model_ref` splits on the first `/` |
 | Routing | `application/routing.py` | Resolves the decoded id back to the provider/model candidate list |
 
@@ -93,7 +93,7 @@ descriptive label must keep it.
   (`api/admin_static/admin.js:1792`). Improving the application label improves the Admin UI
   selector for free, with no Admin-specific change.
 - Codex catalog: `runtime/codex_catalog.py:23` publishes the same inventory to
-  `~/.fcc/codex-model-catalog.json`. It is built from `CatalogModel` and therefore inherits
+  `~/.modelglot/codex-model-catalog.json`. It is built from `CatalogModel` and therefore inherits
   the label; no separate change is required.
 
 ---
@@ -109,7 +109,7 @@ per model. `display_name` is the row title; `description` is secondary text. Its
 `group` or `section` field, so the picker is a flat list in both cases.
 
 Consequence: provider grouping cannot be expressed in the Claude Code picker. The closest
-available approximation is to group by ordering (FCC already orders by provider display
+available approximation is to group by ordering (ModelGlot already orders by provider display
 name, `application/model_catalog.py:79`–`:89`) and to carry the provider name in the
 secondary `description` line.
 
@@ -125,8 +125,8 @@ entries, across refresh and reconnect cycles (see
 
 Consequence: for Desktop, the descriptive title is delivered through the same discovery
 payload (`/v1/models` with the `claude-desktop` view, selected by the
-`X-FCC-Model-View` header written at `harnesses/claude_desktop_integration.py:290`).
-`labelOverride` remains a user-owned pin and must not be overwritten by FCC.
+`X-ModelGlot-Model-View` header written at `harnesses/claude_desktop_integration.py:290`).
+`labelOverride` remains a user-owned pin and must not be overwritten by ModelGlot.
 
 ---
 
@@ -142,14 +142,14 @@ provider-scoped (`nvidia/nemotron-3-ultra-550b-a55b`, `anthropic/claude-sonnet-4
 listings cannot be the primary source for a human-readable title.
 
 They remain authoritative for **capability** facts (context window, output tokens, modality,
-reasoning), which is exactly how FCC uses them today.
+reasoning), which is exactly how ModelGlot uses them today.
 
 ### 4.2 Curated in-repository table (partial)
 
-FCC already owns a provider catalog with human provider names
+ModelGlot already owns a provider catalog with human provider names
 (`config/provider_catalog.py:115`–`:143`, entries at `:147` and `:557` for `NVIDIA NIM` and
 `MiniMax`). A curated per-model table would therefore be consistent with existing style and
-fully offline, but it would need manual maintenance for every new upstream model, and FCC
+fully offline, but it would need manual maintenance for every new upstream model, and ModelGlot
 discovers models dynamically from many providers.
 
 Verdict: suitable as a curated override layer and as a fallback, not as the primary source.
@@ -184,9 +184,9 @@ Verified examples (live query, 2026-11-12):
 | `nvidia/nvidia/nemotron-3-ultra-550b-a55b` | `Nemotron 3 Ultra 550B A55B` | Largest Nemotron 3 model for maximum open-weight reasoning and agent accuracy |
 | `minimax/MiniMax-M3.1-Flash` | `MiniMax-M3.1-Flash` | Frontier multimodal coding model with 1M context window and tunable thinking depth |
 
-Observed provider-id coverage against the FCC provider catalog:
+Observed provider-id coverage against the ModelGlot provider catalog:
 
-| FCC provider id | models.dev provider id | Note |
+| ModelGlot provider id | models.dev provider id | Note |
 | --- | --- | --- |
 | `nvidia_nim` | `nvidia` | Id differs; model keys already carry the `nvidia/` prefix, matching the NIM model ids |
 | `minimax` | `minimax` | Model keys match the MiniMax ids exactly |
@@ -198,15 +198,15 @@ Observed provider-id coverage against the FCC provider catalog:
 | `github_copilot` | `github-copilot` | Id differs |
 | `azure_openai` | `azure` | Id differs |
 | `alibaba_cloud` | `alibaba` | Id differs |
-| `opencode_zen`, `opencode_go` | `opencode` | One catalog provider covers both FCC ids |
+| `opencode_zen`, `opencode_go` | `opencode` | One catalog provider covers both ModelGlot ids |
 | `deepseek`, `groq`, `cerebras`, `siliconflow`, `nebius`, `chutes`, `cohere`, `xai`, `zai`, `huggingface`, `lmstudio`, `mistral`, `openai`, `anthropic`, `vercel`, `sambanova`, `scaleway`, `poolside`, `wandb`, `kilo`, `deepinfra`, `zenmux`, `inception` | same id | Direct match |
 | `featherless`, `ollama_cloud`, `llamacpp`, `ollama`, `cloudflare`, custom providers | absent | No catalog entry; fallback required |
 
 Two structural facts make the join straightforward for the largest providers:
 
 1. The provider id used by models.dev is stable and can be stored as an explicit mapping
-   table in FCC rather than guessed.
-2. Model keys are provider-relative and match the ids FCC discovers upstream, including the
+   table in ModelGlot rather than guessed.
+2. Model keys are provider-relative and match the ids ModelGlot discovers upstream, including the
    `nvidia/…` and `vendor/model` shapes.
 
 Operational facts that shape the design:
@@ -214,7 +214,7 @@ Operational facts that shape the design:
 - `https://models.dev/api.json` responds with
   `cache-control: public, max-age=0, must-revalidate`, so HTTP caching does not reduce
   repeat traffic; a local cache with a TTL is required.
-- The payload is large; only the provider entries that FCC actually uses need to be kept.
+- The payload is large; only the provider entries that ModelGlot actually uses need to be kept.
 
 The shipped implementation consumes the catalog at runtime as a presentation-only source
 and stores only a reduced cache; it does not vendor or redistribute the dataset. The
@@ -233,7 +233,7 @@ distribution decisions.
    the new optional `description` field of `ModelResponse`, because the Claude Code picker
    is flat and cannot group rows.
 3. **The id and the label must be decoupled.** `display_name` is presentation only. The
-   advertised id (`anthropic/…`, `claude-fcc/<hex>`), the provider/model reference, and the
+   advertised id (`anthropic/…`, `claude-modelglot/<hex>`), the provider/model reference, and the
    no-thinking variant derivation stay exactly as they are.
 4. **Native Anthropic passthrough rows keep their current label.** They are addressed by the
    client-visible Anthropic id (`api/model_catalog.py:183`, `:228`).
@@ -244,7 +244,7 @@ distribution decisions.
    sourced from the provider listing (`providers/model_listing.py:40`) and the curated
    profiles.
 7. **User-owned Desktop pins win.** `inferenceModels` with `labelOverride` is preserved by
-   the Desktop harness and is never rewritten by FCC.
+   the Desktop harness and is never rewritten by ModelGlot.
 
 ---
 
@@ -252,7 +252,7 @@ distribution decisions.
 
 For one provider/model reference, the descriptive title is resolved as:
 
-1. **Curated override** — an in-repository table for the flagship models where FCC wants a
+1. **Curated override** — an in-repository table for the flagship models where ModelGlot wants a
    specific wording (for example `Nemotron 3 Ultra 550B A55B` for the NVIDIA Nemotron
    family).
 2. **Catalog lookup** — the models.dev entry for the mapped provider and model key, giving
@@ -275,7 +275,7 @@ The provider attribution always comes from `ProviderDescriptor.display_name`
 | --- | --- | --- |
 | Catalog source unreachable at startup | No descriptive names | Fetch in the background, never on the request path; serve the cached file, then the heuristic, then the raw reference |
 | Stale catalog | Outdated titles after an upstream rename | Local cache with a TTL (24 h) and a background refresh; titles are presentation only, so staleness is cosmetic |
-| Large payload | Slow start, memory pressure | Fetch in the background, persist a reduced map (only the providers and fields FCC uses) |
+| Large payload | Slow start, memory pressure | Fetch in the background, persist a reduced map (only the providers and fields ModelGlot uses) |
 | Licensing of the dataset | Legal exposure | Verify the models.dev license and per-dataset terms before vendoring; runtime consumption is preferred, vendoring only after explicit approval |
 | Model id ambiguity across providers | Wrong title attached to a row | Join on the explicit provider-id mapping table plus the provider-relative model key; never join on the model id alone |
 | Label/id confusion in the picker | Users pick the wrong model | Keep the provider name visible in `description`; keep the id unchanged; never use the label for routing |
@@ -291,7 +291,7 @@ The provider attribution always comes from `ProviderDescriptor.display_name`
 - Changing advertised ids, routing, or fallback behavior.
 - Replacing upstream capability metadata with catalog metadata.
 - Overwriting user-authored Claude Desktop `inferenceModels` or `labelOverride` entries.
-- A live traffic study of model-list endpoint latency and payload size across every FCC
+- A live traffic study of model-list endpoint latency and payload size across every ModelGlot
   provider.
 
 ---

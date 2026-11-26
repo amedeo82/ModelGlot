@@ -49,7 +49,7 @@ def tree(platform: str = "telegram", chat: str = "chat", root: str = "root"):
 
 @pytest_asyncio.fixture
 async def storage(tmp_path: Path):
-    database = SQLiteDatabase(tmp_path / "fcc.db", tmp_path / "code.lock")
+    database = SQLiteDatabase(tmp_path / "modelglot.db", tmp_path / "code.lock")
     await database.start()
     try:
         yield SQLiteMessagingStore(database, managed_message_cap=2)
@@ -756,9 +756,9 @@ async def test_code_close_does_not_release_shared_database(
     code = SQLiteCodeStore(storage.database)
     await code.start()
     await code.close()
-    other = SQLiteDatabase(tmp_path / "fcc.db", tmp_path / "code.lock")
+    other = SQLiteDatabase(tmp_path / "modelglot.db", tmp_path / "code.lock")
     try:
-        with pytest.raises(sqlite3.OperationalError, match="another FCC"):
+        with pytest.raises(sqlite3.OperationalError, match="another ModelGlot"):
             await other.start()
         await storage.commit_trees((tree(),))
         assert not (await storage.load_conversation_snapshot()).is_empty

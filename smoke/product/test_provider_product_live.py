@@ -169,11 +169,11 @@ def test_mistral_prompt_cache_affinity_e2e(smoke_config: SmokeConfig) -> None:
     if provider_model is None:
         pytest.skip("missing_env: mistral is not configured")
 
-    headers = conversation_headers(session_id="fcc-smoke-mistral-cache-affinity")
+    headers = conversation_headers(session_id="modelglot-smoke-mistral-cache-affinity")
     first_payload = {
-        # fcc-smoke-default routes to the MODEL override (the Mistral model);
+        # modelglot-smoke-default routes to the MODEL override (the Mistral model);
         # tier names like claude-opus-4-7 would route to MODEL_OPUS instead.
-        "model": "fcc-smoke-default",
+        "model": "modelglot-smoke-default",
         "max_tokens": 256,
         "system": _long_cacheable_system_prompt(),
         "messages": [{"role": "user", "content": "Say hello in one word."}],
@@ -218,7 +218,7 @@ def test_provider_disconnect_e2e(
 
 def test_provider_error_e2e(smoke_config: SmokeConfig) -> None:
     provider_model = ProviderMatrixDriver(smoke_config).first_model()
-    broken_model = f"{provider_model.provider}/fcc-smoke-missing-model"
+    broken_model = f"{provider_model.provider}/modelglot-smoke-missing-model"
     with (
         SmokeServerDriver(
             smoke_config,
@@ -231,7 +231,7 @@ def test_provider_error_e2e(smoke_config: SmokeConfig) -> None:
             f"{server.base_url}/v1/messages",
             headers=conversation_headers(),
             json={
-                "model": "fcc-smoke-default",
+                "model": "modelglot-smoke-default",
                 "max_tokens": 32,
                 "messages": [{"role": "user", "content": "hello"}],
             },
@@ -410,7 +410,7 @@ def _scenario_interleaved_history(
                         "type": "tool_use",
                         "id": "toolu_interleaved",
                         "name": "echo_smoke",
-                        "input": {"value": "FCC_INTERLEAVED"},
+                        "input": {"value": "MODELGLOT_INTERLEAVED"},
                     },
                 ],
             },
@@ -420,7 +420,7 @@ def _scenario_interleaved_history(
                     {
                         "type": "tool_result",
                         "tool_use_id": "toolu_interleaved",
-                        "content": "FCC_INTERLEAVED",
+                        "content": "MODELGLOT_INTERLEAVED",
                     }
                 ],
             },
@@ -449,7 +449,7 @@ def _scenario_tool_use_then_text_in_history(
                         "type": "tool_use",
                         "id": tool_id,
                         "name": "echo_smoke",
-                        "input": {"value": "FCC_206_SMOKE"},
+                        "input": {"value": "MODELGLOT_206_SMOKE"},
                     },
                     {
                         "type": "text",
@@ -463,7 +463,7 @@ def _scenario_tool_use_then_text_in_history(
                     {
                         "type": "tool_result",
                         "tool_use_id": tool_id,
-                        "content": "FCC_206_SMOKE",
+                        "content": "MODELGLOT_206_SMOKE",
                     },
                 ],
             },
@@ -486,7 +486,10 @@ def _scenario_tool_result_continuation(
         "model": "claude-sonnet-4-5-20250929",
         "max_tokens": 256,
         "messages": [
-            {"role": "user", "content": "Use echo_smoke once with value FCC_TOOL."}
+            {
+                "role": "user",
+                "content": "Use echo_smoke once with value MODELGLOT_TOOL.",
+            }
         ],
         "tools": [echo_tool_schema()],
         "tool_choice": {"type": "tool", "name": "echo_smoke"},
@@ -511,7 +514,7 @@ def _scenario_tool_result_continuation(
                         {
                             "type": "tool_result",
                             "tool_use_id": tool_use["id"],
-                            "content": "FCC_TOOL",
+                            "content": "MODELGLOT_TOOL",
                         }
                     ],
                 },
@@ -530,7 +533,7 @@ def _scenario_tool_history_resume(
         "model": "claude-sonnet-4-5-20250929",
         "max_tokens": 256,
         "messages": [
-            {"role": "user", "content": "Use echo_smoke with value FCC_RESUME."}
+            {"role": "user", "content": "Use echo_smoke with value MODELGLOT_RESUME."}
         ],
         "tools": [echo_tool_schema()],
         "tool_choice": {"type": "tool", "name": "echo_smoke"},
@@ -557,7 +560,7 @@ def _scenario_tool_history_resume(
                             {
                                 "type": "tool_result",
                                 "tool_use_id": tool_use["id"],
-                                "content": "FCC_RESUME",
+                                "content": "MODELGLOT_RESUME",
                             }
                         ],
                     },
@@ -580,7 +583,10 @@ def _scenario_gemini_thought_signature_tool_continuation(
         "model": "claude-sonnet-4-5-20250929",
         "max_tokens": 256,
         "messages": [
-            {"role": "user", "content": "Use echo_smoke once with value FCC_TOOL."}
+            {
+                "role": "user",
+                "content": "Use echo_smoke once with value MODELGLOT_TOOL.",
+            }
         ],
         "tools": [echo_tool_schema()],
         "tool_choice": {"type": "tool", "name": "echo_smoke"},
@@ -617,7 +623,7 @@ def _scenario_gemini_thought_signature_tool_continuation(
                         {
                             "type": "tool_result",
                             "tool_use_id": tool_use["id"],
-                            "content": "FCC_TOOL",
+                            "content": "MODELGLOT_TOOL",
                         }
                     ],
                 },
@@ -637,7 +643,10 @@ def _scenario_reasoning_tool_continuation(
         "model": "claude-sonnet-4-5-20250929",
         "max_tokens": 256,
         "messages": [
-            {"role": "user", "content": "Use echo_smoke once with value FCC_TOOL."},
+            {
+                "role": "user",
+                "content": "Use echo_smoke once with value MODELGLOT_TOOL.",
+            },
             {
                 "role": "assistant",
                 "content": [
@@ -646,7 +655,7 @@ def _scenario_reasoning_tool_continuation(
                         "type": "tool_use",
                         "id": "toolu_reasoning_smoke",
                         "name": "echo_smoke",
-                        "input": {"value": "FCC_TOOL"},
+                        "input": {"value": "MODELGLOT_TOOL"},
                     },
                 ],
             },
@@ -656,7 +665,7 @@ def _scenario_reasoning_tool_continuation(
                     {
                         "type": "tool_result",
                         "tool_use_id": "toolu_reasoning_smoke",
-                        "content": "FCC_TOOL",
+                        "content": "MODELGLOT_TOOL",
                     }
                 ],
             },
@@ -679,7 +688,7 @@ def _scenario_disconnect(
             f"{server.base_url}/v1/messages",
             headers=headers,
             json={
-                "model": "fcc-smoke-default",
+                "model": "modelglot-smoke-default",
                 "max_tokens": 512,
                 "messages": [{"role": "user", "content": smoke_config.prompt}],
             },

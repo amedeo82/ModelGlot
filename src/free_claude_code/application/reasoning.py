@@ -1,4 +1,4 @@
-"""Resolve client reasoning input and FCC configuration exactly once."""
+"""Resolve client reasoning input and ModelGlot configuration exactly once."""
 
 from collections.abc import Mapping
 
@@ -112,7 +112,7 @@ def _apply_reasoning_preference(
     client_policy: ReasoningPolicy,
     preference: ReasoningPreference,
 ) -> ReasoningPolicy:
-    """Apply FCC's route preference to already-parsed client intent."""
+    """Apply ModelGlot's route preference to already-parsed client intent."""
 
     if preference is ReasoningPreference.INHERIT:
         raise ValueError("Reasoning preference must be resolved before application.")

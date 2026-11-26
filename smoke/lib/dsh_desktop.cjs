@@ -71,22 +71,22 @@ async function turn(window, label, marker, newSession = true) {
       }
       return;
     }
-    await turn(window, 'FCC Desktop Fixture', 'FCC_DESKTOP_DONE', false);
+    await turn(window, 'ModelGlot Desktop Fixture', 'MODELGLOT_DESKTOP_DONE', false);
     await host('refresh');
-    await turn(window, 'FCC Updated Fixture', 'FCC_DESKTOP_UPDATED');
+    await turn(window, 'ModelGlot Updated Fixture', 'MODELGLOT_DESKTOP_UPDATED');
     await window.screenshot({ path: path.join(options.artifacts, 'desktop-connected.png') });
     await app.close();
     app = await launch();
     window = await app.firstWindow();
-    await turn(window, 'FCC Updated Fixture', 'FCC_DESKTOP_UPDATED');
+    await turn(window, 'ModelGlot Updated Fixture', 'MODELGLOT_DESKTOP_UPDATED');
     await host('disconnect');
     await window.getByRole('button', { name: 'New session', exact: true }).last().click();
-    await window.getByText('FCC Updated Fixture', { exact: true }).waitFor({ state: 'hidden', timeout: 30000 });
+    await window.getByText('ModelGlot Updated Fixture', { exact: true }).waitFor({ state: 'hidden', timeout: 30000 });
     await host('reconnect');
-    await turn(window, 'FCC Updated Fixture', 'FCC_DESKTOP_UPDATED', false);
+    await turn(window, 'ModelGlot Updated Fixture', 'MODELGLOT_DESKTOP_UPDATED', false);
     await host('final_disconnect');
     await window.getByRole('button', { name: 'New session', exact: true }).last().click();
-    await window.getByText('FCC Updated Fixture', { exact: true }).waitFor({ state: 'hidden', timeout: 30000 });
+    await window.getByText('ModelGlot Updated Fixture', { exact: true }).waitFor({ state: 'hidden', timeout: 30000 });
     await window.screenshot({ path: path.join(options.artifacts, 'desktop-disconnected.png') });
     process.stdout.write(JSON.stringify({ completed: true }) + '\n');
   } finally {

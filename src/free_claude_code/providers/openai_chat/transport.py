@@ -1019,7 +1019,7 @@ class OpenAIChatTransport:
         self._profile.apply_reasoning_to_body(body, reasoning)
         body = self._behavior.finalize_chat_body(body, reasoning=reasoning)
         public_model = request.model if response_model is None else response_model
-        response_id = f"fcc_{uuid.uuid4().hex}"
+        response_id = f"modelglot_{uuid.uuid4().hex}"
         runner = _OpenAIChatStreamRunner(
             self,
             body=body,

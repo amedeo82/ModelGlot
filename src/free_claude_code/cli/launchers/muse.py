@@ -1,4 +1,4 @@
-"""Installed Muse Code launcher with a native FCC connection."""
+"""Installed Muse Code launcher with a native ModelGlot connection."""
 
 import re
 from collections.abc import Sequence
@@ -41,7 +41,7 @@ def _configure(
             ctx.base_env,
             proxy_root_url=ctx.proxy_root_url,
             remove_keys=tuple(_ROUTING_ENV_KEYS),
-            remove_prefixes=("FCC_MUSE_",),
+            remove_prefixes=("MODELGLOT_MUSE_",),
             updates={
                 "META_API_KEY": ctx.auth_token,
                 "MUSE_MODEL": catalog.default_model_id,
@@ -59,7 +59,7 @@ SPEC = HarnessSpec(
     compatibility_check=NativeCheck(
         ("--version",),
         lambda output: version_at_least(output, _VERSION_PATTERN, (0, 2, 1)),
-        "FCC requires Muse Code 0.2.1 or newer.",
+        "ModelGlot requires Muse Code 0.2.1 or newer.",
     ),
 )
 

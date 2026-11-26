@@ -16,13 +16,13 @@ class _Arguments(argparse.Namespace):
 
 def main(argv: Sequence[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
-        prog="fcc-doctor",
-        description="Print and copy FCC diagnostics for a bug report.",
+        prog="modelglot-doctor",
+        description="Print and copy ModelGlot diagnostics for a bug report.",
     )
     parser.add_argument(
         "--disconnect-integrations",
         action="store_true",
-        help="Disconnect recognized FCC editor/app integrations before uninstalling.",
+        help="Disconnect recognized ModelGlot editor/app integrations before uninstalling.",
     )
     args = _Arguments()
     parser.parse_args(argv, namespace=args)
@@ -37,7 +37,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         except IntegrationCleanupError as exc:
             print(str(exc), file=sys.stderr)
             raise SystemExit(1) from None
-        print("Disconnected recognized FCC editor/app integrations.")
+        print("Disconnected recognized ModelGlot editor/app integrations.")
         return
     text = json.dumps(collect_report(), indent=2, ensure_ascii=False) + "\n"
     sys.stdout.write(text)
@@ -46,4 +46,4 @@ def main(argv: Sequence[str] | None = None) -> None:
     except ClipboardUnavailable:
         print("Clipboard unavailable. Copy the JSON above manually.", file=sys.stderr)
     else:
-        print("FCC diagnostics copied to the clipboard.", file=sys.stderr)
+        print("ModelGlot diagnostics copied to the clipboard.", file=sys.stderr)

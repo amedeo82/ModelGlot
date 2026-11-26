@@ -8,7 +8,7 @@ from free_claude_code.config.settings import Settings
 from free_claude_code.messaging.platforms.factory import create_messaging_components
 from free_claude_code.providers.runtime import build_provider_config
 from smoke.lib.child_process import (
-    cmd_fcc_server,
+    cmd_modelglot_server,
     cmd_python_c,
     run_captured_text,
 )
@@ -24,16 +24,16 @@ def _isolated_config_env(home: Path) -> dict[str, str]:
         alias = field.validation_alias
         if isinstance(alias, str):
             env.pop(alias, None)
-    env.pop("FCC_ENV_FILE", None)
+    env.pop("MODELGLOT_ENV_FILE", None)
     env["HOME"] = str(home)
     env["USERPROFILE"] = str(home)
     return env
 
 
 def _write_managed_config(home: Path, text: str) -> None:
-    path = home / ".fcc" / ".env"
+    path = home / ".modelglot" / ".env"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(f"FCC_CONFIG_SCHEMA=1\n{text}", encoding="utf-8")
+    path.write_text(f"MODELGLOT_CONFIG_SCHEMA=1\n{text}", encoding="utf-8")
 
 
 @pytest.mark.smoke_target("config")
@@ -70,7 +70,7 @@ def test_removed_env_migration_e2e(smoke_config: SmokeConfig, tmp_path: Path) ->
     original = 'MODEL="deepseek/imported-once"\n'
     env_file.write_text(original, encoding="utf-8")
     env = _isolated_config_env(home)
-    env["FCC_ENV_FILE"] = str(env_file)
+    env["MODELGLOT_ENV_FILE"] = str(env_file)
     script = (
         "from free_claude_code.config.loader import get_settings; "
         "print(get_settings().model)"
@@ -85,7 +85,7 @@ def test_removed_env_migration_e2e(smoke_config: SmokeConfig, tmp_path: Path) ->
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip() == "deepseek/imported-once"
     assert env_file.read_text(encoding="utf-8") == original
-    managed = home / ".fcc" / ".env"
+    managed = home / ".modelglot" / ".env"
     first = managed.read_bytes()
 
     env_file.write_text('MODEL="groq/changed-later"\n', encoding="utf-8")
@@ -223,7 +223,7 @@ def test_entrypoint_server_e2e(smoke_config: SmokeConfig) -> None:
     with SmokeServerDriver(
         smoke_config,
         name="product-entrypoint",
-        command=cmd_fcc_server(),
+        command=cmd_modelglot_server(),
         env_overrides={"MESSAGING_PLATFORM": "none"},
     ).run() as server:
         assert server.process.poll() is None

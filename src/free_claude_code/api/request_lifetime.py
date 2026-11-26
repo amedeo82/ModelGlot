@@ -49,11 +49,11 @@ class ClientRequestLifetimeMiddleware:
 
         application_task = asyncio.create_task(
             run_application(),
-            name="fcc-client-application",
+            name="modelglot-client-application",
         )
         receive_task = asyncio.create_task(
             receive_until_disconnect(),
-            name="fcc-client-disconnect-receiver",
+            name="modelglot-client-disconnect-receiver",
         )
         try:
             done, _pending = await asyncio.wait(
@@ -79,7 +79,7 @@ class ClientRequestLifetimeMiddleware:
         except asyncio.CancelledError:
             cleanup_task = asyncio.create_task(
                 _cancel_and_wait(application_task, receive_task),
-                name="fcc-client-lifetime-cleanup",
+                name="modelglot-client-lifetime-cleanup",
             )
             await _wait_for_cleanup(cleanup_task)
             raise

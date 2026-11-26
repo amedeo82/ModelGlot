@@ -37,7 +37,7 @@ def test_hermes_uses_native_defaults_and_keeps_user_commands(
         )
         launch_ids.append(
             object_payload(object_payload(config["model"])["default_headers"])[
-                "x-fcc-launch-id"
+                "x-modelglot-launch-id"
             ]
         )
         assert launch_ids[-1]

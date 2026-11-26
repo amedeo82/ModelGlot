@@ -13,7 +13,7 @@ import httpx
 
 from free_claude_code.cli.process_registry import kill_pid_tree_best_effort
 
-from .child_process import cmd_fcc_server
+from .child_process import cmd_modelglot_server
 from .config import SmokeConfig, redacted
 from .server_runtime import server_environment
 
@@ -53,8 +53,10 @@ def start_server(
         {
             "HOST": "127.0.0.1",
             "PORT": str(port),
+            "MODELGLOT_HOST": "127.0.0.1",
+            "MODELGLOT_PORT": str(port),
             "LOG_FILE": str(log_path),
-            "FCC_OPEN_BROWSER": "0",
+            "MODELGLOT_OPEN_BROWSER": "0",
             "MESSAGING_PLATFORM": "none",
             "PYTHONUNBUFFERED": "1",
         }
@@ -62,7 +64,7 @@ def start_server(
     if env_overrides:
         env.update(env_overrides)
 
-    cmd = command or cmd_fcc_server()
+    cmd = command or cmd_modelglot_server()
 
     caller_home = any(key in (env_overrides or {}) for key in ("HOME", "USERPROFILE"))
     with (

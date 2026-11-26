@@ -1,4 +1,4 @@
-"""One-time consolidation of legacy FCC dotenv state."""
+"""One-time consolidation of legacy ModelGlot dotenv state."""
 
 import json
 import os
@@ -17,15 +17,14 @@ from .custom_providers import (
 )
 from .env_files import (
     ANTHROPIC_AUTH_TOKEN_ENV,
-    FCC_CONFIG_SCHEMA_ENV,
+    MODELGLOT_CONFIG_SCHEMA_ENV,
     PROXY_AUTH_ENABLED_ENV,
     dotenv_values_from_file,
     dotenv_values_from_text,
     legacy_explicit_env_path,
-    verified_checkout_env_path,
 )
 from .model_refs import normalize_retired_model_settings
-from .paths import legacy_env_paths, managed_env_path
+from .paths import managed_env_path
 from .provider_catalog import PROVIDER_CATALOG
 from .settings import ENV_KEY_BY_SETTING, Settings
 
@@ -34,16 +33,16 @@ LEGACY_HUGGINGFACE_TOKEN_ENV = "HF_TOKEN"
 HUGGINGFACE_API_KEY_ENV = "HUGGINGFACE_API_KEY"
 LEGACY_OPENCODE_PROXY_ENV = "OPENCODE_PROXY"
 OPENCODE_ZEN_PROXY_ENV = "OPENCODE_ZEN_PROXY"
-LEGACY_OPENCODE_SMOKE_MODEL_ENV = "FCC_SMOKE_MODEL_OPENCODE"
-OPENCODE_ZEN_SMOKE_MODEL_ENV = "FCC_SMOKE_MODEL_OPENCODE_ZEN"
+LEGACY_OPENCODE_SMOKE_MODEL_ENV = "MODELGLOT_SMOKE_MODEL_OPENCODE"
+OPENCODE_ZEN_SMOKE_MODEL_ENV = "MODELGLOT_SMOKE_MODEL_OPENCODE_ZEN"
 
 _SPECIAL_SMOKE_KEYS = frozenset(
     {
-        "FCC_SMOKE_MODEL_MISTRAL_REASONING",
-        "FCC_SMOKE_NIM_MODELS",
-        "FCC_SMOKE_NIM_EXTRA_MODELS",
-        "FCC_SMOKE_OPENROUTER_FREE_MODELS",
-        "FCC_SMOKE_OPENROUTER_FREE_EXTRA_MODELS",
+        "MODELGLOT_SMOKE_MODEL_MISTRAL_REASONING",
+        "MODELGLOT_SMOKE_NIM_MODELS",
+        "MODELGLOT_SMOKE_NIM_EXTRA_MODELS",
+        "MODELGLOT_SMOKE_OPENROUTER_FREE_MODELS",
+        "MODELGLOT_SMOKE_OPENROUTER_FREE_EXTRA_MODELS",
     }
 )
 _DOTENV_ASSIGNMENT_RE = re.compile(
@@ -145,13 +144,14 @@ def smoke_env_keys() -> frozenset[str]:
     """Return catalog-derived and special live-smoke configuration keys."""
 
     catalog_keys = {
-        f"FCC_SMOKE_MODEL_{provider_id.upper()}" for provider_id in PROVIDER_CATALOG
+        f"MODELGLOT_SMOKE_MODEL_{provider_id.upper()}"
+        for provider_id in PROVIDER_CATALOG
     }
     return frozenset(catalog_keys) | _SPECIAL_SMOKE_KEYS
 
 
 def recognized_env_keys() -> frozenset[str]:
-    """Return every dotenv key FCC may import into managed configuration."""
+    """Return every dotenv key ModelGlot may import into managed configuration."""
 
     migrated_keys = {
         key
@@ -159,7 +159,10 @@ def recognized_env_keys() -> frozenset[str]:
         for key in (migration.old_key, migration.new_key)
     }
     return (
-        settings_env_keys() | smoke_env_keys() | migrated_keys | {FCC_CONFIG_SCHEMA_ENV}
+        settings_env_keys()
+        | smoke_env_keys()
+        | migrated_keys
+        | {MODELGLOT_CONFIG_SCHEMA_ENV}
     )
 
 
@@ -183,17 +186,17 @@ def secret_env_keys() -> frozenset[str]:
 def consolidate_managed_config(
     env: Mapping[str, str] | None = None,
 ) -> ConfigMigrationResult:
-    """Consolidate pre-schema configuration into ``~/.fcc/.env`` once."""
+    """Consolidate pre-schema configuration into ``~/.modelglot/.env`` once."""
 
     process = env if env is not None else os.environ
     managed = managed_env_path()
-    base_path: Path | None = managed if managed.exists() else _legacy_base_path()
+    base_path: Path | None = managed if managed.exists() else None
     base_is_managed = base_path == managed
     base_text = _read_text(base_path) if base_path is not None else ""
     base_values = dotenv_values_from_text(base_text)
 
     if base_is_managed:
-        schema = base_values.get(FCC_CONFIG_SCHEMA_ENV)
+        schema = base_values.get(MODELGLOT_CONFIG_SCHEMA_ENV)
         if schema == CONFIG_SCHEMA_VERSION:
             normalized = normalize_retired_model_settings(
                 base_values, preserve_empty_overrides=False
@@ -208,14 +211,14 @@ def consolidate_managed_config(
                 base_values, preserve_empty_overrides=False
             )
             normalized = _normalize_credential_lists(repaired, process)
-            normalized[FCC_CONFIG_SCHEMA_ENV] = CONFIG_SCHEMA_VERSION
+            normalized[MODELGLOT_CONFIG_SCHEMA_ENV] = CONFIG_SCHEMA_VERSION
             atomic_write_managed_config(normalized, path=managed)
             _log_model_repairs(base_values, repaired)
             return ConfigMigrationResult(changed=True)
         if schema not in {None, ""}:
             raise ValueError(
                 f"Managed config {managed} uses unsupported schema {schema!r}; "
-                f"this FCC version supports {CONFIG_SCHEMA_VERSION}."
+                f"this ModelGlot version supports {CONFIG_SCHEMA_VERSION}."
             )
 
     known = recognized_env_keys()
@@ -239,12 +242,21 @@ def consolidate_managed_config(
 
     for key in _RETIRED_ENV_KEYS:
         values.pop(key, None)
-    values.pop(FCC_CONFIG_SCHEMA_ENV, None)
-    _materialize_auth_state(values, process, had_legacy_state=base_path is not None)
+    values.pop(MODELGLOT_CONFIG_SCHEMA_ENV, None)
+    _materialize_auth_state(
+        values,
+        process,
+        had_legacy_state=base_path is not None
+        or (explicit_path is not None and not _same_path(explicit_path, managed)),
+    )
     for key in tuple(values):
-        if key in known and key != FCC_CONFIG_SCHEMA_ENV and not values[key].strip():
+        if (
+            key in known
+            and key != MODELGLOT_CONFIG_SCHEMA_ENV
+            and not values[key].strip()
+        ):
             values.pop(key)
-    values[FCC_CONFIG_SCHEMA_ENV] = CONFIG_SCHEMA_VERSION
+    values[MODELGLOT_CONFIG_SCHEMA_ENV] = CONFIG_SCHEMA_VERSION
     normalized = _normalize_credential_lists(
         normalize_retired_model_settings(values, preserve_empty_overrides=False),
         process,
@@ -341,21 +353,23 @@ def render_managed_config(
     *,
     mask_secrets: bool = False,
 ) -> str:
-    """Render sparse canonical FCC configuration."""
+    """Render sparse canonical ModelGlot configuration."""
 
     known = recognized_env_keys()
     secret_keys = secret_env_keys()
     canonical = dict(values)
-    canonical[FCC_CONFIG_SCHEMA_ENV] = CONFIG_SCHEMA_VERSION
+    canonical[MODELGLOT_CONFIG_SCHEMA_ENV] = CONFIG_SCHEMA_VERSION
     lines = [
         "# Managed by ModelGlot.",
         "# Edit settings in /admin when possible.",
-        f"{FCC_CONFIG_SCHEMA_ENV}={CONFIG_SCHEMA_VERSION}",
+        f"{MODELGLOT_CONFIG_SCHEMA_ENV}={CONFIG_SCHEMA_VERSION}",
     ]
     configured = [
         key
         for key in canonical
-        if key != FCC_CONFIG_SCHEMA_ENV and key in known and canonical[key].strip()
+        if key != MODELGLOT_CONFIG_SCHEMA_ENV
+        and key in known
+        and canonical[key].strip()
     ]
     if configured:
         lines.extend(("", "# Configured settings"))
@@ -425,13 +439,6 @@ def env_text_needs_migration(text: str, migration: EnvMigration) -> bool:
     """Return whether one setting migration would change text."""
 
     return migrate_env_setting_in_text(text, migration)[1]
-
-
-def _legacy_base_path() -> Path | None:
-    for path in legacy_env_paths():
-        if path.is_file():
-            return path
-    return verified_checkout_env_path()
 
 
 def _read_text(path: Path | None) -> str:

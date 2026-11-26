@@ -8,8 +8,8 @@ from pathlib import Path
 from dotenv import dotenv_values
 from dotenv.parser import parse_stream
 
-FCC_ENV_FILE_ENV = "FCC_ENV_FILE"
-FCC_CONFIG_SCHEMA_ENV = "FCC_CONFIG_SCHEMA"
+MODELGLOT_ENV_FILE_ENV = "MODELGLOT_ENV_FILE"
+MODELGLOT_CONFIG_SCHEMA_ENV = "MODELGLOT_CONFIG_SCHEMA"
 ANTHROPIC_AUTH_TOKEN_ENV = "ANTHROPIC_AUTH_TOKEN"
 PROXY_AUTH_ENABLED_ENV = "PROXY_AUTH_ENABLED"
 
@@ -20,28 +20,8 @@ def legacy_explicit_env_path(
     """Return the pre-schema explicit dotenv import path, when configured."""
 
     source = env if env is not None else os.environ
-    value = source.get(FCC_ENV_FILE_ENV, "").strip()
+    value = source.get(MODELGLOT_ENV_FILE_ENV, "").strip()
     return Path(value).expanduser() if value else None
-
-
-def verified_checkout_env_path() -> Path | None:
-    """Return this package checkout's legacy dotenv, never the caller's CWD."""
-
-    checkout = Path(__file__).resolve().parents[3]
-    package = checkout / "src" / "free_claude_code"
-    pyproject = checkout / "pyproject.toml"
-    if package != Path(__file__).resolve().parents[1]:
-        return None
-    if not pyproject.is_file():
-        return None
-    try:
-        project_text = pyproject.read_text(encoding="utf-8")
-    except OSError:
-        return None
-    if 'name = "modelglot"' not in project_text:
-        return None
-    env_path = checkout / ".env"
-    return env_path if env_path.is_file() else None
 
 
 def dotenv_values_from_text(text: str) -> dict[str, str]:

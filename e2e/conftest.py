@@ -18,7 +18,7 @@ from e2e.server_shutdown import join_server
 from free_claude_code.api.app import create_app
 from free_claude_code.api.ports import ApiServices
 from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.config import env_migrations, paths
+from free_claude_code.config import paths
 from free_claude_code.config.admin.credentials import CredentialSubmission
 from free_claude_code.config.env_migrations import recognized_env_keys
 from free_claude_code.config.loader import (
@@ -173,9 +173,9 @@ def admin_base_url(
 ) -> Iterator[str]:
     """Serve one fully isolated Admin application on an OS-assigned port."""
 
-    config_dir = tmp_path / ".fcc"
+    config_dir = tmp_path / ".modelglot"
     monkeypatch.setenv("DSH_HOME", str(tmp_path / ".dsh"))
-    monkeypatch.delenv("FCC_DSH_DESKTOP_API_KEY", raising=False)
+    monkeypatch.delenv("MODELGLOT_DSH_DESKTOP_API_KEY", raising=False)
     monkeypatch.setattr(
         jetbrains_acp_integration,
         "config_path",
@@ -218,21 +218,19 @@ def admin_base_url(
     monkeypatch.setenv("USERPROFILE", str(tmp_path))
     for key in recognized_env_keys():
         monkeypatch.delenv(key, raising=False)
-    monkeypatch.delenv("FCC_ENV_FILE", raising=False)
+    monkeypatch.delenv("MODELGLOT_ENV_FILE", raising=False)
     monkeypatch.setenv("MODEL", "open_router/e2e-default")
     monkeypatch.setenv("OPENROUTER_API_KEY", "e2e-openrouter-key")
     monkeypatch.setenv("GROQ_API_KEY", "e2e-groq-key")
     monkeypatch.setenv("CLOUDFLARE_API_TOKEN", "e2e-cloudflare-token")
     monkeypatch.setenv("MESSAGING_PLATFORM", "none")
     monkeypatch.setenv("VOICE_NOTE_ENABLED", "false")
-    monkeypatch.setenv("FCC_OPEN_BROWSER", "false")
+    monkeypatch.setenv("MODELGLOT_OPEN_BROWSER", "false")
     monkeypatch.setenv("PROXY_AUTH_ENABLED", "false")
     overrides: dict[str, str] = getattr(request, "param", {})
     for key, value in overrides.items():
         monkeypatch.setenv(key, value)
     monkeypatch.setattr(paths, "config_dir_path", lambda: config_dir)
-    monkeypatch.setattr(env_migrations, "legacy_env_paths", lambda: ())
-    monkeypatch.setattr(env_migrations, "verified_checkout_env_path", lambda: None)
     clear_settings_cache()
 
     async def verified_credentials(
@@ -402,7 +400,7 @@ def admin_base_url(
 
     thread = threading.Thread(
         target=run_server,
-        name="fcc-admin-playwright",
+        name="modelglot-admin-playwright",
         daemon=True,
     )
     thread.start()

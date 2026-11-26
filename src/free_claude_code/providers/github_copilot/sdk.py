@@ -56,7 +56,7 @@ _HEADER_NAME = re.compile(r"[!#$%&'*+.^_`|~0-9A-Za-z-]+")
 def _deny_permission(
     _request: PermissionRequest, _invocation: PermissionInvocation
 ) -> PermissionDecisionReject:
-    return PermissionDecisionReject(feedback="FCC owns tool execution.")
+    return PermissionDecisionReject(feedback="ModelGlot owns tool execution.")
 
 
 async def _delete_session_record(
@@ -98,7 +98,7 @@ class SdkRuntime:
             env = profile_environment()
             path = await verified_cli_path(env)
             env["COPILOT_ALLOW_GET_PROVIDER_ENDPOINT"] = "true"
-            directory = tempfile.TemporaryDirectory(prefix="fcc-copilot-")
+            directory = tempfile.TemporaryDirectory(prefix="modelglot-copilot-")
             self._directory = directory
             try:
                 client = CopilotClient(
@@ -247,7 +247,7 @@ class SdkRuntime:
                         await client.start()
                 except Exception:
                     raise CopilotUnavailable(
-                        "Could not reconnect Copilot to remove an FCC session record. Retry disconnect to finish cleanup."
+                        "Could not reconnect Copilot to remove an ModelGlot session record. Retry disconnect to finish cleanup."
                     ) from None
             failed_sessions: list[SdkSession] = []
             for session in self._sessions:
@@ -285,7 +285,7 @@ class SdkRuntime:
             return
         if self._sessions or self._pending_session_ids:
             raise CopilotUnavailable(
-                "Copilot stopped, but an FCC session record could not be removed. Retry disconnect to finish cleanup."
+                "Copilot stopped, but an ModelGlot session record could not be removed. Retry disconnect to finish cleanup."
             )
         self._client = None
         if self._directory is not None:

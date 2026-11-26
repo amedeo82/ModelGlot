@@ -214,8 +214,8 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         settings_attr="proxy_auth_enabled",
         restart_required=True,
         description=(
-            "Require the retained API/CLI token on FCC API routes. "
-            "Changing it restarts FCC."
+            "Require the retained API/CLI token on ModelGlot API routes. "
+            "Changing it restarts ModelGlot."
         ),
     ),
     ConfigFieldSpec(
@@ -228,7 +228,7 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         restart_required=True,
         description=(
             "Retained non-empty token passed to every harness. Authentication can be "
-            "disabled without clearing it. Changing it restarts FCC."
+            "disabled without clearing it. Changing it restarts ModelGlot."
         ),
     ),
     ConfigFieldSpec(
@@ -283,7 +283,7 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         settings_attr="http_read_timeout",
         description=(
             "Seconds to wait between response packets, including streaming. "
-            "Applies without restarting FCC."
+            "Applies without restarting ModelGlot."
         ),
     ),
     ConfigFieldSpec(
@@ -294,7 +294,7 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         settings_attr="http_write_timeout",
         description=(
             "Seconds to allow for sending the request body. Applies without "
-            "restarting FCC."
+            "restarting ModelGlot."
         ),
     ),
     ConfigFieldSpec(
@@ -305,35 +305,35 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         settings_attr="http_connect_timeout",
         description=(
             "Seconds to allow for establishing the TCP/TLS connection. "
-            "Applies without restarting FCC."
+            "Applies without restarting ModelGlot."
         ),
     ),
     ConfigFieldSpec(
-        "HOST",
+        "MODELGLOT_HOST",
         "Server Host",
         "runtime",
         settings_attr="host",
         restart_required=True,
         description=(
-            "Network address the FCC server binds to. Changing it restarts FCC."
+            "Network address the ModelGlot server binds to. Changing it restarts ModelGlot."
         ),
     ),
     ConfigFieldSpec(
-        "PORT",
+        "MODELGLOT_PORT",
         "Server Port",
         "runtime",
         "number",
         settings_attr="port",
         restart_required=True,
-        description="TCP port the FCC server listens on. Changing it restarts FCC.",
+        description="TCP port the ModelGlot server listens on. Changing it restarts ModelGlot.",
     ),
     ConfigFieldSpec(
-        "FCC_OPEN_BROWSER",
+        "MODELGLOT_OPEN_BROWSER",
         "Open Admin on Startup",
         "runtime",
         "boolean",
         settings_attr="open_admin_browser",
-        description="Open the Admin UI after the next fcc-server launch becomes healthy.",
+        description="Open the Admin UI after the next modelglot-server launch becomes healthy.",
     ),
     ConfigFieldSpec(
         "MESSAGING_PLATFORM",
@@ -344,7 +344,7 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         options=("telegram", "discord", "none"),
         session_sensitive=True,
         description=(
-            "Selects the messaging platform started by FCC. Choose Telegram or "
+            "Selects the messaging platform started by ModelGlot. Choose Telegram or "
             "Discord, or None to disable messaging startup."
         ),
     ),
@@ -381,7 +381,7 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         secret=True,
         session_sensitive=True,
         description=(
-            "Bot token issued by BotFather and used to connect FCC to Telegram."
+            "Bot token issued by BotFather and used to connect ModelGlot to Telegram."
         ),
     ),
     ConfigFieldSpec(
@@ -418,7 +418,7 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         session_sensitive=True,
         description=(
             "Bot token issued by the Discord Developer Portal and used to "
-            "connect FCC to Discord."
+            "connect ModelGlot to Discord."
         ),
     ),
     ConfigFieldSpec(
@@ -428,7 +428,7 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         settings_attr="allowed_discord_channels",
         session_sensitive=True,
         description=(
-            "Comma-separated Discord channel IDs that may use FCC. Leave blank "
+            "Comma-separated Discord channel IDs that may use ModelGlot. Leave blank "
             "to accept messages from no channels."
         ),
     ),
@@ -499,7 +499,7 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "boolean",
         settings_attr="enable_web_server_tools",
         description=(
-            "Let Claude Code use WebSearch through FCC and allow forced local web "
+            "Let Claude Code use WebSearch through ModelGlot and allow forced local web "
             "tools. Disable to prevent local web access."
         ),
     ),
@@ -606,31 +606,31 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         restart_required=True,
     ),
     ConfigFieldSpec(
-        "FCC_SMOKE_MODEL_MISTRAL_REASONING",
+        "MODELGLOT_SMOKE_MODEL_MISTRAL_REASONING",
         "Smoke Mistral Reasoning Model",
         "smoke",
         advanced=True,
     ),
     ConfigFieldSpec(
-        "FCC_SMOKE_NIM_MODELS",
+        "MODELGLOT_SMOKE_NIM_MODELS",
         "Smoke NIM Models",
         "smoke",
         advanced=True,
     ),
     ConfigFieldSpec(
-        "FCC_SMOKE_NIM_EXTRA_MODELS",
+        "MODELGLOT_SMOKE_NIM_EXTRA_MODELS",
         "Smoke NIM Extra Models",
         "smoke",
         advanced=True,
     ),
     ConfigFieldSpec(
-        "FCC_SMOKE_OPENROUTER_FREE_MODELS",
+        "MODELGLOT_SMOKE_OPENROUTER_FREE_MODELS",
         "Smoke OpenRouter Free Models",
         "smoke",
         advanced=True,
     ),
     ConfigFieldSpec(
-        "FCC_SMOKE_OPENROUTER_FREE_EXTRA_MODELS",
+        "MODELGLOT_SMOKE_OPENROUTER_FREE_EXTRA_MODELS",
         "Smoke OpenRouter Free Extra Models",
         "smoke",
         advanced=True,
@@ -641,7 +641,7 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
 def _catalog_smoke_fields() -> tuple[ConfigFieldSpec, ...]:
     return tuple(
         ConfigFieldSpec(
-            key=f"FCC_SMOKE_MODEL_{provider_id.upper()}",
+            key=f"MODELGLOT_SMOKE_MODEL_{provider_id.upper()}",
             label=f"Smoke {descriptor.display_name} Model",
             section_id="smoke",
             advanced=True,

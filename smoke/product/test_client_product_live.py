@@ -68,7 +68,7 @@ def _access_request_count(text: str, method: str, path: str) -> int:
 
 def _seed_client_auth(home: Path, auth_token: str) -> None:
     atomic_write_managed_config(
-        {"ANTHROPIC_AUTH_TOKEN": auth_token}, path=home / ".fcc" / ".env"
+        {"ANTHROPIC_AUTH_TOKEN": auth_token}, path=home / ".modelglot" / ".env"
     )
 
 
@@ -150,7 +150,7 @@ def test_pi_cli_prompt_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> None:
             {
                 "HOST": "127.0.0.1",
                 "PORT": str(server.port),
-                "FCC_OPEN_BROWSER": "0",
+                "MODELGLOT_OPEN_BROWSER": "0",
                 "ANTHROPIC_AUTH_TOKEN": auth_token,
                 "PI_CODING_AGENT_DIR": str(tmp_path / "pi-agent"),
             }
@@ -162,11 +162,11 @@ def test_pi_cli_prompt_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> None:
                 "--project",
                 str(smoke_config.root),
                 "--no-sync",
-                "fcc-pi",
+                "modelglot-pi",
                 "--no-session",
                 "--no-approve",
                 "--print",
-                "Reply with exactly FCC_SMOKE_PI",
+                "Reply with exactly MODELGLOT_SMOKE_PI",
             ],
             cwd=tmp_path,
             env=env,
@@ -178,7 +178,7 @@ def test_pi_cli_prompt_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> None:
         server_log = server.log_path.read_text(encoding="utf-8", errors="replace")
 
     assert result.returncode == 0, result.stderr or result.stdout
-    assert "FCC_SMOKE_PI" in result.stdout
+    assert "MODELGLOT_SMOKE_PI" in result.stdout
     assert "POST /v1/messages" in server_log
 
 
@@ -192,9 +192,9 @@ def test_opencode_cli_prompt_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> N
     isolated_config = tmp_path / "opencode-config"
     for path in (isolated_home, isolated_config):
         path.mkdir()
-    isolated_fcc = isolated_home / ".fcc"
-    isolated_fcc.mkdir(mode=0o700)
-    shutil.copyfile(managed_env_path(), isolated_fcc / ".env")
+    isolated_modelglot = isolated_home / ".modelglot"
+    isolated_modelglot.mkdir(mode=0o700)
+    shutil.copyfile(managed_env_path(), isolated_modelglot / ".env")
     isolated_env = {
         "HOME": str(isolated_home),
         "USERPROFILE": str(isolated_home),
@@ -220,7 +220,7 @@ def test_opencode_cli_prompt_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> N
             {
                 "HOST": "127.0.0.1",
                 "PORT": str(server.port),
-                "FCC_OPEN_BROWSER": "0",
+                "MODELGLOT_OPEN_BROWSER": "0",
                 "ANTHROPIC_AUTH_TOKEN": auth_token,
                 **isolated_env,
             }
@@ -243,16 +243,16 @@ def test_opencode_cli_prompt_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> N
             finally:
                 _stop_attached_process(process)
 
-        marker = f"FCC_SMOKE_OPENCODE_{uuid.uuid4().hex}"
-        (tmp_path / "fcc-smoke-marker.txt").write_text(marker, encoding="utf-8")
+        marker = f"MODELGLOT_SMOKE_OPENCODE_{uuid.uuid4().hex}"
+        (tmp_path / "modelglot-smoke-marker.txt").write_text(marker, encoding="utf-8")
         output = run(
             "run",
             "--format",
             "json",
             "--model",
-            f"free-claude-code/{provider_model.full_model}",
+            f"modelglot/{provider_model.full_model}",
             "--auto",
-            "Use the file-reading tool to read fcc-smoke-marker.txt. "
+            "Use the file-reading tool to read modelglot-smoke-marker.txt. "
             "Reply with exactly its contents. Do not modify any files.",
         )
         events = _json_object_lines(output)
@@ -285,7 +285,7 @@ def test_opencode_cli_prompt_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> N
 
     assert "POST /v1/responses" in server_log
     assert "POST /v1/chat/completions" not in server_log
-    assert not list((isolated_fcc / "tmp" / "launchers").iterdir())
+    assert not list((isolated_modelglot / "tmp" / "launchers").iterdir())
 
 
 @pytest.mark.smoke_target("clients")
@@ -315,7 +315,7 @@ def test_aider_cli_prompt_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> None
             {
                 "HOST": "127.0.0.1",
                 "PORT": str(server.port),
-                "FCC_OPEN_BROWSER": "0",
+                "MODELGLOT_OPEN_BROWSER": "0",
                 "ANTHROPIC_AUTH_TOKEN": auth_token,
                 "HOME": str(isolated_home),
                 "USERPROFILE": str(isolated_home),
@@ -330,7 +330,7 @@ def test_aider_cli_prompt_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> None
                 "--project",
                 str(smoke_config.root),
                 "--no-sync",
-                "fcc-aider",
+                "modelglot-aider",
                 "--no-git",
                 "--no-auto-commits",
                 "--no-stream",
@@ -340,7 +340,7 @@ def test_aider_cli_prompt_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> None
                 "--model",
                 provider_model.full_model,
                 "--message",
-                "Reply with exactly FCC_SMOKE_AIDER",
+                "Reply with exactly MODELGLOT_SMOKE_AIDER",
             ],
             cwd=tmp_path,
             env=env,
@@ -352,10 +352,10 @@ def test_aider_cli_prompt_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> None
         server_log = server.log_path.read_text(encoding="utf-8", errors="replace")
 
     assert result.returncode == 0, result.stderr or result.stdout
-    assert "FCC_SMOKE_AIDER" in result.stdout
+    assert "MODELGLOT_SMOKE_AIDER" in result.stdout
     assert "POST /v1/messages" in server_log
     assert "POST /v1/responses" not in server_log
-    assert not any((isolated_home / ".fcc" / "tmp" / "aider").iterdir())
+    assert not any((isolated_home / ".modelglot" / "tmp" / "aider").iterdir())
 
 
 @pytest.mark.smoke_target("clients")
@@ -385,7 +385,7 @@ def test_cline_cli_prompt_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> None
             {
                 "HOST": "127.0.0.1",
                 "PORT": str(server.port),
-                "FCC_OPEN_BROWSER": "0",
+                "MODELGLOT_OPEN_BROWSER": "0",
                 "ANTHROPIC_AUTH_TOKEN": auth_token,
                 "HOME": str(isolated_home),
                 "USERPROFILE": str(isolated_home),
@@ -400,11 +400,11 @@ def test_cline_cli_prompt_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> None
                 "--project",
                 str(smoke_config.root),
                 "--no-sync",
-                "fcc-cline",
+                "modelglot-cline",
                 "--json",
                 "--model",
                 provider_model.full_model,
-                "Reply with exactly FCC_SMOKE_CLINE",
+                "Reply with exactly MODELGLOT_SMOKE_CLINE",
             ],
             cwd=tmp_path,
             env=env,
@@ -416,7 +416,7 @@ def test_cline_cli_prompt_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> None
         server_log = server.log_path.read_text(encoding="utf-8", errors="replace")
 
     assert result.returncode == 0, result.stderr or result.stdout
-    assert "FCC_SMOKE_CLINE" in result.stdout
+    assert "MODELGLOT_SMOKE_CLINE" in result.stdout
     assert "POST /v1/responses" in server_log
     assert "POST /v1/chat/completions" not in server_log
 
@@ -429,9 +429,9 @@ def test_hermes_cli_prompt_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> Non
     if not uv_bin:
         pytest.skip("missing_env: uv not found")
 
-    model_id = "fcc-smoke-hermes"
+    model_id = "modelglot-smoke-hermes"
     full_model = f"lmstudio/{model_id}"
-    marker = "FCC_SMOKE_HERMES"
+    marker = "MODELGLOT_SMOKE_HERMES"
     auth_token = smoke_config.settings.proxy_auth_token
     isolated_home = tmp_path / "home"
     hermes_home = tmp_path / "hermes-home"
@@ -486,13 +486,13 @@ def test_hermes_cli_prompt_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> Non
         for key in credential_env_keys:
             env.pop(key, None)
         for key in tuple(env):
-            if key.startswith("FCC_HERMES_"):
+            if key.startswith("MODELGLOT_HERMES_"):
                 env.pop(key)
         env.update(
             {
                 "HOST": "127.0.0.1",
                 "PORT": str(server.port),
-                "FCC_OPEN_BROWSER": "0",
+                "MODELGLOT_OPEN_BROWSER": "0",
                 "ANTHROPIC_AUTH_TOKEN": auth_token,
                 "HOME": str(isolated_home),
                 "USERPROFILE": str(isolated_home),
@@ -507,7 +507,7 @@ def test_hermes_cli_prompt_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> Non
                 "--project",
                 str(smoke_config.root),
                 "--no-sync",
-                "fcc-hermes",
+                "modelglot-hermes",
                 "--model",
                 full_model,
                 "-z",
@@ -547,9 +547,9 @@ def test_dsh_cli_headless_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> None
     if not uv_bin:
         pytest.skip("missing_env: uv not found")
 
-    model_id = "fcc-smoke-dsh"
+    model_id = "modelglot-smoke-dsh"
     full_model = f"lmstudio/{model_id}"
-    marker = "FCC_SMOKE_DSH"
+    marker = "MODELGLOT_SMOKE_DSH"
     auth_token = smoke_config.settings.proxy_auth_token
     credential_env_keys = _provider_credential_env_keys()
 
@@ -576,7 +576,7 @@ def test_dsh_cli_headless_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> None
                 "--project",
                 str(smoke_config.root),
                 "--no-sync",
-                "fcc-dsh",
+                "modelglot-dsh",
                 "--profile",
                 "headless",
                 f"Reply with exactly {marker}",
@@ -622,10 +622,10 @@ def test_dsh_cli_terminal_failure_e2e(
     if not uv_bin:
         pytest.skip("missing_env: uv not found")
 
-    full_model = "lmstudio/fcc-smoke-failing-model"
+    full_model = "lmstudio/modelglot-smoke-failing-model"
     auth_token = smoke_config.settings.proxy_auth_token
     credential_env_keys = _provider_credential_env_keys()
-    scenario = DshProvider("fcc-smoke-failing-model", "unused", failure="main")
+    scenario = DshProvider("modelglot-smoke-failing-model", "unused", failure="main")
     with (
         dsh_provider(scenario) as provider_base_url,
         SmokeServerDriver(
@@ -648,10 +648,10 @@ def test_dsh_cli_terminal_failure_e2e(
                 "--project",
                 str(smoke_config.root),
                 "--no-sync",
-                "fcc-dsh",
+                "modelglot-dsh",
                 "--profile",
                 "headless",
-                "Reply with exactly FCC_SMOKE_UNREACHABLE",
+                "Reply with exactly MODELGLOT_SMOKE_UNREACHABLE",
             ],
             cwd=tmp_path,
             env=env,
@@ -681,12 +681,12 @@ def test_dsh_cli_tools_and_resume_e2e(
     if not shutil.which("dsh") or not (uv_bin := shutil.which("uv")):
         pytest.skip("missing_env: DeepSeek Harness and uv are required")
     witness = tmp_path / "witness.txt"
-    witness.write_text("FCC_NATIVE_TOOL_WITNESS", encoding="utf-8")
-    model_id = "fcc-smoke-dsh-tools"
+    witness.write_text("MODELGLOT_NATIVE_TOOL_WITNESS", encoding="utf-8")
+    model_id = "modelglot-smoke-dsh-tools"
     full_model = f"lmstudio/{model_id}"
     scenario = DshProvider(
         model_id,
-        "FCC_TOOL_DONE",
+        "MODELGLOT_TOOL_DONE",
         failure="title" if title_failure else "none",
         read_path=str(witness),
     )
@@ -713,7 +713,7 @@ def test_dsh_cli_tools_and_resume_e2e(
                     {
                         "id": "agent-default-model",
                         "config": {
-                            "provider": "free-claude-code",
+                            "provider": "modelglot",
                             "model": full_model,
                             "reasoningEffort": "high",
                         },
@@ -728,14 +728,14 @@ def test_dsh_cli_tools_and_resume_e2e(
             "--project",
             str(smoke_config.root),
             "--no-sync",
-            "fcc-dsh",
+            "modelglot-dsh",
             "headless",
             "--patch",
             str(patch),
             "--json",
         ]
         first = subprocess.run(
-            [*command, "Read witness.txt and reply FCC_TOOL_DONE"],
+            [*command, "Read witness.txt and reply MODELGLOT_TOOL_DONE"],
             cwd=tmp_path,
             env=env,
             capture_output=True,
@@ -754,11 +754,11 @@ def test_dsh_cli_tools_and_resume_e2e(
         )
         assert any(
             event.get("type") == "tool_result"
-            and "FCC_NATIVE_TOOL_WITNESS" in str(event.get("result"))
+            and "MODELGLOT_NATIVE_TOOL_WITNESS" in str(event.get("result"))
             for event in events
         )
         assert any(
-            event.get("type") == "final" and event.get("text") == "FCC_TOOL_DONE"
+            event.get("type") == "final" and event.get("text") == "MODELGLOT_TOOL_DONE"
             for event in events
         )
         session_id = next(
@@ -778,7 +778,7 @@ def test_dsh_cli_tools_and_resume_e2e(
         assert resumed.returncode == 0, resumed.stdout + resumed.stderr
         resumed_events = _json_object_lines(resumed.stdout)
         assert any(
-            event.get("type") == "final" and event.get("text") == "FCC_TOOL_DONE"
+            event.get("type") == "final" and event.get("text") == "MODELGLOT_TOOL_DONE"
             for event in resumed_events
         )
     (tmp_path / "dsh-tool-requests.json").write_text(
@@ -790,7 +790,7 @@ def test_dsh_cli_tools_and_resume_e2e(
     assert all(
         request["purpose"] == "main" for request in scenario.requests[before_resume:]
     )
-    assert "FCC_NATIVE_TOOL_WITNESS" in json.dumps(main[-1]["body"])
+    assert "MODELGLOT_NATIVE_TOOL_WITNESS" in json.dumps(main[-1]["body"])
 
 
 @pytest.mark.smoke_target("clients")
@@ -804,21 +804,21 @@ def test_dsh_cli_web_startup_e2e(
     if not uv_bin:
         pytest.skip("missing_env: uv not found")
 
-    model_id = "fcc-smoke-dsh-web"
+    model_id = "modelglot-smoke-dsh-web"
     full_model = f"lmstudio/{model_id}"
     auth_token = smoke_config.settings.proxy_auth_token
     credential_env_keys = _provider_credential_env_keys()
     web_port = find_free_port()
-    scenario = DshProvider(model_id, "FCC_WEB_DONE")
+    scenario = DshProvider(model_id, "MODELGLOT_WEB_DONE")
     if workflow == "cancel":
         scenario.hold_release = threading.Event()
     elif workflow == "approval":
         scenario.tool_call = (
             "pwsh" if os.name == "nt" else "bash",
             {
-                "command": "Write-Output 'FCC_APPROVAL_DONE'"
+                "command": "Write-Output 'MODELGLOT_APPROVAL_DONE'"
                 if os.name == "nt"
-                else "printf FCC_APPROVAL_DONE",
+                else "printf MODELGLOT_APPROVAL_DONE",
                 "description": "Print a local approval fixture marker",
                 "sandbox_permissions": "danger-full-access",
                 "justification": "Allow this local smoke test to print its fixed marker.",
@@ -865,7 +865,7 @@ def test_dsh_cli_web_startup_e2e(
             "--project",
             str(smoke_config.root),
             "--no-sync",
-            "fcc-dsh",
+            "modelglot-dsh",
             "web",
             *patches,
             "--no-open",
@@ -914,7 +914,7 @@ def test_dsh_cli_web_startup_e2e(
             page.keyboard.insert_text(
                 "Remember these fixture facts: " + "recorded fact " * 200
                 if workflow == "compact"
-                else "Reply FCC_WEB_DONE"
+                else "Reply MODELGLOT_WEB_DONE"
             )
             page.get_by_role("button", name="Send message", exact=True).click()
             if workflow == "approval":
@@ -930,12 +930,14 @@ def test_dsh_cli_web_startup_e2e(
                 )
                 scenario.hold_release.set()
             else:
-                page.get_by_text("FCC_WEB_DONE", exact=True).wait_for(timeout=30000)
+                page.get_by_text("MODELGLOT_WEB_DONE", exact=True).wait_for(
+                    timeout=30000
+                )
             if workflow == "compact":
                 composer.click()
                 page.keyboard.insert_text("Remember the second fixture turn.")
                 page.get_by_role("button", name="Send message", exact=True).click()
-                page.get_by_text("FCC_WEB_DONE", exact=True).nth(1).wait_for(
+                page.get_by_text("MODELGLOT_WEB_DONE", exact=True).nth(1).wait_for(
                     timeout=30000
                 )
                 composer.click()
@@ -944,11 +946,11 @@ def test_dsh_cli_web_startup_e2e(
                 page.get_by_text(re.compile(r"Compacted \d+ history items")).wait_for(
                     timeout=30000
                 )
-                scenario.marker = "FCC_AFTER_COMPACTION"
+                scenario.marker = "MODELGLOT_AFTER_COMPACTION"
                 composer.click()
                 page.keyboard.insert_text("Finish after compaction.")
                 page.get_by_role("button", name="Send message", exact=True).click()
-                page.get_by_text("FCC_AFTER_COMPACTION", exact=True).wait_for(
+                page.get_by_text("MODELGLOT_AFTER_COMPACTION", exact=True).wait_for(
                     timeout=30000
                 )
         except AssertionError as exc:
@@ -986,7 +988,7 @@ def test_dsh_cli_web_startup_e2e(
         assert sum(item["purpose"] == "compaction" for item in scenario.requests) == 1
         assert "compacted-summary" in json.dumps(main[-1])
     if workflow == "approval":
-        assert "FCC_APPROVAL_DONE" in json.dumps(main[-1])
+        assert "MODELGLOT_APPROVAL_DONE" in json.dumps(main[-1])
 
 
 @pytest.mark.smoke_target("clients")
@@ -997,9 +999,9 @@ def test_grok_cli_headless_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> Non
     if not uv_bin:
         pytest.skip("missing_env: uv not found")
 
-    model_id = "fcc-smoke-grok"
+    model_id = "modelglot-smoke-grok"
     full_model = f"lmstudio/{model_id}"
-    marker = "FCC_SMOKE_GROK"
+    marker = "MODELGLOT_SMOKE_GROK"
     auth_token = smoke_config.settings.proxy_auth_token
     credential_env_keys = _provider_credential_env_keys()
 
@@ -1022,14 +1024,14 @@ def test_grok_cli_headless_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> Non
         for key in credential_env_keys:
             env.pop(key, None)
         for key in tuple(env):
-            if key.startswith("FCC_GROK_") or key.startswith("GROK_"):
+            if key.startswith("MODELGLOT_GROK_") or key.startswith("GROK_"):
                 env.pop(key)
         env.pop("XAI_API_KEY", None)
         env.update(
             {
                 "HOST": "127.0.0.1",
                 "PORT": str(server.port),
-                "FCC_OPEN_BROWSER": "0",
+                "MODELGLOT_OPEN_BROWSER": "0",
                 "ANTHROPIC_AUTH_TOKEN": auth_token,
                 "HOME": str(isolated_home),
                 "USERPROFILE": str(isolated_home),
@@ -1042,7 +1044,7 @@ def test_grok_cli_headless_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> Non
                 "--project",
                 str(smoke_config.root),
                 "--no-sync",
-                "fcc-grok",
+                "modelglot-grok",
                 "--model",
                 full_model,
                 "--single",
@@ -1083,9 +1085,9 @@ def test_muse_cli_headless_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> Non
     if not uv_bin:
         pytest.skip("missing_env: uv not found")
 
-    model_id = "fcc-smoke-muse"
+    model_id = "modelglot-smoke-muse"
     full_model = f"lmstudio/{model_id}"
-    marker = "FCC_SMOKE_MUSE"
+    marker = "MODELGLOT_SMOKE_MUSE"
     auth_token = smoke_config.settings.proxy_auth_token
     credential_env_keys = _provider_credential_env_keys()
 
@@ -1108,7 +1110,7 @@ def test_muse_cli_headless_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> Non
         for key in credential_env_keys:
             env.pop(key, None)
         for key in tuple(env):
-            if key.startswith("FCC_MUSE_"):
+            if key.startswith("MODELGLOT_MUSE_"):
                 env.pop(key)
         for key in (
             "META_API_KEY",
@@ -1121,7 +1123,7 @@ def test_muse_cli_headless_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> Non
             {
                 "HOST": "127.0.0.1",
                 "PORT": str(server.port),
-                "FCC_OPEN_BROWSER": "0",
+                "MODELGLOT_OPEN_BROWSER": "0",
                 "ANTHROPIC_AUTH_TOKEN": auth_token,
                 "HOME": str(isolated_home),
                 "USERPROFILE": str(isolated_home),
@@ -1139,7 +1141,7 @@ def test_muse_cli_headless_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> Non
                 "--project",
                 str(smoke_config.root),
                 "--no-sync",
-                "fcc-muse",
+                "modelglot-muse",
                 "exec",
                 "--json",
                 "--no-session-log",
@@ -1181,7 +1183,7 @@ def test_muse_cli_headless_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> Non
         )
         if object_payload(row)["visibility"] == "visible"
     }
-    assert full_model in visible_models, "Muse hides the configured FCC model"
+    assert full_model in visible_models, "Muse hides the configured ModelGlot model"
     assert object_payload(visible_models[full_model])["context_limit"] == 200000
     assert object_payload(visible_models[full_model])["output_limit"] == 81920
     responses_count = _access_request_count(server_log, "POST", "/v1/responses")
@@ -1219,7 +1221,7 @@ def test_claude_cli_adaptive_thinking_e2e(
             server=server,
             config=smoke_config,
             cwd=tmp_path,
-            prompt="think hard, then reply with exactly FCC_SMOKE_CLI",
+            prompt="think hard, then reply with exactly MODELGLOT_SMOKE_CLI",
         )
         server_log = server.log_path.read_text(encoding="utf-8", errors="replace")
 
@@ -1228,13 +1230,13 @@ def test_claude_cli_adaptive_thinking_e2e(
     assert " 422 " not in server_log
     assert 'HTTP/1.1" 422' not in server_log
     assert "400 Bad Request" not in result.stdout
-    assert "FCC_SMOKE_CLI" in result.stdout
+    assert "MODELGLOT_SMOKE_CLI" in result.stdout
 
 
 @pytest.mark.smoke_target("cli")
 def test_claude_cli_web_search_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> None:
-    if os.environ.get("FCC_SMOKE_RUN_WEB_TOOLS") != "1":
-        pytest.skip("missing_env: set FCC_SMOKE_RUN_WEB_TOOLS=1")
+    if os.environ.get("MODELGLOT_SMOKE_RUN_WEB_TOOLS") != "1":
+        pytest.skip("missing_env: set MODELGLOT_SMOKE_RUN_WEB_TOOLS=1")
     claude_bin = shutil.which(smoke_config.claude_bin)
     if not claude_bin:
         pytest.skip(f"missing_env: Claude CLI not found: {smoke_config.claude_bin}")
@@ -1259,7 +1261,7 @@ def test_claude_cli_web_search_e2e(smoke_config: SmokeConfig, tmp_path: Path) ->
                         "role": "user",
                         "content": (
                             "You must use the available web search tool to find the "
-                            "Free Claude Code GitHub repository."
+                            "ModelGlot GitHub repository."
                         ),
                     }
                 ],
@@ -1279,8 +1281,8 @@ def test_claude_cli_web_search_e2e(smoke_config: SmokeConfig, tmp_path: Path) ->
             cwd=tmp_path,
             bare=False,
             prompt=(
-                "Use WebSearch exactly once to find the Free Claude Code GitHub "
-                "repository. Then reply with FCC_SMOKE_WEB_SEARCH and one source URL."
+                "Use WebSearch exactly once to find the ModelGlot GitHub "
+                "repository. Then reply with MODELGLOT_SMOKE_WEB_SEARCH and one source URL."
             ),
             tools="WebSearch",
         )
@@ -1288,7 +1290,7 @@ def test_claude_cli_web_search_e2e(smoke_config: SmokeConfig, tmp_path: Path) ->
 
     assert run.timed_out is False, run.combined_output
     assert run.returncode == 0, run.combined_output
-    assert "FCC_SMOKE_WEB_SEARCH" in run.combined_output
+    assert "MODELGLOT_SMOKE_WEB_SEARCH" in run.combined_output
     assert "http" in run.combined_output
     automatic_payload = json.dumps(
         [event.data for event in automatic_turn.events], sort_keys=True
@@ -1339,11 +1341,11 @@ def test_claude_auto_mode_openai_connected_e2e(
     )
     if provider_model is None:
         pytest.skip(
-            "missing_env: set FCC_SMOKE_MODEL_OPENAI to run the connected-account "
+            "missing_env: set MODELGLOT_SMOKE_MODEL_OPENAI to run the connected-account "
             "Auto-mode smoke"
         )
 
-    marker = f"FCC_SMOKE_AUTO_MODE_{uuid.uuid4().hex}"
+    marker = f"MODELGLOT_SMOKE_AUTO_MODE_{uuid.uuid4().hex}"
     marker_path = tmp_path / "auto-mode-marker.txt"
     marker_path.write_text(marker, encoding="utf-8")
     workspace = tmp_path / "workspace"
@@ -1423,7 +1425,7 @@ def test_claude_cli_provider_error_e2e(
     claude_bin = shutil.which(smoke_config.claude_bin)
     if not claude_bin:
         pytest.skip(f"missing_env: Claude CLI not found: {smoke_config.claude_bin}")
-    broken_model = "lmstudio/fcc-smoke-failing-model"
+    broken_model = "lmstudio/modelglot-smoke-failing-model"
 
     with (
         _deliberately_failing_openai_provider() as (
@@ -1449,7 +1451,7 @@ def test_claude_cli_provider_error_e2e(
             server=server,
             config=smoke_config,
             cwd=tmp_path,
-            prompt="Reply with exactly FCC_SMOKE_UNREACHABLE.",
+            prompt="Reply with exactly MODELGLOT_SMOKE_UNREACHABLE.",
             model="claude-sonnet-4-5-20250929",
         )
         server_log = server.log_path.read_text(encoding="utf-8", errors="replace")
@@ -1465,7 +1467,7 @@ def test_claude_cli_provider_error_e2e(
     assert "empty or malformed" not in lower
     assert "proxy or gateway intercepting" not in lower
     assert "api error" in lower or "selected model" in lower
-    assert "fcc smoke provider rejected the request deliberately" in lower
+    assert "modelglot smoke provider rejected the request deliberately" in lower
     assert failed_downstream_requests == 1, server_log
     assert provider_requests == ["/v1/chat/completions"]
 
@@ -1539,13 +1541,13 @@ def _isolated_dsh_env(
     for key in credential_env_keys:
         env.pop(key, None)
     for key in tuple(env):
-        if key.startswith("FCC_DSH_"):
+        if key.startswith("MODELGLOT_DSH_"):
             env.pop(key)
     env.update(
         {
             "HOST": "127.0.0.1",
             "PORT": str(server_port),
-            "FCC_OPEN_BROWSER": "0",
+            "MODELGLOT_OPEN_BROWSER": "0",
             "ANTHROPIC_AUTH_TOKEN": auth_token,
             "HOME": str(isolated_home),
             "USERPROFILE": str(isolated_home),
@@ -1638,7 +1640,7 @@ def _deliberately_failing_openai_provider() -> Generator[tuple[str, list[str]]]:
                         "object": "list",
                         "data": [
                             {
-                                "id": "fcc-smoke-failing-model",
+                                "id": "modelglot-smoke-failing-model",
                                 "object": "model",
                             }
                         ],
@@ -1659,8 +1661,8 @@ def _deliberately_failing_openai_provider() -> Generator[tuple[str, list[str]]]:
                 {
                     "error": {
                         "type": "invalid_request_error",
-                        "code": "fcc_smoke_failure",
-                        "message": "FCC smoke provider rejected the request deliberately.",
+                        "code": "modelglot_smoke_failure",
+                        "message": "ModelGlot smoke provider rejected the request deliberately.",
                     }
                 },
             )

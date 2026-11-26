@@ -70,7 +70,9 @@ def test_smoke_redaction_does_not_fail_while_reporting_malformed_array_input() -
 def test_live_codex_smoke_exports_first_key_as_subprocess_text(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, credential: str
 ) -> None:
-    monkeypatch.setenv("FCC_SMOKE_CODEX_FREE_MODEL", "open_router/synthetic/free:free")
+    monkeypatch.setenv(
+        "MODELGLOT_SMOKE_CODEX_FREE_MODEL", "open_router/synthetic/free:free"
+    )
 
     def replace_which(name: object):
         return str(tmp_path / "bin" / "codex")

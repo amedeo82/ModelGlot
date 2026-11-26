@@ -82,7 +82,7 @@ def bundle_pids(app: Path):
     return {
         pid
         for pid, executable in process_paths().items()
-        if executable == str(app / "Contents/MacOS/fcc-desktop")
+        if executable == str(app / "Contents/MacOS/modelglot-desktop")
     }
 
 
@@ -105,7 +105,7 @@ def launched(
     command = ["/usr/bin/open", "-n"]
     if wait:
         command.append("-W")
-    for key, value in (env | {"FCC_MACOS_PROBE_OUTPUT": str(output)}).items():
+    for key, value in (env | {"MODELGLOT_MACOS_PROBE_OUTPUT": str(output)}).items():
         command.extend(["--env", f"{key}={value}"])
     command.extend(["--stderr", str(output.with_suffix(".stderr.log")), str(app)])
     if args:

@@ -104,7 +104,7 @@ def test_messages_tool_result_and_followup_remain_distinct_turns() -> None:
                         "type": "tool_use",
                         "id": "call",
                         "name": "echo",
-                        "input": {"value": "FCC_RESUME"},
+                        "input": {"value": "MODELGLOT_RESUME"},
                     },
                 ],
             },
@@ -114,7 +114,7 @@ def test_messages_tool_result_and_followup_remain_distinct_turns() -> None:
                     {
                         "type": "tool_result",
                         "tool_use_id": "call",
-                        "content": "FCC_RESUME",
+                        "content": "MODELGLOT_RESUME",
                     },
                 ],
             },
@@ -131,7 +131,7 @@ def test_messages_tool_result_and_followup_remain_distinct_turns() -> None:
                     "functionResponse": {
                         "id": "call",
                         "name": "echo",
-                        "response": {"output": "FCC_RESUME"},
+                        "response": {"output": "MODELGLOT_RESUME"},
                     }
                 }
             ],

@@ -1,12 +1,12 @@
 # Research: Additional Model Metadata in Claude Code and Desktop Pickers
 
 Status: proposed
-Scope: `free-claude-code`
+Scope: `modelglot`
 Audience: maintainers, contributors, and product reviewers
 
 This document records the research on model information that could be added to the Claude Code
 Terminal and Claude Desktop model pickers beyond the descriptive title and provider attribution
-already implemented by Free Claude Code (FCC). It is a design proposal; the metadata enrichment
+already implemented by ModelGlot. It is a design proposal; the metadata enrichment
 is not implemented yet.
 
 Related documents:
@@ -26,7 +26,7 @@ Related documents:
 
 ## 1. Executive Summary
 
-FCC currently shows a human-readable model title and a provider attribution in the Claude Code
+ModelGlot currently shows a human-readable model title and a provider attribution in the Claude Code
 and Desktop model pickers. The next useful information is not another title source: it is a
 compact model summary that helps a user answer practical selection questions before choosing a
 model.
@@ -51,7 +51,7 @@ The client protocol is the main constraint. Claude Code gateway discovery consum
 - optional `description`.
 
 There are no native discovery fields for prices, badges, context limits, grouping, or icons.
-The `modelPicker` settings format supports `label`, `description`, and `behavesAs`, but FCC
+The `modelPicker` settings format supports `label`, `description`, and `behavesAs`, but ModelGlot
 should not generate user-owned `modelPicker` entries because the catalog is dynamic and the
 setting can replace the built-in lineup. Consequently, additional picker information must be
 encoded as a short, human-readable `description` unless the client protocol changes.
@@ -83,9 +83,9 @@ same API projection. Only the advertised ID encoding differs.
 | Surface | View | Advertised ID |
 | --- | --- | --- |
 | Claude Code Terminal | `claude` | `anthropic/<provider/model>` |
-| Claude Code Terminal, no thinking | `claude` | `claude-3-freecc-no-thinking/<provider/model>` |
-| Claude Desktop | `claude-desktop` | `claude-fcc/<hex(provider/model)>` |
-| Claude Desktop, no thinking | `claude-desktop` | `claude-3-fcc/<hex(provider/model)>` |
+| Claude Code Terminal, no thinking | `claude` | `claude-3-modelglot-no-thinking/<provider/model>` |
+| Claude Desktop | `claude-desktop` | `claude-modelglot/<hex(provider/model)>` |
+| Claude Desktop, no thinking | `claude-desktop` | `claude-3-modelglot/<hex(provider/model)>` |
 
 Relevant implementation points:
 
@@ -139,13 +139,13 @@ The `modelPicker` settings format supports:
 There is no native `group`, `section`, `icon`, `cost`, `contextWindow`, or capability-badge
 field in discovery. Unknown response fields should not be assumed to produce visible UI.
 
-FCC should continue using discovery because:
+ModelGlot should continue using discovery because:
 
 - the model inventory changes dynamically;
 - the catalog already has one shared Terminal and Desktop projection;
 - generated `modelPicker` entries would duplicate catalog state;
 - `replaceBuiltInOptions` can hide discovered rows;
-- `modelPicker` is user- or managed-owned state that FCC should not overwrite.
+- `modelPicker` is user- or managed-owned state that ModelGlot should not overwrite.
 
 Sources:
 
@@ -158,7 +158,7 @@ Sources:
 
 ### 3.1 Provider model listings
 
-FCC already parses provider model listings for operational facts. The generic OpenAI-shaped
+ModelGlot already parses provider model listings for operational facts. The generic OpenAI-shaped
 parser extracts:
 
 - model ID;
@@ -246,7 +246,7 @@ providers with different prices, limits, and availability.
 
 #### Model-specific description
 
-models.dev already provides a concise description for many models. FCC currently stores this
+models.dev already provides a concise description for many models. ModelGlot currently stores this
 value in the reduced cache but replaces it with the provider name when constructing
 `CatalogModel`.
 
@@ -259,13 +259,13 @@ readable.
 The context window tells the user how much material can be held in one conversation. It is
 one of the most useful differentiators between models with otherwise similar titles.
 
-FCC already has provider-reported context values. models.dev may fill missing values, but a
+ModelGlot already has provider-reported context values. models.dev may fill missing values, but a
 provider-specific effective limit must win.
 
 #### Maximum output tokens
 
 The output limit is useful for long generations and agentic workflows. It is already collected
-by FCC.
+by ModelGlot.
 
 #### Reasoning
 
@@ -276,7 +276,7 @@ supported effort values are more relevant to the effort control than to the pick
 #### Input modalities
 
 Vision support is useful in a desktop coding application because it predicts whether images,
-screenshots, PDFs, or other attachments can be used. FCC currently models only `text` and
+screenshots, PDFs, or other attachments can be used. ModelGlot currently models only `text` and
 `image`; it must not advertise audio, video, or PDF support unless the end-to-end protocol path
 preserves those modalities.
 
@@ -341,7 +341,7 @@ line and should not be encoded as URLs in the description.
 #### Provider and lab logos
 
 models.dev exposes provider and lab SVG logos. The current discovery protocol has no logo
-field, so logos require a client-side change and are out of scope for an FCC-only
+field, so logos require a client-side change and are out of scope for an modelglot-only
 implementation.
 
 ---
@@ -418,10 +418,10 @@ The recommended precedence for each category is:
 | Category | First source | Second source | Never inferred |
 | --- | --- | --- | --- |
 | Title | Curated override | models.dev, then heuristic | A title must never affect routing |
-| Provider | FCC provider catalog | Custom provider definition | Provider identity must not be guessed from a model ID |
+| Provider | ModelGlot provider catalog | Custom provider definition | Provider identity must not be guessed from a model ID |
 | Context/output | Provider listing | Curated profile, then catalog fallback with explicit policy | A missing limit is not a default real limit |
 | Reasoning | Provider listing | Curated profile | Unknown is not false |
-| Modalities | Provider listing and FCC capability model | Catalog metadata only when equivalent | Unsupported modalities must not be advertised |
+| Modalities | Provider listing and ModelGlot capability model | Catalog metadata only when equivalent | Unsupported modalities must not be advertised |
 | Description | Curated override | models.dev | External text must be bounded and sanitized |
 | Status | Provider listing | models.dev | Missing is not stable |
 | Price | models.dev provider entry | None | Missing is not free |
@@ -514,7 +514,7 @@ projection. A Desktop-only implementation would duplicate state and make the sur
 - clickable links;
 - logos;
 - raw canonical IDs in the default line;
-- audio, video, or PDF badges until FCC preserves those modalities end to end.
+- audio, video, or PDF badges until ModelGlot preserves those modalities end to end.
 
 ---
 

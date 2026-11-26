@@ -38,7 +38,7 @@ class QueryCredentialFilter(logging.Filter):
 
 
 def uvicorn_log_config(*, console: bool) -> dict[str, object]:
-    """Send Uvicorn records to FCC's file and optional standard console handlers."""
+    """Send Uvicorn records to ModelGlot's file and optional standard console handlers."""
     config = deepcopy(uvicorn.config.LOGGING_CONFIG)
     formatters: dict[str, object] = config["formatters"]
     handler_config: dict[str, object] = config["handlers"]
@@ -48,12 +48,14 @@ def uvicorn_log_config(*, console: bool) -> dict[str, object]:
     if not console:
         formatters.clear()
         handler_config.clear()
-    handler_config["fcc"] = {"()": InterceptHandler}
+    handler_config["modelglot"] = {"()": InterceptHandler}
     for name in ("uvicorn", "uvicorn.access"):
         handlers = loggers[name]["handlers"]
         if not isinstance(handlers, list):
             raise TypeError("Expected Uvicorn logging handlers")
-        loggers[name]["handlers"] = [*handlers, "fcc"] if console else ["fcc"]
+        loggers[name]["handlers"] = (
+            [*handlers, "modelglot"] if console else ["modelglot"]
+        )
     return dict(config)
 
 

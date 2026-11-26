@@ -357,7 +357,7 @@ def test_restart_to_another_local_origin_keeps_the_warning(
                     "required": True,
                     "automatic": True,
                     "admin_url": target,
-                    "fields": ["HOST"],
+                    "fields": ["MODELGLOT_HOST"],
                     "instance_id": "old-server",
                 },
                 "credential_checks": [

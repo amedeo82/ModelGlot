@@ -18,11 +18,11 @@ Quindi le informazioni aggiuntive possono essere inserite principalmente nella `
 
 | Priorità | Informazione | Fonte | Valutazione |
 |---|---|---|---|
-| **P0** | Descrizione specifica del modello | `models.dev` | Già presente nella cache (`providers/model_catalog_source.py:125-155`), ma attualmente scartata: FCC mostra solo il nome del provider. È il migliorlioramento immediato. |
-| **P0** | Context window | Provider listing / FCC | Già disponibile in `CatalogModel.context_window_tokens`; utile per distinguere modelli con 128K, 200K, 1M di contesto. |
-| **P0** | Output massimo | Provider listing / FCC | Già disponibile in `CatalogModel.max_output_tokens`. |
+| **P0** | Descrizione specifica del modello | `models.dev` | Già presente nella cache (`providers/model_catalog_source.py:125-155`), ma attualmente scartata: ModelGlot mostra solo il nome del provider. È il migliorlioramento immediato. |
+| **P0** | Context window | Provider listing / ModelGlot | Già disponibile in `CatalogModel.context_window_tokens`; utile per distinguere modelli con 128K, 200K, 1M di contesto. |
+| **P0** | Output massimo | Provider listing / ModelGlot | Già disponibile in `CatalogModel.max_output_tokens`. |
 | **P0** | Reasoning | Provider listing / `models.dev` | Già presente come `supports_reasoning`; utile per distinguere modelli reasoning-only e varianti “no thinking”. |
-| **P0** | Modalità di input | Provider listing | `text`/`image` sono già supportati da FCC. Mostrare “vision” solo se il provider e il percorso di traduzione lo confermano. |
+| **P0** | Modalità di input | Provider listing | `text`/`image` sono già supportati da ModelGlot. Mostrare “vision” solo se il provider e il percorso di traduzione lo confermano. |
 | **P1** | Tool calling / structured output | `models.dev`, con verifica provider | Molto utile per un ambiente di coding, ma non deve essere mostrato come `false` quando il dato è semplicemente assente. |
 | **P1** | Stato del modello | `models.dev.status` | `alpha`, `beta`, `deprecated`. I modelli deprecati dovrebbero essere segnalati, non necessariamente rimossi. |
 | **P1** | Costo indicativo | `models.dev.cost` | Input/output/reasoning/cache per milione di token. È provider-specific e può diventare obsoleto: mostrarlo solo come “list price”. |
@@ -62,7 +62,7 @@ La seconda forma è probabilmente la più leggibile. La `description` dovrebbe r
 
 ## Dati già disponibili internamente ma non mostrati
 
-Il caso più interessante è che FCC già conosce:
+Il caso più interessante è che ModelGlot già conosce:
 
 - reasoning;
 - input modalities;
@@ -78,7 +78,7 @@ La vista `messages`/`responses` li serializza già in `api/model_catalog.py:233-
 - **Logo/badge grafici:** non esistono nel protocollo discovery.
 - **Benchmark completi:** troppo rumorosi e potenzialmente non comparabili.
 - **Prezzi come dato definitivo:** il prezzo reale può cambiare per provider, piano o contratto.
-- **Audio/video/PDF:** FCC espone attualmente solo `text` e `image`; non bisogna promettere capacità non preservate dal percorso di traduzione.
+- **Audio/video/PDF:** ModelGlot espone attualmente solo `text` e `image`; non bisogna promettere capacità non preservate dal percorso di traduzione.
 - **Sostituire gli ID con ID canonici:** `canonical_model_id` serve solo come metadato; gli ID pubblicati devono restare quelli usati dal routing.
 - **Riscrivere `inferenceModels` o `labelOverride`:** sono owned dall’utente e il Desktop deve preservarli invariati.
 
@@ -86,7 +86,7 @@ La vista `messages`/`responses` li serializza già in `api/model_catalog.py:233-
 
 1. Mantenere la descrizione models.dev come testo editoriale attribuito; valutare separatamente limiti, reasoning, modalities, status e cost con un gate esplicito di provenance.
 2. Aggiungere un formatter compatto della `description` per Claude/Desktop.
-3. Usare soltanto limiti e capability confermati dal provider FCC per i fatti operativi; non colmare i dati provider mancanti con modelli.dev o fallback predefiniti.
+3. Usare soltanto limiti e capability confermati dal provider ModelGlot per i fatti operativi; non colmare i dati provider mancanti con modelli.dev o fallback predefiniti.
 4. Aggiungere un test che garantisca che la descrizione cambi ma ID, routing e fallback restino identici.
 5. Verificare la resa reale nel picker Desktop, perché il protocollo garantisce il campo ma non il layout grafico.
 

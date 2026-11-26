@@ -1,7 +1,7 @@
 # Architecture Analysis and Improvement Backlog
 
 Status: internal engineering document; baseline analysis with current-state deltas
-Scope: `free-claude-code` on branch `custom/main`, re-aligned on 2026-11-17 at `86d408d5`
+Scope: `modelglot` on branch `custom/main`, re-aligned on 2026-11-17 at `86d408d5`
 Audience: maintainers and contributors
 
 This document preserves the static analysis that produced the architecture backlog and
@@ -31,7 +31,7 @@ Those are explicitly listed as gaps in §7.
 
 ## 2. System Overview
 
-Free Claude Code is a local ASGI application that exposes the Anthropic Messages, OpenAI
+ModelGlot is a local ASGI application that exposes the Anthropic Messages, OpenAI
 Chat Completions, OpenAI Responses, and Gemini GenerateContent wire protocols on one port and
 routes each request to a configured upstream provider, translating protocols and tool calls in
 both directions. The same runtime also owns a loopback Admin UI, local web server tools,
@@ -142,7 +142,7 @@ flowchart LR
     events --> admin
 ```
 
-The web-tool path recognizes only the Anthropic server-tool shapes implemented by FCC and
+The web-tool path recognizes only the Anthropic server-tool shapes implemented by ModelGlot and
 enforces scheme, DNS, private-address, redirect, and response-size limits. The Code-session
 path owns session metadata and transcript state in SQLite, delegates execution to the Codex
 harness, and projects live events to the browser over SSE. The user-facing contracts are
@@ -186,7 +186,7 @@ maintenance cost or partial blind spots), **Low** (hygiene and documentation).
 
 `config/settings.py:750` sets `host` default `"0.0.0.0"`; `config/settings.py:753` sets
 `proxy_auth_enabled` default `False`; `config/settings.py:758` sets the token default to the
-well-known value `"freecc"`. The binding is applied at `cli/commands.py:332` and the socket is
+well-known value `"modelglot"`. The binding is applied at `cli/commands.py:332` and the socket is
 reserved at `cli/commands.py:303`.
 
 Result: on a default installation, every generative endpoint — `POST /v1/messages`

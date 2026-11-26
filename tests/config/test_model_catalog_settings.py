@@ -15,16 +15,16 @@ def test_model_catalog_settings_have_safe_defaults() -> None:
 def test_model_catalog_settings_parse_from_managed_and_process_sources() -> None:
     managed = compose_settings_snapshot(
         {
-            "FCC_MODEL_CATALOG_SOURCE": "none",
-            "FCC_MODEL_CATALOG_URL": "https://catalog.example/models.json",
+            "MODELGLOT_MODEL_CATALOG_SOURCE": "none",
+            "MODELGLOT_MODEL_CATALOG_URL": "https://catalog.example/models.json",
         },
         {},
     )
     process = compose_settings_snapshot(
         {},
         {
-            "FCC_MODEL_CATALOG_SOURCE": "none",
-            "FCC_MODEL_CATALOG_URL": "https://catalog.example/models.json",
+            "MODELGLOT_MODEL_CATALOG_SOURCE": "none",
+            "MODELGLOT_MODEL_CATALOG_URL": "https://catalog.example/models.json",
         },
     )
 
@@ -37,9 +37,9 @@ def test_model_catalog_settings_parse_from_managed_and_process_sources() -> None
 
 def test_invalid_model_catalog_source_is_rejected() -> None:
     with pytest.raises(ValidationError):
-        Settings.model_validate({"FCC_MODEL_CATALOG_SOURCE": "invalid"})
+        Settings.model_validate({"MODELGLOT_MODEL_CATALOG_SOURCE": "invalid"})
 
 
 def test_blank_model_catalog_url_is_rejected() -> None:
     with pytest.raises(ValidationError):
-        Settings.model_validate({"FCC_MODEL_CATALOG_URL": " "})
+        Settings.model_validate({"MODELGLOT_MODEL_CATALOG_URL": " "})

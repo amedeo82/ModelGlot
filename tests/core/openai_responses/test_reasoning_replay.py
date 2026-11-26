@@ -53,10 +53,10 @@ def test_replay_round_trip_preserves_exact_native_block(block: JsonObject) -> No
     "carrier",
     [
         "openai-opaque",
-        "fcc:anthropic-reasoning:v2:e30",
-        "fcc:anthropic-reasoning:v1:!bad",
-        "fcc:anthropic-reasoning:v1:e30",  # empty JSON object
-        "fcc:anthropic-reasoning:v1:W10",  # JSON array
+        "modelglot:anthropic-reasoning:v2:e30",
+        "modelglot:anthropic-reasoning:v1:!bad",
+        "modelglot:anthropic-reasoning:v1:e30",  # empty JSON object
+        "modelglot:anthropic-reasoning:v1:W10",  # JSON array
     ],
 )
 def test_malformed_or_foreign_replay_rejected(carrier: str) -> None:
@@ -72,7 +72,7 @@ def test_missing_signature_is_not_accepted_as_signed_history() -> None:
         "block": {"type": "thinking", "thinking": "visible-only"},
     }
     carrier = (
-        "fcc:anthropic-reasoning:v1:"
+        "modelglot:anthropic-reasoning:v1:"
         + base64.urlsafe_b64encode(json.dumps(data).encode()).decode()
     )
     with pytest.raises(HistoryReplayError, match="signed"):
@@ -162,7 +162,8 @@ def test_carrier_cannot_hide_non_json_numbers_or_excessive_nesting(
         + "}}"
     )
     carrier = (
-        "fcc:anthropic-reasoning:v1:" + base64.urlsafe_b64encode(raw.encode()).decode()
+        "modelglot:anthropic-reasoning:v1:"
+        + base64.urlsafe_b64encode(raw.encode()).decode()
     )
     with pytest.raises(HistoryReplayError):
         decode_replay(carrier)
@@ -191,7 +192,8 @@ def test_decoder_rejects_unpaired_surrogate_before_http_serialization() -> None:
         + 'ud800","signature":"sig"}}'
     )
     carrier = (
-        "fcc:anthropic-reasoning:v1:" + base64.urlsafe_b64encode(raw.encode()).decode()
+        "modelglot:anthropic-reasoning:v1:"
+        + base64.urlsafe_b64encode(raw.encode()).decode()
     )
     with pytest.raises(HistoryReplayError):
         decode_replay(carrier)

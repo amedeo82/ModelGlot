@@ -647,7 +647,7 @@ async def test_signed_sibling_is_rejected_before_late_alias_metadata_is_publishe
     assert len(first_bodies) + len(backup_bodies) == 2
     assert events[-1].event in {"error", "response.failed"}
     assert "Signed sibling" not in raw
-    assert "fcc:history" not in raw
+    assert "modelglot:history" not in raw
     if wire == "messages":
         thinking = "".join(
             string_payload(

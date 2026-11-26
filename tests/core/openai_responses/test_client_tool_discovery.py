@@ -298,7 +298,7 @@ def test_native_search_buffers_partial_added_arguments() -> None:
                     "type": "function_call",
                     "id": "fc_search",
                     "call_id": "search",
-                    "name": "fcc_tool_search",
+                    "name": "modelglot_tool_search",
                     "status": "in_progress",
                     "arguments": '{"query":',
                 }
@@ -324,7 +324,7 @@ def test_native_search_buffers_partial_added_arguments() -> None:
                     "type": "function_call",
                     "id": "fc_search",
                     "call_id": "search",
-                    "name": "fcc_tool_search",
+                    "name": "modelglot_tool_search",
                     "status": "completed",
                     "arguments": '{"query":"agent"}',
                 }
@@ -361,7 +361,7 @@ def test_interrupted_discovery_preserves_terminal_failure(
         "type": "function_call",
         "id": "fc_search",
         "call_id": "search",
-        "name": "fcc_tool_search",
+        "name": "modelglot_tool_search",
         "status": "incomplete",
         "arguments": arguments,
     }
@@ -478,7 +478,9 @@ def test_interrupted_discovery_is_excluded_before_tool_activation(
             ResponsesToolPolicy(client_tool_search=True, flatten_namespaces=True),
         ).request
         assert prepared.input == [user, retry]
-        assert [tool["name"] for tool in prepared.tools or []] == ["fcc_tool_search"]
+        assert [tool["name"] for tool in prepared.tools or []] == [
+            "modelglot_tool_search"
+        ]
     else:
         body = build_responses_chat_request(
             request, reasoning_replay=ReasoningReplayMode.REASONING_CONTENT
@@ -487,7 +489,7 @@ def test_interrupted_discovery_is_excluded_before_tool_activation(
         assert [
             object_payload(tool["function"])["name"]
             for tool in object_array(body["tools"])
-        ] == ["fcc_tool_search"]
+        ] == ["modelglot_tool_search"]
     assert request.model_dump() == original
 
 
@@ -565,7 +567,7 @@ def test_interrupted_discovery_keeps_completed_occurrences_of_reused_id(
         {"query": "last"},
     ]
     assert [object_array(tools)[0]["name"] for tools in results] == ["first", "last"]
-    assert set(names) == {"first", "last", "fcc_tool_search"}
+    assert set(names) == {"first", "last", "modelglot_tool_search"}
     assert request.model_dump() == original
 
 
@@ -838,7 +840,7 @@ def test_search_lowering_does_not_shadow_a_real_function() -> None:
             SEARCH,
             {
                 "type": "function",
-                "name": "fcc_tool_search",
+                "name": "modelglot_tool_search",
                 "parameters": {"type": "object"},
             },
         ]
@@ -847,7 +849,7 @@ def test_search_lowering_does_not_shadow_a_real_function() -> None:
     result = adapter.restore_item(
         {
             "type": "function_call",
-            "name": "fcc_tool_search",
+            "name": "modelglot_tool_search",
             "status": "completed",
             "arguments": "{}",
         }
@@ -876,7 +878,7 @@ def test_only_object_conversion_normalizes_integral_numbers(search: bool) -> Non
     value = adapter.restore_item(
         {
             "type": "function_call",
-            "name": "fcc_tool_search" if search else "agents__spawn_agent",
+            "name": "modelglot_tool_search" if search else "agents__spawn_agent",
             "status": "completed",
             "arguments": '{"limit":8.0,"fraction":0.25,"nested":[30000.0]}',
         }
@@ -1470,7 +1472,7 @@ def test_namespaced_search_named_tool_keeps_its_identity_in_all_events(
 ) -> None:
     tool: JsonObject = {
         "type": "custom" if custom else "function",
-        "name": "fcc_tool_search",
+        "name": "modelglot_tool_search",
     }
     if not custom:
         tool["parameters"] = {"type": "object"}
@@ -1485,14 +1487,14 @@ def test_namespaced_search_named_tool_keeps_its_identity_in_all_events(
     events = _completed_tool_events(
         request,
         native=native,
-        name="ordinary__fcc_tool_search",
+        name="ordinary__modelglot_tool_search",
         arguments='{"input":"patch"}' if custom else '{"query":"ordinary"}',
     )
     expected_type = "custom_tool_call" if custom else "function_call"
     for event in events:
         if "item" in event:
             assert object_payload(event["item"])["type"] == expected_type
-            assert object_payload(event["item"])["name"] == "fcc_tool_search"
+            assert object_payload(event["item"])["name"] == "modelglot_tool_search"
             assert object_payload(event["item"])["namespace"] == "ordinary"
     final = array_payload(object_payload(events[-1]["response"])["output"])[0]
     assert object_payload(final)["type"] == expected_type
@@ -1514,7 +1516,7 @@ def test_search_name_reserves_ordinary_calls_from_history() -> None:
             {
                 "type": "function_call",
                 "call_id": "old",
-                "name": "fcc_tool_search",
+                "name": "modelglot_tool_search",
                 "arguments": "{}",
             },
             {"type": "function_call_output", "call_id": "old", "output": "done"},
@@ -1634,7 +1636,7 @@ def test_discovery_preserves_outer_namespace_in_nested_tools(
             ),
         ).request
         assert {tool["name"] for tool in prepared.tools or []} == {
-            "fcc_tool_search",
+            "modelglot_tool_search",
             "agents__run",
         }
         assert prepared.tool_choice == {"type": "function", "name": "agents__run"}
@@ -1645,7 +1647,7 @@ def test_discovery_preserves_outer_namespace_in_nested_tools(
         assert {
             object_payload(tool["function"])["name"]
             for tool in object_array(body["tools"])
-        } == {"fcc_tool_search", "agents__run"}
+        } == {"modelglot_tool_search", "agents__run"}
         assert body["tool_choice"] == {
             "type": "function",
             "function": {"name": "agents__run"},
@@ -1680,7 +1682,7 @@ def test_chat_does_not_turn_missing_search_arguments_into_a_successful_call() ->
         _completed_tool_events(
             OpenAIResponsesRequest(model="example", input="Search", tools=[SEARCH]),
             native=False,
-            name="fcc_tool_search",
+            name="modelglot_tool_search",
             arguments="",
         )
 
@@ -1696,7 +1698,7 @@ def test_synthetic_search_wins_over_bare_aliases_of_real_tools(native: bool) -> 
                 "type": "namespace",
                 "name": "editor",
                 "tools": [
-                    {"type": "custom", "name": "fcc_tool_search"},
+                    {"type": "custom", "name": "modelglot_tool_search"},
                 ],
             },
             {
@@ -1705,7 +1707,7 @@ def test_synthetic_search_wins_over_bare_aliases_of_real_tools(native: bool) -> 
                 "tools": [
                     {
                         "type": "function",
-                        "name": "fcc_tool_search",
+                        "name": "modelglot_tool_search",
                         "parameters": {"type": "object"},
                     },
                 ],
@@ -1713,7 +1715,10 @@ def test_synthetic_search_wins_over_bare_aliases_of_real_tools(native: bool) -> 
         ],
     )
     events = _completed_tool_events(
-        request, native=native, name="fcc_tool_search", arguments='{"query":"agent"}'
+        request,
+        native=native,
+        name="modelglot_tool_search",
+        arguments='{"query":"agent"}',
     )
     item = array_payload(object_payload(events[-1]["response"])["output"])[0]
     assert object_payload(item)["type"] == "tool_search_call"
@@ -1762,7 +1767,7 @@ def test_interleaved_tool_kinds_keep_arguments_and_terminal_output_consistent(
             },
         ],
     )
-    names = ["fcc_tool_search", "group__lookup", "group__edit"]
+    names = ["modelglot_tool_search", "group__lookup", "group__edit"]
     fragments = [['{"query":', '"agent"}'], ['{"n":', "8.0}"], ["plain ", "patch"]]
     events: list[JsonObject]
     if native:
@@ -1919,7 +1924,7 @@ def test_non_finite_arguments_are_opaque_except_in_object_conversion(
     request = OpenAIResponsesRequest(
         model="example", input="Call a tool", tools=[SEARCH, AGENTS]
     )
-    name = "fcc_tool_search" if search else "agents__spawn_agent"
+    name = "modelglot_tool_search" if search else "agents__spawn_agent"
     arguments = '{"nested":[{"limit":' + constant + "}]}"
     if search and native:
         with pytest.raises(ResponsesConversionError, match="arguments"):
@@ -1977,7 +1982,7 @@ def test_non_finite_spellings_in_json_strings_remain_valid(
     events = _completed_tool_events(
         request,
         native=native,
-        name="fcc_tool_search" if search else "agents__spawn_agent",
+        name="modelglot_tool_search" if search else "agents__spawn_agent",
         arguments='{"text":"NaN Infinity -Infinity","limit":8.0}',
     )
     item = array_payload(object_payload(events[-1]["response"])["output"])[0]
@@ -2010,7 +2015,7 @@ def test_argument_numbers_survive_sse_serialization(
     arguments = (
         '{"nested":{"values":[' + number + ',8.0],"text":' + json.dumps(number) + "}}"
     )
-    name = "fcc_tool_search" if search else "lookup"
+    name = "modelglot_tool_search" if search else "lookup"
     if native:
         adapter = ResponsesToolAdapter(
             request,
@@ -2106,7 +2111,7 @@ def test_client_search_reserves_hosted_discovery_names_before_replay(
 ) -> None:
     tool: JsonObject = {
         "type": "custom" if custom else "function",
-        "name": "fcc_tool_search",
+        "name": "modelglot_tool_search",
     }
     if not custom:
         tool["parameters"] = {"type": "object"}
@@ -2130,7 +2135,7 @@ def test_client_search_reserves_hosted_discovery_names_before_replay(
                     tool,
                     {
                         "type": "function",
-                        "name": "fcc_tool_search_1",
+                        "name": "modelglot_tool_search_1",
                         "parameters": {"type": "object"},
                     },
                 ],
@@ -2143,7 +2148,7 @@ def test_client_search_reserves_hosted_discovery_names_before_replay(
     )
     adapter = ResponsesToolAdapter(request, policy)
     assert adapter.request.tools and len(adapter.request.tools) == 1
-    assert adapter.request.tools[0]["name"] == "fcc_tool_search_2"
+    assert adapter.request.tools[0]["name"] == "modelglot_tool_search_2"
     call = cast(
         dict[str, Any],
         adapter.restore_item(
@@ -2152,13 +2157,13 @@ def test_client_search_reserves_hosted_discovery_names_before_replay(
                 "id": "fc",
                 "call_id": "real",
                 "status": "completed",
-                "name": "fcc_tool_search",
+                "name": "modelglot_tool_search",
                 "arguments": '{"input":"text"}' if custom else "{}",
             }
         ),
     )
     assert call["type"] == ("custom_tool_call" if custom else "function_call")
-    assert call["name"] == "fcc_tool_search"
+    assert call["name"] == "modelglot_tool_search"
     search = cast(
         dict[str, Any],
         adapter.restore_item(
@@ -2167,7 +2172,7 @@ def test_client_search_reserves_hosted_discovery_names_before_replay(
                 "id": "fc_search",
                 "call_id": "client_search",
                 "status": "completed",
-                "name": "fcc_tool_search_2",
+                "name": "modelglot_tool_search_2",
                 "arguments": '{"query":"lookup"}',
             }
         ),
@@ -2192,10 +2197,11 @@ def test_client_search_reserves_hosted_discovery_names_before_replay(
     )
     replay = ResponsesToolAdapter(continuation, policy)
     assert (
-        replay.request.tools and replay.request.tools[0]["name"] == "fcc_tool_search_2"
+        replay.request.tools
+        and replay.request.tools[0]["name"] == "modelglot_tool_search_2"
     )
     assert (
         cast(list[dict[str, Any]], replay.request.input)[-2]["name"]
-        == "fcc_tool_search"
+        == "modelglot_tool_search"
     )
     assert request.model_dump() == original

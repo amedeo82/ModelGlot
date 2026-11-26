@@ -102,9 +102,9 @@ def installer_entry(
     suffix = "ps1" if windows else "sh"
     script = tmp_path / f"install.{suffix}"
     env = os.environ | {
-        "FCC_INSTALL_VERSION": "",
-        "FCC_INSTALL_REF": "",
-        "_FCC_INSTALLER_RELEASE": "",
+        "MODELGLOT_INSTALL_VERSION": "",
+        "MODELGLOT_INSTALL_REF": "",
+        "_MODELGLOT_INSTALLER_RELEASE": "",
         "HOME": str(tmp_path),
         "USERPROFILE": str(tmp_path),
     }
@@ -140,7 +140,7 @@ def installer_entry(
                 + "' "
                 + (invocation or "@args")
                 + " } finally { "
-                'Write-Output "restored:$env:FCC_INSTALL_VERSION|$env:_FCC_INSTALLER_RELEASE" }',
+                'Write-Output "restored:$env:MODELGLOT_INSTALL_VERSION|$env:_MODELGLOT_INSTALLER_RELEASE" }',
                 encoding="utf-8",
             )
             executed_script = wrapper
@@ -154,7 +154,10 @@ def installer_entry(
         return subprocess.run(
             [*command, str(executed_script), *args],
             env=env
-            | {"FCC_INSTALL_VERSION": version, "_FCC_INSTALLER_RELEASE": marker},
+            | {
+                "MODELGLOT_INSTALL_VERSION": version,
+                "_MODELGLOT_INSTALLER_RELEASE": marker,
+            },
             input=input,
             capture_output=True,
             text=True,
@@ -171,7 +174,7 @@ def test_installer_entry_freezes_release_and_preserves_invocation(
 ):
     windows, suffix, run = installer_entry
     if windows:
-        body = 'param([switch] $VoiceLocal, [string] $TorchBackend, [switch] $RtkHeadroom)\n$answer = Read-Host\nWrite-Output "installed:$env:FCC_INSTALL_VERSION|$VoiceLocal|$TorchBackend|$RtkHeadroom|$answer"\n'
+        body = 'param([switch] $VoiceLocal, [string] $TorchBackend, [switch] $RtkHeadroom)\n$answer = Read-Host\nWrite-Output "installed:$env:MODELGLOT_INSTALL_VERSION|$VoiceLocal|$TorchBackend|$RtkHeadroom|$answer"\n'
         args = [
             "-VoiceLocal",
             "-TorchBackend",
@@ -180,7 +183,7 @@ def test_installer_entry_freezes_release_and_preserves_invocation(
         ]
         expected = "installed:2.0.0|True|custom backend 'quoted'|True|yes"
     else:
-        body = 'read -r answer\nprintf "installed:%s|%s|%s|%s|%s|%s\\n" "$FCC_INSTALL_VERSION" "$1" "$2" "$3" "$4" "$answer"\n'
+        body = 'read -r answer\nprintf "installed:%s|%s|%s|%s|%s|%s\\n" "$MODELGLOT_INSTALL_VERSION" "$1" "$2" "$3" "$4" "$answer"\n'
         args = [
             "--voice-local",
             "--torch-backend",
@@ -241,13 +244,13 @@ def test_installer_entry_and_tagged_installer_share_release_metadata(
     if windows:
         source = source.replace(
             "\nInitialize-InstallLog\n",
-            '\nWrite-Output "toolchain:$FccInstallVersion|$PythonRequest|$MinUvVersion|$env:_FCC_INSTALLER_RELEASE"\nreturn\nInitialize-InstallLog\n',
+            '\nWrite-Output "toolchain:$ModelGlotInstallVersion|$PythonRequest|$MinUvVersion|$env:_MODELGLOT_INSTALLER_RELEASE"\nreturn\nInitialize-InstallLog\n',
         )
         expected = "toolchain:2.0.0|cpython-3.15.2-windows-x86_64-none|0.14.2|\n"
     else:
         source = source.replace(
             "\ninitialize_install_log\n",
-            '\nprintf "toolchain:%s|%s|%s|%s\\n" "$fcc_install_version" "$PYTHON_VERSION" "$MIN_UV_VERSION" "${_FCC_INSTALLER_RELEASE-unset}"\nexit 0\ninitialize_install_log\n',
+            '\nprintf "toolchain:%s|%s|%s|%s\\n" "$modelglot_install_version" "$PYTHON_VERSION" "$MIN_UV_VERSION" "${_MODELGLOT_INSTALLER_RELEASE-unset}"\nexit 0\ninitialize_install_log\n',
         )
         expected = "toolchain:2.0.0|3.15.2|0.14.2|unset\n"
     metadata = '[project]\nrequires-python = "==3.15.2"\n[tool.uv]\nrequired-version = ">=0.14.2"\n'
@@ -277,9 +280,7 @@ def test_powershell_installer_entry_restores_release_environment(
     windows, _, run = installer_entry
     if not windows:
         pytest.skip("POSIX exec does not modify its parent environment")
-    body = (
-        'Write-Output "selected:$env:FCC_INSTALL_VERSION|$env:_FCC_INSTALLER_RELEASE"\n'
-    )
+    body = 'Write-Output "selected:$env:MODELGLOT_INSTALL_VERSION|$env:_MODELGLOT_INSTALLER_RELEASE"\n'
     if failure:
         body += "throw 'selected installer failed'"
     with release_server(body) as (url, _):

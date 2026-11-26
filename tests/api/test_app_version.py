@@ -9,6 +9,7 @@ from tests.api.support import create_test_app
 def test_fastapi_and_openapi_report_installed_package_version() -> None:
     app = create_test_app()
 
+    assert app.title == "ModelGlot"
     assert app.version == package_version()
     with warnings.catch_warnings():
         warnings.filterwarnings(
@@ -18,4 +19,5 @@ def test_fastapi_and_openapi_report_installed_package_version() -> None:
         )
         response = TestClient(app).get("/openapi.json")
     assert response.status_code == 200
+    assert response.json()["info"]["title"] == "ModelGlot"
     assert response.json()["info"]["version"] == package_version()

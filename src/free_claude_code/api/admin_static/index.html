@@ -4,11 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ModelGlot Admin</title>
-    <link rel="icon" type="image/svg+xml" href="/admin/assets/__FCC_VERSION__/app-icon.svg" />
-    <link rel="stylesheet" href="/admin/assets/__FCC_VERSION__/admin.css" />
-    <link rel="stylesheet" href="/admin/assets/__FCC_VERSION__/code_sessions.css" />
-    <link rel="stylesheet" href="/admin/assets/__FCC_VERSION__/token_optimization.css" />
-    <link rel="stylesheet" href="/admin/assets/__FCC_VERSION__/session_layout.css" />
+    <link rel="icon" type="image/svg+xml" href="/admin/assets/__MODELGLOT_VERSION__/app-icon.svg" />
+    <link rel="stylesheet" href="/admin/assets/__MODELGLOT_VERSION__/admin.css" />
+    <link rel="stylesheet" href="/admin/assets/__MODELGLOT_VERSION__/code_sessions.css" />
+    <link rel="stylesheet" href="/admin/assets/__MODELGLOT_VERSION__/token_optimization.css" />
+    <link rel="stylesheet" href="/admin/assets/__MODELGLOT_VERSION__/session_layout.css" />
   </head>
   <body>
     <div class="app-shell">
@@ -21,11 +21,11 @@
             rel="noopener noreferrer"
             aria-label="Open ModelGlot on GitHub"
           >
-            <img src="/admin/assets/__FCC_VERSION__/app-icon.svg" alt="" />
+            <img src="/admin/assets/__MODELGLOT_VERSION__/app-icon.svg" alt="" />
           </a>
           <div>
             <h1>ModelGlot</h1>
-            <p>Server Control · v__FCC_VERSION__</p>
+            <p>Server Control · v__MODELGLOT_VERSION__</p>
           </div>
         </div>
         <nav id="sectionNav" class="section-nav" aria-label="Admin views"></nav>
@@ -153,7 +153,7 @@
                 <h3 id="codexIntegrationTitle">Codex CLI, IDE & ChatGPT Desktop</h3>
                 <button id="closeCodexIntegration" class="ghost-button" type="button" aria-label="Close" autofocus>×</button>
               </div>
-              <p id="codexIntegrationDescription">Configure the local Codex workspace in Codex CLI, the VS Code extension, and ChatGPT Desktop to use FCC. Your selected model stays unchanged. Chat and cloud features stay on OpenAI services.</p>
+              <p id="codexIntegrationDescription">Configure the local Codex workspace in Codex CLI, the VS Code extension, and ChatGPT Desktop to use ModelGlot. Your selected model stays unchanged. Chat and cloud features stay on OpenAI services.</p>
               <div class="integration-files">
                 <strong>Files to modify</strong>
                 <ul id="codexIntegrationFiles"></ul>
@@ -176,7 +176,7 @@
                 <h3 id="jetBrainsIntegrationTitle">Claude Code in JetBrains ACP</h3>
                 <button id="closeJetBrainsIntegration" class="ghost-button" type="button" aria-label="Close" autofocus>×</button>
               </div>
-              <p id="jetBrainsIntegrationDescription">Route Claude Code in JetBrains through your FCC server.</p>
+              <p id="jetBrainsIntegrationDescription">Route Claude Code in JetBrains through your ModelGlot server.</p>
               <div class="integration-files">
                 <strong>Files to modify</strong>
                 <ul id="jetBrainsIntegrationFiles"></ul>
@@ -199,7 +199,7 @@
                 <h3 id="claudeDesktopIntegrationTitle">Claude Code in App</h3>
                 <button id="closeClaudeDesktopIntegration" class="ghost-button" type="button" aria-label="Close" autofocus>×</button>
               </div>
-              <p id="claudeDesktopIntegrationDescription">Set FCC as Claude Desktop's gateway. Fully quit Claude Desktop before connecting, then reopen it.</p>
+              <p id="claudeDesktopIntegrationDescription">Set ModelGlot as Claude Desktop's gateway. Fully quit Claude Desktop before connecting, then reopen it.</p>
               <div class="integration-files">
                 <strong>Files to modify</strong>
                 <ul id="claudeDesktopIntegrationFiles"></ul>
@@ -225,7 +225,7 @@
                 <h3 id="dshDesktopIntegrationTitle">DeepSeek Harness Desktop</h3>
                 <button id="closeDshDesktopIntegration" class="ghost-button" type="button" aria-label="Close" autofocus>×</button>
               </div>
-              <p id="dshDesktopIntegrationDescription">Install and open DSH Desktop once, then connect FCC as the default for new sessions.</p>
+              <p id="dshDesktopIntegrationDescription">Install and open DSH Desktop once, then connect ModelGlot as the default for new sessions.</p>
               <div class="integration-files">
                 <strong>Files to modify</strong>
                 <ul id="dshDesktopIntegrationFiles"></ul>
@@ -343,7 +343,7 @@
               <section class="usage-dashboard" aria-labelledby="usageDashboardTitle">
                 <div class="section-heading">
                   <div>
-                    <h3 id="usageDashboardTitle">FCC provider usage</h3>
+                    <h3 id="usageDashboardTitle">ModelGlot provider usage</h3>
                     <p>Logical requests and provider-reported tokens are separate from external-tool savings.</p>
                   </div>
                   <a id="usageExport" class="secondary-button" href="/admin/api/usage/export?group_by=day" download>Export CSV</a>
@@ -361,7 +361,7 @@
                   <button id="usageRefresh" class="secondary-button" type="submit">Apply filters</button>
                 </form>
                 <p id="usageCoverage" class="usage-coverage">No usage report loaded.</p>
-                <p id="usageLoading" class="token-optimization-region" role="status" hidden>Loading FCC provider usage…</p>
+                <p id="usageLoading" class="token-optimization-region" role="status" hidden>Loading ModelGlot provider usage…</p>
                 <p id="usageError" class="token-optimization-region error" role="alert" hidden></p>
                 <p id="usageEmpty" class="token-optimization-region" role="status" hidden>No logical requests are retained for this time window and filter.</p>
                 <div class="usage-table-wrap">
@@ -394,7 +394,7 @@
                 <h3 id="usageTrendsTitle">Daily trends</h3>
                 <p>Charts use separate bases and are never stacked or added. UTC buckets for the current day are partial.</p>
                 <div class="trend-grid">
-                  <article aria-labelledby="fccTrendTitle"><h4 id="fccTrendTitle">FCC output tokens</h4><p>Basis: provider_reported · Source: logical successful requests</p><div id="fccTrend" class="trend-chart" role="img" aria-label="FCC daily output tokens; values are listed below"></div><ul id="fccTrendValues" class="trend-values"></ul></article>
+                  <article aria-labelledby="modelglotTrendTitle"><h4 id="modelglotTrendTitle">ModelGlot output tokens</h4><p>Basis: provider_reported · Source: logical successful requests</p><div id="modelglotTrend" class="trend-chart" role="img" aria-label="ModelGlot daily output tokens; values are listed below"></div><ul id="modelglotTrendValues" class="trend-values"></ul></article>
                   <article aria-labelledby="rtkTrendTitle"><h4 id="rtkTrendTitle">RTK tokens saved</h4><p>Basis: tool_reported · Source: rtk gain --daily --format json</p><div id="rtkTrend" class="trend-chart" role="img" aria-label="RTK daily saved tokens; values are listed below"></div><ul id="rtkTrendValues" class="trend-values"></ul></article>
                 </div>
               </section>
@@ -435,13 +435,13 @@
         <button id="saveProvider" class="primary-button" type="button" disabled>Save</button>
       </div>
     </dialog>
-    <script src="/admin/assets/__FCC_VERSION__/form_controls.js"></script>
-    <script src="/admin/assets/__FCC_VERSION__/model_picker_details.js"></script>
-    <script src="/admin/assets/__FCC_VERSION__/model_combobox.js"></script>
-    <script src="/admin/assets/__FCC_VERSION__/api_key_editor.js"></script>
-    <script src="/admin/assets/__FCC_VERSION__/session_ui.js"></script>
-    <script src="/admin/assets/__FCC_VERSION__/code_sessions.js"></script>
-    <script src="/admin/assets/__FCC_VERSION__/token_optimization.js"></script>
-    <script src="/admin/assets/__FCC_VERSION__/admin.js"></script>
+    <script src="/admin/assets/__MODELGLOT_VERSION__/form_controls.js"></script>
+    <script src="/admin/assets/__MODELGLOT_VERSION__/model_picker_details.js"></script>
+    <script src="/admin/assets/__MODELGLOT_VERSION__/model_combobox.js"></script>
+    <script src="/admin/assets/__MODELGLOT_VERSION__/api_key_editor.js"></script>
+    <script src="/admin/assets/__MODELGLOT_VERSION__/session_ui.js"></script>
+    <script src="/admin/assets/__MODELGLOT_VERSION__/code_sessions.js"></script>
+    <script src="/admin/assets/__MODELGLOT_VERSION__/token_optimization.js"></script>
+    <script src="/admin/assets/__MODELGLOT_VERSION__/admin.js"></script>
   </body>
 </html>

@@ -32,7 +32,7 @@ def test_opencode_config_uses_native_responses_and_model_budgets() -> None:
                 max_output_tokens=8192,
             ),
             CatalogModel(
-                wire_slug="claude-3-freecc-no-thinking/open_router/plain-model",
+                wire_slug="claude-3-modelglot-no-thinking/open_router/plain-model",
                 provider_model_ref="open_router/plain-model",
                 display_name="No-thinking model",
                 supports_reasoning=False,
@@ -59,17 +59,17 @@ def test_opencode_config_uses_native_responses_and_model_budgets() -> None:
 
     provider = config.file["providers"]
     assert isinstance(provider, dict)
-    fcc = provider["free-claude-code"]
-    assert isinstance(fcc, dict)
-    assert fcc["package"] == "@opencode/ai/providers/openai/responses"
-    assert fcc["settings"] == {
+    modelglot = provider["modelglot"]
+    assert isinstance(modelglot, dict)
+    assert modelglot["package"] == "@opencode/ai/providers/openai/responses"
+    assert modelglot["settings"] == {
         "baseURL": "http://127.0.0.1:9191/v1",
-        "apiKey": "{env:FCC_OPENCODE_API_KEY}",
+        "apiKey": "{env:MODELGLOT_OPENCODE_API_KEY}",
         "headerTimeout": False,
         "chunkTimeout": False,
         "timeout": False,
     }
-    assert fcc["models"] == {
+    assert modelglot["models"] == {
         "nvidia_nim/vendor/model": {
             "name": "Nested model",
             "capabilities": {
@@ -79,7 +79,7 @@ def test_opencode_config_uses_native_responses_and_model_budgets() -> None:
             },
             "limit": {"context": 131072, "output": 8192},
         },
-        "claude-3-freecc-no-thinking/open_router/plain-model": {
+        "claude-3-modelglot-no-thinking/open_router/plain-model": {
             "name": "No-thinking model",
             "capabilities": {"tools": True, "input": ["text"], "output": ["text"]},
             "limit": {"context": 65536, "output": 4096},
@@ -96,12 +96,12 @@ def test_opencode_config_uses_native_responses_and_model_budgets() -> None:
     assert config.overlay == {
         "compaction": {"buffer": 16384},
         "providers": {
-            "free-claude-code": {
+            "modelglot": {
                 "name": "ModelGlot",
                 "package": "@opencode/ai/providers/openai/responses",
                 "settings": {
                     "baseURL": "http://127.0.0.1:9191/v1",
-                    "apiKey": "{env:FCC_OPENCODE_API_KEY}",
+                    "apiKey": "{env:MODELGLOT_OPENCODE_API_KEY}",
                     "headerTimeout": False,
                     "chunkTimeout": False,
                     "timeout": False,
@@ -113,13 +113,13 @@ def test_opencode_config_uses_native_responses_and_model_budgets() -> None:
                 {"action": "provider.use", "resource": "*", "effect": "deny"},
                 {
                     "action": "provider.use",
-                    "resource": "free-claude-code",
+                    "resource": "modelglot",
                     "effect": "allow",
                 },
             ]
         },
-        "model": "free-claude-code/nvidia_nim/vendor/model",
-        "agents": {"title": {"model": "free-claude-code/nvidia_nim/vendor/model"}},
+        "model": "modelglot/nvidia_nim/vendor/model",
+        "agents": {"title": {"model": "modelglot/nvidia_nim/vendor/model"}},
     }
     serialized = json.dumps(config.file | config.overlay)
     assert "proxy-token" not in serialized
@@ -160,9 +160,9 @@ def test_opencode_context_reserves_fit_small_models(
     )
     provider = config.file["providers"]
     assert isinstance(provider, dict)
-    fcc = provider["free-claude-code"]
-    assert isinstance(fcc, dict)
-    models = fcc["models"]
+    modelglot = provider["modelglot"]
+    assert isinstance(modelglot, dict)
+    models = modelglot["models"]
     assert isinstance(models, dict)
     model = models["test/model"]
     assert isinstance(model, dict)
@@ -189,7 +189,7 @@ def test_opencode_child_receives_private_catalog_and_overlay(
     def inspect(command: object, env: Mapping[str, str]):
         config = decode_object(Path(env["OPENCODE_CONFIG"]).read_text())
         overlay = decode_object(env["OPENCODE_CONFIG_CONTENT"])
-        provider = object_payload(config["providers"])["free-claude-code"]
+        provider = object_payload(config["providers"])["modelglot"]
         assert (
             object_payload(object_payload(provider)["settings"])["baseURL"]
             == "http://127.0.0.1:8182/v1"
@@ -198,9 +198,9 @@ def test_opencode_child_receives_private_catalog_and_overlay(
             assert object_payload(object_payload(provider)["settings"])[key] is False
             assert (
                 object_payload(
-                    object_payload(
-                        object_payload(overlay["providers"])["free-claude-code"]
-                    )["settings"]
+                    object_payload(object_payload(overlay["providers"])["modelglot"])[
+                        "settings"
+                    ]
                 )[key]
                 is False
             )
@@ -211,9 +211,9 @@ def test_opencode_child_receives_private_catalog_and_overlay(
             object_array(object_payload(overlay["experimental"])["policies"])[-1][
                 "resource"
             ]
-            == "free-claude-code"
+            == "modelglot"
         )
-        assert env["FCC_OPENCODE_API_KEY"] == "launcher-test-token"
+        assert env["MODELGLOT_OPENCODE_API_KEY"] == "launcher-test-token"
 
     launch_capture.on_start = inspect
     launch("opencode", ["models"])
@@ -269,4 +269,4 @@ def test_opencode_rejects_caller_control_of_server_lifetime(
 
     launch("opencode", ["run", option, "false", "hello"], exit_code=1)
     assert not launch_capture.commands
-    assert "FCC manages OpenCode standalone mode" in capsys.readouterr().err
+    assert "ModelGlot manages OpenCode standalone mode" in capsys.readouterr().err

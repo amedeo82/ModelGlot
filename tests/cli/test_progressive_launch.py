@@ -33,7 +33,7 @@ def browser_workers(monkeypatch: pytest.MonkeyPatch):
     start = threading.Thread.start
 
     def track_start(thread: threading.Thread):
-        if thread.name == "fcc-open-admin-browser":
+        if thread.name == "modelglot-open-admin-browser":
             workers.append(thread)
         start(thread)
 
@@ -125,7 +125,7 @@ async def test_uvicorn_readiness_and_early_exit_close_runtime(failure: str) -> N
 
 @pytest.mark.parametrize("valid", [False, True])
 @pytest.mark.parametrize("browser_result", [True, False, RuntimeError("opener failed")])
-def test_existing_server_must_identify_itself_as_fcc(
+def test_existing_server_must_identify_itself_as_modelglot(
     monkeypatch: pytest.MonkeyPatch,
     browser_workers: object,
     valid: bool,
@@ -236,12 +236,18 @@ def test_browser_warning_retains_owning_instance_after_server_exit(
 @pytest.mark.parametrize(
     ("occupant", "expected"),
     [
-        ("running", "FCC is already running on port 8082. Use it at http://"),
-        ("stopping", "The FCC instance on port 8082 is still stopping."),
-        ("other", "port 8082 is already in use by another program"),
-        ("not_found", "port 8082 is already in use by another program"),
-        ("forbidden", "port 8082 is already in use. If FCC is not already running"),
-        ("unreachable", "port 8082 is already in use. If FCC is not already running"),
+        ("running", "ModelGlot is already running on port 16969. Use it at http://"),
+        ("stopping", "The ModelGlot instance on port 16969 is still stopping."),
+        ("other", "port 16969 is already in use by another program"),
+        ("not_found", "port 16969 is already in use by another program"),
+        (
+            "forbidden",
+            "port 16969 is already in use. If ModelGlot is not already running",
+        ),
+        (
+            "unreachable",
+            "port 16969 is already in use. If ModelGlot is not already running",
+        ),
     ],
 )
 def test_terminal_serve_explains_busy_port(
@@ -303,7 +309,7 @@ def test_terminal_serve_reports_other_startup_errors_unchanged(
         commands.serve()
 
     assert exited.value.code == 1
-    assert "Could not start FCC: [Errno" in caplog.text
+    assert "Could not start ModelGlot: [Errno" in caplog.text
     request.assert_not_called()
 
 
@@ -337,7 +343,7 @@ def test_queued_browser_rechecks_owner_before_handoff(
 
 
 @pytest.mark.parametrize("reuse", [False, True])
-def test_browser_thread_start_failure_does_not_fail_fcc(
+def test_browser_thread_start_failure_does_not_fail_modelglot(
     monkeypatch: pytest.MonkeyPatch, reuse: bool, caplog: pytest.LogCaptureFixture
 ) -> None:
     settings = Settings()
@@ -377,7 +383,7 @@ def test_browser_thread_start_failure_does_not_fail_fcc(
 def _run_browser_shutdown_probe(
     mode: str, outcome: str, directory: str, setup_delay: str = "0"
 ):
-    """Run real FCC lifecycle owners with only OS/browser/server dependencies faked."""
+    """Run real ModelGlot lifecycle owners with only OS/browser/server dependencies faked."""
     from free_claude_code.cli import desktop, uvicorn_server
     from free_claude_code.config import paths
     from free_claude_code.runtime import bootstrap
@@ -538,12 +544,12 @@ def _run_browser_shutdown_probe(
             finally:
                 lock.release()
     patcher.undo()
-    print("FCC exited while preserving its resource ownership", flush=True)
+    print("ModelGlot exited while preserving its resource ownership", flush=True)
 
 
 @pytest.mark.parametrize("mode", ["server", "desktop"])
 @pytest.mark.parametrize("outcome", ["automatic", "tray"])
-def test_owned_fcc_process_exits_with_stalled_browser(
+def test_owned_modelglot_process_exits_with_stalled_browser(
     tmp_path: Path, mode: str, outcome: str
 ) -> None:
     _assert_browser_probe_exits(tmp_path, mode, outcome)
@@ -586,7 +592,9 @@ def _assert_browser_probe_exits(
         check=False,
     )
     assert completed.returncode == 0, completed.stdout + completed.stderr
-    assert "FCC exited while preserving its resource ownership" in completed.stdout
+    assert (
+        "ModelGlot exited while preserving its resource ownership" in completed.stdout
+    )
 
 
 def test_external_probe_is_cancelled_before_any_request(

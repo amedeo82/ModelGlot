@@ -16,9 +16,8 @@ from packaging.specifiers import SpecifierSet
 
 from free_claude_code.cli.desktop_assets import export_app_icon
 
-BUNDLE_ID = "io.github.amedeo82.free-claude-code"
-LEGACY_BUNDLE_IDS = ("io.github.alishahryar1.free-claude-code",)
-OWNER_FILE = ".free-claude-code-owner"
+BUNDLE_ID = "io.github.amedeo82.modelglot"
+OWNER_FILE = ".modelglot-owner"
 
 
 def runtime_settings() -> tuple[dict[str, str], str]:
@@ -61,30 +60,27 @@ def is_owned(app: Path) -> bool:
     # Existing shell bundles used Contents directly. Signed bundles use Resources.
     for directory in (app / "Contents/Resources", app / "Contents"):
         marker = directory / OWNER_FILE
-        if marker.is_file() and marker.read_text(encoding="utf-8").strip() in {
-            BUNDLE_ID,
-            *LEGACY_BUNDLE_IDS,
-        }:
+        if marker.is_file() and marker.read_text(encoding="utf-8").strip() == BUNDLE_ID:
             return True
     return False
 
 
 def install() -> Path:
-    """Sign a complete sibling bundle before replacing an FCC-owned application."""
+    """Sign a complete sibling bundle before replacing a ModelGlot-owned app."""
     if sys.platform != "darwin":
         raise ValueError("Application installation is supported only on macOS.")
     home = Path.home()
-    app = home / "Applications/Free Claude Code.app"
+    app = home / "Applications/ModelGlot.app"
     if (app.exists() or app.is_symlink()) and not is_owned(app):
         raise ValueError(f"An app not managed by ModelGlot already exists at {app}.")
     settings, architecture = runtime_settings()
     template = (
         files("free_claude_code")
-        .joinpath("assets", "macos", f"fcc-desktop-{architecture}")
+        .joinpath("assets", "macos", f"modelglot-desktop-{architecture}")
         .read_bytes()
     )
     app.parent.mkdir(parents=True, exist_ok=True)
-    root = Path(tempfile.mkdtemp(prefix=".fcc-app-", dir=app.parent))
+    root = Path(tempfile.mkdtemp(prefix=".modelglot-app-", dir=app.parent))
     backup = root / "previous.app"
     published = False
     try:
@@ -93,7 +89,7 @@ def install() -> Path:
         resources = contents / "Resources"
         resources.mkdir(parents=True)
         (contents / "MacOS").mkdir()
-        executable = contents / "MacOS/fcc-desktop"
+        executable = contents / "MacOS/modelglot-desktop"
         executable.write_bytes(template)
         executable.chmod(0o755)
         export_app_icon(resources / "AppIcon.icns")
@@ -103,11 +99,11 @@ def install() -> Path:
         with (contents / "Info.plist").open("wb") as stream:
             plistlib.dump(
                 {
-                    "CFBundleDisplayName": "Free Claude Code",
-                    "CFBundleExecutable": "fcc-desktop",
+                    "CFBundleDisplayName": "ModelGlot",
+                    "CFBundleExecutable": "modelglot-desktop",
                     "CFBundleIdentifier": BUNDLE_ID,
                     "CFBundleIconFile": "AppIcon",
-                    "CFBundleName": "Free Claude Code",
+                    "CFBundleName": "ModelGlot",
                     "CFBundlePackageType": "APPL",
                     "LSMultipleInstancesProhibited": True,
                     "LSUIElement": True,
@@ -136,12 +132,12 @@ def install() -> Path:
             print(
                 f"The previous application is preserved at {backup}.", file=sys.stderr
             )
-    desktop = home / "Desktop/Free Claude Code.app"
+    desktop = home / "Desktop/ModelGlot.app"
     desktop.parent.mkdir(parents=True, exist_ok=True)
     if desktop.is_symlink() and desktop.readlink() == app:
         return app
     if desktop.exists() or desktop.is_symlink():
-        print(f"A non-FCC item already exists at {desktop}; leaving it unchanged.")
+        print(f"An unmanaged item already exists at {desktop}; leaving it unchanged.")
     else:
         desktop.symlink_to(app, target_is_directory=True)
     return app

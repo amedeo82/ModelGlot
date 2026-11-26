@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="780" viewBox="0 0 1200 780" role="img" aria-labelledby="title desc">
-  <title id="title">Mockup della vista Code sessions di Free Claude Code</title>
+  <title id="title">Mockup della vista Code sessions di ModelGlot</title>
   <desc id="desc">Interfaccia Admin con una sessione Codex attiva, selezione del modello, modalità di accesso, trascrizione e compositore del prompt.</desc>
   <defs>
     <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
@@ -16,7 +16,7 @@
   <g font-family="Inter,Segoe UI,Arial,sans-serif">
     <g transform="translate(18 18)">
       <path d="M4 7h15l-4 7 8 9H8l-4-9-4 4V7z" fill="url(#brand)"/>
-      <text x="34" y="13" fill="#f8fafc" font-size="14" font-weight="700">Free Claude Code</text>
+      <text x="34" y="13" fill="#f8fafc" font-size="14" font-weight="700">ModelGlot</text>
       <text x="34" y="30" fill="#64748b" font-size="9">v0.19.36+custom</text>
     </g>
     <g fill="#94a3b8" font-size="12">

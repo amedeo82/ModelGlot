@@ -10,8 +10,8 @@ from pathlib import Path
 from free_claude_code.cli.desktop_assets import export_app_icon
 from free_claude_code.config.paths import config_dir_path
 
-APP_DISPLAY_NAME = "Free Claude Code"
-_SHORTCUT_FILE_NAME = "Free Claude Code.lnk"
+APP_DISPLAY_NAME = "ModelGlot"
+_SHORTCUT_FILE_NAME = "ModelGlot.lnk"
 _SHORTCUT_TIMEOUT_SECONDS = 30.0
 _CREATE_NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
@@ -28,7 +28,7 @@ Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
 
-public static class FccShortcutAppUserModelId
+public static class ModelGlotShortcutAppUserModelId
 {
     private const uint CLSCTX_INPROC_SERVER = 1;
     private const ushort VT_LPWSTR = 31;
@@ -43,21 +43,6 @@ public static class FccShortcutAppUserModelId
     [DllImport("ole32.dll")]
     private static extern int CoCreateInstance(
         ref Guid classId, IntPtr outer, uint context, ref Guid interfaceId, out IntPtr instance);
-
-    [ComImport]
-    [Guid("000214F9-0000-0000-C000-000000000046")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    private interface IShellLinkW
-    {
-        [PreserveSig]
-        int QueryInterface(ref Guid interfaceId, out IntPtr instance);
-
-        [PreserveSig]
-        uint AddRef();
-
-        [PreserveSig]
-        uint Release();
-    }
 
     [ComImport]
     [Guid("0000010B-0000-0000-C000-000000000046")]
@@ -128,10 +113,9 @@ public static class FccShortcutAppUserModelId
             Check(
                 CoCreateInstance(ref classId, IntPtr.Zero, CLSCTX_INPROC_SERVER, ref interfaceId, out shellLinkPointer),
                 "Could not create the Windows shell link");
-            IShellLinkW shellLink = (IShellLinkW)Marshal.GetObjectForIUnknown(shellLinkPointer);
-            IPersistFile persistFile = QueryInterface<IPersistFile>(shellLink, IidPersistFile);
+            IPersistFile persistFile = QueryInterface<IPersistFile>(shellLinkPointer, IidPersistFile);
             Check(persistFile.Load(shortcutPath, 0x42), "Could not load the shortcut '" + shortcutPath + "'");
-            IPropertyStore propertyStore = QueryInterface<IPropertyStore>(shellLink, IidPropertyStore);
+            IPropertyStore propertyStore = QueryInterface<IPropertyStore>(shellLinkPointer, IidPropertyStore);
             PropertyKey key = new PropertyKey
             {
                 FormatId = PkeyAppUserModelIdFormat,
@@ -161,11 +145,11 @@ public static class FccShortcutAppUserModelId
         }
     }
 
-    private static T QueryInterface<T>(IShellLinkW shellLink, Guid interfaceId)
+    private static T QueryInterface<T>(IntPtr shellLinkPointer, Guid interfaceId)
     {
         IntPtr instance = IntPtr.Zero;
         Guid iid = interfaceId;
-        Check(shellLink.QueryInterface(ref iid, out instance), "Could not query the shell link interface");
+        Check(Marshal.QueryInterface(shellLinkPointer, ref iid, out instance), "Could not query the shell link interface");
         try
         {
             return (T)Marshal.GetObjectForIUnknown(instance);
@@ -186,7 +170,7 @@ public static class FccShortcutAppUserModelId
 }
 '@
 
-$shortcutPath = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Free Claude Code.lnk"
+$shortcutPath = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\ModelGlot.lnk"
 $shortcutDirectory = Split-Path -Parent $shortcutPath
 New-Item -ItemType Directory -Force -Path $shortcutDirectory | Out-Null
 
@@ -205,10 +189,10 @@ $shortcut = $shell.CreateShortcut($shortcutPath)
 $shortcut.TargetPath = $TargetPath
 $shortcut.WorkingDirectory = Split-Path -Parent $TargetPath
 $shortcut.IconLocation = "$IconPath,0"
-$shortcut.Description = "Run Free Claude Code in the background"
+$shortcut.Description = "Run ModelGlot in the background"
 $shortcut.Save()
 
-[FccShortcutAppUserModelId]::SetAppUserModelId($shortcutPath, $AppUserModelId)
+[ModelGlotShortcutAppUserModelId]::SetAppUserModelId($shortcutPath, $AppUserModelId)
 Write-Output $shortcutPath
 exit 0
 """
@@ -288,7 +272,7 @@ def ensure_start_menu_shortcut(app_user_model_id: str, icon_path: Path) -> bool:
     if powershell is None:
         return False
     target = desktop_launcher_path()
-    with tempfile.TemporaryDirectory(prefix="fcc-app-identity-") as temp_dir:
+    with tempfile.TemporaryDirectory(prefix="modelglot-app-identity-") as temp_dir:
         script_path = Path(temp_dir) / "ensure_app_identity.ps1"
         script_path.write_text(_SHORTCUT_SCRIPT, encoding="utf-8")
         try:
@@ -320,17 +304,19 @@ def ensure_start_menu_shortcut(app_user_model_id: str, icon_path: Path) -> bool:
 
 
 def desktop_launcher_path() -> Path:
-    """Return the command that starts the FCC desktop shell."""
+    """Return the command that starts the ModelGlot desktop shell."""
 
     candidates = []
     argv0 = Path(sys.argv[0]) if sys.argv and sys.argv[0] else None
     if argv0 is not None:
         candidates.append(argv0)
-        candidates.append(argv0.with_name("fcc-desktop.exe"))
-    candidates.append(Path(sys.executable).with_name("fcc-desktop.exe"))
-    candidates.append(Path(sys.executable).with_name("fcc-desktop"))
+        candidates.append(argv0.with_name("modelglot-desktop.exe"))
+    candidates.append(Path(sys.executable).with_name("modelglot-desktop.exe"))
+    candidates.append(Path(sys.executable).with_name("modelglot-desktop"))
     for candidate in candidates:
-        if candidate.exists() and candidate.name.lower().startswith("fcc-desktop"):
+        if candidate.exists() and candidate.name.lower().startswith(
+            "modelglot-desktop"
+        ):
             return candidate
     return Path(sys.executable)
 

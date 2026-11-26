@@ -1,7 +1,7 @@
 import type { ExtensionAPI, ProviderModelConfig } from "@earendil-works/pi-coding-agent";
 
-const API_KEY_ENV = "FCC_PI_API_KEY";
-const BASE_URL_ENV = "FCC_PI_BASE_URL";
+const API_KEY_ENV = "MODELGLOT_PI_API_KEY";
+const BASE_URL_ENV = "MODELGLOT_PI_BASE_URL";
 const CATALOG_TIMEOUT_MS = 35000;
 const DEFAULT_MAX_TOKENS = 16384;
 
@@ -66,9 +66,9 @@ function modelDefinition(
 	};
 }
 
-export function projectFccModels(payload: unknown): ProviderModelConfig[] {
+export function projectModelGlotModels(payload: unknown): ProviderModelConfig[] {
 	if (!isRecord(payload) || payload.object !== "list" || !Array.isArray(payload.data)) {
-		throw new Error("FCC model catalog returned an invalid response shape.");
+		throw new Error("ModelGlot model catalog returned an invalid response shape.");
 	}
 	const models: ProviderModelConfig[] = [];
 	const seen = new Set<string>();
@@ -79,7 +79,7 @@ export function projectFccModels(payload: unknown): ProviderModelConfig[] {
 		if (!id.trim() || !providerModel.includes("/") || seen.has(id)) continue;
 		const contextWindow = optionalPositiveInteger(entry.contextWindow);
 		if (contextWindow === undefined) {
-			throw new Error("FCC model context is missing or invalid. Restart the FCC server after updating.");
+			throw new Error("ModelGlot model context is missing or invalid. Restart the ModelGlot server after updating.");
 		}
 		seen.add(id);
 		models.push(
@@ -95,7 +95,7 @@ export function projectFccModels(payload: unknown): ProviderModelConfig[] {
 	}
 
 	if (models.length === 0) {
-		throw new Error("FCC model catalog contains no routable provider models.");
+		throw new Error("ModelGlot model catalog contains no routable provider models.");
 	}
 	return models;
 }
@@ -105,7 +105,7 @@ function requestIdSuffix(response: Response): string {
 	return requestId ? ` (request ${requestId})` : "";
 }
 
-async function fetchFccModels(baseUrl: string, apiKey: string): Promise<ProviderModelConfig[]> {
+async function fetchModelGlotModels(baseUrl: string, apiKey: string): Promise<ProviderModelConfig[]> {
 	const controller = new AbortController();
 	const timeout = setTimeout(() => controller.abort(), CATALOG_TIMEOUT_MS);
 	try {
@@ -117,14 +117,14 @@ async function fetchFccModels(baseUrl: string, apiKey: string): Promise<Provider
 			});
 		} catch (error) {
 			if (error instanceof Error && error.name === "AbortError") {
-				throw new Error(`FCC model catalog timed out after ${CATALOG_TIMEOUT_MS}ms.`);
+				throw new Error(`ModelGlot model catalog timed out after ${CATALOG_TIMEOUT_MS}ms.`);
 			}
 			const message = error instanceof Error ? error.message : String(error);
-			throw new Error(`Could not reach the FCC model catalog: ${message}`);
+			throw new Error(`Could not reach the ModelGlot model catalog: ${message}`);
 		}
 
 		if (!response.ok) {
-			throw new Error(`FCC model catalog returned HTTP ${response.status}${requestIdSuffix(response)}.`);
+			throw new Error(`ModelGlot model catalog returned HTTP ${response.status}${requestIdSuffix(response)}.`);
 		}
 
 		let payload: unknown;
@@ -132,11 +132,11 @@ async function fetchFccModels(baseUrl: string, apiKey: string): Promise<Provider
 			payload = await response.json();
 		} catch (error) {
 			if (error instanceof Error && error.name === "AbortError") {
-				throw new Error(`FCC model catalog timed out after ${CATALOG_TIMEOUT_MS}ms.`);
+				throw new Error(`ModelGlot model catalog timed out after ${CATALOG_TIMEOUT_MS}ms.`);
 			}
-			throw new Error(`FCC model catalog returned invalid JSON${requestIdSuffix(response)}.`);
+			throw new Error(`ModelGlot model catalog returned invalid JSON${requestIdSuffix(response)}.`);
 		}
-		return projectFccModels(payload);
+		return projectModelGlotModels(payload);
 	} finally {
 		clearTimeout(timeout);
 	}
@@ -145,10 +145,10 @@ async function fetchFccModels(baseUrl: string, apiKey: string): Promise<Provider
 export default async function freeClaudeCode(pi: ExtensionAPI): Promise<void> {
 	const baseUrl = normalizeBaseUrl(requireEnvironment(BASE_URL_ENV));
 	const apiKey = requireEnvironment(API_KEY_ENV);
-	const models = await fetchFccModels(baseUrl, apiKey);
+	const models = await fetchModelGlotModels(baseUrl, apiKey);
 
-	pi.registerProvider("free-claude-code", {
-		name: "Free Claude Code",
+	pi.registerProvider("modelglot", {
+		name: "ModelGlot",
 		baseUrl,
 		apiKey: `$${API_KEY_ENV}`,
 		authHeader: true,
@@ -157,7 +157,7 @@ export default async function freeClaudeCode(pi: ExtensionAPI): Promise<void> {
 	});
 
 	pi.on("before_provider_headers", (event, ctx) => {
-		if (ctx.model?.provider === "free-claude-code") {
+		if (ctx.model?.provider === "modelglot") {
 			event.headers["x-opencode-session"] = ctx.sessionManager.getSessionId();
 		}
 	});
@@ -165,7 +165,7 @@ export default async function freeClaudeCode(pi: ExtensionAPI): Promise<void> {
 	pi.on("before_provider_request", (event, ctx) => {
 		const payload = event.payload;
 		if (
-			ctx.model?.provider !== "free-claude-code" ||
+			ctx.model?.provider !== "modelglot" ||
 			ctx.model.api !== "anthropic-messages" ||
 			ctx.model.reasoning === false ||
 			!isRecord(payload) || payload.model !== ctx.model.id ||
@@ -177,7 +177,7 @@ export default async function freeClaudeCode(pi: ExtensionAPI): Promise<void> {
 		if (effort === "off") return;
 
 		// Pi synthesizes a token budget from this level. Send the original effort
-		// so FCC can choose the provider's supported thinking mode and encoding.
+		// so ModelGlot can choose the provider's supported thinking mode and encoding.
 		const thinking = { ...payload.thinking };
 		delete thinking.type;
 		delete thinking.budget_tokens;

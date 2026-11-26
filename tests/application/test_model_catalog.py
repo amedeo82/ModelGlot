@@ -90,7 +90,7 @@ def test_catalog_sorts_components_and_preserves_exact_identity_and_default() -> 
         read_model_catalog(replace(snapshot, model_infos=tuple(reversed(infos))))
         == catalog
     )
-    assert catalog.default_model_id == "claude-3-freecc-no-thinking/open_router/Zulu"
+    assert catalog.default_model_id == "claude-3-modelglot-no-thinking/open_router/Zulu"
     selected = next(
         model for model in catalog.models if model.wire_slug == catalog.default_model_id
     )
@@ -240,7 +240,7 @@ def test_no_thinking_title_keeps_the_routing_suffix() -> None:
     model = read_model_catalog(snapshot).models[0]
 
     assert model.display_name == "Vendor Model (no thinking)"
-    assert model.wire_slug == f"claude-3-freecc-no-thinking/{ref}"
+    assert model.wire_slug == f"claude-3-modelglot-no-thinking/{ref}"
 
 
 def test_duplicate_provider_titles_are_disambiguated() -> None:
@@ -277,14 +277,14 @@ def _client_model(wire_slug: str, provider_model_ref: str) -> CatalogModel:
 def test_catalog_wire_slug_prefers_the_advertised_no_thinking_slug() -> None:
     models = (
         _client_model(
-            "claude-3-freecc-no-thinking/open_router/vendor/chat-model",
+            "claude-3-modelglot-no-thinking/open_router/vendor/chat-model",
             "open_router/vendor/chat-model",
         ),
     )
 
     assert (
         catalog_wire_slug_for_ref(models, "open_router/vendor/chat-model")
-        == "claude-3-freecc-no-thinking/open_router/vendor/chat-model"
+        == "claude-3-modelglot-no-thinking/open_router/vendor/chat-model"
     )
 
 

@@ -51,7 +51,7 @@ router = APIRouter()
 
 STATIC_DIR = Path(__file__).resolve().parent / "admin_static"
 PACKAGE_ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
-_ADMIN_ASSET_VERSION_PLACEHOLDER = "__FCC_VERSION__"
+_ADMIN_ASSET_VERSION_PLACEHOLDER = "__MODELGLOT_VERSION__"
 _ADMIN_ASSET_MEDIA_TYPES = {
     ".js": "text/javascript",
     ".css": "text/css",
@@ -282,7 +282,7 @@ async def admin_usage_export(
     return Response(
         content=content,
         media_type="text/csv; charset=utf-8",
-        headers={"Content-Disposition": 'attachment; filename="fcc-usage.csv"'},
+        headers={"Content-Disposition": 'attachment; filename="modelglot-usage.csv"'},
     )
 
 

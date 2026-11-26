@@ -20,11 +20,11 @@ def release(tmp_path: Path):
     repo.mkdir()
     git(repo, "init")
     files = {
-        "pyproject.toml": '[project]\nname="modelglot"\ndynamic=["version"]\n[project.scripts]\nfcc-server="free_claude_code.cli:serve"\n[project.gui-scripts]\nfcc-desktop="free_claude_code.desktop:launch"\n',
+        "pyproject.toml": '[project]\nname="modelglot"\ndynamic=["version"]\n[project.scripts]\nmodelglot-server="free_claude_code.cli:serve"\n[project.gui-scripts]\nmodelglot-desktop="free_claude_code.desktop:launch"\n',
         "README.md": "readme",
         "LICENSE": "license",
-        "scripts/update/fcc-update": "#!/bin/sh\n",
-        "scripts/update/fcc-update.cmd": "@echo off\n",
+        "scripts/update/modelglot-update": "#!/bin/sh\n",
+        "scripts/update/modelglot-update.cmd": "@echo off\n",
         "scripts/build_macos_launcher.py": "# native build\n",
         "scripts/macos/launcher.m": "// launcher\n",
         "src/free_claude_code/__init__.py": "",
@@ -38,7 +38,7 @@ def release(tmp_path: Path):
     git(repo, "add", ".")
     # Generated templates are deliberately absent from git ls-files.
     for architecture in ("arm64", "x86_64"):
-        files[f"src/free_claude_code/assets/macos/fcc-desktop-{architecture}"] = (
+        files[f"src/free_claude_code/assets/macos/modelglot-desktop-{architecture}"] = (
             architecture
         )
     metadata = "Name: modelglot\nVersion: 1.2.3\n"
@@ -47,12 +47,12 @@ def release(tmp_path: Path):
         for name, content in files.items()
         if name.startswith("src/")
     }
-    for name in ("fcc-update", "fcc-update.cmd"):
+    for name in ("modelglot-update", "modelglot-update.cmd"):
         wheel[f"modelglot-1.2.3.data/scripts/{name}"] = files[f"scripts/update/{name}"]
     wheel["modelglot-1.2.3.dist-info/METADATA"] = metadata
     wheel["modelglot-1.2.3.dist-info/entry_points.txt"] = (
-        "[console_scripts]\nfcc-server=free_claude_code.cli:serve\n"
-        "[gui_scripts]\nfcc-desktop=free_claude_code.desktop:launch\n"
+        "[console_scripts]\nmodelglot-server=free_claude_code.cli:serve\n"
+        "[gui_scripts]\nmodelglot-desktop=free_claude_code.desktop:launch\n"
     )
     sdist = {f"modelglot-1.2.3/{name}": body for name, body in files.items()}
     sdist["modelglot-1.2.3/PKG-INFO"] = metadata
@@ -94,11 +94,11 @@ def test_complete_release_passes(
     "suffix",
     [
         "assets/icon.png",
-        "scripts/fcc-update.cmd",
+        "scripts/modelglot-update.cmd",
         "entry_points.txt",
         "METADATA",
-        "assets/macos/fcc-desktop-arm64",
-        "assets/macos/fcc-desktop-x86_64",
+        "assets/macos/modelglot-desktop-arm64",
+        "assets/macos/modelglot-desktop-x86_64",
     ],
 )
 def test_missing_wheel_or_sdist_content_fails(
@@ -109,7 +109,7 @@ def test_missing_wheel_or_sdist_content_fails(
 ) -> None:
     if archive == 2:
         suffix = {
-            "scripts/fcc-update.cmd": "scripts/update/fcc-update.cmd",
+            "scripts/modelglot-update.cmd": "scripts/update/modelglot-update.cmd",
             "entry_points.txt": "pyproject.toml",
             "METADATA": "PKG-INFO",
         }.get(suffix, suffix)
@@ -125,7 +125,7 @@ def test_wrong_version_or_entrypoint_fails(
     release: tuple[Path, dict[str, str], dict[str, str]], tmp_path: Path
 ) -> None:
     release[1]["modelglot-1.2.3.dist-info/entry_points.txt"] = (
-        "[console_scripts]\nfcc-server=wrong:command\n"
+        "[console_scripts]\nmodelglot-server=wrong:command\n"
     )
     result = validate(release, tmp_path)
     assert result.returncode != 0
@@ -144,7 +144,7 @@ def test_mismatched_metadata_fails(
 def test_mismatched_native_templates_fail(
     release: tuple[Path, dict[str, str], dict[str, str]], tmp_path: Path
 ) -> None:
-    release[1]["free_claude_code/assets/macos/fcc-desktop-arm64"] = "different"
+    release[1]["free_claude_code/assets/macos/modelglot-desktop-arm64"] = "different"
     result = validate(release, tmp_path)
     assert result.returncode != 0
     assert "template" in result.stdout.lower()

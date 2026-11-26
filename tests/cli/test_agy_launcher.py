@@ -127,7 +127,7 @@ def test_native_start_failure_removes_temporary_settings(
 
 
 @pytest.mark.parametrize("output", ["1.4.7", "1.5.8", "1.5.9-beta.1", "unknown"])
-def test_unsupported_native_version_stops_before_fcc(
+def test_unsupported_native_version_stops_before_modelglot(
     output: str, launch_capture: LaunchCapture
 ) -> None:
     launch_capture.versions["agy"] = output

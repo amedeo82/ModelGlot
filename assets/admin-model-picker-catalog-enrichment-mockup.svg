@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1400" viewBox="0 0 1200 1400" role="img" aria-labelledby="title desc">
-  <title id="title">Mockup Wave 4 del model picker Admin di Free Claude Code</title>
+  <title id="title">Mockup Wave 4 del model picker Admin di ModelGlot</title>
   <desc id="desc">Dropdown compatto con loghi NVIDIA, capability e limiti; scheda del modello MiniMax selezionato con dettagli models.dev e distinzione grafica della provenance.</desc>
   <defs>
     <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
@@ -32,7 +32,7 @@
 
   <rect width="1200" height="1400" fill="#080c12"/>
   <g class="body text">
-    <text x="40" y="36" class="label">FREE CLAUDE CODE · ADMIN MODEL PICKER · WAVE 4</text>
+    <text x="40" y="36" class="label">MODELGLOT · ADMIN MODEL PICKER · WAVE 4</text>
     <text x="40" y="66" class="strong" font-size="24">Catalog metadata enrichment</text>
     <text x="40" y="88" class="muted">Compact dropdown + selected-model detail · provider-specific NVIDIA fixtures</text>
 
@@ -141,14 +141,14 @@
     <line x1="52" y1="1070" x2="1148" y2="1070" stroke="#27364a"/>
     <use href="#info" x="52" y="1090" width="16" height="16" color="#94a3b8"/>
     <text x="78" y="1102" class="muted small">Limiti e capability dalla voce NVIDIA di models.dev, non dalla descrizione editoriale.</text>
-    <text x="78" y="1126" class="muted small">I badge di catalogo non certificano il supporto del percorso runtime FCC.</text>
+    <text x="78" y="1126" class="muted small">I badge di catalogo non certificano il supporto del percorso runtime ModelGlot.</text>
     <text x="52" y="1170" fill="#38bdf8" font-size="10" font-weight="700">FONTE: MODELS.DEV · PROVIDER: NVIDIA · CACHE: 24H</text>
-    <text x="52" y="1200" class="muted small">Video input è una dichiarazione di catalogo finché il percorso FCC non lo supporta.</text>
+    <text x="52" y="1200" class="muted small">Video input è una dichiarazione di catalogo finché il percorso ModelGlot non lo supporta.</text>
     <text x="52" y="1228" class="muted small">Unknown non equivale a false. Costo zero non equivale automaticamente a “Free”.</text>
 
     <!-- Legend -->
     <line x1="42" y1="1310" x2="70" y2="1310" stroke="#34d399" stroke-width="2"/>
-    <text x="80" y="1314" class="muted small">confermato provider/FCC</text>
+    <text x="80" y="1314" class="muted small">confermato provider/ModelGlot</text>
     <line x1="280" y1="1310" x2="308" y2="1310" stroke="#38bdf8" stroke-dasharray="4 3"/>
     <text x="318" y="1314" class="muted small">dichiarato da models.dev</text>
     <text x="42" y="1348" class="muted small">Icona sempre accompagnata da testo · dettaglio selezionato separato dal listbox · layout responsive</text>

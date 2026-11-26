@@ -1,4 +1,4 @@
-"""Configure FCC's model group in the native VS Code chat model picker."""
+"""Configure ModelGlot's model group in the native VS Code chat model picker."""
 
 import json
 from collections.abc import Sequence
@@ -27,7 +27,7 @@ from free_claude_code.harnesses.model_policy import (
 )
 
 _NAME = "ModelGlot"
-_MARKER = "fccIntegration"
+_MARKER = "modelglotIntegration"
 
 
 def config_path() -> Path:
@@ -70,14 +70,14 @@ def _read(path: Path) -> tuple[list[JsonObject], JsonObject | None]:
     groups = cast(list[JsonObject], document)
     owned = [g for g in groups if g.get(_MARKER) == "vscode"]
     if len(owned) > 1:
-        raise ValueError("Duplicate FCC model groups")
+        raise ValueError("Duplicate ModelGlot model groups")
     group = owned[0] if owned else None
     if group is not None and (
         group.get("vendor") != "customendpoint"
         or not isinstance(group.get("name"), str)
         or not group["name"]
     ):
-        raise ValueError("Invalid FCC model group")
+        raise ValueError("Invalid ModelGlot model group")
     return groups, group
 
 
@@ -95,13 +95,13 @@ def configure(
     *,
     only_existing: bool = False,
 ) -> bool:
-    """Regenerate FCC models while preserving native preferences in group.settings."""
+    """Regenerate ModelGlot models while preserving native preferences in group.settings."""
     path = path.resolve()
     groups, group = _read(path)
     if group is None and only_existing:
         return False
     if not auth_token.strip():
-        raise ValueError("FCC's managed token is required")
+        raise ValueError("ModelGlot's managed token is required")
     name = group["name"] if group is not None else _NAME
     if any(
         g is not group and g.get("vendor") == "customendpoint" and g.get("name") == name

@@ -45,7 +45,7 @@ class DshProvider:
             if any(
                 isinstance(message, dict)
                 and message.get("role") == "user"
-                and "FCC_CHILD_TASK" in str(message.get("content", ""))
+                and "MODELGLOT_CHILD_TASK" in str(message.get("content", ""))
                 for message in messages
             ):
                 return "subagent"
@@ -132,7 +132,7 @@ def dsh_provider(scenario: DshProvider) -> Generator[str]:
                     self.chunk({"role": "assistant", "content": "Local fixture task"})
                     self.chunk({}, "stop")
                 elif purpose == "subagent":
-                    self.chunk({"role": "assistant", "content": "FCC_CHILD_DONE"})
+                    self.chunk({"role": "assistant", "content": "MODELGLOT_CHILD_DONE"})
                     self.chunk({}, "stop")
                 elif purpose == "compaction":
                     self.chunk(

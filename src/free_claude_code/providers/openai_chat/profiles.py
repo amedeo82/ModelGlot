@@ -576,7 +576,7 @@ OPENAI_CHAT_PROFILES: dict[str, OpenAIChatProfile] = {
             disabled_value="none",
             enabled_value="max",
         ),
-        user_agent="free-claude-code",
+        user_agent="modelglot",
     ),
     "minimax": OpenAIChatProfile(
         _policy(

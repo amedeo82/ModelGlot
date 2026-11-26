@@ -25,7 +25,7 @@ def dump_threads_after(
         output.flush()
 
     timer = threading.Timer(timeout, dump)
-    timer.name = "fcc-test-diagnostics"
+    timer.name = "modelglot-test-diagnostics"
     timer.daemon = True
     timer.start()
     try:

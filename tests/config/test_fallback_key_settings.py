@@ -145,20 +145,20 @@ def test_custom_provider_key_selection_and_unauthenticated_default() -> None:
         "api_keys": KEYS,
     }
     selected = Settings(
-        FCC_CUSTOM_PROVIDERS=[definition],
+        MODELGLOT_CUSTOM_PROVIDERS=[definition],
         MODEL_FALLBACKS=[{"model": f"{CUSTOM_ID}/one", "api_key_number": 2}],
     )
     assert selected.model_fallbacks is not None
     assert selected.model_fallbacks[0].api_key_number == 2
     anonymous = Settings(
-        FCC_CUSTOM_PROVIDERS=[definition | {"api_keys": []}],
+        MODELGLOT_CUSTOM_PROVIDERS=[definition | {"api_keys": []}],
         MODEL_FALLBACKS=[{"model": f"{CUSTOM_ID}/one"}],
     )
     assert anonymous.model_fallbacks is not None
     assert anonymous.model_fallbacks[0].api_key_number == 1
     with pytest.raises(ValidationError, match="Key 2"):
         Settings(
-            FCC_CUSTOM_PROVIDERS=[definition | {"api_keys": []}],
+            MODELGLOT_CUSTOM_PROVIDERS=[definition | {"api_keys": []}],
             MODEL_FALLBACKS=[{"model": f"{CUSTOM_ID}/one", "api_key_number": 2}],
         )
 

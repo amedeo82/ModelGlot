@@ -79,16 +79,16 @@ runs:
         cache_root="${CI_TEMP//\\//}"
         identity="$CI_RUNNER-$CI_OS-$CI_ARCH-py-$version-uv-$uv_version"
         {
-          echo "UV_CACHE_DIR=$cache_root/fcc-uv-cache"
-          echo "UV_PYTHON_INSTALL_DIR=$cache_root/fcc-uv-python"
+          echo "UV_CACHE_DIR=$cache_root/modelglot-uv-cache"
+          echo "UV_PYTHON_INSTALL_DIR=$cache_root/modelglot-uv-python"
           echo "UV_PYTHON_PREFERENCE=only-managed"
         } >> "$GITHUB_ENV"
         {
           echo "python-version=$version"
           echo "uv-version=$uv_version"
-          echo "python-path=$cache_root/fcc-uv-python"
+          echo "python-path=$cache_root/modelglot-uv-python"
           echo "python-key=uv-python-v2-$identity"
-          echo "dependencies-path=$cache_root/fcc-uv-cache"
+          echo "dependencies-path=$cache_root/modelglot-uv-cache"
           echo "dependencies-prefix=uv-deps-v2-$identity-"
         } >> "$GITHUB_OUTPUT"
 

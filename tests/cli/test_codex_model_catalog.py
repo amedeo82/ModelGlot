@@ -34,17 +34,17 @@ def test_launcher_config_composes_with_persistent_codex_config(
     (codex_home / "config.toml").write_text(
         "\n".join(
             (
-                'model_provider = "fcc"',
+                'model_provider = "modelglot"',
                 'model = "nvidia_nim/test-model"',
                 f"model_catalog_json = {json.dumps(str(catalog_path))}",
                 "",
-                "[model_providers.fcc]",
+                "[model_providers.modelglot]",
                 'name = "ModelGlot"',
-                'base_url = "http://127.0.0.1:8082/v1"',
+                'base_url = "http://127.0.0.1:16969/v1"',
                 'wire_api = "responses"',
                 "",
-                "[model_providers.fcc.auth]",
-                'command = "fcc-codex"',
+                "[model_providers.modelglot.auth]",
+                'command = "modelglot-codex"',
                 'args = ["--print-proxy-auth-token"]',
                 "",
             )
@@ -64,7 +64,7 @@ def test_launcher_config_composes_with_persistent_codex_config(
     result = subprocess.run(
         [
             codex_binary,
-            *codex_config_args(api_url="http://127.0.0.1:8082/v1"),
+            *codex_config_args(api_url="http://127.0.0.1:16969/v1"),
             "debug",
             "models",
         ],

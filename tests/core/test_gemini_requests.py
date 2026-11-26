@@ -276,7 +276,7 @@ def test_call_replay_preserves_metadata_only_for_the_selected_connection() -> No
         decode_bundle(base64.b64encode(b"unrecognized-google-bytes").decode()) is None
     )
     with pytest.raises(GeminiConversionError):
-        decode_bundle(base64.b64encode(b"fcc:gemini-replay:v1:{}").decode())
+        decode_bundle(base64.b64encode(b"modelglot:gemini-replay:v1:{}").decode())
 
 
 def test_gemini_schema_proto_names_and_string_integers_preserve_constraints() -> None:

@@ -72,7 +72,7 @@ async def verified_cli_path(env: Mapping[str, str]) -> str:
         is None
     ):
         raise CopilotUnavailable(
-            f"FCC requires GitHub Copilot CLI {COPILOT_CLI_VERSION} for its pinned SDK. Install that version and reconnect."
+            f"ModelGlot requires GitHub Copilot CLI {COPILOT_CLI_VERSION} for its pinned SDK. Install that version and reconnect."
         )
     return path
 

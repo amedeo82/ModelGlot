@@ -109,9 +109,12 @@ async def test_jetbrains_startup_refresh_and_failed_discovery_allow_disconnect(
         jb.config_path(),
         {
             "agent_servers": {
-                "Claude Code (FCC)": {
+                "Claude Code (ModelGlot)": {
                     "command": "old-node",
-                    "env": {"FCC_JETBRAINS_ACP": "1", "ANTHROPIC_AUTH_TOKEN": "old"},
+                    "env": {
+                        "MODELGLOT_JETBRAINS_ACP": "1",
+                        "ANTHROPIC_AUTH_TOKEN": "old",
+                    },
                 }
             }
         },
@@ -126,7 +129,7 @@ async def test_jetbrains_startup_refresh_and_failed_discovery_allow_disconnect(
         assert object_payload(status["update"])["changed"] is True
         entry = object_payload(
             decode_object(jb.config_path().read_text())["agent_servers"]
-        )["Claude Code (FCC)"]
+        )["Claude Code (ModelGlot)"]
         assert (
             object_payload(object_payload(entry)["env"])["ANTHROPIC_AUTH_TOKEN"]
             == TOKEN
@@ -459,7 +462,7 @@ async def test_desktop_startup_rotates_selected_profile_and_disconnect_stays_off
         True,
         disconnect_path=claude_desktop_disconnect_path(),
     )
-    profile = root / "configLibrary" / f"{desktop.FCC_ID}.json"
+    profile = root / "configLibrary" / f"{desktop.MODELGLOT_ID}.json"
     config = decode_object(profile.read_text())
     models = [
         {"name": desktop_model_id("nvidia_nim/one"), "labelOverride": "Pinned model"},

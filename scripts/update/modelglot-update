@@ -1,4 +1,4 @@
 #!/bin/sh
 set -eu
 installer=$(curl -fsSL "https://raw.githubusercontent.com/amedeo82/ModelGlot/main/scripts/install.sh")
-FCC_INSTALL_REF= exec sh -c "$installer" sh --update "$@"
+MODELGLOT_INSTALL_REF= exec sh -c "$installer" sh --update "$@"

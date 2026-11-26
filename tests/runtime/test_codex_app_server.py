@@ -132,10 +132,13 @@ async def test_factory_open_preserves_setup_and_catalog_until_process_exit(
             )
         )
         assert config["model"] == no_thinking_gateway_model_id(selection.model)
-        assert config["model_providers"]["fcc"] == {
+        assert config["model_providers"]["modelglot"] == {
             "name": "ModelGlot",
             "base_url": "http://127.0.0.1:8182/v1",
-            "auth": {"command": "fcc-codex", "args": ["--print-proxy-auth-token"]},
+            "auth": {
+                "command": "modelglot-codex",
+                "args": ["--print-proxy-auth-token"],
+            },
             "wire_api": "responses",
             "stream_idle_timeout_ms": 2147483647,
         }
@@ -206,7 +209,7 @@ async def test_factory_initialization_failure_reaps_before_catalog_cleanup(
 
 
 @pytest.mark.asyncio
-async def test_history_open_needs_no_fcc_setup_or_inventory(
+async def test_history_open_needs_no_modelglot_setup_or_inventory(
     tmp_path: Path, factory_peer: FactoryPeer
 ) -> None:
     runtime = MagicMock(spec=RequestRuntimePort)
@@ -352,7 +355,7 @@ async def test_complete_mode_overrides_restore_native_defaults(
     monkeypatch.setattr(native, "rpc", rpc)
     thread = await native.create_thread()
     assert thread.permission_defaults == defaults
-    assert rpc.call_args.args[1] == {"cwd": str(tmp_path), "modelProvider": "fcc"}
+    assert rpc.call_args.args[1] == {"cwd": str(tmp_path), "modelProvider": "modelglot"}
     rpc.return_value = {"turn": {"id": "turn"}}
     harness = FakeHarness()
     expected = {

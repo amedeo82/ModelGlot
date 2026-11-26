@@ -377,7 +377,7 @@ async def test_numeric_text_reaches_translated_and_native_consumers(
         sdk_chat_chunk(
             {"choices": [{"delta": {"content": value}, "finish_reason": None}]}
         )
-        for value in ["FCC_", numeric, "_SMOKE"]
+        for value in ["MODELGLOT_", numeric, "_SMOKE"]
     ]
     chunks.append(sdk_chat_chunk({"choices": [{"delta": {}, "finish_reason": "stop"}]}))
     closed = AsyncMock()
@@ -422,7 +422,7 @@ async def test_numeric_text_reaches_translated_and_native_consumers(
             for event in parsed
             for choice in array_payload(event.data.get("choices", []))
         )
-    assert text == f"FCC_{numeric}_SMOKE"
+    assert text == f"MODELGLOT_{numeric}_SMOKE"
     assert create.call_count == 1
     closed.assert_awaited_once()
 
@@ -448,7 +448,7 @@ async def test_captured_cloudflare_numeric_stream(
             for frame in packet.frames
         ]
     parsed = parse_sse_text("".join(frames))
-    assert "FCC_206_SMOKE" in "".join(
+    assert "MODELGLOT_206_SMOKE" in "".join(
         string_payload(object_payload(e.data.get("delta", {})).get("text", ""))
         for e in parsed
     )

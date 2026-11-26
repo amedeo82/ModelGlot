@@ -203,7 +203,7 @@ def _final_usage_record(
         else CanonicalUsage(estimated_input_tokens=outcome.estimated_input_tokens)
     )
     state = cast(Mapping[str, object], scope.get("state", {}))
-    request_id = cast(str, state.get("fcc_request_id")) or new_request_id()
+    request_id = cast(str, state.get("modelglot_request_id")) or new_request_id()
     failure_category = (
         re.sub(r"[^A-Za-z0-9_.-]+", "_", failure_reason)[:64] or "unknown"
         if failure_reason

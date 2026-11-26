@@ -1,4 +1,4 @@
-"""Browser contracts for FCC's advisory autofill opt-outs."""
+"""Browser contracts for ModelGlot's advisory autofill opt-outs."""
 
 from playwright.sync_api import Page
 

@@ -1066,7 +1066,7 @@ class TestStreamingExceptionHandling:
             "<think>Use the requested command.</think>"
             "I will invoke Bash now.\n"
             "<tool_call>\n<function=Bash>\n<parameter=command>\n"
-            "printf FCC_STEP_TOOL\n</parameter>\n</function>\n</tool_call>"
+            "printf MODELGLOT_STEP_TOOL\n</parameter>\n</function>\n</tool_call>"
         )
         stream_mock = AsyncStreamMock(
             [

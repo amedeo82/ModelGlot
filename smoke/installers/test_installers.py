@@ -31,24 +31,31 @@ UV_NEWER = ".".join(
 RELEASE_VERSION = "2.0.0"
 METADATA_URL = f"https://raw.githubusercontent.com/amedeo82/ModelGlot/v{RELEASE_VERSION}/pyproject.toml"
 
-FCC_COMMANDS = (
-    "fcc-desktop",
-    "fcc-server",
-    "fcc-claude",
-    "fcc-codex",
-    "fcc-pi",
-    "fcc-opencode",
-    "fcc-cline",
-    "fcc-hermes",
-    "fcc-dsh",
-    "fcc-grok",
-    "fcc-muse",
-    "fcc-aider",
-    "fcc-agy",
-    "fcc-doctor",
-    "fcc-update",
-    "fcc-init",
-    "free-claude-code",
+MODELGLOT_COMMANDS = (
+    "modelglot-desktop",
+    "modelglot-server",
+    "modelglot-claude",
+    "modelglot-codex",
+    "modelglot-pi",
+    "modelglot-opencode",
+    "modelglot-cline",
+    "modelglot-hermes",
+    "modelglot-dsh",
+    "modelglot-grok",
+    "modelglot-muse",
+    "modelglot-aider",
+    "modelglot-agy",
+    "modelglot-doctor",
+    "modelglot-update",
+    "modelglot-init",
+)
+
+UPSTREAM_COMMANDS = (
+    "other-desktop",
+    "other-server",
+    "other-doctor",
+    "other-update",
+    "other-cli",
 )
 
 CODING_AGENTS = (
@@ -129,13 +136,13 @@ def test_invalid_toolchain_stops_before_installer_changes(
     result = release_harness.run()
     assert result.returncode != 0
     assert release_harness.calls() == [f"download:{METADATA_URL}"]
-    assert not (release_harness.root / "home/.fcc/logs").exists()
+    assert not (release_harness.root / "home/.modelglot/logs").exists()
 
 
 def test_missing_release_pin_rejects_handoff_before_download(
     release_harness: InstallerHarness,
 ):
-    release_harness.env.pop("FCC_INSTALL_VERSION")
+    release_harness.env.pop("MODELGLOT_INSTALL_VERSION")
     result = release_harness.run()
     assert result.returncode != 0
     assert "handoff" in result.stdout + result.stderr
@@ -148,45 +155,47 @@ def test_toolchain_download_failure_stops_before_changes(
     result = release_harness.run(fail_step="toolchain-download")
     assert result.returncode != 0
     assert release_harness.calls() == [f"download:{METADATA_URL}"]
-    assert not (release_harness.root / "home/.fcc/logs").exists()
+    assert not (release_harness.root / "home/.modelglot/logs").exists()
 
 
 @pytest.mark.parametrize("voice", [False, True])
-def test_install_sh_pins_selected_fcc_release(posix_harness: PosixHarness, voice: bool):
-    posix_harness.env["FCC_INSTALL_VERSION"] = "2.0.0"
+def test_install_sh_pins_selected_modelglot_release(
+    posix_harness: PosixHarness, voice: bool
+):
+    posix_harness.env["MODELGLOT_INSTALL_VERSION"] = "2.0.0"
     posix_harness.add_uv(UV_MINIMUM)
     result = posix_harness.run_functions(
-        f"voice_local={int(voice)}\nvalidate_args\ninstall_free_claude_code\ninstaller_path=''\nprint_installer_retry"
+        f"voice_local={int(voice)}\nvalidate_args\ninstall_modelglot\ninstaller_path=''\nprint_installer_retry"
     )
     assert result.returncode == 0, result.stdout + result.stderr
     spec = "modelglot[voice_local]==2.0.0" if voice else "modelglot==2.0.0"
     assert any(call.endswith(spec) for call in posix_harness.calls())
     assert "/v2.0.0/scripts/install.sh" in result.stdout
-    assert "FCC_INSTALL_VERSION=" in result.stdout
+    assert "MODELGLOT_INSTALL_VERSION=" in result.stdout
 
 
 @pytest.mark.parametrize("voice", [False, True])
-def test_install_ps1_pins_selected_fcc_release(
+def test_install_ps1_pins_selected_modelglot_release(
     powershell_harness: PowerShellHarness, voice: bool
 ):
-    powershell_harness.env["FCC_INSTALL_VERSION"] = "2.0.0"
+    powershell_harness.env["MODELGLOT_INSTALL_VERSION"] = "2.0.0"
     powershell_harness.add_uv(UV_MINIMUM)
     result = powershell_harness.run_functions(
-        "Install-FreeClaudeCode\n$script:InstallerPath = ''\nWrite-Output (Get-InstallerRetryCommand)",
+        "Install-ModelGlot\n$script:InstallerPath = ''\nWrite-Output (Get-InstallerRetryCommand)",
         *(["-VoiceLocal"] if voice else []),
     )
     assert result.returncode == 0, result.stdout + result.stderr
     spec = "modelglot[voice_local]==2.0.0" if voice else "modelglot==2.0.0"
     assert any(call.endswith(spec) for call in powershell_harness.calls())
     assert "/v2.0.0/scripts/install.ps1" in result.stdout
-    assert "$env:FCC_INSTALL_VERSION = '2.0.0'" in result.stdout
+    assert "$env:MODELGLOT_INSTALL_VERSION = '2.0.0'" in result.stdout
 
 
 def test_install_sh_defaults_to_main_branch_package(
     posix_harness: PosixHarness,
 ) -> None:
-    posix_harness.env.pop("FCC_INSTALL_VERSION")
-    posix_harness.env.pop("FCC_INSTALL_REF", None)
+    posix_harness.env.pop("MODELGLOT_INSTALL_VERSION")
+    posix_harness.env.pop("MODELGLOT_INSTALL_REF", None)
     result = posix_harness.run_functions("package_spec")
     assert result.returncode == 0, result.stdout + result.stderr
     assert (
@@ -198,8 +207,8 @@ def test_install_sh_defaults_to_main_branch_package(
 def test_install_ps1_defaults_to_main_branch_package(
     powershell_harness: PowerShellHarness,
 ) -> None:
-    powershell_harness.env.pop("FCC_INSTALL_VERSION")
-    powershell_harness.env.pop("FCC_INSTALL_REF", None)
+    powershell_harness.env.pop("MODELGLOT_INSTALL_VERSION")
+    powershell_harness.env.pop("MODELGLOT_INSTALL_REF", None)
     result = powershell_harness.run_functions("Get-PackageSpec")
     assert result.returncode == 0, result.stdout + result.stderr
     assert (
@@ -208,7 +217,7 @@ def test_install_ps1_defaults_to_main_branch_package(
     )
 
 
-FCC_UPDATE_DECISIONS = [
+MODELGLOT_UPDATE_DECISIONS = [
     pytest.param(None, True, "", id="not-installed"),
     pytest.param(
         "1.2.2", True, "ModelGlot update available: 1.2.2 -> 1.2.3.", id="older"
@@ -263,8 +272,8 @@ def _assert_update_decision(
     assert "path-changed" not in result.stdout, output
 
 
-@pytest.mark.parametrize(("installed", "needed", "message"), FCC_UPDATE_DECISIONS)
-def test_install_sh_update_compares_installed_fcc_with_selected_release(
+@pytest.mark.parametrize(("installed", "needed", "message"), MODELGLOT_UPDATE_DECISIONS)
+def test_install_sh_update_compares_installed_modelglot_with_selected_release(
     posix_harness: PosixHarness, installed: str | None, needed: bool, message: str
 ):
     if installed is not None:
@@ -275,19 +284,19 @@ def test_install_sh_update_compares_installed_fcc_with_selected_release(
             uv_bin / "uv",
             f"""#!/bin/sh
 [ "$*" = "tool list" ] || exit 35
-printf 'other-tool v9.9.9\\n- other\\nmodelglot v{installed}\\n- fcc-server\\n'
+printf 'other-tool v9.9.9\\n- other\\nmodelglot v{installed}\\n- modelglot-server\\n'
 """,
         )
     result = posix_harness.run_functions(
-        "fcc_install_version=1.2.3\nbefore=$PATH\n"
-        "if fcc_update_is_needed; then echo decision:install; else echo decision:skip; fi\n"
+        "modelglot_install_version=1.2.3\nbefore=$PATH\n"
+        "if modelglot_update_is_needed; then echo decision:install; else echo decision:skip; fi\n"
         '[ "$PATH" = "$before" ] || echo path-changed'
     )
     _assert_update_decision(result, needed, message)
 
 
-@pytest.mark.parametrize(("installed", "needed", "message"), FCC_UPDATE_DECISIONS)
-def test_install_ps1_update_compares_installed_fcc_with_selected_release(
+@pytest.mark.parametrize(("installed", "needed", "message"), MODELGLOT_UPDATE_DECISIONS)
+def test_install_ps1_update_compares_installed_modelglot_with_selected_release(
     powershell_harness: PowerShellHarness,
     installed: str | None,
     needed: bool,
@@ -307,8 +316,8 @@ exit /b 0
 """,
         )
     result = powershell_harness.run_functions(
-        "$FccInstallVersion = '1.2.3'\n$before = $env:Path\n"
-        "$decision = if (Test-FccUpdateNeeded) { 'install' } else { 'skip' }\n"
+        "$ModelGlotInstallVersion = '1.2.3'\n$before = $env:Path\n"
+        "$decision = if (Test-ModelGlotUpdateNeeded) { 'install' } else { 'skip' }\n"
         'Write-Output "decision:$decision"\n'
         "if ($env:Path -ne $before) { Write-Output 'path-changed' }"
     )
@@ -324,12 +333,12 @@ def test_install_sh_update_prefers_modelglot_over_legacy_listing(
         uv_bin / "uv",
         """#!/bin/sh
 [ "$*" = "tool list" ] || exit 35
-printf 'free-claude-code v1.2.3\n- legacy\nmodelglot v1.2.2\n- fcc-server\n'
+printf 'other-cli v1.2.3\n- legacy\nmodelglot v1.2.2\n- modelglot-server\n'
 """,
     )
     result = posix_harness.run_functions(
-        "fcc_install_version=1.2.3\n"
-        "if fcc_update_is_needed; then echo decision:install; else echo decision:skip; fi"
+        "modelglot_install_version=1.2.3\n"
+        "if modelglot_update_is_needed; then echo decision:install; else echo decision:skip; fi"
     )
     _assert_update_decision(result, True, "ModelGlot update available: 1.2.2 -> 1.2.3.")
 
@@ -343,14 +352,14 @@ def test_install_ps1_update_prefers_modelglot_over_legacy_listing(
         uv_bin / "uv.cmd",
         """@echo off
 if not "%~1 %~2"=="tool list" exit /b 35
-echo free-claude-code v1.2.3
+echo other-cli v1.2.3
 echo modelglot v1.2.2
 exit /b 0
 """,
     )
     result = powershell_harness.run_functions(
-        "$FccInstallVersion = '1.2.3'\n"
-        "$decision = if (Test-FccUpdateNeeded) { 'install' } else { 'skip' }\n"
+        "$ModelGlotInstallVersion = '1.2.3'\n"
+        "$decision = if (Test-ModelGlotUpdateNeeded) { 'install' } else { 'skip' }\n"
         'Write-Output "decision:$decision"'
     )
     _assert_update_decision(result, True, "ModelGlot update available: 1.2.2 -> 1.2.3.")
@@ -368,15 +377,15 @@ exit /b 0
         "2.0.0/../main",
     ],
 )
-def test_install_sh_rejects_invalid_fcc_release_before_changes(
+def test_install_sh_rejects_invalid_modelglot_release_before_changes(
     posix_harness: PosixHarness, version: str
 ):
-    posix_harness.env["FCC_INSTALL_VERSION"] = version
+    posix_harness.env["MODELGLOT_INSTALL_VERSION"] = version
     result = posix_harness.run("--dry-run")
     assert result.returncode != 0
-    assert "FCC_INSTALL_VERSION" in result.stderr
+    assert "MODELGLOT_INSTALL_VERSION" in result.stderr
     assert posix_harness.calls() == []
-    assert not (Path(posix_harness.env["HOME"]) / ".fcc/logs").exists()
+    assert not (Path(posix_harness.env["HOME"]) / ".modelglot/logs").exists()
 
 
 @pytest.mark.parametrize(
@@ -391,15 +400,17 @@ def test_install_sh_rejects_invalid_fcc_release_before_changes(
         "2.0.0/../main",
     ],
 )
-def test_install_ps1_rejects_invalid_fcc_release_before_changes(
+def test_install_ps1_rejects_invalid_modelglot_release_before_changes(
     powershell_harness: PowerShellHarness, version: str
 ):
-    powershell_harness.env["FCC_INSTALL_VERSION"] = version
+    powershell_harness.env["MODELGLOT_INSTALL_VERSION"] = version
     result = powershell_harness.run("-DryRun")
     assert result.returncode != 0
-    assert "FCC_INSTALL_VERSION" in result.stderr
+    assert "MODELGLOT_INSTALL_VERSION" in result.stderr
     assert powershell_harness.calls() == []
-    assert not (Path(powershell_harness.env["USERPROFILE"]) / ".fcc/logs").exists()
+    assert not (
+        Path(powershell_harness.env["USERPROFILE"]) / ".modelglot/logs"
+    ).exists()
 
 
 def test_install_ps1_bundle_dry_run_includes_headroom(
@@ -409,7 +420,7 @@ def test_install_ps1_bundle_dry_run_includes_headroom(
     assert result.returncode == 0, result.stderr
     assert "headroom-ai[mcp]==0.40.0" in result.stdout
     assert "mcp install --agent claude" in result.stdout
-    assert "_fcc-configure-headroom" not in result.stdout
+    assert "_modelglot-configure-headroom" not in result.stdout
     assert not any("headroom-ai" in call for call in powershell_harness.calls())
 
 
@@ -418,7 +429,7 @@ def test_install_sh_bundle_dry_run_includes_headroom(posix_harness: PosixHarness
     assert result.returncode == 0, result.stderr
     assert "headroom-ai[mcp]==0.40.0" in result.stdout
     assert "mcp install --agent claude" in result.stdout
-    assert "_fcc-configure-headroom" not in result.stdout
+    assert "_modelglot-configure-headroom" not in result.stdout
     assert not any("headroom-ai" in call for call in posix_harness.calls())
 
 
@@ -470,7 +481,7 @@ def _assert_headroom_bundle_workflow(
     assert (
         calls.index("headroom:--version") < calls.index(rtk[0]) < calls.index(setup[0])
     )
-    assert not any("_fcc-configure-headroom" in call for call in calls)
+    assert not any("_modelglot-configure-headroom" in call for call in calls)
 
 
 @pytest.mark.parametrize(
@@ -558,7 +569,7 @@ def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def _assert_uv_ready_without_fcc_install(calls: list[str]) -> None:
+def _assert_uv_ready_without_modelglot_install(calls: list[str]) -> None:
     assert "uv:--version" in calls
     assert not any("--refresh-package modelglot" in call for call in calls)
 
@@ -616,11 +627,11 @@ fi'''
     )
     return f"""#!/bin/sh
 echo "{name}:$*" >> "$CALL_LOG"
-if [ "{name}" = "opencode" ] && [ "${{FCC_RUNNING_PHASE:-}}" = "opencode-plugin" ]; then
-    if [ -e "$FCC_PROCESS_MARKER.probed" ]; then
-        : > "$FCC_PROCESS_MARKER"
+if [ "{name}" = "opencode" ] && [ "${{MODELGLOT_RUNNING_PHASE:-}}" = "opencode-plugin" ]; then
+    if [ -e "$MODELGLOT_PROCESS_MARKER.probed" ]; then
+        : > "$MODELGLOT_PROCESS_MARKER"
     else
-        : > "$FCC_PROCESS_MARKER.probed"
+        : > "$MODELGLOT_PROCESS_MARKER.probed"
     fi
 fi
 if [ "{name}" = "headroom" ]; then
@@ -671,8 +682,8 @@ def _posix_uv_command(version: str) -> str:
 echo "uv:$*" >> "$CALL_LOG"
 tool_bin=${{UV_TOOL_BIN_DIR:-$FAKE_TOOL_BIN}}
 if [ "${{1:-}}" = "--version" ]; then
-    if [ "${{FCC_RUNNING_PHASE:-}}" = "late" ]; then
-        : > "$FCC_PROCESS_MARKER"
+    if [ "${{MODELGLOT_RUNNING_PHASE:-}}" = "late" ]; then
+        : > "$MODELGLOT_PROCESS_MARKER"
     fi
     if [ "$FAIL_STEP" = "uv-verify" ]; then
         exit 32
@@ -707,28 +718,28 @@ if [ "${{1:-}}" = "tool" ] && [ "${{2:-}}" = "install" ]; then
             exit 0
             ;;
     esac
-    if [ "$FAIL_STEP" = "fcc-install" ]; then
+    if [ "$FAIL_STEP" = "modelglot-install" ]; then
         exit 33
     fi
     mkdir -p "$tool_bin"
-    cp "$FAKE_FIXTURES/fcc-command.sh" "$tool_bin/fcc-server"
-    cp "$FAKE_FIXTURES/fcc-command.sh" "$tool_bin/fcc-desktop"
-    cp "$FAKE_FIXTURES/fcc-command.sh" "$tool_bin/fcc-claude"
-    cp "$FAKE_FIXTURES/fcc-command.sh" "$tool_bin/fcc-pi"
-    cp "$FAKE_FIXTURES/fcc-command.sh" "$tool_bin/fcc-opencode"
-    cp "$FAKE_FIXTURES/fcc-command.sh" "$tool_bin/fcc-cline"
-    cp "$FAKE_FIXTURES/fcc-command.sh" "$tool_bin/fcc-hermes"
-    cp "$FAKE_FIXTURES/fcc-command.sh" "$tool_bin/fcc-dsh"
-    cp "$FAKE_FIXTURES/fcc-command.sh" "$tool_bin/fcc-grok"
-    cp "$FAKE_FIXTURES/fcc-command.sh" "$tool_bin/fcc-muse"
-    cp "$FAKE_FIXTURES/fcc-command.sh" "$tool_bin/fcc-aider"
-    cp "$FAKE_FIXTURES/fcc-command.sh" "$tool_bin/fcc-agy"
-    cp "$FAKE_FIXTURES/fcc-command.sh" "$tool_bin/fcc-doctor"
-    cp "$FAKE_FIXTURES/fcc-command.sh" "$tool_bin/fcc-update"
-    if [ "$FAIL_STEP" != "fcc-missing" ]; then
-        cp "$FAKE_FIXTURES/fcc-command.sh" "$tool_bin/fcc-codex"
+    cp "$FAKE_FIXTURES/modelglot-command.sh" "$tool_bin/modelglot-server"
+    cp "$FAKE_FIXTURES/modelglot-command.sh" "$tool_bin/modelglot-desktop"
+    cp "$FAKE_FIXTURES/modelglot-command.sh" "$tool_bin/modelglot-claude"
+    cp "$FAKE_FIXTURES/modelglot-command.sh" "$tool_bin/modelglot-pi"
+    cp "$FAKE_FIXTURES/modelglot-command.sh" "$tool_bin/modelglot-opencode"
+    cp "$FAKE_FIXTURES/modelglot-command.sh" "$tool_bin/modelglot-cline"
+    cp "$FAKE_FIXTURES/modelglot-command.sh" "$tool_bin/modelglot-hermes"
+    cp "$FAKE_FIXTURES/modelglot-command.sh" "$tool_bin/modelglot-dsh"
+    cp "$FAKE_FIXTURES/modelglot-command.sh" "$tool_bin/modelglot-grok"
+    cp "$FAKE_FIXTURES/modelglot-command.sh" "$tool_bin/modelglot-muse"
+    cp "$FAKE_FIXTURES/modelglot-command.sh" "$tool_bin/modelglot-aider"
+    cp "$FAKE_FIXTURES/modelglot-command.sh" "$tool_bin/modelglot-agy"
+    cp "$FAKE_FIXTURES/modelglot-command.sh" "$tool_bin/modelglot-doctor"
+    cp "$FAKE_FIXTURES/modelglot-command.sh" "$tool_bin/modelglot-update"
+    if [ "$FAIL_STEP" != "modelglot-missing" ]; then
+        cp "$FAKE_FIXTURES/modelglot-command.sh" "$tool_bin/modelglot-codex"
     fi
-    chmod +x "$tool_bin"/fcc-*
+    chmod +x "$tool_bin"/modelglot-*
     exit 0
 fi
 if [ "${{1:-}}" = "tool" ] && [ "${{2:-}}" = "update-shell" ]; then
@@ -810,14 +821,14 @@ exit 76
         _write_executable(
             fallback_bin / "ps",
             """#!/bin/sh
-printf '%s\n' "$FCC_PS_OUTPUT"
+printf '%s\n' "$MODELGLOT_PS_OUTPUT"
 """,
         )
         awk = shutil.which("awk", path=self.env["PATH"])
         if awk is None:
             pytest.skip("awk is required for the POSIX process fallback scenario")
         shutil.copy(awk, fallback_bin / "awk")
-        self.env["FCC_PS_OUTPUT"] = process_line
+        self.env["MODELGLOT_PS_OUTPUT"] = process_line
         self.env["PATH"] = str(fallback_bin)
 
     def run(self, *args: str, fail_step: str = "") -> subprocess.CompletedProcess[str]:
@@ -852,13 +863,13 @@ printf '%s\n' "$FCC_PS_OUTPUT"
         installer.write_text(source, encoding="utf-8")
         env = self.env | {
             "FAIL_STEP": fail_step,
-            "FCC_INSTALLER": str(installer),
+            "MODELGLOT_INSTALLER": str(installer),
         }
         command = [
             "/bin/sh",
             "-c",
-            'cat "$FCC_INSTALLER" | /bin/sh -s -- "$@"',
-            "fcc-installer",
+            'cat "$MODELGLOT_INSTALLER" | /bin/sh -s -- "$@"',
+            "modelglot-installer",
             *args,
         ]
         return subprocess.run(
@@ -917,6 +928,14 @@ def posix_harness(tmp_path: Path) -> PosixHarness:
     log = tmp_path / "calls.log"
     for path in (bin_dir, fixtures, tool_bin, home):
         path.mkdir(parents=True)
+    upstream_home = home / ".otherapp"
+    upstream_home.mkdir()
+    (upstream_home / "config.json").write_text('{"upstream": true}\n', encoding="utf-8")
+    (upstream_home / "aumid.txt").write_text(
+        "io.github.example.otherapp\n", encoding="utf-8"
+    )
+    for name in UPSTREAM_COMMANDS:
+        _write_executable(tool_bin / name, "#!/bin/sh\nexit 0\n")
     (fixtures / "pyproject.toml").write_text(
         (_repo_root() / "pyproject.toml").read_text(encoding="utf-8"), encoding="utf-8"
     )
@@ -924,12 +943,12 @@ def posix_harness(tmp_path: Path) -> PosixHarness:
     _write_executable(
         bin_dir / "pgrep",
         """#!/bin/sh
-[ -n "${FCC_RUNNING_COMMAND:-}" ] || exit 1
-if [ "${FCC_RUNNING_PHASE:-early}" != "early" ] && [ ! -e "$FCC_PROCESS_MARKER" ]; then
+[ -n "${MODELGLOT_RUNNING_COMMAND:-}" ] || exit 1
+if [ "${MODELGLOT_RUNNING_PHASE:-early}" != "early" ] && [ ! -e "$MODELGLOT_PROCESS_MARKER" ]; then
     exit 1
 fi
 case "$*" in
-    "-x $FCC_RUNNING_COMMAND"|"-f (^|/)$FCC_RUNNING_COMMAND([[:space:]]|$)") printf '4242\n'; exit 0 ;;
+    "-x $MODELGLOT_RUNNING_COMMAND"|"-f (^|/)$MODELGLOT_RUNNING_COMMAND([[:space:]]|$)") printf '4242\n'; exit 0 ;;
     *) exit 1 ;;
 esac
 """,
@@ -938,7 +957,7 @@ esac
         bin_dir / "getent",
         """#!/bin/sh
 [ "${1:-}" = "passwd" ] || exit 61
-printf 'fcc-test:x:1000:1000::%s:/bin/sh\n' "$FAKE_INFERRED_HOME"
+printf 'modelglot-test:x:1000:1000::%s:/bin/sh\n' "$FAKE_INFERRED_HOME"
 """,
     )
     _write_executable(
@@ -959,14 +978,14 @@ while [ "$#" -gt 0 ]; do
     shift
 done
 echo "download:$url" >> "$CALL_LOG"
-if [ "$url" = "https://raw.githubusercontent.com/amedeo82/ModelGlot/v${FCC_INSTALL_VERSION}/pyproject.toml" ]; then
+if [ "$url" = "https://raw.githubusercontent.com/amedeo82/ModelGlot/v${MODELGLOT_INSTALL_VERSION}/pyproject.toml" ]; then
     [ "$FAIL_STEP" != "toolchain-download" ] || exit 41
     cat "$FAKE_FIXTURES/pyproject.toml"
     exit 0
 fi
 if [ "$url" = "https://registry.npmjs.org/-/package/opencode-ai/dist-tags" ]; then
     [ "$FAIL_STEP" != "opencode-metadata" ] || exit 41
-    if [ "${FCC_RUNNING_PHASE:-}" = "opencode-preliminary" ]; then : > "$FCC_PROCESS_MARKER"; fi
+    if [ "${MODELGLOT_RUNNING_PHASE:-}" = "opencode-preliminary" ]; then : > "$MODELGLOT_PROCESS_MARKER"; fi
     printf '%s\n' "$FAKE_OPENCODE_TAGS"
     exit 0
 fi
@@ -981,8 +1000,8 @@ case "$url" in
     *pi.dev*) source="$FAKE_FIXTURES/pi-installer.sh" ;;
     *opencode.ai*)
         source="$FAKE_FIXTURES/opencode-installer.sh"
-        if [ "${FCC_RUNNING_PHASE:-}" = "opencode-download" ]; then
-            : > "$FCC_PROCESS_MARKER"
+        if [ "${MODELGLOT_RUNNING_PHASE:-}" = "opencode-download" ]; then
+            : > "$MODELGLOT_PROCESS_MARKER"
         fi
         ;;
     *hermes-agent.nousresearch.com*) source="$FAKE_FIXTURES/hermes-installer.sh" ;;
@@ -1150,17 +1169,17 @@ chmod +x "$uv_bin/uv"
     _write_executable(fixtures / "uv-command.sh", _posix_uv_command(UV_MINIMUM))
     _write_executable(fixtures / "headroom-command.sh", _posix_command("headroom"))
     _write_executable(
-        fixtures / "fcc-command.sh",
+        fixtures / "modelglot-command.sh",
         """#!/bin/sh
 name=${0##*/}
 echo "$name:$*" >> "$CALL_LOG"
-if [ "$FAIL_STEP" = "fcc-verify" ]; then
+if [ "$FAIL_STEP" = "modelglot-verify" ]; then
     exit 36
 fi
-if [ "$name" = "fcc-desktop" ] && [ "${1:-}" = "--install-macos-app" ]; then
+if [ "$name" = "modelglot-desktop" ] && [ "${1:-}" = "--install-macos-app" ]; then
     [ "$FAIL_STEP" = "macos-app-setup" ] && exit 37
 fi
-if [ "$name" = "fcc-server" ] && [ "${1:-}" = "--version" ]; then
+if [ "$name" = "modelglot-server" ] && [ "${1:-}" = "--version" ]; then
     echo "modelglot 3.5.18"
 fi
 """,
@@ -1202,16 +1221,16 @@ printf '%s  %s\n' "$checksum" "$1"
             "HOME": str(home),
             "CALL_LOG": str(log),
             "FAKE_FIXTURES": str(fixtures),
-            "FCC_INSTALL_VERSION": RELEASE_VERSION,
-            "_FCC_INSTALLER_RELEASE": RELEASE_VERSION,
+            "MODELGLOT_INSTALL_VERSION": RELEASE_VERSION,
+            "_MODELGLOT_INSTALLER_RELEASE": RELEASE_VERSION,
             "FAKE_TOOL_BIN": str(tool_bin),
             "FAKE_INFERRED_HOME": str(home),
-            "FCC_PROCESS_MARKER": str(tmp_path / "fcc-process-ready"),
-            "FCC_RUNNING_COMMAND": "",
-            "FCC_RUNNING_PHASE": "early",
+            "MODELGLOT_PROCESS_MARKER": str(tmp_path / "modelglot-process-ready"),
+            "MODELGLOT_RUNNING_COMMAND": "",
+            "MODELGLOT_RUNNING_PHASE": "early",
             "FAKE_UNAME": "Linux",
             "FAKE_NPM_PREFIX": str(npm_prefix),
-            "USER": "fcc-test",
+            "USER": "modelglot-test",
             "CLAUDE_CONFIG_DIR": "",
             "FAIL_STEP": "",
         }
@@ -1224,6 +1243,17 @@ printf '%s  %s\n' "$checksum" "$1"
     env.pop("CARGO_HOME", None)
     env.pop("GROK_BIN_DIR", None)
     return PosixHarness(tmp_path, bin_dir, fixtures, tool_bin, log, env)
+
+
+def _assert_posix_installer_upstream_preserved(harness: PosixHarness) -> None:
+    home = Path(harness.env["HOME"])
+    assert (home / ".otherapp" / "config.json").read_text(
+        encoding="utf-8"
+    ) == '{"upstream": true}\n'
+    assert (home / ".otherapp" / "aumid.txt").read_text(
+        encoding="utf-8"
+    ) == "io.github.example.otherapp\n"
+    assert all((harness.tool_bin / name).is_file() for name in UPSTREAM_COMMANDS)
 
 
 @pytest.mark.parametrize("rtk", (False, True, None))
@@ -1241,7 +1271,7 @@ def test_install_sh_auto_selects_installed_harnesses(
 
     assert result.returncode == 0, result.stdout
     assert "Install or verify" not in result.stdout
-    assert "for fcc-" not in result.stdout
+    assert "for modelglot-" not in result.stdout
     assert ("Enable RTK + Headroom token optimization" in result.stdout) is (
         rtk is not True
     )
@@ -1267,7 +1297,7 @@ def test_install_sh_asks_only_about_missing_harnesses(
     )
 
     assert result.returncode == 0, result.stdout
-    assert re.findall(r"for fcc-(\w+)\?", result.stdout) == [
+    assert re.findall(r"for modelglot-(\w+)\?", result.stdout) == [
         "codex",
         "pi",
         "cline",
@@ -1298,7 +1328,7 @@ def test_install_sh_discovers_installed_npm_harnesses_before_questions(
     result = posix_harness.run_interactive("n\n" * 8)
 
     assert result.returncode == 0, result.stdout
-    assert re.findall(r"for fcc-(\w+)\?", result.stdout) == [
+    assert re.findall(r"for modelglot-(\w+)\?", result.stdout) == [
         "claude",
         "codex",
         "hermes",
@@ -1328,7 +1358,7 @@ def test_install_sh_discovers_installed_aider_without_uv(
     result = posix_harness.run_interactive("n\n" * 10)
 
     assert result.returncode == 0, result.stdout
-    assert "for fcc-aider?" not in result.stdout
+    assert "for modelglot-aider?" not in result.stdout
     calls = posix_harness.calls()
     assert "aider:--version" in calls
     assert not any("aider-chat@latest" in call for call in calls)
@@ -1341,7 +1371,7 @@ def test_install_sh_asks_about_unrelated_pi(posix_harness: PosixHarness) -> None
     result = posix_harness.run_interactive("n\n" * 11)
 
     assert result.returncode == 0, result.stdout
-    assert "Install Pi for fcc-pi?" in result.stdout
+    assert "Install Pi for modelglot-pi?" in result.stdout
     calls = posix_harness.calls()
     assert "unrelated-pi:--help" in calls
     assert "unrelated-pi:--version" not in calls
@@ -1357,7 +1387,7 @@ def test_install_sh_interactive_dry_run_does_not_execute_probes(
     result = posix_harness.run_interactive("n\n", "--dry-run")
 
     assert result.returncode == 0, result.stdout
-    assert "for fcc-" not in result.stdout
+    assert "for modelglot-" not in result.stdout
     assert posix_harness.calls() == []
 
 
@@ -1387,7 +1417,7 @@ def test_install_sh_does_not_use_uv_install_directory_for_aider(
     result = posix_harness.run_interactive("n\n" * 11)
 
     assert result.returncode == 0, result.stdout
-    assert "Install Aider for fcc-aider?" in result.stdout
+    assert "Install Aider for modelglot-aider?" in result.stdout
     assert "aider:--version" not in posix_harness.calls()
 
 
@@ -1428,12 +1458,13 @@ def test_install_sh_fresh_install_is_verified(posix_harness: PosixHarness) -> No
     assert calls[-3:] == [
         "uv:tool update-shell",
         "uv:tool dir --bin",
-        "fcc-server:--version",
+        "modelglot-server:--version",
     ]
     assert not any("hermes:setup" in call for call in calls)
     home = Path(posix_harness.env["HOME"])
     assert (home / ".grok" / "bin" / "grok").is_file()
     assert not (home / ".local" / "bin" / "grok").exists()
+    _assert_posix_installer_upstream_preserved(posix_harness)
 
 
 def test_install_sh_discovers_grok_in_custom_bin_directory(
@@ -1464,7 +1495,7 @@ def test_install_sh_installs_selected_hermes_without_setup(
     assert calls.index("hermes-install:--non-interactive --skip-setup") < calls.index(
         "hermes:--version"
     )
-    assert "Run Hermes Agent with: fcc-hermes" in result.stdout
+    assert "Run Hermes Agent with: modelglot-hermes" in result.stdout
     assert not any("hermes:setup" in call for call in calls)
     assert not any(call.startswith("rtk:init") for call in calls)
 
@@ -1481,7 +1512,7 @@ def test_install_sh_stops_when_selected_hermes_install_fails(
 
     assert result.returncode != 0
     assert "ModelGlot is installed and verified." not in result.stdout
-    _assert_uv_ready_without_fcc_install(posix_harness.calls())
+    _assert_uv_ready_without_modelglot_install(posix_harness.calls())
 
 
 def test_install_sh_rejects_unsupported_hermes_platform_before_download(
@@ -1543,7 +1574,7 @@ def test_install_sh_stops_when_grok_install_fails(
 
     assert result.returncode != 0
     assert "ModelGlot is installed and verified." not in result.stdout
-    _assert_uv_ready_without_fcc_install(posix_harness.calls())
+    _assert_uv_ready_without_modelglot_install(posix_harness.calls())
 
 
 @pytest.mark.parametrize("failure", ["muse-download", "muse-install"])
@@ -1558,7 +1589,7 @@ def test_install_sh_stops_when_muse_install_fails(
 
     assert result.returncode != 0
     assert "ModelGlot is installed and verified." not in result.stdout
-    _assert_uv_ready_without_fcc_install(posix_harness.calls())
+    _assert_uv_ready_without_modelglot_install(posix_harness.calls())
 
 
 def test_install_sh_stops_when_aider_install_fails(
@@ -1594,7 +1625,7 @@ def test_install_sh_accepts_aider_as_the_only_selected_agent(
     assert calls.index("uv:--version") < calls.index(aider_install)
     assert calls.index(aider_install) < calls.index("aider:--version")
     assert not any("aider.chat/install" in call for call in calls)
-    assert "Run Aider with: fcc-aider" in result.stdout
+    assert "Run Aider with: modelglot-aider" in result.stdout
     assert "Select at least one coding agent." not in result.stdout
 
 
@@ -1635,7 +1666,7 @@ def test_install_sh_checks_existing_aider_in_custom_uv_tool_bin_before_installin
     else:
         assert result.returncode == 0, result.stderr
     calls = posix_harness.calls()
-    assert "for fcc-aider?" not in result.stdout
+    assert "for modelglot-aider?" not in result.stdout
     assert "aider:--version" in calls
     assert not any("aider-chat@latest" in call for call in calls)
     assert existing_aider.read_bytes() == original
@@ -1667,7 +1698,7 @@ def test_install_sh_installs_latest_selected_dsh(
     assert calls.index("npm:install -g @deepseek-ai/dsh@latest") < calls.index(
         "dsh:--version"
     )
-    assert "Run DeepSeek Harness with: fcc-dsh" in result.stdout
+    assert "Run DeepSeek Harness with: modelglot-dsh" in result.stdout
     assert not any(call.startswith("rtk:init") for call in calls)
 
 
@@ -1746,7 +1777,7 @@ def test_install_sh_noninteractive_skips_dsh_without_node(
     result = posix_harness.run()
 
     assert result.returncode == 0, result.stderr
-    assert "Run DeepSeek Harness with: fcc-dsh" not in result.stdout
+    assert "Run DeepSeek Harness with: modelglot-dsh" not in result.stdout
     assert not any("@deepseek-ai/dsh" in call for call in posix_harness.calls())
 
 
@@ -1760,7 +1791,7 @@ def test_install_sh_stops_when_selected_dsh_install_fails(
 
     assert result.returncode != 0
     assert "ModelGlot is installed and verified." not in result.stdout
-    _assert_uv_ready_without_fcc_install(posix_harness.calls())
+    _assert_uv_ready_without_modelglot_install(posix_harness.calls())
 
 
 def test_install_sh_installs_and_configures_rtk_for_selected_agents(
@@ -1870,7 +1901,7 @@ def test_install_sh_rejects_conflicting_rtk_command(
     assert result.returncode != 0
     assert "not a compatible Rust Token Killer installation" in result.stderr
     assert not any("rtk-ai/rtk" in call for call in posix_harness.calls())
-    assert "fcc-server:--version" in posix_harness.calls()
+    assert "modelglot-server:--version" in posix_harness.calls()
     assert re.search(r"failed.*RTK configuration", result.stdout, re.IGNORECASE)
 
 
@@ -1892,7 +1923,7 @@ def test_install_sh_stops_when_rtk_setup_fails(
 
     assert result.returncode != 0
     assert "ModelGlot is installed and verified." in result.stdout
-    assert "fcc-server:--version" in posix_harness.calls()
+    assert "modelglot-server:--version" in posix_harness.calls()
     assert re.search(r"failed.*RTK configuration", result.stdout, re.IGNORECASE)
 
 
@@ -1904,11 +1935,11 @@ def test_install_sh_installs_then_updates_only_selected_agent(
 
     assert result.returncode == 0, result.stdout
     assert "Select at least one coding agent." in result.stdout
-    assert "Run Codex with: fcc-codex" in result.stdout
-    assert "Run Claude Code with: fcc-claude" not in result.stdout
-    assert "Run Pi with: fcc-pi" not in result.stdout
-    assert "Run OpenCode with: fcc-opencode" not in result.stdout
-    assert "Run Cline with: fcc-cline" not in result.stdout
+    assert "Run Codex with: modelglot-codex" in result.stdout
+    assert "Run Claude Code with: modelglot-claude" not in result.stdout
+    assert "Run Pi with: modelglot-pi" not in result.stdout
+    assert "Run OpenCode with: modelglot-opencode" not in result.stdout
+    assert "Run Cline with: modelglot-cline" not in result.stdout
     calls = posix_harness.calls()
     assert "codex-install:1" in calls
     assert not any(
@@ -1922,7 +1953,7 @@ def test_install_sh_installs_then_updates_only_selected_agent(
     update = posix_harness.run_interactive("\n" * 11)
 
     assert update.returncode == 0, update.stdout
-    assert "for fcc-codex?" not in update.stdout
+    assert "for modelglot-codex?" not in update.stdout
     update_calls = posix_harness.calls()[len(calls) :]
     assert "codex:--version" in update_calls
     assert [call for call in update_calls if call.startswith("download:")] == [
@@ -1941,7 +1972,7 @@ def test_install_sh_rejects_uninstalled_only_selection(
 
     assert result.returncode != 0
     assert "No selected coding agent was installed." in result.stdout
-    _assert_uv_ready_without_fcc_install(posix_harness.calls())
+    _assert_uv_ready_without_modelglot_install(posix_harness.calls())
 
 
 def test_install_sh_delegates_macos_bundle_to_installed_helper(
@@ -1952,9 +1983,9 @@ def test_install_sh_delegates_macos_bundle_to_installed_helper(
     result = posix_harness.run()
     assert result.returncode == 0, result.stderr
     calls = posix_harness.calls()
-    assert calls.count("fcc-desktop:--install-macos-app") == 1
-    assert calls.index("fcc-server:--version") < calls.index(
-        "fcc-desktop:--install-macos-app"
+    assert calls.count("modelglot-desktop:--install-macos-app") == 1
+    assert calls.index("modelglot-server:--version") < calls.index(
+        "modelglot-desktop:--install-macos-app"
     )
     install = next(call for call in calls if "--refresh-package modelglot" in call)
     assert "--managed-python" in install and "+gil" in install
@@ -1981,7 +2012,7 @@ def test_install_sh_macos_python_selection_overrides_only_its_preference(
             1,
         ),
     )
-    result = posix_harness.run_functions("install_free_claude_code")
+    result = posix_harness.run_functions("install_modelglot")
     assert result.returncode == 0, result.stderr
     calls = posix_harness.calls()
     install = next(call for call in calls if "--refresh-package modelglot" in call)
@@ -1998,12 +2029,12 @@ def test_install_sh_macos_python_selection_overrides_only_its_preference(
     assert ("+gil" in install) == (system == "Darwin")
 
 
-def test_install_sh_stops_before_fcc_when_macos_python_install_fails(
+def test_install_sh_stops_before_modelglot_when_macos_python_install_fails(
     posix_harness: PosixHarness,
 ):
     posix_harness.env.update(FAKE_UNAME="Darwin", FAIL_STEP="python-install")
     posix_harness.add_uv(UV_MINIMUM)
-    result = posix_harness.run_functions("install_free_claude_code")
+    result = posix_harness.run_functions("install_modelglot")
     assert result.returncode != 0
     assert not any(call.startswith("uv:tool install") for call in posix_harness.calls())
 
@@ -2017,7 +2048,9 @@ def test_install_sh_macos_helper_dry_run_and_platform_scope(
         f"dry_run={int(dry_run)}\ninstall_macos_desktop_app"
     )
     assert result.returncode == 0, result.stderr
-    assert not any(call.startswith("fcc-desktop:") for call in posix_harness.calls())
+    assert not any(
+        call.startswith("modelglot-desktop:") for call in posix_harness.calls()
+    )
     assert ("--install-macos-app" in result.stdout) == dry_run
     assert not (posix_harness.root / "home/Applications").exists()
 
@@ -2032,11 +2065,9 @@ def test_install_sh_stops_if_macos_bundle_setup_fails(
     assert result.returncode != 0
     assert "Command failed with exit code 37" in result.stderr
     assert "ModelGlot is installed and verified." in result.stdout
-    assert "Start the proxy with: fcc-server" in result.stdout
+    assert "Start the proxy with: modelglot-server" in result.stdout
     assert "Open ModelGlot from Applications" not in result.stdout
-    assert not (
-        posix_harness.root / "home" / "Desktop" / "Free Claude Code.app"
-    ).exists()
+    assert not (posix_harness.root / "home" / "Desktop" / "ModelGlot.app").exists()
 
 
 @pytest.mark.parametrize("uv_version", (UV_MINIMUM, f"{UV_MINIMUM}+build.1", UV_NEWER))
@@ -2102,12 +2133,12 @@ def test_install_sh_continues_when_pi_is_not_installed(
 
     assert result.returncode == 0, result.stderr
     assert "Pi was not installed; continuing without it." in result.stdout
-    assert "Run Pi with: fcc-pi" not in result.stdout
+    assert "Run Pi with: modelglot-pi" not in result.stdout
     calls = posix_harness.calls()
     assert "pi-install" in calls
     assert not any(call.startswith("pi:") for call in calls)
     assert "uv-install" in calls
-    assert "fcc-server:--version" in calls
+    assert "modelglot-server:--version" in calls
 
 
 def test_install_sh_continues_when_unrelated_pi_is_unchanged(
@@ -2119,11 +2150,11 @@ def test_install_sh_continues_when_unrelated_pi_is_unchanged(
 
     assert result.returncode == 0, result.stderr
     assert "Pi was not installed; continuing without it." in result.stdout
-    assert "Run Pi with: fcc-pi" not in result.stdout
+    assert "Run Pi with: modelglot-pi" not in result.stdout
     calls = posix_harness.calls()
     assert "unrelated-pi:--help" in calls
     assert "unrelated-pi:--version" not in calls
-    assert "fcc-server:--version" in calls
+    assert "modelglot-server:--version" in calls
 
 
 def test_install_sh_continues_when_pi_resolution_changes_to_unrelated_command(
@@ -2141,11 +2172,11 @@ def test_install_sh_continues_when_pi_resolution_changes_to_unrelated_command(
 
     assert result.returncode == 0, result.stderr
     assert "Pi was not installed; continuing without it." in result.stdout
-    assert "Run Pi with: fcc-pi" not in result.stdout
+    assert "Run Pi with: modelglot-pi" not in result.stdout
     calls = posix_harness.calls()
     assert "other-unrelated-pi:--help" in calls
     assert "other-unrelated-pi:--version" not in calls
-    assert "fcc-server:--version" in calls
+    assert "modelglot-server:--version" in calls
 
 
 @pytest.mark.parametrize(
@@ -2291,10 +2322,10 @@ def test_install_sh_replaces_prerelease_uv(
         "uv-download",
         "uv-install",
         "uv-verify",
-        "fcc-install",
+        "modelglot-install",
         "path-update",
-        "fcc-missing",
-        "fcc-verify",
+        "modelglot-missing",
+        "modelglot-verify",
     ],
 )
 def test_install_sh_stops_without_success_on_each_failure(
@@ -2330,8 +2361,8 @@ def test_install_sh_stops_without_success_on_each_failure(
         "uv-download": "uv-install",
         "uv-install": "uv:--version",
         "uv-verify": "uv:tool install",
-        "fcc-install": "uv:tool update-shell",
-        "fcc-missing": "fcc-server:--version",
+        "modelglot-install": "uv:tool update-shell",
+        "modelglot-missing": "modelglot-server:--version",
     }.get(failure)
     if failure == "pi-verify":
         # OpenCode is probed during preflight. No later phase may run after Pi fails.
@@ -2363,7 +2394,7 @@ def test_install_sh_rejects_broken_existing_client_without_replacing_it(
 
     assert result.returncode != 0
     calls = posix_harness.calls()
-    _assert_uv_ready_without_fcc_install(calls)
+    _assert_uv_ready_without_modelglot_install(calls)
     assert not any("claude.ai" in call for call in calls)
 
 
@@ -2392,7 +2423,7 @@ def test_install_sh_rejects_unparseable_existing_uv(
         ),
     ],
 )
-def test_install_sh_voice_flags_only_change_fcc_spec(
+def test_install_sh_voice_flags_only_change_modelglot_spec(
     posix_harness: PosixHarness,
     args: tuple[str, ...],
     package: str,
@@ -2430,12 +2461,12 @@ def test_install_sh_rejects_invalid_options_before_mutation(
     assert posix_harness.calls() == []
 
 
-@pytest.mark.parametrize("command_name", FCC_COMMANDS)
-def test_install_sh_rejects_running_fcc_before_mutation(
+@pytest.mark.parametrize("command_name", MODELGLOT_COMMANDS)
+def test_install_sh_rejects_running_modelglot_before_mutation(
     posix_harness: PosixHarness,
     command_name: str,
 ) -> None:
-    posix_harness.env["FCC_RUNNING_COMMAND"] = command_name
+    posix_harness.env["MODELGLOT_RUNNING_COMMAND"] = command_name
 
     result = posix_harness.run()
 
@@ -2444,20 +2475,20 @@ def test_install_sh_rejects_running_fcc_before_mutation(
     assert f"{command_name} (PID 4242)" in result.stderr
 
 
-def test_install_sh_rechecks_for_fcc_process_before_tool_replacement(
+def test_install_sh_rechecks_for_modelglot_process_before_tool_replacement(
     posix_harness: PosixHarness,
 ) -> None:
     posix_harness.add_client("claude")
     posix_harness.add_client("codex")
     posix_harness.add_client("pi")
     posix_harness.add_uv(UV_MINIMUM)
-    posix_harness.env["FCC_RUNNING_COMMAND"] = "fcc-server"
-    posix_harness.env["FCC_RUNNING_PHASE"] = "late"
+    posix_harness.env["MODELGLOT_RUNNING_COMMAND"] = "modelglot-server"
+    posix_harness.env["MODELGLOT_RUNNING_PHASE"] = "late"
 
     result = posix_harness.run()
 
     assert result.returncode != 0
-    assert "fcc-server (PID 4242)" in result.stderr
+    assert "modelglot-server (PID 4242)" in result.stderr
     assert not any(
         "--refresh-package modelglot" in call for call in posix_harness.calls()
     )
@@ -2466,18 +2497,29 @@ def test_install_sh_rechecks_for_fcc_process_before_tool_replacement(
 def test_install_sh_ignores_similarly_named_process(
     posix_harness: PosixHarness,
 ) -> None:
-    posix_harness.env["FCC_RUNNING_COMMAND"] = "fcc-server-helper"
+    posix_harness.env["MODELGLOT_RUNNING_COMMAND"] = "modelglot-server-helper"
 
     result = posix_harness.run()
 
     assert result.returncode == 0, result.stderr
 
 
+def test_install_sh_preserves_running_upstream_installation(
+    posix_harness: PosixHarness,
+) -> None:
+    posix_harness.env["MODELGLOT_RUNNING_COMMAND"] = "other-server"
+
+    result = posix_harness.run()
+
+    assert result.returncode == 0, result.stderr
+    _assert_posix_installer_upstream_preserved(posix_harness)
+
+
 @pytest.mark.parametrize(
     ("command_name", "process_args"),
     (
-        ("free-claude-code", "/home/user/.local/bin/free-claude-code"),
-        ("fcc-server", "/usr/bin/python3 /home/user/.local/bin/fcc-server"),
+        ("modelglot-desktop", "/home/user/.local/bin/modelglot-desktop"),
+        ("modelglot-server", "/usr/bin/python3 /home/user/.local/bin/modelglot-server"),
     ),
 )
 def test_install_sh_process_fallback_reads_full_command_line(
@@ -2487,7 +2529,7 @@ def test_install_sh_process_fallback_reads_full_command_line(
 ) -> None:
     posix_harness.use_process_list_fallback(f"4242 {process_args}")
 
-    result = posix_harness.run_functions("assert_no_fcc_processes_running")
+    result = posix_harness.run_functions("assert_no_modelglot_processes_running")
 
     assert result.returncode != 0
     assert posix_harness.calls() == []
@@ -2503,17 +2545,19 @@ def test_install_ps1_gui_icon_export_completes_before_returning(
     powershell_harness: PowerShellHarness,
 ) -> None:
     desktop_command = powershell_harness.root / "icon-exporter.exe"
-    shutil.copy2(Path(sys.executable).with_name("fcc-desktop.exe"), desktop_command)
+    shutil.copy2(
+        Path(sys.executable).with_name("modelglot-desktop.exe"), desktop_command
+    )
     destination = (
-        powershell_harness.root / "profile with spaces" / ".fcc" / "app-icon.ico"
+        powershell_harness.root / "profile with spaces" / ".modelglot" / "app-icon.ico"
     )
     powershell_harness.env.update(
-        FCC_TEST_DESKTOP_COMMAND=str(desktop_command),
-        FCC_TEST_ICON_PATH=str(destination),
+        MODELGLOT_TEST_DESKTOP_COMMAND=str(desktop_command),
+        MODELGLOT_TEST_ICON_PATH=str(destination),
     )
     completed = powershell_harness.run_functions(
-        "Export-FccDesktopIcon -DesktopCommand $env:FCC_TEST_DESKTOP_COMMAND "
-        "-IconPath $env:FCC_TEST_ICON_PATH"
+        "Export-ModelGlotDesktopIcon -DesktopCommand $env:MODELGLOT_TEST_DESKTOP_COMMAND "
+        "-IconPath $env:MODELGLOT_TEST_ICON_PATH"
     )
     assert completed.returncode == 0, completed.stderr
     assert (
@@ -2529,8 +2573,8 @@ def _create_windows_shortcut(
 ) -> None:
     shortcut_path.parent.mkdir(parents=True, exist_ok=True)
     env = os.environ | {
-        "FCC_TEST_SHORTCUT": str(shortcut_path),
-        "FCC_TEST_TARGET": str(target_path),
+        "MODELGLOT_TEST_SHORTCUT": str(shortcut_path),
+        "MODELGLOT_TEST_TARGET": str(target_path),
     }
     subprocess.run(
         [
@@ -2539,8 +2583,8 @@ def _create_windows_shortcut(
             "-Command",
             (
                 "$shell = New-Object -ComObject WScript.Shell; "
-                "$shortcut = $shell.CreateShortcut($env:FCC_TEST_SHORTCUT); "
-                "$shortcut.TargetPath = $env:FCC_TEST_TARGET; "
+                "$shortcut = $shell.CreateShortcut($env:MODELGLOT_TEST_SHORTCUT); "
+                "$shortcut.TargetPath = $env:MODELGLOT_TEST_TARGET; "
                 "$shortcut.Save()"
             ),
         ],
@@ -2556,7 +2600,7 @@ def _windows_shortcut_icon(
     shortcut_path: Path,
     env: dict[str, str],
 ) -> str:
-    process_env = env | {"FCC_TEST_SHORTCUT": str(shortcut_path)}
+    process_env = env | {"MODELGLOT_TEST_SHORTCUT": str(shortcut_path)}
     completed = subprocess.run(
         [
             powershell,
@@ -2564,7 +2608,7 @@ def _windows_shortcut_icon(
             "-Command",
             (
                 "$shell = New-Object -ComObject WScript.Shell; "
-                "$shortcut = $shell.CreateShortcut($env:FCC_TEST_SHORTCUT); "
+                "$shortcut = $shell.CreateShortcut($env:MODELGLOT_TEST_SHORTCUT); "
                 "[Console]::Out.Write($shortcut.IconLocation)"
             ),
         ],
@@ -2619,11 +2663,11 @@ def _batch_client(name: str, *, version_output: str | None = None) -> str:
     )
     return f"""@echo off
 echo {name}:%*>>"%CALL_LOG%"
-if "{name}"=="opencode" if "%FCC_RUNNING_PHASE%"=="opencode-plugin" (
-    if exist "%FCC_PROCESS_MARKER%.probed" (
-        type nul > "%FCC_PROCESS_MARKER%"
+if "{name}"=="opencode" if "%MODELGLOT_RUNNING_PHASE%"=="opencode-plugin" (
+    if exist "%MODELGLOT_PROCESS_MARKER%.probed" (
+        type nul > "%MODELGLOT_PROCESS_MARKER%"
     ) else (
-        type nul > "%FCC_PROCESS_MARKER%.probed"
+        type nul > "%MODELGLOT_PROCESS_MARKER%.probed"
     )
 )
 if "{name}"=="headroom" if "%FAIL_STEP%"=="headroom-check" exit /b 79
@@ -2669,7 +2713,7 @@ if "%1"=="tool" if "%2"=="update-shell" goto update_shell
 if "%1"=="tool" if "%2"=="dir" if "%3"=="--bin" goto tool_bin
 exit /b 59
 :version
-if "%FCC_RUNNING_PHASE%"=="late" type nul > "%FCC_PROCESS_MARKER%"
+if "%MODELGLOT_RUNNING_PHASE%"=="late" type nul > "%MODELGLOT_PROCESS_MARKER%"
 if "%FAIL_STEP%"=="uv-verify" exit /b 52
 echo uv {version}
 exit /b 0
@@ -2677,23 +2721,23 @@ exit /b 0
 if "%5"=="python3.12" goto install_aider
 if "%5"=="headroom-ai[mcp]==0.40.0" goto install_headroom
 if "%5"=="headroom-ai[mcp]" goto install_headroom
-if "%FAIL_STEP%"=="fcc-install" exit /b 53
+if "%FAIL_STEP%"=="modelglot-install" exit /b 53
 if not exist "%UV_BIN_DIR%" mkdir "%UV_BIN_DIR%"
-copy /y "%FAKE_FIXTURES%\fcc-command.cmd" "%UV_BIN_DIR%\fcc-server.cmd" >nul
-copy /y "%FAKE_FIXTURES%\fcc-command.cmd" "%UV_BIN_DIR%\fcc-desktop.cmd" >nul
-copy /y "%FAKE_FIXTURES%\fcc-command.cmd" "%UV_BIN_DIR%\fcc-claude.cmd" >nul
-copy /y "%FAKE_FIXTURES%\fcc-command.cmd" "%UV_BIN_DIR%\fcc-pi.cmd" >nul
-copy /y "%FAKE_FIXTURES%\fcc-command.cmd" "%UV_BIN_DIR%\fcc-opencode.cmd" >nul
-copy /y "%FAKE_FIXTURES%\fcc-command.cmd" "%UV_BIN_DIR%\fcc-cline.cmd" >nul
-copy /y "%FAKE_FIXTURES%\fcc-command.cmd" "%UV_BIN_DIR%\fcc-hermes.cmd" >nul
-copy /y "%FAKE_FIXTURES%\fcc-command.cmd" "%UV_BIN_DIR%\fcc-dsh.cmd" >nul
-copy /y "%FAKE_FIXTURES%\fcc-command.cmd" "%UV_BIN_DIR%\fcc-grok.cmd" >nul
-copy /y "%FAKE_FIXTURES%\fcc-command.cmd" "%UV_BIN_DIR%\fcc-muse.cmd" >nul
-copy /y "%FAKE_FIXTURES%\fcc-command.cmd" "%UV_BIN_DIR%\fcc-aider.cmd" >nul
-copy /y "%FAKE_FIXTURES%\fcc-command.cmd" "%UV_BIN_DIR%\fcc-agy.cmd" >nul
-copy /y "%FAKE_FIXTURES%\fcc-command.cmd" "%UV_BIN_DIR%\fcc-doctor.cmd" >nul
-copy /y "%FAKE_FIXTURES%\fcc-command.cmd" "%UV_BIN_DIR%\fcc-update.cmd" >nul
-if not "%FAIL_STEP%"=="fcc-missing" copy /y "%FAKE_FIXTURES%\fcc-command.cmd" "%UV_BIN_DIR%\fcc-codex.cmd" >nul
+copy /y "%FAKE_FIXTURES%\modelglot-command.cmd" "%UV_BIN_DIR%\modelglot-server.cmd" >nul
+copy /y "%FAKE_FIXTURES%\modelglot-command.cmd" "%UV_BIN_DIR%\modelglot-desktop.cmd" >nul
+copy /y "%FAKE_FIXTURES%\modelglot-command.cmd" "%UV_BIN_DIR%\modelglot-claude.cmd" >nul
+copy /y "%FAKE_FIXTURES%\modelglot-command.cmd" "%UV_BIN_DIR%\modelglot-pi.cmd" >nul
+copy /y "%FAKE_FIXTURES%\modelglot-command.cmd" "%UV_BIN_DIR%\modelglot-opencode.cmd" >nul
+copy /y "%FAKE_FIXTURES%\modelglot-command.cmd" "%UV_BIN_DIR%\modelglot-cline.cmd" >nul
+copy /y "%FAKE_FIXTURES%\modelglot-command.cmd" "%UV_BIN_DIR%\modelglot-hermes.cmd" >nul
+copy /y "%FAKE_FIXTURES%\modelglot-command.cmd" "%UV_BIN_DIR%\modelglot-dsh.cmd" >nul
+copy /y "%FAKE_FIXTURES%\modelglot-command.cmd" "%UV_BIN_DIR%\modelglot-grok.cmd" >nul
+copy /y "%FAKE_FIXTURES%\modelglot-command.cmd" "%UV_BIN_DIR%\modelglot-muse.cmd" >nul
+copy /y "%FAKE_FIXTURES%\modelglot-command.cmd" "%UV_BIN_DIR%\modelglot-aider.cmd" >nul
+copy /y "%FAKE_FIXTURES%\modelglot-command.cmd" "%UV_BIN_DIR%\modelglot-agy.cmd" >nul
+copy /y "%FAKE_FIXTURES%\modelglot-command.cmd" "%UV_BIN_DIR%\modelglot-doctor.cmd" >nul
+copy /y "%FAKE_FIXTURES%\modelglot-command.cmd" "%UV_BIN_DIR%\modelglot-update.cmd" >nul
+if not "%FAIL_STEP%"=="modelglot-missing" copy /y "%FAKE_FIXTURES%\modelglot-command.cmd" "%UV_BIN_DIR%\modelglot-codex.cmd" >nul
 exit /b 0
 :install_aider
 if "%FAIL_STEP%"=="aider-install" exit /b 57
@@ -2806,16 +2850,16 @@ exit /b 76
             + '\nWrite-Output "Installer scenario completed."\n',
             encoding="utf-8",
         )
-        self.env["FCC_INSTALLER_SCENARIO"] = str(scenario)
+        self.env["MODELGLOT_INSTALLER_SCENARIO"] = str(scenario)
         try:
             return self.run(*args, fail_step=fail_step)
         finally:
-            self.env["FCC_INSTALLER_SCENARIO"] = ""
+            self.env["MODELGLOT_INSTALLER_SCENARIO"] = ""
 
     def run_interactive(
         self, answers: list[str], *args: str, fail_step: str = ""
     ) -> subprocess.CompletedProcess[str]:
-        self.env["FCC_INSTALLER_ANSWERS"] = json.dumps({"answers": answers})
+        self.env["MODELGLOT_INSTALLER_ANSWERS"] = json.dumps({"answers": answers})
         return self.run(*args, fail_step=fail_step)
 
     def calls(self) -> list[str]:
@@ -2852,6 +2896,16 @@ def powershell_harness(
     log = tmp_path / "calls.log"
     for path in (bin_dir, fixtures, tool_bin, home, local_app_data, app_data):
         path.mkdir(parents=True)
+    upstream_home = home / ".otherapp"
+    upstream_home.mkdir()
+    (upstream_home / "config.json").write_text('{"upstream": true}\n', encoding="utf-8")
+    (upstream_home / "aumid.txt").write_text(
+        "io.github.example.otherapp\n", encoding="utf-8"
+    )
+    for name in UPSTREAM_COMMANDS:
+        (tool_bin / f"{name}.cmd").write_text(
+            "@echo off\nexit /b 0\n", encoding="utf-8"
+        )
     (fixtures / "pyproject.toml").write_text(
         (_repo_root() / "pyproject.toml").read_text(encoding="utf-8"), encoding="utf-8"
     )
@@ -2884,17 +2938,17 @@ def powershell_harness(
     (fixtures / "headroom-command.cmd").write_text(
         _batch_client("headroom"), encoding="utf-8"
     )
-    (fixtures / "fcc-command.cmd").write_text(
+    (fixtures / "modelglot-command.cmd").write_text(
         """@echo off
-for %%I in ("%~f0") do set "FCC_NAME=%%~nI"
-echo %FCC_NAME%:%*>>"%CALL_LOG%"
-if "%FAIL_STEP%"=="fcc-verify" exit /b 55
-if "%FCC_NAME%"=="fcc-desktop" if "%1"=="--export-icon" if "%FAIL_STEP%"=="desktop-icon-export" exit /b 56
-if "%FCC_NAME%"=="fcc-desktop" if "%1"=="--export-icon" (
+for %%I in ("%~f0") do set "MODELGLOT_NAME=%%~nI"
+echo %MODELGLOT_NAME%:%*>>"%CALL_LOG%"
+if "%FAIL_STEP%"=="modelglot-verify" exit /b 55
+if "%MODELGLOT_NAME%"=="modelglot-desktop" if "%1"=="--export-icon" if "%FAIL_STEP%"=="desktop-icon-export" exit /b 56
+if "%MODELGLOT_NAME%"=="modelglot-desktop" if "%1"=="--export-icon" (
     if not exist "%~dp2" mkdir "%~dp2"
     echo fake icon>"%~2"
 )
-if "%FCC_NAME%"=="fcc-server" if "%1"=="--version" echo modelglot 3.5.18
+if "%MODELGLOT_NAME%"=="modelglot-server" if "%1"=="--version" echo modelglot 3.5.18
 exit /b 0
 """,
         encoding="utf-8",
@@ -2955,8 +3009,8 @@ Add-Content -LiteralPath $env:CALL_LOG -Value "grok-install"
     (fixtures / "muse-installer.ps1").write_text(
         r"""if ($env:FAIL_STEP -eq "muse-install") { exit 68 }
 $originalPath = $env:Path
-if ($env:FCC_TEST_USER_PATH) {
-    $env:Path = "$originalPath$([IO.Path]::PathSeparator)$env:FCC_TEST_USER_PATH"
+if ($env:MODELGLOT_TEST_USER_PATH) {
+    $env:Path = "$originalPath$([IO.Path]::PathSeparator)$env:MODELGLOT_TEST_USER_PATH"
 }
 $existing = Get-Command "muse" -CommandType Application -ErrorAction SilentlyContinue
 $env:Path = $originalPath
@@ -3025,7 +3079,7 @@ Add-Content -LiteralPath $env:CALL_LOG -Value "agy-install"
             fixtures / asset_name, "w", zipfile.ZIP_DEFLATED
         ) as archive:
             archive.write(
-                Path(sys.executable).with_name("fcc-server.exe"),
+                Path(sys.executable).with_name("modelglot-server.exe"),
                 arcname="opencode.exe",
             )
     (bin_dir / "opencode.cmd").write_text(_batch_client("opencode"), encoding="utf-8")
@@ -3044,7 +3098,7 @@ function Invoke-RestMethod {
     if ($Uri -eq "https://registry.npmjs.org/-/package/opencode-ai/dist-tags") {
         Add-Content -LiteralPath $env:CALL_LOG -Value "download:$Uri"
         if ($env:FAIL_STEP -eq "opencode-metadata") { throw "simulated metadata failure" }
-        if ($env:FCC_RUNNING_PHASE -eq "opencode-preliminary") { New-Item -ItemType File -Path $env:FCC_PROCESS_MARKER -Force | Out-Null }
+        if ($env:MODELGLOT_RUNNING_PHASE -eq "opencode-preliminary") { New-Item -ItemType File -Path $env:MODELGLOT_PROCESS_MARKER -Force | Out-Null }
         if ($OutFile) {
             [IO.File]::WriteAllText($OutFile, $env:FAKE_OPENCODE_TAGS)
             return
@@ -3053,7 +3107,7 @@ function Invoke-RestMethod {
     }
 
     Add-Content -LiteralPath $env:CALL_LOG -Value "download:$Uri"
-    if ($Uri -eq "https://raw.githubusercontent.com/amedeo82/ModelGlot/v$env:FCC_INSTALL_VERSION/pyproject.toml") {
+    if ($Uri -eq "https://raw.githubusercontent.com/amedeo82/ModelGlot/v$env:MODELGLOT_INSTALL_VERSION/pyproject.toml") {
         if ($env:FAIL_STEP -eq "toolchain-download") { throw "simulated metadata failure" }
         return [IO.File]::ReadAllText((Join-Path $env:FAKE_FIXTURES "pyproject.toml"))
     }
@@ -3112,36 +3166,36 @@ function Invoke-RestMethod {
         throw "unexpected installer URL: $Uri"
     }
     Copy-Item -LiteralPath $source -Destination $OutFile -Force
-    if ($env:FCC_RUNNING_PHASE -eq "opencode-download" -and $Uri.Contains("opencode.ai/files/bin/")) {
-        New-Item -ItemType File -Path $env:FCC_PROCESS_MARKER -Force | Out-Null
+    if ($env:MODELGLOT_RUNNING_PHASE -eq "opencode-download" -and $Uri.Contains("opencode.ai/files/bin/")) {
+        New-Item -ItemType File -Path $env:MODELGLOT_PROCESS_MARKER -Force | Out-Null
     }
 }
 function Get-Process {
     [CmdletBinding()]
     param([string[]] $Name)
 
-    if ([string]::IsNullOrWhiteSpace($env:FCC_RUNNING_COMMAND)) {
+    if ([string]::IsNullOrWhiteSpace($env:MODELGLOT_RUNNING_COMMAND)) {
         return
     }
     if (
-        $env:FCC_RUNNING_PHASE -ne "early" -and
-        -not (Test-Path -LiteralPath $env:FCC_PROCESS_MARKER)
+        $env:MODELGLOT_RUNNING_PHASE -ne "early" -and
+        -not (Test-Path -LiteralPath $env:MODELGLOT_PROCESS_MARKER)
     ) {
         return
     }
     foreach ($requestedName in $Name) {
-        if ($requestedName -eq $env:FCC_RUNNING_COMMAND) {
+        if ($requestedName -eq $env:MODELGLOT_RUNNING_COMMAND) {
             [pscustomobject] @{ Id = 4242; ProcessName = $requestedName }
         }
     }
 }
-$installerSource = [IO.File]::ReadAllText($env:FCC_INSTALLER)
+$installerSource = [IO.File]::ReadAllText($env:MODELGLOT_INSTALLER)
 $installerSource = $installerSource.Replace(
     '[Environment]::GetEnvironmentVariable("Path", "User")',
-    '$env:FCC_TEST_USER_PATH'
+    '$env:MODELGLOT_TEST_USER_PATH'
 )
-if ($env:FCC_INSTALLER_ANSWERS) {
-    $script:InstallerAnswers = (ConvertFrom-Json $env:FCC_INSTALLER_ANSWERS).answers
+if ($env:MODELGLOT_INSTALLER_ANSWERS) {
+    $script:InstallerAnswers = (ConvertFrom-Json $env:MODELGLOT_INSTALLER_ANSWERS).answers
     $script:InstallerAnswerIndex = 0
     function Read-Host {
         param([string] $Prompt)
@@ -3177,8 +3231,8 @@ $nativeVersionProbe = '    $output = Read-OpenCodeVersionOutput $OpenCodePath'
 $fakeArchiveVersionProbe = @'
     $output = if ([IO.Path]::GetExtension($OpenCodePath) -eq ".exe") {
         Add-Content -LiteralPath $env:CALL_LOG -Value "opencode:--version"
-        if ($env:FCC_RUNNING_PHASE -eq "opencode-publish" -and [IO.File]::ReadAllText($OpenCodePath) -ne "old-opencode-v1") {
-            New-Item -ItemType File -Path $env:FCC_PROCESS_MARKER -Force | Out-Null
+        if ($env:MODELGLOT_RUNNING_PHASE -eq "opencode-publish" -and [IO.File]::ReadAllText($OpenCodePath) -ne "old-opencode-v1") {
+            New-Item -ItemType File -Path $env:MODELGLOT_PROCESS_MARKER -Force | Out-Null
         }
         if ($env:FAIL_STEP -eq "opencode-verify") { throw "simulated version failure" }
         if ([IO.File]::ReadAllText($OpenCodePath) -eq "old-opencode-v1") {
@@ -3194,7 +3248,7 @@ $fakeArchiveVersionProbe = @'
     }
 '@
 $installerSource = $installerSource.Replace($nativeVersionProbe, $fakeArchiveVersionProbe.TrimEnd())
-if ($env:FCC_INSTALLER_SCENARIO) {
+if ($env:MODELGLOT_INSTALLER_SCENARIO) {
     $tokens = $null
     $parseErrors = $null
     $ast = [System.Management.Automation.Language.Parser]::ParseInput(
@@ -3206,7 +3260,7 @@ if ($env:FCC_INSTALLER_SCENARIO) {
     })
     if (-not $definitions.Count) { throw "Installer function definitions missing" }
     $installerSource = $installerSource.Substring(0, $definitions[-1].Extent.EndOffset) +
-        [Environment]::NewLine + [IO.File]::ReadAllText($env:FCC_INSTALLER_SCENARIO)
+        [Environment]::NewLine + [IO.File]::ReadAllText($env:MODELGLOT_INSTALLER_SCENARIO)
 }
 $installer = [scriptblock]::Create($installerSource)
 & $installer @args
@@ -3229,22 +3283,22 @@ $installer = [scriptblock]::Create($installerSource)
             "CALL_LOG": str(log),
             "CLAUDE_CONFIG_DIR": "",
             "FAKE_FIXTURES": str(fixtures),
-            "FCC_INSTALL_VERSION": RELEASE_VERSION,
-            "_FCC_INSTALLER_RELEASE": RELEASE_VERSION,
+            "MODELGLOT_INSTALL_VERSION": RELEASE_VERSION,
+            "_MODELGLOT_INSTALLER_RELEASE": RELEASE_VERSION,
             "FAKE_TOOL_BIN": str(tool_bin),
             "FAKE_NPM_PREFIX": str(npm_prefix),
-            "FCC_INSTALLER": str(_repo_root() / "scripts" / "install.ps1"),
-            "FCC_PROCESS_MARKER": str(tmp_path / "fcc-process-ready"),
-            "FCC_RUNNING_COMMAND": "",
-            "FCC_RUNNING_PHASE": "early",
+            "MODELGLOT_INSTALLER": str(_repo_root() / "scripts" / "install.ps1"),
+            "MODELGLOT_PROCESS_MARKER": str(tmp_path / "modelglot-process-ready"),
+            "MODELGLOT_RUNNING_COMMAND": "",
+            "MODELGLOT_RUNNING_PHASE": "early",
             "PROCESSOR_ARCHITECTURE": "AMD64",
             "PROCESSOR_ARCHITEW6432": "",
             "FAIL_STEP": "",
             "FAKE_OPENCODE_RELEASE": "",
             "FAKE_OPENCODE_ARCHIVE_VERSION": "",
-            "FCC_INSTALLER_ANSWERS": "",
-            "FCC_INSTALLER_SCENARIO": "",
-            "FCC_TEST_USER_PATH": "",
+            "MODELGLOT_INSTALLER_ANSWERS": "",
+            "MODELGLOT_INSTALLER_SCENARIO": "",
+            "MODELGLOT_TEST_USER_PATH": "",
         }
     )
     env.pop("XDG_BIN_HOME", None)
@@ -3254,26 +3308,57 @@ $installer = [scriptblock]::Create($installerSource)
     env.pop("UV_TOOL_BIN_DIR", None)
     env.pop("CARGO_HOME", None)
     env.pop("GROK_BIN_DIR", None)
+    upstream_shortcuts = (
+        home / "Desktop" / "Other App.lnk",
+        app_data
+        / "Microsoft"
+        / "Windows"
+        / "Start Menu"
+        / "Programs"
+        / "Other App.lnk",
+    )
+    for shortcut in upstream_shortcuts:
+        _create_windows_shortcut(powershell, shortcut, tool_bin / "other-desktop.cmd")
     return PowerShellHarness(
         tmp_path, bin_dir, fixtures, tool_bin, log, env, powershell, wrapper
     )
+
+
+def _assert_powershell_installer_upstream_preserved(
+    harness: PowerShellHarness,
+) -> None:
+    home = Path(harness.env["USERPROFILE"])
+    assert (home / ".otherapp" / "config.json").read_text(
+        encoding="utf-8"
+    ) == '{"upstream": true}\n'
+    assert (home / ".otherapp" / "aumid.txt").read_text(
+        encoding="utf-8"
+    ) == "io.github.example.otherapp\n"
+    assert all(
+        (harness.tool_bin / f"{name}.cmd").is_file() for name in UPSTREAM_COMMANDS
+    )
+    app_data = Path(harness.env["APPDATA"])
+    assert (home / "Desktop" / "Other App.lnk").is_file()
+    assert (
+        app_data / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Other App.lnk"
+    ).is_file()
 
 
 class TestPowerShellModuleIsolation:
     @pytest.fixture(autouse=True)
     def unrelated_host_module(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         modules = tmp_path / "host-modules"
-        module = modules / "FccUnrelated"
+        module = modules / "ModelGlotUnrelated"
         module.mkdir(parents=True)
-        (module / "FccUnrelated.psd1").write_text(
-            "@{RootModule='FccUnrelated.psm1'; ModuleVersion='1.0.0'; "
-            "FunctionsToExport=@('Get-FccUnrelatedProbe')}",
+        (module / "ModelGlotUnrelated.psd1").write_text(
+            "@{RootModule='ModelGlotUnrelated.psm1'; ModuleVersion='1.0.0'; "
+            "FunctionsToExport=@('Get-ModelGlotUnrelatedProbe')}",
             encoding="utf-8",
         )
-        (module / "FccUnrelated.psm1").write_text(
+        (module / "ModelGlotUnrelated.psm1").write_text(
             "Add-Content -LiteralPath $env:CALL_LOG -Value 'unrelated-module-import'\n"
-            "function Get-FccUnrelatedProbe { 'unrelated' }\n"
-            "Export-ModuleMember -Function Get-FccUnrelatedProbe\n",
+            "function Get-ModelGlotUnrelatedProbe { 'unrelated' }\n"
+            "Export-ModuleMember -Function Get-ModelGlotUnrelatedProbe\n",
             encoding="utf-8",
         )
         monkeypatch.setenv(
@@ -3285,9 +3370,9 @@ class TestPowerShellModuleIsolation:
         self, powershell_harness: PowerShellHarness
     ):
         result = powershell_harness.run_functions(
-            """$null = Get-ApplicationCommand 'FccUnrelatedProbe'
+            """$null = Get-ApplicationCommand 'ModelGlotUnrelatedProbe'
 $child = Get-PowerShellExecutable
-& $child -NoProfile -Command 'Get-Command FccUnrelatedProbe -CommandType Application -ErrorAction SilentlyContinue; Get-Item -LiteralPath $env:FAKE_FIXTURES | Out-Null; exit 0'
+& $child -NoProfile -Command 'Get-Command ModelGlotUnrelatedProbe -CommandType Application -ErrorAction SilentlyContinue; Get-Item -LiteralPath $env:FAKE_FIXTURES | Out-Null; exit 0'
 if ($LASTEXITCODE -ne 0) { throw 'Child command lookup failed' }
 """
         )
@@ -3311,7 +3396,7 @@ def test_install_ps1_auto_selects_installed_harnesses(
 
     assert result.returncode == 0, result.stderr
     assert "Install or verify" not in result.stdout
-    assert "for fcc-" not in result.stdout
+    assert "for modelglot-" not in result.stdout
     assert ("Enable RTK + Headroom token optimization" in result.stdout) is (
         rtk is not True
     )
@@ -3338,7 +3423,7 @@ def test_install_ps1_asks_only_about_missing_harnesses(
     )
 
     assert result.returncode == 0, result.stderr
-    assert re.findall(r"for fcc-(\w+)\?", result.stdout) == [
+    assert re.findall(r"for modelglot-(\w+)\?", result.stdout) == [
         "codex",
         "pi",
         "cline",
@@ -3369,7 +3454,7 @@ def test_install_ps1_discovers_installed_npm_harnesses_before_questions(
     result = powershell_harness.run_interactive(["n"] * 8)
 
     assert result.returncode == 0, result.stderr
-    assert re.findall(r"for fcc-(\w+)\?", result.stdout) == [
+    assert re.findall(r"for modelglot-(\w+)\?", result.stdout) == [
         "claude",
         "codex",
         "hermes",
@@ -3425,7 +3510,7 @@ def test_install_sh_discovery_preserves_existing_command_priority(
     )
 
     assert result.returncode == 0, result.stdout
-    assert f"for fcc-{candidate}?" not in result.stdout
+    assert f"for modelglot-{candidate}?" not in result.stdout
     calls = posix_harness.calls()
     assert "claude:--version" in calls
     assert "codex:--version" in calls
@@ -3446,7 +3531,7 @@ def test_install_ps1_discovery_preserves_existing_command_priority(
     )
 
     assert result.returncode == 0, result.stderr
-    assert f"for fcc-{candidate}?" not in result.stdout
+    assert f"for modelglot-{candidate}?" not in result.stdout
     calls = powershell_harness.calls()
     assert "claude:--version" in calls
     assert "codex:--version" in calls
@@ -3531,21 +3616,22 @@ def test_install_ps1_setup_preserves_other_commands(
     _assert_setup_preserves_other_commands(powershell_harness, installing, other)
 
 
-def test_install_ps1_verifies_new_fcc_after_custom_tool_discovery(
+def test_install_ps1_verifies_new_modelglot_after_custom_tool_discovery(
     powershell_harness: PowerShellHarness,
 ) -> None:
     powershell_harness.add_uv(UV_MINIMUM)
     powershell_harness.env["UV_TOOL_BIN_DIR"] = str(powershell_harness.tool_bin)
     _write_executable(
-        powershell_harness.bin_dir / "fcc-server.cmd", _batch_client("stale-fcc")
+        powershell_harness.bin_dir / "modelglot-server.cmd",
+        _batch_client("stale-modelglot"),
     )
 
     result = powershell_harness.run_interactive(["n"] * 11)
 
     assert result.returncode == 0, result.stdout + result.stderr
     calls = powershell_harness.calls()
-    assert "fcc-server:--version" in calls
-    assert not any(call.startswith("stale-fcc:") for call in calls)
+    assert "modelglot-server:--version" in calls
+    assert not any(call.startswith("stale-modelglot:") for call in calls)
 
 
 def _assert_lookup_is_isolated(
@@ -3556,7 +3642,7 @@ def _assert_lookup_is_isolated(
     make_command = _batch_client if windows else _posix_command
     tool_bin = harness.root / "query tool bin"
     harness.env["UV_TOOL_BIN_DIR"] = str(tool_bin)
-    harness.env["FCC_TEST_USER_PATH"] = str(tool_bin)
+    harness.env["MODELGLOT_TEST_USER_PATH"] = str(tool_bin)
     harness.env["QUERY_COMMAND"] = command
     harness.env["QUERY_PRESENT"] = "1" if present else "0"
     if command == "opencode":
@@ -3703,7 +3789,7 @@ def test_install_ps1_discovers_installed_aider_without_uv(
     result = powershell_harness.run_interactive(["n"] * 10)
 
     assert result.returncode == 0, result.stderr
-    assert "for fcc-aider?" not in result.stdout
+    assert "for modelglot-aider?" not in result.stdout
     calls = powershell_harness.calls()
     assert "aider:--version" in calls
     assert not any("aider-chat@latest" in call for call in calls)
@@ -3718,7 +3804,7 @@ def test_install_ps1_asks_about_unrelated_pi(
     result = powershell_harness.run_interactive(["n"] * 11)
 
     assert result.returncode == 0, result.stderr
-    assert "Install Pi for fcc-pi?" in result.stdout
+    assert "Install Pi for modelglot-pi?" in result.stdout
     calls = powershell_harness.calls()
     assert "unrelated-pi:--help" in calls
     assert "unrelated-pi:--version" not in calls
@@ -3732,12 +3818,12 @@ def test_install_ps1_discovers_muse_from_user_path(
     user_bin = powershell_harness.root / "user bin"
     _write_executable(user_bin / "muse.cmd", _batch_client("muse"))
     _write_executable(user_bin / "codex.cmd", _batch_client("wrong-codex"))
-    powershell_harness.env["FCC_TEST_USER_PATH"] = str(user_bin)
+    powershell_harness.env["MODELGLOT_TEST_USER_PATH"] = str(user_bin)
 
     result = powershell_harness.run_interactive(["n"] * 9)
 
     assert result.returncode == 0, result.stderr
-    assert "for fcc-muse?" not in result.stdout
+    assert "for modelglot-muse?" not in result.stdout
     calls = powershell_harness.calls()
     assert "muse:--version" in calls
     assert "muse-install:external" in calls
@@ -3754,7 +3840,7 @@ def test_install_ps1_interactive_dry_run_does_not_execute_probes(
     result = powershell_harness.run_interactive(["n"], "-DryRun")
 
     assert result.returncode == 0, result.stderr
-    assert "for fcc-" not in result.stdout
+    assert "for modelglot-" not in result.stdout
     assert powershell_harness.calls() == []
 
 
@@ -3784,7 +3870,7 @@ def test_install_ps1_does_not_use_uv_install_directory_for_aider(
     result = powershell_harness.run_interactive(["n"] * 11)
 
     assert result.returncode == 0, result.stderr
-    assert "Install Aider for fcc-aider?" in result.stdout
+    assert "Install Aider for modelglot-aider?" in result.stdout
     assert "aider:--version" not in powershell_harness.calls()
 
 
@@ -3831,16 +3917,16 @@ def test_install_ps1_fresh_install_is_verified(
     assert calls[-4:-1] == [
         "uv:tool update-shell",
         "uv:tool dir --bin",
-        "fcc-server:--version",
+        "modelglot-server:--version",
     ]
     home = Path(powershell_harness.env["USERPROFILE"])
     app_data = Path(powershell_harness.env["APPDATA"])
     assert (home / ".grok" / "bin" / "grok.cmd").is_file()
     assert not (home / ".local" / "bin" / "grok.cmd").exists()
-    icon = home / ".fcc" / "app-icon.ico"
+    icon = home / ".modelglot" / "app-icon.ico"
     assert icon.read_text(encoding="utf-8").strip() == "fake icon"
-    assert calls[-1] == f'fcc-desktop:--export-icon "{icon}"'
-    desktop_shortcut = home / "Desktop" / "Free Claude Code.lnk"
+    assert calls[-1] == f'modelglot-desktop:--export-icon "{icon}"'
+    desktop_shortcut = home / "Desktop" / "ModelGlot.lnk"
     assert desktop_shortcut.is_file()
     assert (
         _windows_shortcut_icon(
@@ -3851,13 +3937,9 @@ def test_install_ps1_fresh_install_is_verified(
         == f"{icon},0"
     )
     assert (
-        app_data
-        / "Microsoft"
-        / "Windows"
-        / "Start Menu"
-        / "Programs"
-        / "Free Claude Code.lnk"
+        app_data / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "ModelGlot.lnk"
     ).is_file()
+    _assert_powershell_installer_upstream_preserved(powershell_harness)
 
 
 def test_install_ps1_discovers_grok_in_custom_bin_directory(
@@ -3945,7 +4027,7 @@ def test_install_ps1_stops_when_muse_install_fails(
 
     assert result.returncode != 0
     assert "Installer scenario completed." not in result.stdout
-    _assert_uv_ready_without_fcc_install(powershell_harness.calls())
+    _assert_uv_ready_without_modelglot_install(powershell_harness.calls())
 
 
 @pytest.mark.parametrize("failure", ["grok-download", "grok-install"])
@@ -3960,7 +4042,7 @@ def test_install_ps1_stops_when_grok_install_fails(
 
     assert result.returncode != 0
     assert "Installer scenario completed." not in result.stdout
-    _assert_uv_ready_without_fcc_install(powershell_harness.calls())
+    _assert_uv_ready_without_modelglot_install(powershell_harness.calls())
 
 
 def test_install_ps1_stops_when_aider_install_fails(
@@ -4030,7 +4112,7 @@ def test_install_ps1_checks_existing_aider_in_custom_uv_tool_bin_before_installi
         assert result.returncode == 0, result.stderr
     calls = powershell_harness.calls()
     if interactive:
-        assert "for fcc-aider?" not in result.stdout
+        assert "for modelglot-aider?" not in result.stdout
         assert "aider:--version" in calls
     else:
         assert calls.index("uv:tool dir --bin") < calls.index("aider:--version")
@@ -4118,7 +4200,7 @@ def test_install_ps1_rejects_exact_dsh_on_unsupported_node(
     assert "requires Node.js ^22.19.0 or >=24.0.0" in (
         f"{result.stdout}\n{result.stderr}"
     )
-    _assert_uv_ready_without_fcc_install(powershell_harness.calls())
+    _assert_uv_ready_without_modelglot_install(powershell_harness.calls())
 
 
 @pytest.mark.parametrize("node_version", ["22.18.0", "23.9.0", "not-a-version"])
@@ -4142,7 +4224,7 @@ def test_install_ps1_rejects_incompatible_node_for_selected_dsh(
 
     assert result.returncode != 0
     assert "Installer scenario completed." not in result.stdout
-    _assert_uv_ready_without_fcc_install(powershell_harness.calls())
+    _assert_uv_ready_without_modelglot_install(powershell_harness.calls())
 
 
 def test_install_ps1_noninteractive_skips_dsh_without_node(
@@ -4156,7 +4238,7 @@ def test_install_ps1_noninteractive_skips_dsh_without_node(
     result = powershell_harness.run()
 
     assert result.returncode == 0, result.stderr
-    assert "Run DeepSeek Harness with: fcc-dsh" not in result.stdout
+    assert "Run DeepSeek Harness with: modelglot-dsh" not in result.stdout
     assert not any("@deepseek-ai/dsh" in call for call in powershell_harness.calls())
 
 
@@ -4170,7 +4252,7 @@ def test_install_ps1_stops_when_selected_dsh_install_fails(
 
     assert result.returncode != 0
     assert "Installer scenario completed." not in result.stdout
-    _assert_uv_ready_without_fcc_install(powershell_harness.calls())
+    _assert_uv_ready_without_modelglot_install(powershell_harness.calls())
 
 
 def test_install_ps1_installs_hermes_noninteractively(
@@ -4287,7 +4369,7 @@ def test_install_ps1_rejects_conflicting_rtk_command(
     assert result.returncode != 0
     assert "not a compatible Rust Token Killer installation" in result.stderr
     assert not any("rtk-ai/rtk" in call for call in powershell_harness.calls())
-    _assert_uv_ready_without_fcc_install(powershell_harness.calls())
+    _assert_uv_ready_without_modelglot_install(powershell_harness.calls())
 
 
 def test_install_ps1_rtk_dry_run_prints_install_and_agent_setup(
@@ -4354,10 +4436,10 @@ def test_install_ps1_stops_if_windows_icon_export_fails(
     assert result.returncode != 0
     assert "Command failed with exit code 56" in result.stderr
     assert "ModelGlot is installed and verified." in result.stdout
-    assert "start the proxy with: fcc-server" in result.stdout
+    assert "start the proxy with: modelglot-server" in result.stdout
     assert "Open the ModelGlot desktop shortcut" not in result.stdout
     home = Path(powershell_harness.env["USERPROFILE"])
-    assert not (home / "Desktop" / "Free Claude Code.lnk").exists()
+    assert not (home / "Desktop" / "ModelGlot.lnk").exists()
 
 
 def test_install_ps1_preserves_unowned_desktop_shortcut(
@@ -4365,7 +4447,7 @@ def test_install_ps1_preserves_unowned_desktop_shortcut(
 ) -> None:
     powershell_harness.add_uv(UV_MINIMUM)
     desktop_shortcut = (
-        Path(powershell_harness.env["USERPROFILE"]) / "Desktop" / "Free Claude Code.lnk"
+        Path(powershell_harness.env["USERPROFILE"]) / "Desktop" / "ModelGlot.lnk"
     )
     unrelated_target = powershell_harness.root / "unrelated.cmd"
     unrelated_target.write_text("@echo off\n", encoding="utf-8")
@@ -4377,14 +4459,14 @@ def test_install_ps1_preserves_unowned_desktop_shortcut(
     original_shortcut = desktop_shortcut.read_bytes()
 
     result = powershell_harness.run_functions(
-        "Add-KnownBinDirectories\nEnsure-Uv\nInstall-FreeClaudeCode\nConfigure-AndConfirmFreeClaudeCode\nShow-InstallerNextSteps"
+        "Add-KnownBinDirectories\nEnsure-Uv\nInstall-ModelGlot\nConfigure-AndConfirmModelGlot\nShow-InstallerNextSteps"
     )
 
     assert result.returncode == 0, result.stderr
-    assert "not managed by Free Claude Code" in result.stdout
+    assert "not managed by ModelGlot" in result.stdout
     assert desktop_shortcut.read_bytes() == original_shortcut
     assert "Open the ModelGlot desktop shortcut" not in result.stdout
-    assert "start the proxy with: fcc-server" in result.stdout
+    assert "start the proxy with: modelglot-server" in result.stdout
 
 
 @pytest.mark.parametrize("uv_version", (UV_MINIMUM, f"{UV_MINIMUM}+build.1", UV_NEWER))
@@ -4469,12 +4551,12 @@ def test_install_ps1_continues_when_pi_is_not_installed(
 
     assert result.returncode == 0, result.stderr
     assert "Pi was not installed; continuing without it." in result.stdout
-    assert "Run Pi with: fcc-pi" not in result.stdout
+    assert "Run Pi with: modelglot-pi" not in result.stdout
     calls = powershell_harness.calls()
     assert "pi-install" in calls
     assert not any(call.startswith("pi:") for call in calls)
     assert "uv-install" in calls
-    assert "fcc-server:--version" in calls
+    assert "modelglot-server:--version" in calls
 
 
 def test_install_ps1_continues_when_unrelated_pi_is_unchanged(
@@ -4487,11 +4569,11 @@ def test_install_ps1_continues_when_unrelated_pi_is_unchanged(
 
     assert result.returncode == 0, result.stderr
     assert "Pi was not installed; continuing without it." in result.stdout
-    assert "Run Pi with: fcc-pi" not in result.stdout
+    assert "Run Pi with: modelglot-pi" not in result.stdout
     calls = powershell_harness.calls()
     assert "unrelated-pi:--help" in calls
     assert "unrelated-pi:--version" not in calls
-    assert "fcc-server:--version" in calls
+    assert "modelglot-server:--version" in calls
 
 
 def test_install_ps1_continues_when_pi_resolution_changes_to_unrelated_command(
@@ -4510,11 +4592,11 @@ def test_install_ps1_continues_when_pi_resolution_changes_to_unrelated_command(
 
     assert result.returncode == 0, result.stderr
     assert "Pi was not installed; continuing without it." in result.stdout
-    assert "Run Pi with: fcc-pi" not in result.stdout
+    assert "Run Pi with: modelglot-pi" not in result.stdout
     calls = powershell_harness.calls()
     assert "other-unrelated-pi:--help" in calls
     assert "other-unrelated-pi:--version" not in calls
-    assert "fcc-server:--version" in calls
+    assert "modelglot-server:--version" in calls
 
 
 @pytest.mark.parametrize(
@@ -4644,17 +4726,22 @@ def test_install_ps1_replaces_prerelease_uv(
         "uv-download",
         "uv-install",
         "uv-verify",
-        "fcc-install",
+        "modelglot-install",
         "path-update",
-        "fcc-missing",
-        "fcc-verify",
+        "modelglot-missing",
+        "modelglot-verify",
     ],
 )
 def test_install_ps1_stops_without_success_on_each_failure(
     powershell_harness: PowerShellHarness,
     failure: str,
 ) -> None:
-    if failure in {"fcc-install", "path-update", "fcc-missing", "fcc-verify"}:
+    if failure in {
+        "modelglot-install",
+        "path-update",
+        "modelglot-missing",
+        "modelglot-verify",
+    }:
         powershell_harness.add_installed_clients()
         powershell_harness.add_uv(UV_MINIMUM)
     if failure in {"opencode-download", "opencode-archive"}:
@@ -4663,10 +4750,10 @@ def test_install_ps1_stops_without_success_on_each_failure(
     if failure in {
         "uv-install",
         "claude-verify",
-        "fcc-install",
+        "modelglot-install",
         "path-update",
-        "fcc-missing",
-        "fcc-verify",
+        "modelglot-missing",
+        "modelglot-verify",
     }:
         result = powershell_harness.run(fail_step=failure)
     else:
@@ -4710,8 +4797,8 @@ def test_install_ps1_stops_without_success_on_each_failure(
         "uv-download": "uv-install",
         "uv-install": "uv:--version",
         "uv-verify": "uv:tool install",
-        "fcc-install": "uv:tool update-shell",
-        "fcc-missing": "fcc-server:--version",
+        "modelglot-install": "uv:tool update-shell",
+        "modelglot-missing": "modelglot-server:--version",
     }.get(failure)
     if forbidden is not None:
         assert not any(forbidden in call for call in calls)
@@ -4741,7 +4828,7 @@ def test_install_ps1_rejects_broken_existing_client_without_replacing_it(
 
     assert result.returncode != 0
     calls = powershell_harness.calls()
-    _assert_uv_ready_without_fcc_install(calls)
+    _assert_uv_ready_without_modelglot_install(calls)
     assert not any("claude.ai" in call for call in calls)
 
 
@@ -4770,14 +4857,14 @@ def test_install_ps1_rejects_unparseable_existing_uv(
         ),
     ],
 )
-def test_install_ps1_voice_flags_only_change_fcc_spec(
+def test_install_ps1_voice_flags_only_change_modelglot_spec(
     powershell_harness: PowerShellHarness,
     args: tuple[str, ...],
     package: str,
 ) -> None:
     powershell_harness.add_uv(UV_MINIMUM)
     result = powershell_harness.run_functions(
-        "Add-KnownBinDirectories\nEnsure-Uv\nInstall-FreeClaudeCode", *args
+        "Add-KnownBinDirectories\nEnsure-Uv\nInstall-ModelGlot", *args
     )
 
     assert result.returncode == 0, result.stderr
@@ -4811,42 +4898,42 @@ def test_install_ps1_rejects_torch_backend_without_local_voice(
     assert powershell_harness.calls() == []
 
 
-@pytest.mark.parametrize("command_name", FCC_COMMANDS)
-def test_install_ps1_rejects_running_fcc_before_mutation(
+@pytest.mark.parametrize("command_name", MODELGLOT_COMMANDS)
+def test_install_ps1_rejects_running_modelglot_before_mutation(
     powershell_harness: PowerShellHarness,
     command_name: str,
 ) -> None:
-    powershell_harness.env["FCC_RUNNING_COMMAND"] = command_name
+    powershell_harness.env["MODELGLOT_RUNNING_COMMAND"] = command_name
 
     # One full workflow checks placement before mutation; the other names test
     # the same guard's exact process matching without repeating startup.
     result = (
         powershell_harness.run()
-        if command_name == "fcc-server"
-        else powershell_harness.run_functions("Assert-NoFccProcessesRunning")
+        if command_name == "modelglot-server"
+        else powershell_harness.run_functions("Assert-NoModelGlotProcessesRunning")
     )
 
     assert result.returncode != 0
     assert powershell_harness.calls() == (
-        [f"download:{METADATA_URL}"] if command_name == "fcc-server" else []
+        [f"download:{METADATA_URL}"] if command_name == "modelglot-server" else []
     )
     assert f"{command_name} (PID 4242)" in result.stderr
 
 
-def test_install_ps1_rechecks_for_fcc_process_before_tool_replacement(
+def test_install_ps1_rechecks_for_modelglot_process_before_tool_replacement(
     powershell_harness: PowerShellHarness,
 ) -> None:
     powershell_harness.add_client("claude")
     powershell_harness.add_client("codex")
     powershell_harness.add_client("pi")
     powershell_harness.add_uv(UV_MINIMUM)
-    powershell_harness.env["FCC_RUNNING_COMMAND"] = "fcc-server"
-    powershell_harness.env["FCC_RUNNING_PHASE"] = "late"
+    powershell_harness.env["MODELGLOT_RUNNING_COMMAND"] = "modelglot-server"
+    powershell_harness.env["MODELGLOT_RUNNING_PHASE"] = "late"
 
     result = powershell_harness.run()
 
     assert result.returncode != 0
-    assert "fcc-server (PID 4242)" in result.stderr
+    assert "modelglot-server (PID 4242)" in result.stderr
     assert not any(
         "--refresh-package modelglot" in call for call in powershell_harness.calls()
     )
@@ -4855,11 +4942,22 @@ def test_install_ps1_rechecks_for_fcc_process_before_tool_replacement(
 def test_install_ps1_ignores_similarly_named_process(
     powershell_harness: PowerShellHarness,
 ) -> None:
-    powershell_harness.env["FCC_RUNNING_COMMAND"] = "fcc-server-helper"
+    powershell_harness.env["MODELGLOT_RUNNING_COMMAND"] = "modelglot-server-helper"
 
-    result = powershell_harness.run_functions("Assert-NoFccProcessesRunning")
+    result = powershell_harness.run_functions("Assert-NoModelGlotProcessesRunning")
 
     assert result.returncode == 0, result.stderr
+
+
+def test_install_ps1_preserves_running_upstream_installation(
+    powershell_harness: PowerShellHarness,
+) -> None:
+    powershell_harness.env["MODELGLOT_RUNNING_COMMAND"] = "other-server"
+
+    result = powershell_harness.run()
+
+    assert result.returncode == 0, result.stderr
+    _assert_powershell_installer_upstream_preserved(powershell_harness)
 
 
 def test_installers_use_native_clients_and_single_python_selection() -> None:
@@ -4870,14 +4968,16 @@ def test_installers_use_native_clients_and_single_python_selection() -> None:
     ).read_text(encoding="utf-8")
 
     for text in (shell, powershell):
-        for command_name in FCC_COMMANDS:
+        for command_name in MODELGLOT_COMMANDS:
             assert command_name in text
         assert "@anthropic-ai/claude-code" not in text
         assert "@openai/codex" not in text
         assert "@earendil-works/pi-coding-agent" not in text
         assert "https://github.com/amedeo82/ModelGlot" in text
         assert "https://raw.githubusercontent.com/amedeo82/ModelGlot" in text
-        assert "amedeo82/free-claude-code" not in text
+        assert "amedeo82/other-cli" not in text
+        for upstream in ("other-cli", "other-", ".otherapp"):
+            assert upstream not in text
         assert "custom/main" not in text
         assert "git --version" not in text
         assert (
@@ -4899,7 +4999,7 @@ def test_installers_use_native_clients_and_single_python_selection() -> None:
         "main/scripts/install-muse.ps1"
     ) in powershell
     assert "amedeo82/ModelGlot/main/scripts/install-muse.ps1" in muse_launcher
-    assert "amedeo82/free-claude-code" not in muse_launcher
+    assert "amedeo82/other-cli" not in muse_launcher
 
 
 def test_install_ps1_uses_x64_python_for_windows_arm_compatibility() -> None:
@@ -4935,7 +5035,7 @@ def test_install_ps1_installs_then_updates_only_selected_agent(
 
     assert result.returncode == 0, result.stderr
     assert "Select at least one coding agent." in result.stdout
-    assert "Run Codex with: fcc-codex" in result.stdout
+    assert "Run Codex with: modelglot-codex" in result.stdout
     calls = powershell_harness.calls()
     assert "codex-install:1" in calls
     assert not any(
@@ -4949,7 +5049,7 @@ def test_install_ps1_installs_then_updates_only_selected_agent(
     update = powershell_harness.run_interactive([""] * 11)
 
     assert update.returncode == 0, update.stderr
-    assert "for fcc-codex?" not in update.stdout
+    assert "for modelglot-codex?" not in update.stdout
     update_calls = powershell_harness.calls()[len(calls) :]
     assert "codex:--version" in update_calls
     assert [call for call in update_calls if call.startswith("download:")] == [
@@ -5195,7 +5295,7 @@ if "%stage%"=="major" if not "%VERSION%"=="" exit /b 0
 if "%FAKE_OPENCODE_FAIL%"=="%stage%" exit /b 31
 if "%FAKE_OPENCODE_KEEP%"=="%stage%" exit /b 0
 >"%FAKE_OPENCODE_STATE%" echo %result%
-if "%stage%"=="preliminary" if "%FCC_RUNNING_PHASE%"=="opencode-major" type nul >"%FCC_PROCESS_MARKER%"
+if "%stage%"=="preliminary" if "%MODELGLOT_RUNNING_PHASE%"=="opencode-major" type nul >"%MODELGLOT_PROCESS_MARKER%"
 if "%stage%"=="preliminary" if not "%FAKE_OPENCODE_MOVE_TO%"=="" (
     copy /y "%~f0" "%FAKE_OPENCODE_MOVE_TO%" >nul
     exit /b 0
@@ -5220,7 +5320,7 @@ if [ "$stage" = major ] && [ -n "${VERSION:-}" ]; then exit 0; fi
 [ "$FAKE_OPENCODE_FAIL" != "$stage" ] || exit 31
 [ "$FAKE_OPENCODE_KEEP" != "$stage" ] || exit 0
 printf '%s\\n' "$result" > "$FAKE_OPENCODE_STATE"
-if [ "$stage" = preliminary ] && [ "$FCC_RUNNING_PHASE" = opencode-major ]; then : > "$FCC_PROCESS_MARKER"; fi
+if [ "$stage" = preliminary ] && [ "$MODELGLOT_RUNNING_PHASE" = opencode-major ]; then : > "$MODELGLOT_PROCESS_MARKER"; fi
 if [ "$stage" = preliminary ] && [ -n "$FAKE_OPENCODE_MOVE_TO" ]; then
     cp "$0" "$FAKE_OPENCODE_MOVE_TO" && chmod +x "$FAKE_OPENCODE_MOVE_TO"
 fi
@@ -5444,7 +5544,8 @@ def test_opencode_process_appearing_before_upgrade_blocks_it(
 ):
     _prepare_opencode_upgrade(release_harness, "1.18.31")
     release_harness.env.update(
-        FCC_RUNNING_COMMAND="opencode", FCC_RUNNING_PHASE=f"opencode-{stage}"
+        MODELGLOT_RUNNING_COMMAND="opencode",
+        MODELGLOT_RUNNING_PHASE=f"opencode-{stage}",
     )
     result = _run_opencode_scenario(release_harness)
     assert result.returncode != 0
@@ -5631,10 +5732,13 @@ def _assert_opencode_linked_rtk_parent_is_preserved(
                 harness.powershell,
                 "-NoProfile",
                 "-Command",
-                "New-Item -ItemType Junction -Path $env:FCC_TEST_LINK -Target $env:FCC_TEST_TARGET -ErrorAction Stop | Out-Null",
+                "New-Item -ItemType Junction -Path $env:MODELGLOT_TEST_LINK -Target $env:MODELGLOT_TEST_TARGET -ErrorAction Stop | Out-Null",
             ],
             env=harness.env
-            | {"FCC_TEST_LINK": str(linked), "FCC_TEST_TARGET": str(shared)},
+            | {
+                "MODELGLOT_TEST_LINK": str(linked),
+                "MODELGLOT_TEST_TARGET": str(shared),
+            },
             capture_output=True,
             text=True,
             check=True,
@@ -5696,8 +5800,8 @@ def _assert_opencode_starting_late_blocks_mutation(
         Path(__file__).with_name("fixtures").joinpath("rtk-opencode-v1.ts").read_bytes()
     )
     plugin.write_bytes(contents)
-    harness.env["FCC_RUNNING_COMMAND"] = command
-    harness.env["FCC_RUNNING_PHASE"] = phase
+    harness.env["MODELGLOT_RUNNING_COMMAND"] = command
+    harness.env["MODELGLOT_RUNNING_PHASE"] = phase
     result = (
         harness.run_functions(
             '$script:OriginalOpenCode = Get-ApplicationCommand "opencode"\nAdd-KnownBinDirectories\nEnsure-OpenCode'
@@ -5705,7 +5809,7 @@ def _assert_opencode_starting_late_blocks_mutation(
         if isinstance(harness, PowerShellHarness)
         else harness.run()
     )
-    assert Path(harness.env["FCC_PROCESS_MARKER"]).exists()
+    assert Path(harness.env["MODELGLOT_PROCESS_MARKER"]).exists()
     assert result.returncode != 0
     assert "Close OpenCode" in result.stderr
     assert plugin.read_bytes() == contents
@@ -5738,7 +5842,7 @@ def test_install_sh_opencode_running_blocks_native_migration(
 ) -> None:
     binary = _prepare_native_opencode_v1(posix_harness)
     original = binary.read_bytes()
-    posix_harness.env["FCC_RUNNING_COMMAND"] = "opencode"
+    posix_harness.env["MODELGLOT_RUNNING_COMMAND"] = "opencode"
     result = posix_harness.run()
     assert result.returncode != 0
     assert "Close OpenCode" in result.stderr
@@ -5750,7 +5854,7 @@ def test_install_ps1_opencode_running_blocks_native_migration(
 ) -> None:
     binary = _prepare_native_opencode_v1(powershell_harness)
     original = binary.read_bytes()
-    powershell_harness.env["FCC_RUNNING_COMMAND"] = "opencode"
+    powershell_harness.env["MODELGLOT_RUNNING_COMMAND"] = "opencode"
     result = powershell_harness.run()
     assert result.returncode != 0
     assert "Close OpenCode" in result.stderr
@@ -5780,7 +5884,7 @@ def _assert_external_opencode_is_not_shadowed(
             if isinstance(harness, PowerShellHarness)
             else harness.run_interactive("n\n" * 11)
         )
-        assert "for fcc-opencode?" not in result.stdout
+        assert "for modelglot-opencode?" not in result.stdout
     else:
         result = harness.run()
     assert result.returncode != 0
@@ -5941,7 +6045,7 @@ def _assert_opencode_link_requires_manual_migration(
         native.symlink_to(target)
     except OSError as exc:
         pytest.skip(f"symlink creation unavailable: {exc}")
-    # No installed command: FCC must refuse a linked fresh-install destination.
+    # No installed command: ModelGlot must refuse a linked fresh-install destination.
     harness.env["PATH"] = str(harness.bin_dir) + os.pathsep + harness.env["PATH"]
     result = (
         harness.run_functions("$script:OriginalOpenCode = $null\nEnsure-OpenCode")
@@ -6068,24 +6172,24 @@ def _assert_installer_recovers_after_verification_failure(
         else ("--rtk-headroom", "--voice-local", "--torch-backend", "cu130")
     )
 
-    failed = harness.run(*options, fail_step="fcc-verify")
+    failed = harness.run(*options, fail_step="modelglot-verify")
 
     assert failed.returncode != 0
     assert not any(call.startswith("rtk:init") for call in harness.calls())
-    assert not (home / "Desktop" / "Free Claude Code.lnk").exists()
+    assert not (home / "Desktop" / "ModelGlot.lnk").exists()
     assert "ModelGlot is installed and verified." not in failed.stdout
-    assert re.search(r"completed.*FCC package", failed.stdout, re.IGNORECASE)
-    assert re.search(r"failed.*FCC verification", failed.stdout, re.IGNORECASE)
+    assert re.search(r"completed.*ModelGlot package", failed.stdout, re.IGNORECASE)
+    assert re.search(r"failed.*ModelGlot verification", failed.stdout, re.IGNORECASE)
     assert re.search(r"not attempted.*RTK", failed.stdout, re.IGNORECASE)
     retry = next(
         line for line in failed.stdout.splitlines() if line.startswith("Retry:")
     )
     assert all(option in retry for option in options)
-    logs = list((home / ".fcc" / "logs").glob("install-*.log"))
+    logs = list((home / ".modelglot" / "logs").glob("install-*.log"))
     assert len(logs) == 1
     first_log = logs[0].read_text(encoding="utf-8-sig")
-    assert "fcc-server" in first_log
-    assert re.search(r"failed.*FCC verification", first_log, re.IGNORECASE)
+    assert "modelglot-server" in first_log
+    assert re.search(r"failed.*ModelGlot verification", first_log, re.IGNORECASE)
     calls_before_retry = len(harness.calls())
 
     recovered = harness.run(*options)
@@ -6095,13 +6199,13 @@ def _assert_installer_recovers_after_verification_failure(
     retry_calls = harness.calls()[calls_before_retry:]
     assert "claude-install" not in retry_calls
     assert "codex-install:1" not in retry_calls
-    verification = retry_calls.index("fcc-server:--version")
+    verification = retry_calls.index("modelglot-server:--version")
     assert all(
         index > verification
         for index, call in enumerate(retry_calls)
         if call.startswith("rtk:init")
     )
-    assert len(list((home / ".fcc" / "logs").glob("install-*.log"))) == 2
+    assert len(list((home / ".modelglot" / "logs").glob("install-*.log"))) == 2
     assert logs[0].read_text(encoding="utf-8-sig") == first_log
 
 
@@ -6122,11 +6226,11 @@ def test_install_ps1_explains_child_policy_failure_without_doctor(
 ) -> None:
     powershell_harness.add_installed_clients()
     powershell_harness.add_uv(UV_MINIMUM)
-    fixture = powershell_harness.fixtures / "fcc-command.cmd"
+    fixture = powershell_harness.fixtures / "modelglot-command.cmd"
     fixture.write_text(
         "@echo off\n"
         'echo %~n0:%*>>"%CALL_LOG%"\n'
-        'if "%~n0"=="fcc-server" (\n'
+        'if "%~n0"=="modelglot-server" (\n'
         "    echo error: uv trampoline failed to spawn Python child process 1>&2\n"
         "    echo Caused by: uncategorized error ^(os error 4551^) 1>&2\n"
         "    exit /b 1\n"
@@ -6143,10 +6247,10 @@ def test_install_ps1_explains_child_policy_failure_without_doctor(
     assert "CodeIntegrity/Operational" in output
     assert "3077" in output
     assert not any(
-        call.startswith("fcc-doctor:") for call in powershell_harness.calls()
+        call.startswith("modelglot-doctor:") for call in powershell_harness.calls()
     )
     home = Path(powershell_harness.env["USERPROFILE"])
-    logs = list((home / ".fcc" / "logs").glob("install-*.log"))
+    logs = list((home / ".modelglot" / "logs").glob("install-*.log"))
     assert len(logs) == 1
     assert "os error 4551" in logs[0].read_text(encoding="utf-8-sig")
 
@@ -6157,16 +6261,18 @@ def test_install_ps1_log_failure_preserves_installation_failure(
     powershell_harness.add_installed_clients()
     powershell_harness.add_uv(UV_MINIMUM)
     home = Path(powershell_harness.env["USERPROFILE"])
-    (home / ".fcc").mkdir()
-    (home / ".fcc" / "logs").write_text("not a directory", encoding="utf-8")
+    (home / ".modelglot").mkdir()
+    (home / ".modelglot" / "logs").write_text("not a directory", encoding="utf-8")
 
-    result = powershell_harness.run(fail_step="fcc-install")
+    result = powershell_harness.run(fail_step="modelglot-install")
 
     assert result.returncode != 0
     output = result.stdout + result.stderr
     assert "53" in output
-    assert re.search(r"failed.*FCC package", output, re.IGNORECASE)
-    assert (home / ".fcc" / "logs").read_text(encoding="utf-8") == "not a directory"
+    assert re.search(r"failed.*ModelGlot package", output, re.IGNORECASE)
+    assert (home / ".modelglot" / "logs").read_text(
+        encoding="utf-8"
+    ) == "not a directory"
 
 
 @pytest.mark.parametrize("code", [4551, 1260, 5])
@@ -6211,13 +6317,13 @@ def test_install_sh_log_failure_preserves_installation_failure(
         posix_harness.add_client(command)
     posix_harness.add_uv(UV_MINIMUM)
     home = Path(posix_harness.env["HOME"])
-    (home / ".fcc").mkdir()
-    (home / ".fcc/logs").write_text("not a directory", encoding="utf-8")
-    result = posix_harness.run(fail_step="fcc-install")
+    (home / ".modelglot").mkdir()
+    (home / ".modelglot/logs").write_text("not a directory", encoding="utf-8")
+    result = posix_harness.run(fail_step="modelglot-install")
     assert result.returncode != 0
     assert "33" in result.stdout + result.stderr
-    assert re.search(r"failed.*FCC package", result.stdout, re.IGNORECASE)
-    assert (home / ".fcc/logs").read_text(encoding="utf-8") == "not a directory"
+    assert re.search(r"failed.*ModelGlot package", result.stdout, re.IGNORECASE)
+    assert (home / ".modelglot/logs").read_text(encoding="utf-8") == "not a directory"
 
 
 def test_install_ps1_retry_command_preserves_literal_options_and_path(
@@ -6277,11 +6383,13 @@ def test_install_ps1_preview_creates_no_log_or_probe(
     powershell_harness: PowerShellHarness,
     option: str,
 ) -> None:
-    powershell_harness.env.pop("FCC_INSTALL_VERSION")
+    powershell_harness.env.pop("MODELGLOT_INSTALL_VERSION")
     result = powershell_harness.run(option)
     assert result.returncode == 0, result.stderr
     assert powershell_harness.calls() == []
-    assert not (Path(powershell_harness.env["USERPROFILE"]) / ".fcc/logs").exists()
+    assert not (
+        Path(powershell_harness.env["USERPROFILE"]) / ".modelglot/logs"
+    ).exists()
     if option == "-DryRun":
         assert (
             "modelglot @ git+https://github.com/amedeo82/ModelGlot.git@main"
@@ -6294,11 +6402,11 @@ def test_install_sh_preview_creates_no_log_or_probe(
     posix_harness: PosixHarness,
     option: str,
 ) -> None:
-    posix_harness.env.pop("FCC_INSTALL_VERSION")
+    posix_harness.env.pop("MODELGLOT_INSTALL_VERSION")
     result = posix_harness.run(option)
     assert result.returncode == 0, result.stderr
     assert posix_harness.calls() == []
-    assert not (Path(posix_harness.env["HOME"]) / ".fcc/logs").exists()
+    assert not (Path(posix_harness.env["HOME"]) / ".modelglot/logs").exists()
     if option == "--dry-run":
         assert (
             "modelglot @ git+https://github.com/amedeo82/ModelGlot.git@main"
@@ -6377,7 +6485,7 @@ def test_install_sh_piped_failure_retries_downloaded_installer(
     for command in CODING_AGENTS:
         posix_harness.add_client(command)
     posix_harness.add_uv(UV_MINIMUM)
-    result = posix_harness.run_interactive("n\n", fail_step="fcc-install")
+    result = posix_harness.run_interactive("n\n", fail_step="modelglot-install")
     assert result.returncode != 0
     retry = next(
         line for line in result.stdout.splitlines() if line.startswith("Retry:")
@@ -6386,7 +6494,7 @@ def test_install_sh_piped_failure_retries_downloaded_installer(
         f"https://raw.githubusercontent.com/amedeo82/ModelGlot/v{RELEASE_VERSION}/scripts/install.sh"
         in retry
     )
-    assert f"| FCC_INSTALL_VERSION='{RELEASE_VERSION}' sh -s --" in retry
+    assert f"| MODELGLOT_INSTALL_VERSION='{RELEASE_VERSION}' sh -s --" in retry
 
 
 def _assert_installer_shows_selected_plan_and_next_steps(
@@ -6414,7 +6522,9 @@ def _assert_installer_shows_selected_plan_and_next_steps(
     assert stages
     assert [int(number) for number, _ in stages] == list(range(1, len(stages) + 1))
     assert {int(total) for _, total in stages} == {len(stages)}
-    assert re.findall(r"Run .* with: (fcc-\S+)", result.stdout) == ["fcc-claude"]
+    assert re.findall(r"Run .* with: (modelglot-\S+)", result.stdout) == [
+        "modelglot-claude"
+    ]
     assert "wrapper is ready after" not in result.stdout
     assert "Skipped:" not in result.stdout
 
@@ -6444,7 +6554,7 @@ def _assert_installer_keeps_launch_instructions_after_rtk_failure(
     )
     assert result.returncode != 0
     assert "ModelGlot is installed and verified." in result.stdout
-    assert "Run Claude Code with: fcc-claude" in result.stdout
+    assert "Run Claude Code with: modelglot-claude" in result.stdout
     assert "Failed: RTK configuration" in result.stdout
     assert "Retry:" in result.stdout
 

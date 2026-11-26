@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  window.FccFormControls = {
+  window.ModelGlotFormControls = {
     configure(node) {
       if (node.matches('input:not([type="hidden"]), textarea, form')) {
         node.autocomplete = "off";

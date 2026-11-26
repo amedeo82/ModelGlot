@@ -1,4 +1,4 @@
-"""Installed Grok Build launcher with native FCC connection settings."""
+"""Installed Grok Build launcher with native ModelGlot connection settings."""
 
 import json
 import re
@@ -64,7 +64,7 @@ def _configure(
         ctx.base_env,
         proxy_root_url=ctx.proxy_root_url,
         remove_keys=tuple(_ROUTING_ENV_KEYS),
-        remove_prefixes=("FCC_GROK_",),
+        remove_prefixes=("MODELGLOT_GROK_",),
         updates={
             "GROK_XAI_API_BASE_URL": v1_url,
             "GROK_MODELS_BASE_URL": v1_url,
@@ -108,7 +108,7 @@ SPEC = HarnessSpec(
     compatibility_check=NativeCheck(
         ("version", "--json"),
         _compatible_version,
-        "FCC requires Grok Build 1.0.5 or newer.",
+        "ModelGlot requires Grok Build 1.0.5 or newer.",
     ),
 )
 

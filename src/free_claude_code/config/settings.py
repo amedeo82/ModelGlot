@@ -72,7 +72,7 @@ class Settings(BaseModel):
 
     custom_providers: Annotated[
         tuple[CustomProviderDefinition, ...], BeforeValidator(decode_custom_providers)
-    ] = Field(default=(), validation_alias="FCC_CUSTOM_PROVIDERS")
+    ] = Field(default=(), validation_alias="MODELGLOT_CUSTOM_PROVIDERS")
 
     @property
     def provider_ids(self) -> tuple[str, ...]:
@@ -748,21 +748,23 @@ class Settings(BaseModel):
 
     # ==================== Server ====================
     model_catalog_source: Literal["models.dev", "none"] = Field(
-        default="models.dev", validation_alias="FCC_MODEL_CATALOG_SOURCE"
+        default="models.dev", validation_alias="MODELGLOT_MODEL_CATALOG_SOURCE"
     )
     model_catalog_url: NonEmptyString = Field(
         default="https://models.dev/api.json",
-        validation_alias="FCC_MODEL_CATALOG_URL",
+        validation_alias="MODELGLOT_MODEL_CATALOG_URL",
     )
-    host: NonEmptyString = Field(default="0.0.0.0", validation_alias="HOST")
-    port: int = Field(default=8082, validation_alias="PORT")
-    open_admin_browser: bool = Field(default=True, validation_alias="FCC_OPEN_BROWSER")
+    host: NonEmptyString = Field(default="0.0.0.0", validation_alias="MODELGLOT_HOST")
+    port: int = Field(default=16969, validation_alias="MODELGLOT_PORT")
+    open_admin_browser: bool = Field(
+        default=True, validation_alias="MODELGLOT_OPEN_BROWSER"
+    )
     proxy_auth_enabled: bool = Field(
         default=False,
         validation_alias="PROXY_AUTH_ENABLED",
     )
     proxy_auth_token: NonEmptyString = Field(
-        default="freecc",
+        default="modelglot",
         validation_alias="ANTHROPIC_AUTH_TOKEN",
     )
 

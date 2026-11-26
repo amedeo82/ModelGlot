@@ -200,7 +200,7 @@ class TestBuildRequestBody:
             ),
         ],
     )
-    def test_max_tokens_preserves_fcc_output_limit(
+    def test_max_tokens_preserves_modelglot_output_limit(
         self, req: MessagesRequest, requested: int | None, expected: int
     ) -> None:
         req.max_tokens = requested
@@ -270,11 +270,11 @@ class TestBuildRequestBody:
         self, req: MessagesRequest
     ) -> None:
         tool_schema = deepcopy(GREP_SCHEMA_FROM_SERVER_LOG)
-        tool_schema["properties"]["_fcc_arg_type"] = {
+        tool_schema["properties"]["_modelglot_arg_type"] = {
             "type": "string",
             "description": "Existing safe property that collides with the alias",
         }
-        tool_schema["required"] = ["pattern", "-A", "_fcc_arg_type"]
+        tool_schema["required"] = ["pattern", "-A", "_modelglot_arg_type"]
         original_schema = deepcopy(tool_schema)
         req.tools = [
             Tool(
@@ -308,16 +308,18 @@ class TestBuildRequestBody:
             "count",
         ]
         assert (
-            object_payload(properties)["_fcc_arg_type"]
-            == original_schema["properties"]["_fcc_arg_type"]
+            object_payload(properties)["_modelglot_arg_type"]
+            == original_schema["properties"]["_modelglot_arg_type"]
         )
-        assert aliases == {"_fcc_arg_type_2": "type"}
+        assert aliases == {"_modelglot_arg_type_2": "type"}
         assert (
-            object_payload(properties)["_fcc_arg_type_2"]
+            object_payload(properties)["_modelglot_arg_type_2"]
             == original_schema["properties"]["type"]
         )
         assert "-A" in array_payload(object_payload(parameters)["required"])
-        assert "_fcc_arg_type" in array_payload(object_payload(parameters)["required"])
+        assert "_modelglot_arg_type" in array_payload(
+            object_payload(parameters)["required"]
+        )
         assert tool_schema == original_schema
 
     def test_reported_long_tool_name_uses_generic_alias_after_nim_repairs(
@@ -351,7 +353,7 @@ class TestBuildRequestBody:
         assert wire_name != long_name
         assert re.fullmatch(r"[A-Za-z0-9_-]{1,64}", string_payload(wire_name))
         assert body[NIM_TOOL_ARGUMENT_ALIASES_KEY] == {
-            long_name: {"_fcc_arg_type": "type"}
+            long_name: {"_modelglot_arg_type": "type"}
         }
         assert (
             NIM_TOOL_ARGUMENT_ALIASES_KEY
@@ -426,26 +428,28 @@ class TestBuildRequestBody:
         )["parent"]
         parent_properties = object_payload(parent)["properties"]
         assert "type" not in object_payload(parent_properties)
-        assert object_payload(parent_properties)["_fcc_arg_type"] == {
+        assert object_payload(parent_properties)["_modelglot_arg_type"] == {
             "type": "string",
             "enum": ["page_id"],
         }
-        assert object_payload(parent)["required"] == ["_fcc_arg_type", "id"]
-        assert aliases == {"_fcc_arg_type": "type"}
+        assert object_payload(parent)["required"] == ["_modelglot_arg_type", "id"]
+        assert aliases == {"_modelglot_arg_type": "type"}
         assert tool_schema == original_schema
 
     def test_private_alias_metadata_is_stripped_without_mutating_body(self) -> None:
         body: JsonObject = {
             "model": "test",
-            NIM_TOOL_ARGUMENT_ALIASES_KEY: {"Grep": {"_fcc_arg_A": "-A"}},
+            NIM_TOOL_ARGUMENT_ALIASES_KEY: {"Grep": {"_modelglot_arg_A": "-A"}},
         }
 
         upstream_body = body_without_nim_tool_argument_aliases(body)
 
         assert NIM_TOOL_ARGUMENT_ALIASES_KEY not in upstream_body
-        assert body[NIM_TOOL_ARGUMENT_ALIASES_KEY] == {"Grep": {"_fcc_arg_A": "-A"}}
+        assert body[NIM_TOOL_ARGUMENT_ALIASES_KEY] == {
+            "Grep": {"_modelglot_arg_A": "-A"}
+        }
         assert nim_tool_argument_aliases_from_body(body) == {
-            "Grep": {"_fcc_arg_A": "-A"}
+            "Grep": {"_modelglot_arg_A": "-A"}
         }
 
     def test_reasoning_uses_named_effort(self) -> None:

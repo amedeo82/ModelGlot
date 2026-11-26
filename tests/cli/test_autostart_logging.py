@@ -68,7 +68,7 @@ def test_server_entrypoint_routes_logs_across_restarts(
         logger.complete()
         assert len(generations) == 2
     """)
-    with InterprocessFileLock(user_home / ".fcc" / "server.owner.lock"):
+    with InterprocessFileLock(user_home / ".modelglot" / "server.owner.lock"):
         result = subprocess.run(
             [
                 sys.executable,

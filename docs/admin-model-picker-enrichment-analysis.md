@@ -12,7 +12,7 @@ Related documents:
 
 > **Implementation update — 2026-11-20.** Wave 4 now retains provider-scoped models.dev facts in
 > cache schema v2, exposes them through the additive `catalog` namespace, and renders compact
-> options plus a selected detail card. Solid badges remain provider/FCC facts; dashed badges with
+> options plus a selected detail card. Solid badges remain provider/ModelGlot facts; dashed badges with
 > visible `Catalog` text are declarations for the exact hosting-provider row, never runtime
 > guarantees. Runtime facts win conflicts. Pricing is not retained or displayed.
 >
@@ -29,7 +29,7 @@ Related documents:
 The Admin model picker already has two useful foundations:
 
 1. `/admin/api/models` resolves a display title for every canonical provider model.
-2. `FccModelCombobox` renders a searchable list of those titles.
+2. `ModelGlotModelCombobox` renders a searchable list of those titles.
 
 The picker does not currently expose that title in the selected state because the visible input always contains the canonical routing value, for example `nvidia_nim/minimaxai/minimax-m3.1-flash`. The canonical value is also the persistence and routing contract, so replacing it with a title would break saved configuration and provider routing.
 
@@ -83,7 +83,7 @@ Relevant code:
 
 ### 1.2 Model combobox value behavior
 
-`FccModelCombobox` writes the selected canonical identifier to `input.value`. The selected option label is derived from the shared title map, but it is not retained as the selected display value.
+`ModelGlotModelCombobox` writes the selected canonical identifier to `input.value`. The selected option label is derived from the shared title map, but it is not retained as the selected display value.
 
 The Admin editor reads the field with `readFieldValue`. For model fields, that currently means the raw `input.value`. The fallback editor also uses the raw input value when it constructs the saved configuration.
 
@@ -338,7 +338,7 @@ A compatible structured map is added:
 
 - `model_details` is keyed by the same canonical identifier as `model_labels`.
 - `display_name` duplicates `model_labels` intentionally so clients can consume one typed detail object.
-- `provider_id` is the normalized FCC provider identifier; `provider_label` is its human-readable badge text.
+- `provider_id` is the normalized ModelGlot provider identifier; `provider_label` is its human-readable badge text.
 - `description` is optional editorial text and `description_source` identifies its provenance.
 - The `1M context` description is plain catalog text, not a structured limit and not an authoritative capability badge.
 - boolean capability fields use `null` for unknown, not `false`.
@@ -347,11 +347,11 @@ A compatible structured map is added:
 - fields not applicable to a model may be omitted; clients must treat absent fields as unknown.
 - `catalog` is additive and loopback-Admin-only. It identifies the models.dev source provider,
   canonical lab, fetch/update freshness, capabilities, modalities, limits, lifecycle, and logo URLs.
-- Catalog facts never overwrite or backfill sibling provider/FCC fields. Audio, video, and PDF are
+- Catalog facts never overwrite or backfill sibling provider/ModelGlot fields. Audio, video, and PDF are
   catalog declarations only; cost is neither retained nor exposed.
 - Logo URLs are same-origin references to bounded, validated SVGs or `null`; clients use initials
   for `null` URLs and image-load failures. No Admin model-read endpoint fetches catalog or logos.
-- The term *canonical value* in this document means the FCC `provider_model_ref`; it is not the models.dev `canonical_model_id` field.
+- The term *canonical value* in this document means the ModelGlot `provider_model_ref`; it is not the models.dev `canonical_model_id` field.
 
 ---
 
@@ -504,7 +504,7 @@ Claude/Desktop/API descriptions, titles, `provider_model_ref`, or `wire_slug`. B
 endpoints project `model_details` from the cached application inventory. Unknown reasoning,
 modalities, context, and output stay `null`; no client fallback is used.
 
-`FccModelCombobox.canonicalValue(input)` is the only Admin identity reader for model fields and
+`ModelGlotModelCombobox.canonicalValue(input)` is the only Admin identity reader for model fields and
 fallback editors. Component state and `data-canonical-value` retain routing identity while the
 visible input holds the resolved title. Genuine typing marks a custom edit, so refreshes cannot
 resurrect a previous selection. Optional `None`, locked fields, API-key association, dirty state,
@@ -539,7 +539,7 @@ metadata and use initials.
 
 The hybrid UI uses compact option rows and a selected detail card. Compact token labels divide by
 1024 (`262144` → `256K`, `256000` → `250K`); detail stats show exact integers and `tokens`. Solid
-badges identify provider/FCC facts, dashed badges include visible `Catalog` text, and neutral
+badges identify provider/ModelGlot facts, dashed badges include visible `Catalog` text, and neutral
 lifecycle/open-weight badges make no runtime assertion. Runtime values suppress conflicting
 catalog values. The card exposes source, provider scope, update/freshness, and the runtime/catalog
 explanation. No custom tooltip or interactive control is nested in listbox options.

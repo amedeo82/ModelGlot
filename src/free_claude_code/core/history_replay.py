@@ -15,9 +15,9 @@ from .openai_chat import ChatToolResultImages
 from .recovery_limits import RECOVERY_RETENTION_BYTES
 
 type HistoryProtocol = Literal["responses", "messages", "chat", "gemini"]
-_PREFIX = "fcc:history:v1:"
-_ASSOCIATED_PREFIX = "fcc:history:v2:"
-_LEGACY_PREFIX = "fcc:anthropic-reasoning:v1:"
+_PREFIX = "modelglot:history:v1:"
+_ASSOCIATED_PREFIX = "modelglot:history:v2:"
+_LEGACY_PREFIX = "modelglot:anthropic-reasoning:v1:"
 
 
 class HistoryReplayError(ValueError):
@@ -103,7 +103,7 @@ def _json_copy(value: object) -> JsonObject:
 
 def is_replay(value: object) -> TypeGuard[str]:
     return isinstance(value, str) and value.startswith(
-        ("fcc:history:", "fcc:anthropic-reasoning:")
+        ("modelglot:history:", "modelglot:anthropic-reasoning:")
     )
 
 
@@ -145,14 +145,14 @@ def encode_gemini_replay(record: ReplayRecord) -> str:
 
 
 def decode_gemini_replay(signature: str) -> ReplayRecord | None:
-    """Recognize an FCC record while leaving ordinary native signatures alone."""
+    """Recognize an ModelGlot record while leaving ordinary native signatures alone."""
     try:
         raw = base64.b64decode(
             signature + "=" * (-len(signature) % 4), altchars=b"-_", validate=True
         )
     except ValueError:
         return None
-    if not raw.startswith((b"fcc:history:", b"fcc:anthropic-reasoning:")):
+    if not raw.startswith((b"modelglot:history:", b"modelglot:anthropic-reasoning:")):
         return None
     _check_continuation_size(signature)
     try:
@@ -1164,7 +1164,7 @@ def _restore_gemini_parts(
                     decoded = base64.b64decode(signature, validate=True)
                 except ValueError:
                     decoded = b""
-                if decoded.startswith(b"fcc:gemini-replay:"):
+                if decoded.startswith(b"modelglot:gemini-replay:"):
                     raise HistoryReplayError(
                         "Saved compatibility signatures require a fresh Gemini turn"
                     )

@@ -9,14 +9,14 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$script:MuseOwner = "free-claude-code-muse-installer"
+$script:MuseOwner = "modelglot-muse-installer"
 $script:MuseOwnerSchemaVersion = 1
 
 function Show-MuseUninstallerUsage {
     @"
 Usage: uninstall-muse.ps1 [options]
 
-Removes only the native-Windows Muse Code executable managed by FCC.
+Removes only the native-Windows Muse Code executable managed by ModelGlot.
 Muse settings, credentials, sessions, logs, caches, and external installations are preserved.
 
 Options:
@@ -36,7 +36,7 @@ function Get-MuseInstallPaths {
         Root = $root
         Bin = $bin
         Executable = Join-Path $bin "muse.exe"
-        Record = Join-Path $root ".fcc-muse-install.json"
+        Record = Join-Path $root ".modelglot-muse-install.json"
     }
 }
 
@@ -202,17 +202,17 @@ function Invoke-MuseUninstaller {
     $recordExists = Test-Path -LiteralPath $paths.Record -PathType Leaf
 
     if (-not $rootExists -and -not $recordExists) {
-        Write-Host "No FCC-managed Muse Code installation was found."
+        Write-Host "No ModelGlot-managed Muse Code installation was found."
         return
     }
     if (-not $recordExists) {
-        throw "The Muse Code install root is not owned by FCC; refusing to remove '$($paths.Root)'."
+        throw "The Muse Code install root is not owned by ModelGlot; refusing to remove '$($paths.Root)'."
     }
 
     [void] (Read-MuseOwnershipRecord -RecordPath $paths.Record)
 
     if ($DryRun) {
-        Write-Host "Dry run: remove the FCC-managed executable and installer residue from '$($paths.Bin)'."
+        Write-Host "Dry run: remove the ModelGlot-managed executable and installer residue from '$($paths.Bin)'."
         Write-Host "Dry run: remove exact '$($paths.Bin)' entries from the user and current-process PATH."
         Write-Host "Dry run: remove the ownership record '$($paths.Record)' and empty managed directories."
         Write-Host "Dry run complete. No changes were made."
@@ -233,7 +233,7 @@ function Invoke-MuseUninstaller {
     }
 
     $recordResidue = @(Get-ChildItem -LiteralPath $paths.Root -Force -File | Where-Object {
-        $_.Name -cmatch '^\.fcc-muse-install\.json\.[0-9a-f]{32}\.(?:tmp|backup)$'
+        $_.Name -cmatch '^\.modelglot-muse-install\.json\.[0-9a-f]{32}\.(?:tmp|backup)$'
     })
     foreach ($file in $recordResidue) {
         Remove-Item -LiteralPath $file.FullName -Force
@@ -273,7 +273,7 @@ function Invoke-MuseUninstaller {
         Write-Host "Muse Code was uninstalled; unknown files in '$($paths.Root)' were preserved."
     }
     else {
-        Write-Host "The FCC-managed Muse Code installation was removed."
+        Write-Host "The ModelGlot-managed Muse Code installation was removed."
     }
 }
 

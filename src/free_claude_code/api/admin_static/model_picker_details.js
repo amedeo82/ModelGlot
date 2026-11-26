@@ -262,10 +262,10 @@
         provenance.className = "model-picker-badge-source";
         provenance.textContent = "Catalog";
         element.appendChild(provenance);
-        element.title = `${badge.label}: models.dev catalog declaration, not an FCC runtime guarantee.`;
+        element.title = `${badge.label}: models.dev catalog declaration, not an ModelGlot runtime guarantee.`;
         element.setAttribute("aria-label", `${badge.label}, models.dev catalog declaration`);
       } else if (badge.authority === "runtime") {
-        element.title = `${badge.label}: provider/FCC-confirmed runtime fact.`;
+        element.title = `${badge.label}: provider/ModelGlot-confirmed runtime fact.`;
       } else {
         element.title = `${badge.label}: neutral catalog information, not a runtime capability.`;
       }
@@ -311,7 +311,7 @@
       value.textContent = formatExactTokens(stat.value);
       const source = document.createElement("span");
       source.className = "model-picker-stat-source";
-      source.textContent = stat.authority === "runtime" ? "Provider/FCC" : "models.dev catalog";
+      source.textContent = stat.authority === "runtime" ? "Provider/ModelGlot" : "models.dev catalog";
       value.appendChild(document.createElement("br"));
       value.appendChild(source);
       item.append(term, value);
@@ -345,7 +345,7 @@
     const explanation = document.createElement("div");
     explanation.className = "model-picker-catalog-explanation";
     explanation.textContent =
-      "Dashed Catalog badges are models.dev declarations, not FCC runtime guarantees. Provider/FCC facts take precedence.";
+      "Dashed Catalog badges are models.dev declarations, not ModelGlot runtime guarantees. Provider/ModelGlot facts take precedence.";
     parent.append(source, explanation);
   }
 
@@ -395,7 +395,7 @@
       .join(" ");
   }
 
-  window.FccModelPickerDetails = {
+  window.ModelGlotModelPickerDetails = {
     formatExactTokens,
     formatTokens,
     renderOption,

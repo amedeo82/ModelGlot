@@ -1,4 +1,4 @@
-"""Native DSH operations against local, isolated FCC providers."""
+"""Native DSH operations against local, isolated ModelGlot providers."""
 
 import json
 import os
@@ -25,7 +25,7 @@ pytestmark = [pytest.mark.live, pytest.mark.smoke_target("clients")]
 def command(config: SmokeConfig) -> list[str]:
     if not shutil.which("dsh") or not (uv := shutil.which("uv")):
         pytest.skip("missing_env: DeepSeek Harness and uv are required")
-    return [uv, "run", "--project", str(config.root), "--no-sync", "fcc-dsh"]
+    return [uv, "run", "--project", str(config.root), "--no-sync", "modelglot-dsh"]
 
 
 @pytest.mark.parametrize(
@@ -35,15 +35,15 @@ def test_dsh_native_operations_e2e(
     smoke_config: SmokeConfig, tmp_path: Path, operation: str
 ) -> None:
     native = command(smoke_config)
-    model = "fcc-dsh-operations"
+    model = "modelglot-dsh-operations"
     full_model = f"lmstudio/{model}"
-    scenario = DshProvider(model, "FCC_NATIVE_DONE")
+    scenario = DshProvider(model, "MODELGLOT_NATIVE_DONE")
     if operation == "subagent":
         scenario.tool_call = (
             "subagent",
             {
                 "description": "Read a fixture instruction",
-                "prompt": "FCC_CHILD_TASK: Reply FCC_CHILD_DONE",
+                "prompt": "MODELGLOT_CHILD_TASK: Reply MODELGLOT_CHILD_DONE",
                 "run_in_background": False,
             },
         )
@@ -51,9 +51,9 @@ def test_dsh_native_operations_e2e(
         scenario.tool_call = (
             "pwsh" if os.name == "nt" else "bash",
             {
-                "command": "Start-Sleep -Seconds 3; Write-Output 'FCC_IDLE_TOOL_DONE'"
+                "command": "Start-Sleep -Seconds 3; Write-Output 'MODELGLOT_IDLE_TOOL_DONE'"
                 if os.name == "nt"
-                else "sleep 3; printf FCC_IDLE_TOOL_DONE",
+                else "sleep 3; printf MODELGLOT_IDLE_TOOL_DONE",
                 "description": "Wait briefly and print a fixture marker",
                 "timeoutMs": 10000,
             },
@@ -61,7 +61,7 @@ def test_dsh_native_operations_e2e(
     elif operation == "vision_no_thinking":
         full_model = f"alibaba_cloud/{model}"
         image = tmp_path / "vision.png"
-        shutil.copyfile(smoke_config.root / "smoke/assets/vision-fcc.png", image)
+        shutil.copyfile(smoke_config.root / "smoke/assets/vision-modelglot.png", image)
         scenario.tool_call = ("read_image", {"file_path": str(image)})
     else:
         scenario.protocol = "responses"
@@ -75,7 +75,7 @@ def test_dsh_native_operations_e2e(
                 ALIBABA_CLOUD_API_KEY="local-fixture-only",
             )
         if operation == "native_responses":
-            overrides["FCC_CUSTOM_PROVIDERS"] = json.dumps(
+            overrides["MODELGLOT_CUSTOM_PROVIDERS"] = json.dumps(
                 [
                     {
                         "provider_id": full_model.split("/")[0],
@@ -115,11 +115,15 @@ def test_dsh_native_operations_e2e(
     assert result.returncode == 0, result.stdout + result.stderr
     events = _json_object_lines(result.stdout)
     assert any(
-        item.get("type") == "final" and item.get("text") == "FCC_NATIVE_DONE"
+        item.get("type") == "final" and item.get("text") == "MODELGLOT_NATIVE_DONE"
         for item in events
     )
     if operation in ("subagent", "idle_tool"):
-        witness = "FCC_CHILD_DONE" if operation == "subagent" else "FCC_IDLE_TOOL_DONE"
+        witness = (
+            "MODELGLOT_CHILD_DONE"
+            if operation == "subagent"
+            else "MODELGLOT_IDLE_TOOL_DONE"
+        )
         assert any(
             item.get("type") == "tool_result"
             and item.get("status") == "completed"
@@ -148,8 +152,8 @@ def test_dsh_native_settings_migration_and_dump_e2e(
     smoke_config: SmokeConfig, tmp_path: Path
 ) -> None:
     native = command(smoke_config)
-    scenario = DshProvider("fcc-dsh-migration", "FCC_MIGRATED")
-    full_model = "lmstudio/fcc-dsh-migration"
+    scenario = DshProvider("modelglot-dsh-migration", "MODELGLOT_MIGRATED")
+    full_model = "lmstudio/modelglot-dsh-migration"
     credentials = _provider_credential_env_keys()
     with (
         dsh_provider(scenario) as upstream,
@@ -170,7 +174,7 @@ def test_dsh_native_settings_migration_and_dump_e2e(
         legacy = home / "settings.yaml"
         legacy.write_text("agent-loop:\n  maxParallelToolCalls: 3\n", encoding="utf-8")
         result = subprocess.run(
-            [*native, "headless", "Reply FCC_MIGRATED"],
+            [*native, "headless", "Reply MODELGLOT_MIGRATED"],
             cwd=tmp_path,
             env=env,
             capture_output=True,
@@ -184,13 +188,11 @@ def test_dsh_native_settings_migration_and_dump_e2e(
             encoding="utf-8"
         )
         assert "maxParallelToolCalls: 3" in persisted
-        assert (
-            "free-claude-code" not in persisted and "FCC_DSH_API_KEY" not in persisted
-        )
+        assert "modelglot" not in persisted and "MODELGLOT_DSH_API_KEY" not in persisted
         assert smoke_config.settings.proxy_auth_token not in persisted
         user_patch = tmp_path / "caller.patch.yml"
         user_patch.write_text(
-            "- id: agent-default-model\n  config:\n    provider: free-claude-code\n    model: caller-precedence\n",
+            "- id: agent-default-model\n  config:\n    provider: modelglot\n    model: caller-precedence\n",
             encoding="utf-8",
         )
         for selection in (

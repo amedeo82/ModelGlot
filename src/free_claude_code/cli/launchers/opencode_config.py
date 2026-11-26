@@ -1,4 +1,4 @@
-"""Process-local OpenCode v2 configuration for FCC model routing."""
+"""Process-local OpenCode v2 configuration for ModelGlot model routing."""
 
 from dataclasses import dataclass
 
@@ -10,8 +10,8 @@ from free_claude_code.config.server_urls import proxy_v1_url
 from free_claude_code.core.json_types import JsonObject
 from free_claude_code.core.model_capabilities import ModelInputModality
 
-OPENCODE_API_KEY_ENV = "FCC_OPENCODE_API_KEY"
-OPENCODE_PROVIDER_ID = "free-claude-code"
+OPENCODE_API_KEY_ENV = "MODELGLOT_OPENCODE_API_KEY"
+OPENCODE_PROVIDER_ID = "modelglot"
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,10 +25,10 @@ class OpenCodeConfig:
 def build_opencode_config(
     models: tuple[CatalogModel, ...], *, default_model_id: str, proxy_root_url: str
 ) -> OpenCodeConfig:
-    """Translate a non-empty FCC model snapshot into OpenCode v2 config."""
+    """Translate a non-empty ModelGlot model snapshot into OpenCode v2 config."""
 
     if not models:
-        raise ValueError("OpenCode requires at least one routable FCC model")
+        raise ValueError("OpenCode requires at least one routable ModelGlot model")
 
     model_config: JsonObject = {
         model.wire_slug: _model_config(model) for model in models

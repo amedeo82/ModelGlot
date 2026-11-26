@@ -6,7 +6,7 @@ from playwright.sync_api import Page, expect
 
 @pytest.fixture
 def admin_client_files(tmp_path: Path):
-    source = tmp_path / ".fcc/agent_workspace/sessions.json"
+    source = tmp_path / ".modelglot/agent_workspace/sessions.json"
     source.parent.mkdir(parents=True)
     source.write_text('{"conversation":')
     return source

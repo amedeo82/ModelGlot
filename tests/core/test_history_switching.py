@@ -444,7 +444,7 @@ def test_malformed_carrier_fails_startup_before_inference(wire: str) -> None:
                                 "content": [
                                     {
                                         "type": "redacted_thinking",
-                                        "data": "fcc:history:v2:unsupported",
+                                        "data": "modelglot:history:v2:unsupported",
                                     }
                                 ],
                             }
@@ -459,7 +459,7 @@ def test_malformed_carrier_fails_startup_before_inference(wire: str) -> None:
                     input=[
                         {
                             "type": "reasoning",
-                            "encrypted_content": "fcc:history:v2:unsupported",
+                            "encrypted_content": "modelglot:history:v2:unsupported",
                         }
                     ],
                 )

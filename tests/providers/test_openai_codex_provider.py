@@ -287,7 +287,7 @@ async def test_streamed_authentication_error_has_authentication_status(
 async def test_model_discovery_formats_package_version_for_upstream(
     monkeypatch: pytest.MonkeyPatch, package_version: str, client_version: str
 ) -> None:
-    monkeypatch.setattr(codex_provider_module, "FCC_VERSION", package_version)
+    monkeypatch.setattr(codex_provider_module, "MODELGLOT_VERSION", package_version)
     requests: list[httpx2.Request] = []
 
     def handler(request: httpx2.Request) -> httpx2.Response:

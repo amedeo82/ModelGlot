@@ -66,7 +66,9 @@ def test_count_tokens_endpoint(client: TestClient) -> None:
     assert response.json()["input_tokens"] == 5
 
 
-@pytest.mark.parametrize("prefix", ["", "anthropic/", "claude-3-freecc-no-thinking/"])
+@pytest.mark.parametrize(
+    "prefix", ["", "anthropic/", "claude-3-modelglot-no-thinking/"]
+)
 @pytest.mark.parametrize(
     "ref,target",
     [

@@ -949,7 +949,11 @@ def test_catalog_enriched_minimax_and_gemma_preserve_authority_layout_and_identi
                     "label": "MiniMax"
                     if canonical_id.startswith("minimax/")
                     else "Google",
-                    "logo_url": None,
+                    "logo_url": (
+                        "/admin/catalog-logos/labs/minimax.svg"
+                        if canonical_id.startswith("minimax/")
+                        else None
+                    ),
                 },
                 "provider_logo_url": (
                     f"/admin/assets/{package_version()}/providers/nvidia-color.svg"
@@ -1011,6 +1015,17 @@ def test_catalog_enriched_minimax_and_gemma_preserve_authority_layout_and_identi
     page.set_viewport_size({"width": width, "height": 900})
     page.route("**/admin/api/config", single_nim_config)
     page.route("**/admin/api/models", lambda route: route.fulfill(json=payload))
+    page.route(
+        "**/admin/catalog-logos/labs/minimax.svg",
+        lambda route: route.fulfill(
+            content_type="image/svg+xml",
+            body=(
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'
+                '<path fill="currentColor" d="M2 2h20v20H2z"/>'
+                "</svg>"
+            ),
+        ),
+    )
     _open_models(page, admin_base_url)
     provider_logo_src = (
         page.locator('[data-provider="nvidia_nim"] .provider-logo').get_attribute("src")
@@ -1060,7 +1075,13 @@ def test_catalog_enriched_minimax_and_gemma_preserve_authority_layout_and_identi
     expect(summary.locator(".model-picker-logo--provider img")).to_have_attribute(
         "src", provider_logo_path
     )
-    expect(summary.locator(".model-picker-logo-fallback")).to_have_count(1)
+    expect(summary.locator(".model-picker-logo--lab img")).to_have_attribute(
+        "src", "/admin/catalog-logos/labs/minimax.svg"
+    )
+    expect(summary.locator(".model-picker-logo--lab img")).to_have_css(
+        "filter", "invert(1)"
+    )
+    expect(summary.locator(".model-picker-logo-fallback")).to_have_count(0)
     expect(summary.locator(".model-picker-canonical")).to_have_count(0)
     expect(summary.locator('[data-icon="video"]')).to_be_visible()
     expect(
@@ -1084,6 +1105,8 @@ def test_catalog_enriched_minimax_and_gemma_preserve_authority_layout_and_identi
     expect(summary.locator('[data-capability="structured-output"]')).to_have_count(0)
     expect(summary.locator('[data-capability="audio"]')).to_have_count(0)
     expect(summary.locator('[data-capability="video"]')).to_have_count(0)
+    expect(summary.locator(".model-picker-logo--lab img")).to_have_count(0)
+    expect(summary.locator(".model-picker-logo-fallback")).to_have_count(1)
     assert page.evaluate(
         "document.documentElement.scrollWidth <= document.documentElement.clientWidth"
     )

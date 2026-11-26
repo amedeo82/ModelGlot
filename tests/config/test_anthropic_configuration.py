@@ -38,7 +38,7 @@ def test_save_remove_workspace_optional_and_local_token_independent() -> None:
 
 def test_claude_launch_does_not_inherit_anthropic_account_credentials() -> None:
     env = build_claude_proxy_env(
-        proxy_root_url="http://localhost:8082",
+        proxy_root_url="http://localhost:16969",
         auth_token="proxy-token",
         base_env={
             "ANTHROPIC_API_KEY": "upstream-key",

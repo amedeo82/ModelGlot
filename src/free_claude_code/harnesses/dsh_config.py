@@ -10,9 +10,9 @@ from free_claude_code.config.server_urls import proxy_v1_url
 from free_claude_code.core.json_types import JsonObject
 from free_claude_code.core.model_capabilities import ModelInputModality
 
-DSH_API_KEY_ENV = "FCC_DSH_API_KEY"
-DSH_ENV_PREFIX = "FCC_DSH_"
-DSH_PROVIDER_ID = "free-claude-code"
+DSH_API_KEY_ENV = "MODELGLOT_DSH_API_KEY"
+DSH_ENV_PREFIX = "MODELGLOT_DSH_"
+DSH_PROVIDER_ID = "modelglot"
 
 _MAX_TIMER_DELAY_MS = 2_147_483_647
 _REASONING_EFFORTS: JsonObject = {
@@ -33,7 +33,7 @@ def build_dsh_launch_config(
     proxy_root_url: str,
     credentials_path: Path,
 ) -> tuple[JsonObject, ...]:
-    """Translate FCC's catalog into an isolated DSH overlay."""
+    """Translate ModelGlot's catalog into an isolated DSH overlay."""
 
     provider = build_dsh_provider(
         models,
@@ -72,9 +72,11 @@ def build_dsh_provider(
     proxy_root_url: str,
     credential_ref: str,
 ) -> JsonObject:
-    """Build the same FCC Responses route for temporary and persistent clients."""
+    """Build the same ModelGlot Responses route for temporary and persistent clients."""
     if not models:
-        raise ValueError("DeepSeek Harness requires at least one routable FCC model")
+        raise ValueError(
+            "DeepSeek Harness requires at least one routable ModelGlot model"
+        )
 
     return {
         "displayName": "ModelGlot",

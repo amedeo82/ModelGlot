@@ -102,12 +102,14 @@ class CodexAppServer:
             )
             register_pid(self._process.pid)
             self._alive = True
-            self._reader = asyncio.create_task(self._read(), name="fcc-codex-jsonl")
+            self._reader = asyncio.create_task(
+                self._read(), name="modelglot-codex-jsonl"
+            )
             self._stderr = asyncio.create_task(
-                self._read_stderr(), name="fcc-codex-stderr"
+                self._read_stderr(), name="modelglot-codex-stderr"
             )
             self._dispatcher = asyncio.create_task(
-                self._dispatch(), name="fcc-codex-events"
+                self._dispatch(), name="modelglot-codex-events"
             )
             await self.rpc(
                 "initialize",
@@ -137,7 +139,7 @@ class CodexAppServer:
 
     async def create_thread(self) -> NativeThread:
         response = await self.rpc(
-            "thread/start", {"cwd": self._cwd, "modelProvider": "fcc"}
+            "thread/start", {"cwd": self._cwd, "modelProvider": "modelglot"}
         )
         native = self._thread_with_permissions(response)
         self.thread_id = native.id
@@ -146,7 +148,7 @@ class CodexAppServer:
     async def resume_thread(self, thread_id: str) -> NativeThread:
         response = await self.rpc(
             "thread/resume",
-            {"threadId": thread_id, "cwd": self._cwd, "modelProvider": "fcc"},
+            {"threadId": thread_id, "cwd": self._cwd, "modelProvider": "modelglot"},
         )
         native = self._thread_with_permissions(response)
         self.thread_id = native.id
@@ -180,7 +182,7 @@ class CodexAppServer:
         model = self._model_slugs.get(selection.model)
         if not self.thread_id or model is None:
             raise CodeUnavailableError(
-                "Codex is not prepared for the selected FCC model."
+                "Codex is not prepared for the selected ModelGlot model."
             )
         params: JsonObject = {
             "threadId": self.thread_id,
@@ -227,7 +229,7 @@ class CodexAppServer:
     async def rpc(self, method: str, params: JsonObject) -> JsonObject:
         if not self._alive:
             raise CodeUnavailableError("The Codex connection is closed.")
-        request_id = f"fcc-{uuid.uuid4()}"
+        request_id = f"modelglot-{uuid.uuid4()}"
         future: asyncio.Future[JsonObject] = asyncio.get_running_loop().create_future()
         # A cancelled caller does not erase the pending native response/identity.
         future.add_done_callback(
@@ -519,7 +521,7 @@ class CodexAppServer:
         if self._closing is None:
             self._closing = asyncio.create_task(
                 self._close(),
-                name="fcc-codex-close",
+                name="modelglot-codex-close",
             )
         await asyncio.shield(self._closing)
 
@@ -533,7 +535,9 @@ class CodexAppServer:
 
     async def _reap_owned_process(self) -> None:
         if self._reaping is None:
-            self._reaping = asyncio.create_task(self._reap(), name="fcc-codex-reap")
+            self._reaping = asyncio.create_task(
+                self._reap(), name="modelglot-codex-reap"
+            )
         await asyncio.shield(self._reaping)
 
     async def _reap(self) -> None:

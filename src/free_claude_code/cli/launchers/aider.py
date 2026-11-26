@@ -1,4 +1,4 @@
-"""Installed Aider launcher using native model settings for FCC routing."""
+"""Installed Aider launcher using native model settings for ModelGlot routing."""
 
 from collections.abc import Sequence
 
@@ -24,7 +24,7 @@ def _configure(
     settings_path = files.write_json("model-settings.yml", config.settings)
     metadata_path = files.write_json("model-metadata.json", config.metadata)
     return PreparedLaunch(
-        [ctx.binary_path, "--set-env", "ANTHROPIC_API_KEY=fcc-local", *args],
+        [ctx.binary_path, "--set-env", "ANTHROPIC_API_KEY=modelglot-local", *args],
         client_environment(
             ctx.base_env,
             proxy_root_url=ctx.proxy_root_url,

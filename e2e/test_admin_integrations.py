@@ -109,7 +109,7 @@ def test_codex_connect_disconnect_and_modal_paths(
     expect(page.locator("#claudeIntegrationDialog")).not_to_be_visible()
     expect(dialog.get_by_role("button", name="Close", exact=True)).to_be_focused()
     expect(dialog).to_contain_text(
-        "Configure the local Codex workspace in Codex CLI, the VS Code extension, and ChatGPT Desktop to use FCC."
+        "Configure the local Codex workspace in Codex CLI, the VS Code extension, and ChatGPT Desktop to use ModelGlot."
     )
     expect(dialog).to_contain_text("Chat and cloud features stay on OpenAI services.")
     assert dialog.evaluate("element => element.scrollWidth <= element.clientWidth")
@@ -145,7 +145,7 @@ def test_codex_connect_disconnect_and_modal_paths(
             assert len({buttons[index]["y"] for index in row}) == 1
         assert len({button["height"] for button in buttons}) == 1
     expect(page.locator("#codexIntegrationMessage")).to_contain_text(
-        "Settings saved. Restart Codex or ChatGPT Desktop and select an FCC model."
+        "Settings saved. Restart Codex or ChatGPT Desktop and select an ModelGlot model."
     )
     assert tomllib.loads(path.read_text())["model"] == "my-choice"
     assert "# Keep this" in path.read_text()
@@ -439,7 +439,7 @@ def admin_client_files(request: pytest.FixtureRequest, tmp_path: Path):
                 "editor.fontSize": 15,
                 "claudeCode.disableLoginPrompt": True,
                 "claudeCode.environmentVariables": [
-                    {"name": "ANTHROPIC_BASE_URL", "value": "http://localhost:8082"},
+                    {"name": "ANTHROPIC_BASE_URL", "value": "http://localhost:16969"},
                     {"name": "ANTHROPIC_AUTH_TOKEN", "value": "e2e-proxy-token"},
                     {
                         "name": "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY",

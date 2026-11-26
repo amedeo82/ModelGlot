@@ -1476,7 +1476,7 @@ async def test_startup_notice_is_published_and_recorded_for_clear(
 
     mock_platform.queue_send_message.assert_awaited_once_with(
         _SCOPE.chat_id,
-        "🚀 *Claude Code Proxy is online\\!* \\(Bot API\\)",
+        "🚀 *ModelGlot is online\\!* \\(Bot API\\)",
         parse_mode="MarkdownV2",
         fire_and_forget=False,
     )

@@ -38,10 +38,10 @@ def powershell_module_paths(tmp_path_factory: pytest.TempPathFactory) -> dict[st
                 "-NoProfile",
                 "-NonInteractive",
                 "-Command",
-                "New-Item -ItemType Junction -Path $env:FCC_TEST_MODULE_PATH "
+                "New-Item -ItemType Junction -Path $env:MODELGLOT_TEST_MODULE_PATH "
                 "-Target (Join-Path $PSHOME 'Modules') | Out-Null",
             ],
-            env=os.environ | {"FCC_TEST_MODULE_PATH": str(path)},
+            env=os.environ | {"MODELGLOT_TEST_MODULE_PATH": str(path)},
             check=True,
             capture_output=True,
             text=True,

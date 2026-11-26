@@ -741,6 +741,10 @@ button.startup-busy::before,
   object-fit: contain;
 }
 
+.model-picker-logo--lab img {
+  filter: invert(1);
+}
+
 .model-picker-logo-fallback {
   font-size: 10px;
   font-weight: 800;

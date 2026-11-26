@@ -1,4 +1,4 @@
-"""Installed Pi launcher using the bundled FCC provider extension."""
+"""Installed Pi launcher using the bundled ModelGlot provider extension."""
 
 import re
 import sys
@@ -38,16 +38,16 @@ def _configure(
             "-e",
             str(extension_path),
             "--models",
-            "free-claude-code/**",
+            "modelglot/**",
             *args,
         ],
         client_environment(
             ctx.base_env,
             proxy_root_url=ctx.proxy_root_url,
-            remove_prefixes=("FCC_PI_",),
+            remove_prefixes=("MODELGLOT_PI_",),
             updates={
-                "FCC_PI_BASE_URL": ctx.proxy_root_url.rstrip("/"),
-                "FCC_PI_API_KEY": ctx.auth_token,
+                "MODELGLOT_PI_BASE_URL": ctx.proxy_root_url.rstrip("/"),
+                "MODELGLOT_PI_API_KEY": ctx.auth_token,
             },
         ),
     )
@@ -61,7 +61,7 @@ SPEC = HarnessSpec(
     compatibility_check=NativeCheck(
         ("--version",),
         lambda output: version_at_least(output, _VERSION_PATTERN, (0, 80, 4)),
-        "FCC requires Pi 0.80.4 or newer for provider request headers.",
+        "ModelGlot requires Pi 0.80.4 or newer for provider request headers.",
     ),
 )
 

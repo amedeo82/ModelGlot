@@ -11,8 +11,8 @@ from .failures import ExecutionFailure
 
 ERROR_DETAIL_DISPLAY_CAP_BYTES = 16_384
 _MAX_CAUSE_CHAIN_DEPTH = 4
-_UPSTREAM_BODY_ATTR = "_fcc_upstream_error_body"
-_UPSTREAM_BODY_TRUNCATED_ATTR = "_fcc_upstream_error_body_truncated"
+_UPSTREAM_BODY_ATTR = "_modelglot_upstream_error_body"
+_UPSTREAM_BODY_TRUNCATED_ATTR = "_modelglot_upstream_error_body_truncated"
 
 _SECRET_TEXT_REPLACEMENTS = (
     (

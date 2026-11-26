@@ -666,7 +666,7 @@ def test_automatic_web_search_rejects_malformed_history_replay_as_client_error()
             {
                 "role": "assistant",
                 "content": [
-                    {"type": "redacted_thinking", "data": "fcc:history:v1:bad"},
+                    {"type": "redacted_thinking", "data": "modelglot:history:v1:bad"},
                     {
                         "type": "server_tool_use",
                         "id": "prior",
@@ -709,7 +709,7 @@ def test_rejects_web_search_domain_wildcards_and_url_parts(domain: str) -> None:
 async def test_service_rejects_forced_server_tool_when_local_handler_is_disabled(
     provider_id: str,
 ) -> None:
-    """Every provider needs FCC's local handler for forced server tools."""
+    """Every provider needs ModelGlot's local handler for forced server tools."""
     settings = Settings.model_validate({"ENABLE_WEB_SERVER_TOOLS": False})
     assert settings.enable_web_server_tools is False
 

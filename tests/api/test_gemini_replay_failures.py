@@ -86,7 +86,7 @@ def test_failed_signed_continuation_stops_and_releases_attempt(
             for candidate in array_payload(event.data.get("candidates", []))
         )
         assert "test-native-signature" not in response.text
-        assert "fcc:history:" not in response.text
+        assert "modelglot:history:" not in response.text
         assert provider_manager_for_app(app)._current.active_leases == 0
     assert len(calls) == 2
     assert len(closed) == 2

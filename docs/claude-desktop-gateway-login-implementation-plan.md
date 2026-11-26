@@ -6,8 +6,8 @@ Input: [`claude-desktop-gateway-login-analysis.md`](claude-desktop-gateway-login
 Audience: maintainers and contributors
 
 This plan converts the Claude Desktop gateway/login analysis into an ordered, reviewable
-implementation. The target behavior is a reversible FCC-owned Desktop configuration that
-routes inference through FCC when selected without removing normal Claude.ai sign-in or
+implementation. The target behavior is a reversible modelglot-owned Desktop configuration that
+routes inference through ModelGlot when selected without removing normal Claude.ai sign-in or
 destroying the native login/bootstrap state.
 
 The plan does not attempt to make standard Claude.ai identity and 3P gateway identity
@@ -56,7 +56,7 @@ These apply to every implementation step.
    the relevant step.
 4. **Tests accompany behavior.** Every change to the Desktop lifecycle adds focused unit
    tests and relevant API, runtime, cleanup, or end-to-end coverage.
-5. **Preserve ownership boundaries.** FCC may modify only the FCC-owned profile and fields it
+5. **Preserve ownership boundaries.** ModelGlot may modify only the modelglot-owned profile and fields it
    explicitly owns. It must not rewrite unknown user fields or the native credential store.
 6. **Preserve `hybridPointer`.** Do not synthesize, normalize, or delete the undocumented
    value. Preserve it exactly when present and continue working when it is absent.
@@ -78,16 +78,16 @@ Effort estimates are rough developer-days for a maintainer already familiar with
 
 After the implementation:
 
-- Connect creates or updates the FCC-owned gateway profile.
+- Connect creates or updates the modelglot-owned gateway profile.
 - Connect selects that profile.
 - Connect preserves `hybridPointer` if it exists.
 - Connect does not force the deployment chooser away from Claude.ai.
 - Connect preserves the selected native profile and its pointer in a recoverable journal.
-- Refresh rotates only FCC-owned gateway fields.
+- Refresh rotates only modelglot-owned gateway fields.
 - Disconnect restores the previous profile, pointer, and deployment state.
 - If safe restoration is impossible, the Desktop configuration remains valid and standard
   sign-in remains reachable.
-- FCC never revokes Anthropic credentials and never explicitly disables skills, plugins, or
+- ModelGlot never revokes Anthropic credentials and never explicitly disables skills, plugins, or
   connectors.
 
 ### 1.2 Explicit non-goals
@@ -109,7 +109,7 @@ The implementation must not:
 ## 2. State Model
 
 Introduce an explicit persisted journal for the reversible lifecycle. The journal must be
-FCC-owned, local, atomic, and sufficient to reconstruct the user's pre-Connect state.
+modelglot-owned, local, atomic, and sufficient to reconstruct the user's pre-Connect state.
 
 Recommended record shape:
 
@@ -126,7 +126,7 @@ Recommended record shape:
 
 Requirements:
 
-- Store it in an FCC-owned state directory, not inside Claude Desktop's `configLibrary`.
+- Store it in an modelglot-owned state directory, not inside Claude Desktop's `configLibrary`.
 - Use the same atomic-write helper used by the existing Desktop integration.
 - Do not store tokens, credentials, model definitions, or profile contents in the journal.
 - Treat `null` and an absent value as distinct only where that distinction is required to
@@ -246,7 +246,7 @@ configuration without storing credentials or profile contents.
 **Changes.**
 
 - `src/free_claude_code/config/paths.py` — add a dedicated path for the Desktop restore
-  journal under the FCC-owned state directory.
+  journal under the modelglot-owned state directory.
 - `src/free_claude_code/harnesses/claude_desktop_integration.py`:
   - add a typed journal structure;
   - add strict parsing and validation;
@@ -323,13 +323,13 @@ the new reversible contract.
 
 - `src/free_claude_code/harnesses/claude_desktop_integration.py`:
   - split the current `active` concept into:
-    - `gateway_configured`: the FCC profile is selected and contains valid FCC-owned gateway
+    - `gateway_configured`: the ModelGlot profile is selected and contains valid modelglot-owned gateway
       fields;
     - `native_login_available`: the Desktop metadata retains a valid native profile or
       pointer state and the deployment chooser has not been forced off;
     - `connected`: the public integration status reported to the Admin UI.
   - keep `_current()` responsible for validating the gateway URL, credential, model-discovery
-    setting, and FCC ownership header;
+    setting, and ModelGlot ownership header;
   - never infer that standard login is unavailable merely because `hybridPointer` is absent;
   - treat `deploymentMode: "3p"` as gateway-only configuration, while `any` or an absent mode
     remains chooser-enabled.
@@ -340,11 +340,11 @@ the new reversible contract.
 - gateway profile selected with `3p` is gateway-only;
 - gateway profile selected with `1p` is reported as a conflict rather than silently claiming
   the gateway is active;
-- a valid native profile remains selected after the FCC profile is registered but not
+- a valid native profile remains selected after the ModelGlot profile is registered but not
   applied;
 - `hybridPointer` absence does not itself mean login was destroyed;
-- a modified FCC URL or token causes the current-state check to fail;
-- a non-FCC profile with the same ID is rejected.
+- a modified ModelGlot URL or token causes the current-state check to fail;
+- a non-ModelGlot profile with the same ID is rejected.
 
 **Acceptance.**
 
@@ -369,7 +369,7 @@ Desktop into gateway-only mode by default.
   - capture the previous selected profile, `hybridPointer`, and deployment mode before any
     mutation;
   - write the restore journal before mutating `_meta.json` or `claude_desktop_config.json`;
-  - register and select the FCC profile without deleting `hybridPointer`;
+  - register and select the ModelGlot profile without deleting `hybridPointer`;
   - set `deploymentMode` to `any` when the file previously had no effective mode or had `any`;
   - preserve an existing user-selected mode unless it conflicts with the gateway profile;
   - if the existing mode is `1p`, report a conflict or require explicit user choice rather
@@ -415,14 +415,14 @@ profile and forcing `1p`.
 
 - `src/free_claude_code/harnesses/claude_desktop_integration.py`, `_disconnect()`:
   - load and validate the restore journal;
-  - verify that the journal still belongs to the current root and FCC ownership state;
+  - verify that the journal still belongs to the current root and ModelGlot ownership state;
   - if the recorded previous profile exists and remains valid, restore it as `appliedId`;
   - restore the recorded `hybridPointer` exactly when it was present;
-  - remove the pointer only when the journal proves FCC added it, which the new Connect path
+  - remove the pointer only when the journal proves ModelGlot added it, which the new Connect path
     never does;
-  - restore the previous deployment mode, mapping an absent value to removal of the FCC-owned
+  - restore the previous deployment mode, mapping an absent value to removal of the modelglot-owned
     key or an explicit `any` according to the approved compatibility policy;
-  - remove the FCC profile and FCC library entry;
+  - remove the ModelGlot profile and ModelGlot library entry;
   - verify the final state before deleting the journal;
   - remove the journal only after successful verification;
   - if restoration fails, keep the pending-disconnect marker and journal for a later retry.
@@ -435,7 +435,7 @@ profile and forcing `1p`.
 - Disconnect restores the previous profile ID.
 - Disconnect restores the exact previous `hybridPointer`.
 - Disconnect restores the previous deployment mode.
-- Disconnect removes the FCC profile and FCC entry.
+- Disconnect removes the ModelGlot profile and ModelGlot entry.
 - Disconnect leaves a native profile and its fields untouched.
 - Disconnect works when the journal has no previous profile.
 - Disconnect uses the safe fallback when the recorded profile no longer exists.
@@ -459,30 +459,30 @@ profile and forcing `1p`.
 
 ### S2.3 — Preserve the native profile when the user selects it manually
 
-**Goal.** Handle the case where the user chooses Claude.ai after FCC has applied its profile.
+**Goal.** Handle the case where the user chooses Claude.ai after ModelGlot has applied its profile.
 
 **Changes.**
 
 - `src/free_claude_code/harnesses/claude_desktop_integration.py`:
-  - refresh must not reactivate the FCC profile if another profile is now selected;
+  - refresh must not reactivate the ModelGlot profile if another profile is now selected;
   - Disconnect must not restore an obsolete profile over a deliberate newer user selection;
   - define the conflict rule explicitly in code and document it;
-  - retain the FCC profile and journal until the user explicitly disconnects or the journal
+  - retain the ModelGlot profile and journal until the user explicitly disconnects or the journal
     can be safely superseded.
 - If the native profile ID cannot be determined from the current metadata, do not guess.
 
 **Tests.**
 
-- Refresh does not reselect the FCC profile after the user selects another profile.
+- Refresh does not reselect the ModelGlot profile after the user selects another profile.
 - Disconnect recognizes a deliberate newer selection and does not overwrite it.
-- Refresh remains idempotent when the FCC profile is still selected.
+- Refresh remains idempotent when the ModelGlot profile is still selected.
 - A stale journal cannot force restoration over a newer selection.
 
 **Acceptance.**
 
-- The user can switch to Claude.ai after connecting without FCC switching the profile back
+- The user can switch to Claude.ai after connecting without ModelGlot switching the profile back
   on the next server refresh.
-- The integration status truthfully reports that the FCC gateway profile is configured but
+- The integration status truthfully reports that the ModelGlot gateway profile is configured but
   not currently selected.
 
 **Effort.** 1 day.
@@ -495,7 +495,7 @@ profile and forcing `1p`.
 
 **Changes.**
 
-- On startup or Connect, detect an existing FCC installation whose metadata lacks
+- On startup or Connect, detect an existing ModelGlot installation whose metadata lacks
   `hybridPointer` and whose mode is `3p`.
 - Do not infer the original native pointer or profile automatically.
 - Surface a migration status that tells the user that native sign-in state cannot be recovered
@@ -509,7 +509,7 @@ profile and forcing `1p`.
 
 **Tests.**
 
-- legacy FCC state is detected;
+- legacy ModelGlot state is detected;
 - detection does not mutate state;
 - explicit migration changes `3p` to `any` and preserves profiles;
 - migration does not create a fake pointer;
@@ -706,7 +706,7 @@ pass.
 | User selects Claude.ai after Connect | Refresh does not switch back; Disconnect does not overwrite the newer choice |
 | Gateway restart with token rotation | Gateway fields update; profile selection and pointer do not change |
 | Interruption during Disconnect | Retry completes restoration and removes the pending marker |
-| Legacy FCC state from the old implementation | Migration is detected and requires explicit confirmation |
+| Legacy ModelGlot state from the old implementation | Migration is detected and requires explicit confirmation |
 | MDM-managed Desktop | Connect fails safely and leaves managed configuration untouched |
 
 **Acceptance.**
@@ -736,7 +736,7 @@ pass.
 **Acceptance.**
 
 - The release note contains no secrets.
-- Rollback instructions identify which files FCC owns and which files the user must not edit
+- Rollback instructions identify which files ModelGlot owns and which files the user must not edit
   by hand unless necessary.
 
 **Effort.** 0.5 day.
@@ -806,11 +806,11 @@ parallel after S2.1, provided they agree on the shared state and journal helpers
 - [ ] No production Connect path silently forces `deploymentMode: "3p"`.
 - [ ] A native profile remains restorable after a gateway connection.
 - [ ] Disconnect restores the previous profile and pointer.
-- [ ] Refresh changes only FCC-owned gateway fields.
+- [ ] Refresh changes only modelglot-owned gateway fields.
 - [ ] A deliberate user selection is not overwritten by refresh or disconnect.
 - [ ] The journal contains no secrets and uses atomic writes.
 - [ ] Interrupted connect or disconnect operations are retryable.
-- [ ] Legacy FCC state has an explicit, non-destructive migration path.
+- [ ] Legacy ModelGlot state has an explicit, non-destructive migration path.
 - [ ] MDM-managed installations remain protected.
 - [ ] The Admin API and UI describe the effective mode accurately.
 - [ ] README documents the standard/3P distinction and Anthropic-hosted connector limitation.
@@ -829,7 +829,7 @@ These are intentionally outside the first implementation:
    helper-script flow if per-user attribution or token rotation becomes necessary.
 3. **Managed connector and plugin provisioning.** Provide project-level templates for
    `managedMcpServers`, organization plugin directories, and managed marketplace policies.
-   The per-user FCC profile already registers the official Anthropic marketplaces; see
+   The per-user ModelGlot profile already registers the official Anthropic marketplaces; see
    `docs/claude-desktop-1m-context-and-official-marketplace.md`.
 4. **Claude.ai one-time import.** Research completed on 2026-11-17. The supported path is
    the Desktop `claudeAiImport.enabled` setting, which exposes a one-time history import

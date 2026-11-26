@@ -85,12 +85,13 @@ def test_extract_accepts_every_known_session_header(name: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "name", [name for name in MISTRAL_SESSION_HEADER_NAMES if name != "x-fcc-launch-id"]
+    "name",
+    [name for name in MISTRAL_SESSION_HEADER_NAMES if name != "x-modelglot-launch-id"],
 )
 def test_conversation_identity_takes_precedence_over_launch_identity(name: str) -> None:
     assert (
         extract_mistral_affinity_key(
-            {"x-fcc-launch-id": "launch-1", name: "conversation-1"}
+            {"x-modelglot-launch-id": "launch-1", name: "conversation-1"}
         )
         == "conversation-1"
     )
@@ -100,7 +101,7 @@ def test_conversation_identity_takes_precedence_over_launch_identity(name: str) 
 def test_blank_conversation_identity_falls_back_to_launch_identity(blank: str) -> None:
     assert (
         extract_mistral_affinity_key(
-            {"x-opencode-session": blank, "x-fcc-launch-id": "launch-1"}
+            {"x-opencode-session": blank, "x-modelglot-launch-id": "launch-1"}
         )
         == "launch-1"
     )
@@ -148,7 +149,7 @@ def test_affinity_headers_are_empty_without_a_session_header(
 def test_affinity_headers_forward_only_the_affinity_header() -> None:
     headers = {
         "authorization": "Bearer secret",
-        "user-agent": "fcc-test/1.0",
+        "user-agent": "modelglot-test/1.0",
         "x-opencode-session": "sess-4",
     }
     assert mistral_affinity_headers(headers) == {MISTRAL_AFFINITY_HEADER: "sess-4"}
@@ -186,7 +187,7 @@ async def test_stream_messages_sends_affinity_header(
     [
         None,
         {},
-        {"authorization": "Bearer secret", "user-agent": "fcc-test/1.0"},
+        {"authorization": "Bearer secret", "user-agent": "modelglot-test/1.0"},
     ],
 )
 async def test_stream_messages_without_session_header_sends_no_extra_headers(

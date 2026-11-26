@@ -16,7 +16,7 @@ def conversation_headers(
 ) -> dict[str, str]:
     """Identify a smoke conversation while preserving explicit caller headers."""
     result = httpx.Headers(auth_headers() if headers is None else headers)
-    result.setdefault("user-agent", "fcc-smoke/1.0")
+    result.setdefault("user-agent", "modelglot-smoke/1.0")
     result.setdefault("x-opencode-session", session_id or str(uuid.uuid4()))
     return dict(result)
 

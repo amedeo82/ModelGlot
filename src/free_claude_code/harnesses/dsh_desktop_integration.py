@@ -1,4 +1,4 @@
-"""Write, compare, and remove FCC's entries in DSH Desktop's native files."""
+"""Write, compare, and remove ModelGlot's entries in DSH Desktop's native files."""
 
 import copy
 import os
@@ -14,7 +14,7 @@ from free_claude_code.harnesses import dsh_files
 from free_claude_code.harnesses.dsh_config import DSH_PROVIDER_ID, build_dsh_provider
 from free_claude_code.harnesses.dsh_files import DshConfigError, mapping
 
-DSH_DESKTOP_API_KEY = "FCC_DSH_DESKTOP_API_KEY"
+DSH_DESKTOP_API_KEY = "MODELGLOT_DSH_DESKTOP_API_KEY"
 
 
 def config_home() -> Path:
@@ -137,7 +137,7 @@ def configure(
     home = home.resolve()
     if not auth_token.strip():
         raise DshConfigError(
-            "Set an FCC proxy authentication token before connecting DSH Desktop."
+            "Set an ModelGlot proxy authentication token before connecting DSH Desktop."
         )
     with _locked(home):
         if only_existing and not has_provider(home):

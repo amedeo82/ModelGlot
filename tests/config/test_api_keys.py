@@ -122,17 +122,17 @@ def test_schema_one_upgrade_preserves_custom_order_and_unknown_values() -> None:
         }
     ]
     store.path.write_text(
-        "FCC_CONFIG_SCHEMA=1\nOPENAI_API_KEY=old-secret\nUNKNOWN_PRIVATE=preserve-me\n"
-        + "FCC_CUSTOM_PROVIDERS="
+        "MODELGLOT_CONFIG_SCHEMA=1\nOPENAI_API_KEY=old-secret\nUNKNOWN_PRIVATE=preserve-me\n"
+        + "MODELGLOT_CUSTOM_PROVIDERS="
         + quote_env_value(json.dumps(custom))
         + "\n",
         encoding="utf-8",
     )
     store.initialize({})
     values = dotenv_values_from_file(store.path)
-    assert values["FCC_CONFIG_SCHEMA"] == "2"
+    assert values["MODELGLOT_CONFIG_SCHEMA"] == "2"
     assert json.loads(values["OPENAI_API_KEY"]) == ["old-secret"]
-    assert json.loads(values["FCC_CUSTOM_PROVIDERS"])[0]["api_keys"] == [
+    assert json.loads(values["MODELGLOT_CUSTOM_PROVIDERS"])[0]["api_keys"] == [
         "custom-secret"
     ]
     assert values["UNKNOWN_PRIVATE"] == "preserve-me"
@@ -144,7 +144,7 @@ def test_schema_one_upgrade_preserves_custom_order_and_unknown_values() -> None:
 def _old_store(values: dict[str, str], schema: str | None = "1"):
     store = ManagedConfigStore()
     store.path.parent.mkdir(parents=True, exist_ok=True)
-    lines = [f"FCC_CONFIG_SCHEMA={schema}"] if schema else []
+    lines = [f"MODELGLOT_CONFIG_SCHEMA={schema}"] if schema else []
     lines.extend(f"{key}={quote_env_value(value)}" for key, value in values.items())
     store.path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return store
@@ -184,7 +184,7 @@ def test_upgrade_preserves_shadowed_invalid_credential_list(
     assert snapshot.managed["OPENAI_API_KEY"] == stored
     assert json.loads(snapshot.managed["GROQ_API_KEY"]) == ["managed-good"]
     assert snapshot.managed["UNKNOWN_PRIVATE"] == "preserved"
-    assert snapshot.managed["FCC_CONFIG_SCHEMA"] == "2"
+    assert snapshot.managed["MODELGLOT_CONFIG_SCHEMA"] == "2"
     before = store.path.read_bytes(), store.path.stat().st_mtime_ns
     store.initialize(process)
     assert (store.path.read_bytes(), store.path.stat().st_mtime_ns) == before
@@ -205,14 +205,14 @@ def test_upgrade_preserves_shadowed_invalid_credential_list(
 def test_upgrade_converts_custom_credentials_before_effective_definition_validation(
     saved: list[JsonObject], converted: list[JsonObject]
 ) -> None:
-    store = _old_store({"FCC_CUSTOM_PROVIDERS": json.dumps(saved)})
-    process = {"FCC_CUSTOM_PROVIDERS": "[]"}
+    store = _old_store({"MODELGLOT_CUSTOM_PROVIDERS": json.dumps(saved)})
+    process = {"MODELGLOT_CUSTOM_PROVIDERS": "[]"}
     store.initialize(process)
     snapshot = store.read(process)
     assert snapshot.settings.custom_providers == ()
     assert snapshot.sources["custom_providers"] is ConfigSource.PROCESS
-    assert json.loads(snapshot.managed["FCC_CUSTOM_PROVIDERS"]) == converted
-    assert snapshot.managed["FCC_CONFIG_SCHEMA"] == "2"
+    assert json.loads(snapshot.managed["MODELGLOT_CUSTOM_PROVIDERS"]) == converted
+    assert snapshot.managed["MODELGLOT_CONFIG_SCHEMA"] == "2"
     with pytest.raises(ValidationError):
         store.read({})
 
@@ -220,7 +220,7 @@ def test_upgrade_converts_custom_credentials_before_effective_definition_validat
 def test_upgrade_preserves_custom_noncredential_members() -> None:
     store = _old_store(
         {
-            "FCC_CUSTOM_PROVIDERS": json.dumps(
+            "MODELGLOT_CUSTOM_PROVIDERS": json.dumps(
                 [
                     {
                         "provider_id": "custom_" + "1" * 32,
@@ -235,7 +235,7 @@ def test_upgrade_preserves_custom_noncredential_members() -> None:
     )
     store.initialize({})
     snapshot = store.read({})
-    assert json.loads(snapshot.managed["FCC_CUSTOM_PROVIDERS"]) == [
+    assert json.loads(snapshot.managed["MODELGLOT_CUSTOM_PROVIDERS"]) == [
         {
             "provider_id": "custom_" + "1" * 32,
             "display_name": "  Name  ",
@@ -250,11 +250,11 @@ def test_upgrade_preserves_custom_noncredential_members() -> None:
 
 def test_upgrade_preserves_conflicting_custom_credential_forms_for_validation() -> None:
     saved = [{"api_key": "old-secret", "api_keys": ["new-secret"]}]
-    store = _old_store({"FCC_CUSTOM_PROVIDERS": json.dumps(saved)})
-    process = {"FCC_CUSTOM_PROVIDERS": "[]"}
+    store = _old_store({"MODELGLOT_CUSTOM_PROVIDERS": json.dumps(saved)})
+    process = {"MODELGLOT_CUSTOM_PROVIDERS": "[]"}
     store.initialize(process)
     snapshot = store.read(process)
-    assert json.loads(snapshot.managed["FCC_CUSTOM_PROVIDERS"]) == saved
+    assert json.loads(snapshot.managed["MODELGLOT_CUSTOM_PROVIDERS"]) == saved
     assert snapshot.settings.custom_providers == ()
     with pytest.raises(ValidationError):
         store.read({})
@@ -272,11 +272,11 @@ def test_upgrade_preserves_conflicting_custom_credential_forms_for_validation() 
 def test_upgrade_preserves_unconvertible_custom_owner_when_shadowed(
     stored: str,
 ) -> None:
-    store = _old_store({"FCC_CUSTOM_PROVIDERS": stored})
-    process = {"FCC_CUSTOM_PROVIDERS": "[]"}
+    store = _old_store({"MODELGLOT_CUSTOM_PROVIDERS": stored})
+    process = {"MODELGLOT_CUSTOM_PROVIDERS": "[]"}
     store.initialize(process)
     snapshot = store.read(process)
-    assert snapshot.managed["FCC_CUSTOM_PROVIDERS"] == stored
+    assert snapshot.managed["MODELGLOT_CUSTOM_PROVIDERS"] == stored
     assert snapshot.settings.custom_providers == ()
     with pytest.raises(ValidationError):
         store.read({})
@@ -286,8 +286,8 @@ def test_upgrade_preserves_unconvertible_custom_owner_when_shadowed(
     "key,value",
     [
         ("OPENAI_API_KEY", '["", "saved"]'),
-        ("FCC_CUSTOM_PROVIDERS", "{"),
-        ("FCC_CUSTOM_PROVIDERS", '[{"api_keys":[3]}]'),
+        ("MODELGLOT_CUSTOM_PROVIDERS", "{"),
+        ("MODELGLOT_CUSTOM_PROVIDERS", '[{"api_keys":[3]}]'),
     ],
 )
 def test_unshadowed_credential_conversion_failure_preserves_original_file(

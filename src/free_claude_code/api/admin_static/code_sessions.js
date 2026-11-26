@@ -60,7 +60,7 @@
     const node = document.createElement(tag);
     if (text !== undefined) node.textContent = text;
     if (className) node.className = className;
-    return window.FccFormControls.configure(node);
+    return window.ModelGlotFormControls.configure(node);
   }
   function button(text, action, className = "secondary-button") {
     const node = element("button", text, className);
@@ -70,14 +70,14 @@
   }
   function saved(id) {
     try {
-      return JSON.parse(sessionStorage.getItem(`fcc.code.${id}`)) || {};
+      return JSON.parse(sessionStorage.getItem(`modelglot.code.${id}`)) || {};
     } catch {
       return {};
     }
   }
   function save(id, value) {
     try {
-      sessionStorage.setItem(`fcc.code.${id}`, JSON.stringify(value));
+      sessionStorage.setItem(`modelglot.code.${id}`, JSON.stringify(value));
     } catch {
       /* This tab still works when browser storage is unavailable. */
     }
@@ -800,7 +800,7 @@
         form.append(
           element(
             "p",
-            "Choose an existing folder on the computer running FCC. You can also enter its path manually.",
+            "Choose an existing folder on the computer running ModelGlot. You can also enter its path manually.",
             "code-notice",
           ),
         );
@@ -899,7 +899,7 @@
         form.append(
           element(
             "p",
-            "This deletes the conversation from FCC and Codex history. Your project files stay in place.",
+            "This deletes the conversation from ModelGlot and Codex history. Your project files stay in place.",
           ),
         );
       },

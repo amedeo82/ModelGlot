@@ -17,8 +17,8 @@ from free_claude_code.config.settings import Settings
 
 def _launcher_settings(
     *,
-    port: int = 8082,
-    token: str = "freecc",
+    port: int = 16969,
+    token: str = "modelglot",
     open_admin_browser: bool = True,
 ) -> Settings:
     return Settings(
@@ -39,22 +39,22 @@ def test_cli_scripts_are_registered() -> None:
     )
 
     assert pyproject["project"]["scripts"] == {
-        "fcc-server": "free_claude_code.cli.entrypoints:serve",
-        "fcc-doctor": "free_claude_code.cli.entrypoints:doctor",
-        "fcc-claude": "free_claude_code.cli.launchers.claude:launch",
-        "fcc-codex": "free_claude_code.cli.launchers.codex:launch",
-        "fcc-pi": "free_claude_code.cli.launchers.pi:launch",
-        "fcc-opencode": "free_claude_code.cli.launchers.opencode:launch",
-        "fcc-cline": "free_claude_code.cli.launchers.cline:launch",
-        "fcc-hermes": "free_claude_code.cli.launchers.hermes:launch",
-        "fcc-dsh": "free_claude_code.cli.launchers.dsh:launch",
-        "fcc-grok": "free_claude_code.cli.launchers.grok:launch",
-        "fcc-muse": "free_claude_code.cli.launchers.muse:launch",
-        "fcc-agy": "free_claude_code.cli.launchers.agy:launch",
-        "fcc-aider": "free_claude_code.cli.launchers.aider:launch",
+        "modelglot-server": "free_claude_code.cli.entrypoints:serve",
+        "modelglot-doctor": "free_claude_code.cli.entrypoints:doctor",
+        "modelglot-claude": "free_claude_code.cli.launchers.claude:launch",
+        "modelglot-codex": "free_claude_code.cli.launchers.codex:launch",
+        "modelglot-pi": "free_claude_code.cli.launchers.pi:launch",
+        "modelglot-opencode": "free_claude_code.cli.launchers.opencode:launch",
+        "modelglot-cline": "free_claude_code.cli.launchers.cline:launch",
+        "modelglot-hermes": "free_claude_code.cli.launchers.hermes:launch",
+        "modelglot-dsh": "free_claude_code.cli.launchers.dsh:launch",
+        "modelglot-grok": "free_claude_code.cli.launchers.grok:launch",
+        "modelglot-muse": "free_claude_code.cli.launchers.muse:launch",
+        "modelglot-agy": "free_claude_code.cli.launchers.agy:launch",
+        "modelglot-aider": "free_claude_code.cli.launchers.aider:launch",
     }
     assert pyproject["project"]["gui-scripts"] == {
-        "fcc-desktop": "free_claude_code.cli.desktop_entrypoint:launch",
+        "modelglot-desktop": "free_claude_code.cli.desktop_entrypoint:launch",
     }
 
 
@@ -78,7 +78,7 @@ def test_distribution_metadata_targets_modelglot() -> None:
     "argv",
     [("--version",), ("--version", "--help"), ("--help", "--version")],
 )
-def test_fcc_server_reports_version_without_side_effects(
+def test_modelglot_server_reports_version_without_side_effects(
     argv: tuple[str, ...],
     capsys: pytest.CaptureFixture[str],
 ) -> None:
@@ -176,7 +176,7 @@ def test_server_startup_repairs_invalid_managed_provider_proxy(
     managed.write_text(
         "\n".join(
             (
-                "FCC_CONFIG_SCHEMA=2",
+                "MODELGLOT_CONFIG_SCHEMA=2",
                 "MODEL=nvidia_nim/test-model",
                 f"OPENAI_PROXY={invalid_proxy}",
                 "",
@@ -287,7 +287,7 @@ def test_load_server_settings_leaves_process_owned_invalid_proxy_explicit(
     managed = managed_env_path()
     managed.parent.mkdir(parents=True)
     managed.write_text(
-        "FCC_CONFIG_SCHEMA=2\nOPENAI_PROXY=invalid://managed-proxy\n",
+        "MODELGLOT_CONFIG_SCHEMA=2\nOPENAI_PROXY=invalid://managed-proxy\n",
         encoding="utf-8",
     )
     baseline = managed.read_bytes()

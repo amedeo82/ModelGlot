@@ -1,13 +1,13 @@
-# Profilo FCC per Claude Desktop
+# Profilo ModelGlot per Claude Desktop
 
 Status: implementato
 Data: 2026-11-17
-Ambito: profilo gateway FCC per Claude Desktop in modalità third-party (3P)
+Ambito: profilo gateway ModelGlot per Claude Desktop in modalità third-party (3P)
 
 ## Sintesi
 
-Free Claude Code (FCC) gestisce per Claude Desktop un profilo 3P dedicato, atomico e
-conservativo. Il profilo instrada l'inferenza attraverso il gateway locale FCC, abilita la
+ModelGlot gestisce per Claude Desktop un profilo 3P dedicato, atomico e
+conservativo. Il profilo instrada l'inferenza attraverso il gateway locale ModelGlot, abilita la
 scoperta dei modelli e conserva le personalizzazioni dell'utente.
 
 Le migliorie principali rispetto alla prima integrazione sono:
@@ -23,23 +23,23 @@ Le migliorie principali rispetto alla prima integrazione sono:
 Il profilo viene creato e applicato da
 `src/free_claude_code/harnesses/claude_desktop_integration.py`. La sua vista dedicata del
 catalogo è implementata in `src/free_claude_code/api/model_catalog.py` e selezionata tramite
-l'header `X-FCC-Model-View: claude-desktop`.
+l'header `X-ModelGlot-Model-View: claude-desktop`.
 
 ## Configurazione del profilo
 
-Oltre ai campi gateway e alla scoperta dei modelli, FCC gestisce questi valori:
+Oltre ai campi gateway e alla scoperta dei modelli, ModelGlot gestisce questi valori:
 
 ```json
 {
   "inferenceProvider": "gateway",
-  "inferenceGatewayBaseUrl": "http://127.0.0.1:8082",
+  "inferenceGatewayBaseUrl": "http://127.0.0.1:16969",
   "inferenceCredentialKind": "static",
   "inferenceGatewayApiKey": "<proxy-token>",
   "inferenceGatewayAuthScheme": "bearer",
   "modelDiscoveryEnabled": true,
   "modelPrefer1mContext": true,
   "inferenceCustomHeaders": {
-    "X-FCC-Model-View": "claude-desktop"
+    "X-ModelGlot-Model-View": "claude-desktop"
   },
   "coworkEgressAllowedHosts": ["*"]
 }
@@ -49,8 +49,8 @@ L'URL del gateway può usare HTTPS oppure HTTP solo verso `localhost`, `127.0.0.
 La chiave mostrata sopra rappresenta il valore iniziale: Claude Desktop può sostituirlo con
 una copia sigillata `__sealed__:...`.
 
-Il profilo usa un UUID deterministico e l'header `X-FCC-Model-View` come marcatori di
-proprietà. FCC rifiuta di sovrascrivere un profilo nativo che occupi accidentalmente lo
+Il profilo usa un UUID deterministico e l'header `X-ModelGlot-Model-View` come marcatori di
+proprietà. ModelGlot rifiuta di sovrascrivere un profilo nativo che occupi accidentalmente lo
 stesso UUID.
 
 ## Migliorie implementate
@@ -87,7 +87,7 @@ connector o degli accessi OAuth dall'account Claude.ai.
 ### Import Claude.ai — capability verificata, non ancora attivata
 
 Claude Desktop in modalità 3P supporta un import one-shot dall'account Claude.ai
-attraverso la chiave `claudeAiImport`. FCC non imposta ancora questa chiave: il pulsante
+attraverso la chiave `claudeAiImport`. ModelGlot non imposta ancora questa chiave: il pulsante
 **Import…** in **Settings → Import & export** resta quindi disabilitato quando
 l'import non è abilitato da un'altra fonte di configurazione.
 
@@ -105,25 +105,25 @@ La configurazione minima prevista per un'attivazione esplicita è:
 L'import può copiare chat, progetti e artefatti dell'utente. Ogni import è una copia
 one-shot: nuove attività nell'account non compaiono automaticamente. Non trasferisce
 plugin personali, connector, estensioni desktop o token OAuth. Il piano di
-implementazione FCC, le allowlist per organizzazione, la gestione di
+implementazione ModelGlot, le allowlist per organizzazione, la gestione di
 `automatic3pImport` e i test sono descritti in
 [`claude-desktop-1m-context-and-official-marketplace.md`](claude-desktop-1m-context-and-official-marketplace.md#sincronizzazione-con-laccount-claudeai).
 
 ### Continuità con chiave sigillata
 
 Claude Desktop può crittografare in-place `inferenceGatewayApiKey`, sostituendo il token
-FCC con un valore `__sealed__:...`. FCC conserva uno SHA-256 del token nell'archivio locale
-`~/.fcc/claude-desktop-token.json`; non vi viene salvato il token in chiaro.
+ModelGlot con un valore `__sealed__:...`. ModelGlot conserva uno SHA-256 del token nell'archivio locale
+`~/.modelglot/claude-desktop-token.json`; non vi viene salvato il token in chiaro.
 
 Una chiave sigillata viene considerata corrente quando il fingerprint corrisponde al token
-FCC attivo. In questo caso il refresh non riscrive la chiave e l'integrazione resta
-connessa. Se il fingerprint manca, è corrotto o corrisponde a un token precedente, FCC
+ModelGlot attivo. In questo caso il refresh non riscrive la chiave e l'integrazione resta
+connessa. Se il fingerprint manca, è corrotto o corrisponde a un token precedente, ModelGlot
 considera il profilo obsoleto e scrive il token corrente, che Desktop potrà sigillare di
 nuovo. Il fingerprint viene rimosso durante il Disconnect.
 
 ### Conservazione delle personalizzazioni
 
-Connect, Reconnect e refresh aggiornano soltanto i campi gestiti da FCC. Sono preservati:
+Connect, Reconnect e refresh aggiornano soltanto i campi gestiti da ModelGlot. Sono preservati:
 
 - `inferenceModels`, inclusi ordine, nomi e metadati per modello;
 - override dei modelli salvati dall'utente;
@@ -131,7 +131,7 @@ Connect, Reconnect e refresh aggiornano soltanto i campi gestiti da FCC. Sono pr
 - marketplace aggiuntivi e configurazioni personalizzate dei marketplace ufficiali;
 - policy di egress esistenti, inclusa una lista vuota o ristretta.
 
-Se `coworkEgressAllowedHosts` non è presente, FCC imposta `["*"]` per consentire a Cowork,
+Se `coworkEgressAllowedHosts` non è presente, ModelGlot imposta `["*"]` per consentire a Cowork,
 Code e agli altri strumenti Desktop di raggiungere i servizi necessari. Una policy già
 definita non viene modificata.
 
@@ -142,7 +142,7 @@ differisce da quello corrente. Connect e refresh sono quindi idempotenti e non p
 modifiche o notifiche inutili.
 
 Prima di modificare Claude Desktop, il Disconnect salva un record locale senza credenziali in
-`~/.fcc/claude-desktop-disconnect.json`. Se la pulizia viene interrotta, il record mantiene
+`~/.modelglot/claude-desktop-disconnect.json`. Se la pulizia viene interrotta, il record mantiene
 l'operazione in uno stato `disconnect_pending`; l'Admin UI consente di ripeterla dopo un
 reload o un riavvio. Una nuova operazione di Connect viene bloccata finché la pulizia non
 è completa.
@@ -162,22 +162,22 @@ La struttura gestita contiene:
 ```text
 <Claude-3p>/
 ├── configLibrary/
-│   ├── <FCC_ID>.json
+│   ├── <MODELGLOT_ID>.json
 │   ├── <DEFAULT_ID>.json
 │   └── _meta.json
 └── claude_desktop_config.json
 ```
 
-Gli archivi locali FCC usati per la ripresa della disconnessione e per il fingerprint
-sono invece mantenuti in `~/.fcc/`.
+Gli archivi locali ModelGlot usati per la ripresa della disconnessione e per il fingerprint
+sono invece mantenuti in `~/.modelglot/`.
 
 ## Ciclo di connessione
 
-1. **Connect** crea o aggiorna il profilo FCC, registra l'entry `FCC`, seleziona il profilo
+1. **Connect** crea o aggiorna il profilo ModelGlot, registra l'entry `ModelGlot`, seleziona il profilo
    e imposta `deploymentMode: "3p"`.
 2. **Refresh**, eseguito all'avvio del server e su richiesta, aggiorna endpoint e credenziali
-   solo se il profilo FCC è ancora attivo; non riattiva un profilo disconnesso.
-3. **Disconnect** rimuove il profilo e l'entry FCC. Quando il profilo FCC era selezionato,
+   solo se il profilo ModelGlot è ancora attivo; non riattiva un profilo disconnesso.
+3. **Disconnect** rimuove il profilo e l'entry ModelGlot. Quando il profilo ModelGlot era selezionato,
    seleziona un profilo Default vuoto e riporta `deploymentMode` a `"1p"`.
 
 La selezione nativa già applicata dall'utente non viene sovrascritta. Tuttavia, il
@@ -188,8 +188,8 @@ questo richiede ancora il lifecycle reversibile descritto in
 
 ## Limiti noti
 
-- In modalità 3P il sign-in standard Claude.ai e il gateway FCC non governano la stessa
-  sessione. Il Disconnect riporta al percorso di accesso standard quando il profilo FCC era
+- In modalità 3P il sign-in standard Claude.ai e il gateway ModelGlot non governano la stessa
+  sessione. Il Disconnect riporta al percorso di accesso standard quando il profilo ModelGlot era
   selezionato, ma non ricostruisce il profilo nativo precedente.
 - I connector ospitati da Anthropic e il contenuto sincronizzato dall'account Claude.ai
   restano disponibili soltanto nel Desktop standard. Le estensioni locali 3P possono essere
@@ -199,7 +199,7 @@ questo richiede ancora il lifecycle reversibile descritto in
 - L'import Claude.ai supportato da Desktop è una copia one-shot e deve essere abilitato
   esplicitamente; non trasferisce plugin personali, connector o accessi OAuth.
 - Il contesto da 1M dipende dai limiti reali del provider selezionato.
-- FCC modifica soltanto installazioni Desktop non gestite. Le policy organizationali vengono
+- ModelGlot modifica soltanto installazioni Desktop non gestite. Le policy organizationali vengono
   rilevate e l'integrazione viene rifiutata.
 
 ## Verifica

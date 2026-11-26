@@ -2,12 +2,10 @@
 set -eu
 
 PACKAGE_NAME="modelglot"
-LEGACY_PACKAGE_NAME="free-claude-code"
-FCC_HOME_DIRNAME=".fcc"
-FCC_MACOS_BUNDLE_IDS="io.github.amedeo82.free-claude-code io.github.alishahryar1.free-claude-code"
-FCC_MACOS_OWNER_FILE=".free-claude-code-owner"
-# Include retired entry points so older installations are fully stopped and removed.
-FCC_COMMANDS="fcc-desktop fcc-server fcc-claude fcc-codex fcc-pi fcc-opencode fcc-cline fcc-hermes fcc-dsh fcc-grok fcc-muse fcc-aider fcc-agy fcc-doctor fcc-update fcc-init free-claude-code"
+MODELGLOT_HOME_DIRNAME=".modelglot"
+MODELGLOT_MACOS_BUNDLE_ID="io.github.amedeo82.modelglot"
+MODELGLOT_MACOS_OWNER_FILE=".modelglot-owner"
+MODELGLOT_COMMANDS="modelglot-desktop modelglot-server modelglot-claude modelglot-codex modelglot-pi modelglot-opencode modelglot-cline modelglot-hermes modelglot-dsh modelglot-grok modelglot-muse modelglot-aider modelglot-agy modelglot-doctor modelglot-update modelglot-init"
 
 dry_run=0
 keep_integrations=0
@@ -17,7 +15,7 @@ show_usage() {
     cat <<'USAGE'
 Usage: uninstall.sh [options]
 
-Removes the ModelGlot and legacy Free Claude Code uv tools, then deletes ~/.fcc/ after removal is verified.
+Removes the ModelGlot uv tools, then deletes ~/.modelglot/ after removal is verified.
 Does not remove uv, Claude Code, Codex, Pi, OpenCode, Cline, Hermes Agent, DeepSeek Harness, Grok Build, Muse Code, Aider, Antigravity CLI, the uv-managed Python runtime, or shared PATH entries.
 
 Options:
@@ -99,7 +97,7 @@ add_known_uv_paths() {
     hash -r 2>/dev/null || true
 }
 
-fcc_process_ids() {
+modelglot_process_ids() {
     command_name=$1
 
     if command -v pgrep >/dev/null 2>&1; then
@@ -125,20 +123,20 @@ fcc_process_ids() {
         ' || true
 }
 
-is_fcc_command_running() {
-    [ -n "$(fcc_process_ids "$1")" ]
+is_modelglot_command_running() {
+    [ -n "$(modelglot_process_ids "$1")" ]
 }
 
-assert_no_fcc_processes_running() {
+assert_no_modelglot_processes_running() {
     running=""
-    for command_name in $FCC_COMMANDS; do
-        if is_fcc_command_running "$command_name"; then
+    for command_name in $MODELGLOT_COMMANDS; do
+        if is_modelglot_command_running "$command_name"; then
             running="${running} ${command_name}"
         fi
     done
 
     if [ -n "$running" ]; then
-        fail "ModelGlot or legacy Free Claude Code is still running (${running# }). Stop those processes, then rerun uninstall."
+        fail "ModelGlot is still running (${running# }). Stop those processes, then rerun uninstall."
     fi
 }
 
@@ -151,7 +149,7 @@ initialize_uv_context() {
     fi
 
     if ! command -v uv >/dev/null 2>&1; then
-        fail "uv is required to remove the Free Claude Code tool. Install uv, then rerun this uninstaller; ~/.fcc was not deleted."
+        fail "uv is required to remove the ModelGlot tool. Install uv, then rerun this uninstaller; ~/.modelglot was not deleted."
     fi
 
     print_command uv tool dir --bin
@@ -159,9 +157,9 @@ initialize_uv_context() {
         :
     else
         status=$?
-        fail "Could not determine the uv tool bin directory (exit code $status); ~/.fcc was not deleted."
+        fail "Could not determine the uv tool bin directory (exit code $status); ~/.modelglot was not deleted."
     fi
-    [ -n "$uv_tool_bin" ] || fail "uv returned an empty tool bin directory; ~/.fcc was not deleted."
+    [ -n "$uv_tool_bin" ] || fail "uv returned an empty tool bin directory; ~/.modelglot was not deleted."
 }
 
 uninstall_uv_tool() {
@@ -187,63 +185,59 @@ uninstall_uv_tool() {
     if [ -n "$output" ]; then
         printf '%s\n' "$output" >&2
     fi
-    fail "uv tool uninstall $package_name failed with exit code $status; ~/.fcc was not deleted."
+    fail "uv tool uninstall $package_name failed with exit code $status; ~/.modelglot was not deleted."
 }
 
-uninstall_free_claude_code() {
-    # Remove both installations when an upgrade left the legacy uv tool behind.
+uninstall_modelglot() {
     uninstall_uv_tool "$PACKAGE_NAME"
-    uninstall_uv_tool "$LEGACY_PACKAGE_NAME"
 }
 
 disconnect_integrations() {
     [ "$keep_integrations" -eq 0 ] || return 0
     if [ "$dry_run" -eq 1 ]; then
-        print_command fcc-doctor --disconnect-integrations
+        print_command modelglot-doctor --disconnect-integrations
         return 0
     fi
-    doctor="$uv_tool_bin/fcc-doctor"
+    doctor="$uv_tool_bin/modelglot-doctor"
     if [ ! -x "$doctor" ]; then
-        fail "FCC's integration cleanup command is unavailable. Update FCC first, or disconnect editor/app integrations manually and rerun with --keep-integrations. FCC data was not deleted."
+        fail "ModelGlot's integration cleanup command is unavailable. Update ModelGlot first, or disconnect editor/app integrations manually and rerun with --keep-integrations. ModelGlot data was not deleted."
     fi
     print_command "$doctor" --disconnect-integrations
     if "$doctor" --disconnect-integrations; then
         return 0
     fi
-    fail "Editor/app integration cleanup failed. Correct the reported problem and retry. For older FCC versions, update first or disconnect manually and rerun with --keep-integrations. FCC and its data were not deleted."
+    fail "Editor/app integration cleanup failed. Correct the reported problem and retry. For older ModelGlot versions, update first or disconnect manually and rerun with --keep-integrations. ModelGlot and its data were not deleted."
 }
 
-verify_fcc_commands_removed() {
+verify_modelglot_commands_removed() {
     if [ "$dry_run" -eq 1 ]; then
-        printf '+ verify all Free Claude Code entry points are absent from the uv tool bin directory\n'
+        printf '+ verify all ModelGlot entry points are absent from the uv tool bin directory\n'
         return 0
     fi
 
     remaining=""
-    for command_name in $FCC_COMMANDS fcc-update.cmd; do
+    for command_name in $MODELGLOT_COMMANDS modelglot-update.cmd; do
         command_path="$uv_tool_bin/$command_name"
         if [ -e "$command_path" ] || [ -L "$command_path" ]; then
             remaining="${remaining} ${command_path}"
         fi
     done
     if [ -n "$remaining" ]; then
-        fail "Free Claude Code entry points remain after uv uninstall:${remaining}; ~/.fcc was not deleted."
+        fail "ModelGlot entry points remain after uv uninstall:${remaining}; ~/.modelglot was not deleted."
     fi
 }
 
-macos_app_is_fcc_owned() {
+macos_app_is_modelglot_owned() {
     app_dir=$1
     [ -d "$app_dir" ] && [ ! -L "$app_dir" ] || return 1
-    for owner_file in "$app_dir/Contents/Resources/$FCC_MACOS_OWNER_FILE" "$app_dir/Contents/$FCC_MACOS_OWNER_FILE"; do
+    for owner_file in "$app_dir/Contents/Resources/$MODELGLOT_MACOS_OWNER_FILE" "$app_dir/Contents/$MODELGLOT_MACOS_OWNER_FILE"; do
         if [ ! -f "$owner_file" ]; then
             continue
         fi
         owner_id=$(cat "$owner_file")
-        for bundle_id in $FCC_MACOS_BUNDLE_IDS; do
-            if [ "$owner_id" = "$bundle_id" ]; then
-                return 0
-            fi
-        done
+        if [ "$owner_id" = "$MODELGLOT_MACOS_BUNDLE_ID" ]; then
+            return 0
+        fi
     done
     return 1
 }
@@ -251,15 +245,15 @@ macos_app_is_fcc_owned() {
 remove_macos_desktop_app() {
     [ "$(uname -s)" = "Darwin" ] || return 0
 
-    app_dir="$HOME/Applications/Free Claude Code.app"
-    desktop_link="$HOME/Desktop/Free Claude Code.app"
+    app_dir="$HOME/Applications/ModelGlot.app"
+    desktop_link="$HOME/Desktop/ModelGlot.app"
 
-    if ! macos_app_is_fcc_owned "$app_dir"; then
+    if ! macos_app_is_modelglot_owned "$app_dir"; then
         if [ -e "$app_dir" ] || [ -L "$app_dir" ]; then
-            printf 'An app not managed by Free Claude Code exists at %s; leaving it unchanged.\n' "$app_dir"
+            printf 'An app not managed by ModelGlot exists at %s; leaving it unchanged.\n' "$app_dir"
         fi
         if [ -e "$desktop_link" ] || [ -L "$desktop_link" ]; then
-            printf 'The Free Claude Code desktop item cannot be verified; leaving it unchanged.\n'
+            printf 'The ModelGlot desktop item cannot be verified; leaving it unchanged.\n'
         fi
         return 0
     fi
@@ -268,26 +262,26 @@ remove_macos_desktop_app() {
         if [ "$(readlink "$desktop_link")" = "$app_dir" ]; then
             run rm -f "$desktop_link"
         else
-            printf 'A non-FCC link exists at %s; leaving it unchanged.\n' "$desktop_link"
+            printf 'A non-ModelGlot link exists at %s; leaving it unchanged.\n' "$desktop_link"
         fi
     elif [ -e "$desktop_link" ]; then
-        printf 'A non-FCC item exists at %s; leaving it unchanged.\n' "$desktop_link"
+        printf 'A non-ModelGlot item exists at %s; leaving it unchanged.\n' "$desktop_link"
     fi
     if [ -e "$app_dir" ]; then
         run rm -rf "$app_dir"
     fi
 }
 
-purge_fcc_home() {
-    fcc_home="$HOME/$FCC_HOME_DIRNAME"
-    if [ ! -e "$fcc_home" ]; then
-        printf 'No FCC config directory at %s; skipping purge.\n' "$fcc_home"
+purge_modelglot_home() {
+    modelglot_home="$HOME/$MODELGLOT_HOME_DIRNAME"
+    if [ ! -e "$modelglot_home" ]; then
+        printf 'No ModelGlot config directory at %s; skipping purge.\n' "$modelglot_home"
         return 0
     fi
 
-    run rm -rf "$fcc_home"
-    if [ "$dry_run" -eq 0 ] && [ -e "$fcc_home" ]; then
-        fail "FCC config directory still exists after deletion: $fcc_home"
+    run rm -rf "$modelglot_home"
+    if [ "$dry_run" -eq 0 ] && [ -e "$modelglot_home" ]; then
+        fail "ModelGlot config directory still exists after deletion: $modelglot_home"
     fi
 }
 
@@ -314,32 +308,32 @@ parse_args() {
 }
 
 parse_args "$@"
-[ -n "${HOME:-}" ] || fail "HOME is not set; cannot locate Free Claude Code data."
+[ -n "${HOME:-}" ] || fail "HOME is not set; cannot locate ModelGlot data."
 
-step "Checking for running ModelGlot or legacy Free Claude Code processes"
-assert_no_fcc_processes_running
+step "Checking for running ModelGlot processes"
+assert_no_modelglot_processes_running
 
-step "Locating the uv-managed Free Claude Code installation"
+step "Locating the uv-managed ModelGlot installation"
 initialize_uv_context
 
-step "Disconnecting FCC editor/app integrations"
+step "Disconnecting ModelGlot editor/app integrations"
 disconnect_integrations
 
-step "Removing ModelGlot and legacy Free Claude Code uv tools"
-uninstall_free_claude_code
+step "Removing ModelGlot uv tools"
+uninstall_modelglot
 
-step "Verifying Free Claude Code entry points were removed"
-verify_fcc_commands_removed
+step "Verifying ModelGlot entry points were removed"
+verify_modelglot_commands_removed
 
-step "Removing the Free Claude Code desktop launcher"
+step "Removing the ModelGlot desktop launcher"
 remove_macos_desktop_app
 
-step "Purging FCC config and data from ~/.fcc"
-purge_fcc_home
+step "Purging ModelGlot config and data from ~/.modelglot"
+purge_modelglot_home
 
 if [ "$dry_run" -eq 1 ]; then
     printf '\nDry run complete. No changes were made.\n'
 else
-    printf '\nModelGlot and legacy Free Claude Code have been removed and verified.\n'
+    printf '\nModelGlot has been removed and verified.\n'
     printf 'uv, Claude Code, Codex, Pi, OpenCode, Cline, Hermes Agent, DeepSeek Harness, Grok Build, Muse Code, Aider, the uv-managed Python runtime, and shared PATH entries were left installed.\n'
 fi

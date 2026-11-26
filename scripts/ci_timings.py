@@ -426,7 +426,7 @@ def main() -> None:
             for suite in SUITES
         },
     )
-    root = Path(os.environ["RUNNER_TEMP"]) / "fcc-ci-timings"
+    root = Path(os.environ["RUNNER_TEMP"]) / "modelglot-ci-timings"
     baseline = root / "baseline"
     if args.command == "prepare":
         original = prepare(run, baseline, GitHub(os.environ["GITHUB_REPOSITORY"]))

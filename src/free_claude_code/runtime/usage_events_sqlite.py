@@ -1,4 +1,4 @@
-"""SQLite-backed durable usage metadata on FCC's shared database owner."""
+"""SQLite-backed durable usage metadata on ModelGlot's shared database owner."""
 
 import sqlite3
 from collections.abc import Callable

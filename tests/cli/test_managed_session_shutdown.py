@@ -11,16 +11,16 @@ from free_claude_code.core.json_types import JsonObject
 def _manager() -> ManagedClaudeSessionManager:
     return ManagedClaudeSessionManager(
         workspace_path="/tmp",
-        proxy_root_url="http://127.0.0.1:8082",
-        auth_token="freecc",
+        proxy_root_url="http://127.0.0.1:16969",
+        auth_token="modelglot",
     )
 
 
 def _session() -> ManagedClaudeSession:
     return ManagedClaudeSession(
         "/tmp",
-        "http://127.0.0.1:8082",
-        auth_token="freecc",
+        "http://127.0.0.1:16969",
+        auth_token="modelglot",
     )
 
 

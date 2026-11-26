@@ -22,23 +22,23 @@ from free_claude_code.harnesses.integration_cleanup import (
 from tests.harnesses.antigravity_support import write_previous_connection
 from tests.wire_payload import array_payload, decode_object, object_payload
 
-URL = "http://127.0.0.1:8082"
+URL = "http://127.0.0.1:16969"
 TOKEN = "cleanup-test-token"
 
 
 def paths_at(root: Path) -> IntegrationPaths:
     return IntegrationPaths(
-        root / "fcc/.env",
+        root / "modelglot/.env",
         root / "vscode/settings.json",
         root / "vscode/chatLanguageModels.json",
         root / "codex/config.toml",
-        root / "fcc/catalog.json",
+        root / "modelglot/catalog.json",
         root / "jetbrains/acp.json",
         root / "desktop",
-        root / "fcc/desktop-disconnect.json",
+        root / "modelglot/desktop-disconnect.json",
         root / "dsh",
         root / "antigravity/settings.json",
-        root / "fcc/antigravity-integration.json",
+        root / "modelglot/antigravity-integration.json",
     )
 
 
@@ -46,8 +46,10 @@ def paths_at(root: Path) -> IntegrationPaths:
 def paths(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     paths = paths_at(tmp_path)
     paths.env.parent.mkdir()
-    paths.env.write_text(f"PORT=8082\nANTHROPIC_AUTH_TOKEN={TOKEN}\nMODEL=invalid\n")
-    for key in ("HOST", "PORT", "ANTHROPIC_AUTH_TOKEN"):
+    paths.env.write_text(
+        f"MODELGLOT_PORT=16969\nANTHROPIC_AUTH_TOKEN={TOKEN}\nMODEL=invalid\n"
+    )
+    for key in ("MODELGLOT_HOST", "MODELGLOT_PORT", "ANTHROPIC_AUTH_TOKEN"):
         monkeypatch.delenv(key, raising=False)
     monkeypatch.setattr(claude_desktop_integration, "check_unmanaged", lambda: None)
     return paths
@@ -74,7 +76,9 @@ def test_cleanup_disconnects_native_connections_and_preserves_unrelated_settings
         json.dumps(
             {
                 "agent_servers": {
-                    "Claude Code (FCC)": {"env": {"FCC_JETBRAINS_ACP": "1"}},
+                    "Claude Code (ModelGlot)": {
+                        "env": {"MODELGLOT_JETBRAINS_ACP": "1"}
+                    },
                     "Other": {"command": "keep"},
                 }
             }
@@ -88,11 +92,11 @@ def test_cleanup_disconnects_native_connections_and_preserves_unrelated_settings
     profile = paths.dsh / "profiles/desktop/cordis.patch.yml"
     profile.parent.mkdir(parents=True)
     profile.write_text(
-        f"- id: llm-pi-ai\n  config:\n    providers:\n      {DSH_PROVIDER_ID}:\n        baseURL: http://127.0.0.1:8082/v1\n      other:\n        keep: true\n- id: agent-default-model\n  config:\n    provider: {DSH_PROVIDER_ID}\n    model: test\n"
+        f"- id: llm-pi-ai\n  config:\n    providers:\n      {DSH_PROVIDER_ID}:\n        baseURL: http://127.0.0.1:16969/v1\n      other:\n        keep: true\n- id: agent-default-model\n  config:\n    provider: {DSH_PROVIDER_ID}\n    model: test\n"
     )
     credentials = paths.dsh / ".credentials.yaml"
     credentials.write_text(
-        f"version: 1\nrefs:\n  FCC_DSH_DESKTOP_API_KEY: {TOKEN}\n  OTHER: keep\n"
+        f"version: 1\nrefs:\n  MODELGLOT_DSH_DESKTOP_API_KEY: {TOKEN}\n  OTHER: keep\n"
     )
 
     disconnect_integrations(paths)
@@ -116,12 +120,12 @@ def test_cleanup_disconnects_native_connections_and_preserves_unrelated_settings
     }
     assert json.loads(mode.read_text()) == {"deploymentMode": "1p", "keep": True}
     assert not (
-        paths.desktop / f"configLibrary/{claude_desktop_integration.FCC_ID}.json"
+        paths.desktop / f"configLibrary/{claude_desktop_integration.MODELGLOT_ID}.json"
     ).exists()
     assert not paths.desktop_disconnect.exists()
     assert f"      {DSH_PROVIDER_ID}:" not in profile.read_text()
     assert "        keep: true" in profile.read_text()
-    assert "FCC_DSH_DESKTOP_API_KEY" not in credentials.read_text()
+    assert "MODELGLOT_DSH_DESKTOP_API_KEY" not in credentials.read_text()
     assert "OTHER: keep" in credentials.read_text()
     assert paths.env.exists()
     tracked = [
@@ -164,8 +168,8 @@ def test_manually_changed_vscode_connection_is_preserved(
 @pytest.mark.parametrize(
     ("key", "value", "connected_url"),
     [
-        ("PORT", "9000", "http://127.0.0.1:9000"),
-        ("HOST", "192.0.2.20", "http://192.0.2.20:8082"),
+        ("MODELGLOT_PORT", "9000", "http://127.0.0.1:9000"),
+        ("MODELGLOT_HOST", "192.0.2.20", "http://192.0.2.20:16969"),
     ],
 )
 @pytest.mark.parametrize("keep_override", [False, True])
@@ -317,7 +321,7 @@ def test_cleanup_fails_when_path_access_cannot_be_confirmed(
     elif field == "dsh":
         paths.dsh.mkdir()
         (paths.dsh / ".credentials.yaml").write_text(
-            f"version: 1\nrefs:\n  FCC_DSH_DESKTOP_API_KEY: {TOKEN}\n"
+            f"version: 1\nrefs:\n  MODELGLOT_DSH_DESKTOP_API_KEY: {TOKEN}\n"
         )
     elif field == "desktop_disconnect":
         blocked.write_text(
@@ -355,7 +359,7 @@ def test_cleanup_fails_when_path_access_cannot_be_confirmed(
 
 @pytest.mark.parametrize(
     "connected_url",
-    ["http://localhost:8082/", "http://[::1]:8082", "http://127.0.0.1:8082/"],
+    ["http://localhost:16969/", "http://[::1]:16969", "http://127.0.0.1:16969/"],
 )
 def test_equivalent_loopback_connection_is_disconnected(
     paths: IntegrationPaths, connected_url: str
@@ -376,7 +380,7 @@ def test_missing_identity_does_not_claim_gateway_settings(
     assert paths.claude_vscode.read_bytes() == before
 
 
-@pytest.mark.parametrize("content", ["PORT=invalid", "ANTHROPIC_AUTH_TOKEN="])
+@pytest.mark.parametrize("content", ["MODELGLOT_PORT=invalid", "ANTHROPIC_AUTH_TOKEN="])
 def test_invalid_connection_settings_abort_without_modifying_apps(
     paths: IntegrationPaths, content: str
 ) -> None:
@@ -424,9 +428,9 @@ def test_orphan_dsh_credential_is_removed_without_creating_profile(
     paths.dsh.mkdir()
     credentials = paths.dsh / ".credentials.yaml"
     credentials.write_text(
-        f"version: 1\nrefs:\n  FCC_DSH_DESKTOP_API_KEY: {TOKEN}\n  OTHER: keep\n"
+        f"version: 1\nrefs:\n  MODELGLOT_DSH_DESKTOP_API_KEY: {TOKEN}\n  OTHER: keep\n"
     )
     disconnect_integrations(paths)
-    assert "FCC_DSH_DESKTOP_API_KEY" not in credentials.read_text()
+    assert "MODELGLOT_DSH_DESKTOP_API_KEY" not in credentials.read_text()
     assert "OTHER: keep" in credentials.read_text()
     assert not (paths.dsh / "profiles").exists()

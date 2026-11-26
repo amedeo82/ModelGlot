@@ -20,7 +20,7 @@ from free_claude_code.config.model_refs import ModelFallback, decode_model_fallb
 
 
 @pytest.mark.parametrize(
-    "schema", ["", "FCC_CONFIG_SCHEMA=1\n", "FCC_CONFIG_SCHEMA=2\n"]
+    "schema", ["", "MODELGLOT_CONFIG_SCHEMA=1\n", "MODELGLOT_CONFIG_SCHEMA=2\n"]
 )
 def test_super_migration_persists_once_preserving_other_settings(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, schema: str
@@ -55,18 +55,16 @@ def test_super_migration_persists_once_preserving_other_settings(
     assert (managed.read_bytes(), managed.stat().st_mtime_ns) == before
 
 
-def test_super_migration_imports_legacy_selection_without_editing_source(
+def test_super_migration_ignores_legacy_selection_without_editing_source(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     managed, legacy = _paths(monkeypatch, tmp_path)
     legacy.parent.mkdir(parents=True)
     original = "MODEL=nvidia_nim/nvidia/nemotron-3-super-120b-a12b\nNVIDIA_NIM_API_KEY=keep-secret\n"
     legacy.write_text(original, encoding="utf-8")
-    consolidate_managed_config({})
-    assert (
-        dotenv_values_from_file(managed)["MODEL"]
-        == "nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b"
-    )
+    result = consolidate_managed_config({})
+    assert result.imported_from == ()
+    assert "MODEL" not in dotenv_values_from_file(managed)
     assert legacy.read_text(encoding="utf-8") == original
 
 
@@ -75,9 +73,7 @@ def test_super_migration_atomic_write_failure_preserves_managed_file(
 ) -> None:
     managed, _ = _paths(monkeypatch, tmp_path)
     managed.parent.mkdir(parents=True)
-    original = (
-        b"FCC_CONFIG_SCHEMA=2\nMODEL=nvidia_nim/nvidia/nemotron-3-super-120b-a12b\n"
-    )
+    original = b"MODELGLOT_CONFIG_SCHEMA=2\nMODEL=nvidia_nim/nvidia/nemotron-3-super-120b-a12b\n"
     managed.write_bytes(original)
 
     def fail_replace(*args: object):
@@ -90,7 +86,7 @@ def test_super_migration_atomic_write_failure_preserves_managed_file(
     assert list(managed.parent.glob("*.tmp")) == []
 
 
-@pytest.mark.parametrize("schema", ["", "FCC_CONFIG_SCHEMA=1\n"])
+@pytest.mark.parametrize("schema", ["", "MODELGLOT_CONFIG_SCHEMA=1\n"])
 def test_retired_models_repair_managed_config_once_preserving_unknowns(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, schema: str
 ) -> None:
@@ -142,7 +138,7 @@ def test_retirement_atomic_write_failure_preserves_managed_file(
 ) -> None:
     managed, _ = _paths(monkeypatch, tmp_path)
     managed.parent.mkdir(parents=True)
-    original = b"FCC_CONFIG_SCHEMA=1\nMODEL=github_models/old\n"
+    original = b"MODELGLOT_CONFIG_SCHEMA=1\nMODEL=github_models/old\n"
     managed.write_bytes(original)
 
     def fail_replace(*args: object):
@@ -156,11 +152,9 @@ def test_retirement_atomic_write_failure_preserves_managed_file(
 
 
 def _paths(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> tuple[Path, Path]:
-    managed = tmp_path / ".fcc" / ".env"
+    managed = tmp_path / ".modelglot" / ".env"
     legacy = tmp_path / "legacy" / ".env"
     monkeypatch.setattr(env_migrations, "managed_env_path", lambda: managed)
-    monkeypatch.setattr(env_migrations, "legacy_env_paths", lambda: (legacy,))
-    monkeypatch.setattr(env_migrations, "verified_checkout_env_path", lambda: None)
     return managed, legacy
 
 
@@ -192,11 +186,11 @@ def test_fresh_install_writes_only_schema_metadata(
 
     assert result.changed is True
     assert dotenv_values_from_file(managed) == {
-        "FCC_CONFIG_SCHEMA": CONFIG_SCHEMA_VERSION
+        "MODELGLOT_CONFIG_SCHEMA": CONFIG_SCHEMA_VERSION
     }
 
 
-def test_legacy_file_imports_only_recognized_values_and_is_untouched(
+def test_legacy_file_is_not_imported_and_is_untouched(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     managed, legacy = _paths(monkeypatch, tmp_path)
@@ -207,10 +201,10 @@ def test_legacy_file_imports_only_recognized_values_and_is_untouched(
     result = consolidate_managed_config({})
     values = dotenv_values_from_file(managed)
 
-    assert result.imported_from == (legacy.resolve(),)
-    assert values["MODEL"] == "deepseek/legacy"
-    assert values["HUGGINGFACE_API_KEY"] == '["hf"]'
-    assert values["PROXY_AUTH_ENABLED"] == "false"
+    assert result.imported_from == ()
+    assert "MODEL" not in values
+    assert "HUGGINGFACE_API_KEY" not in values
+    assert "PROXY_AUTH_ENABLED" not in values
     assert "UNRELATED_SECRET" not in values
     assert legacy.read_text(encoding="utf-8") == original
 
@@ -231,33 +225,27 @@ def test_existing_managed_state_does_not_merge_legacy(
     assert "GROQ_API_KEY" not in values
 
 
-def test_verified_checkout_imports_only_when_managed_and_legacy_are_absent(
+def test_checkout_is_not_imported_when_managed_is_absent(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     managed, _legacy = _paths(monkeypatch, tmp_path)
     checkout = tmp_path / "checkout.env"
     original = "MODEL=deepseek/checkout\n"
     checkout.write_text(original, encoding="utf-8")
-    monkeypatch.setattr(env_migrations, "legacy_env_paths", lambda: ())
-    monkeypatch.setattr(
-        env_migrations,
-        "verified_checkout_env_path",
-        lambda: checkout,
-    )
 
     result = consolidate_managed_config({})
 
-    assert result.imported_from == (checkout.resolve(),)
-    assert dotenv_values_from_file(managed)["MODEL"] == "deepseek/checkout"
+    assert result.imported_from == ()
+    assert "MODEL" not in dotenv_values_from_file(managed)
     assert checkout.read_text(encoding="utf-8") == original
 
 
 def test_canonical_setting_wins_and_retired_key_is_removed(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    managed, legacy = _paths(monkeypatch, tmp_path)
-    legacy.parent.mkdir(parents=True)
-    legacy.write_text(
+    managed, _legacy = _paths(monkeypatch, tmp_path)
+    managed.parent.mkdir(parents=True)
+    managed.write_text(
         "HF_TOKEN=old-token\nHUGGINGFACE_API_KEY=current-token\n",
         encoding="utf-8",
     )
@@ -279,11 +267,11 @@ def test_explicit_file_overlays_once_and_then_becomes_inert(
     original = "MODEL=open_router/override\nGROQ_API_KEY=\n"
     explicit.write_text(original, encoding="utf-8")
 
-    consolidate_managed_config({"FCC_ENV_FILE": str(explicit)})
+    consolidate_managed_config({"MODELGLOT_ENV_FILE": str(explicit)})
     first = dotenv_values_from_file(managed)
     assert explicit.read_text(encoding="utf-8") == original
     explicit.write_text("MODEL=groq/later\n", encoding="utf-8")
-    result = consolidate_managed_config({"FCC_ENV_FILE": str(explicit)})
+    result = consolidate_managed_config({"MODELGLOT_ENV_FILE": str(explicit)})
 
     assert first["MODEL"] == "open_router/override"
     assert "GROQ_API_KEY" not in first
@@ -297,9 +285,11 @@ def test_post_schema_invalid_explicit_path_is_never_dereferenced(
 ) -> None:
     managed, _legacy = _paths(monkeypatch, tmp_path)
     managed.parent.mkdir(parents=True)
-    managed.write_text("FCC_CONFIG_SCHEMA=2\n", encoding="utf-8")
+    managed.write_text("MODELGLOT_CONFIG_SCHEMA=2\n", encoding="utf-8")
 
-    result = consolidate_managed_config({"FCC_ENV_FILE": str(tmp_path / "missing.env")})
+    result = consolidate_managed_config(
+        {"MODELGLOT_ENV_FILE": str(tmp_path / "missing.env")}
+    )
 
     assert result.changed is False
 
@@ -310,7 +300,9 @@ def test_pre_schema_invalid_explicit_path_fails_without_writing(
     managed, _legacy = _paths(monkeypatch, tmp_path)
 
     with pytest.raises(FileNotFoundError, match=r"missing\.env"):
-        consolidate_managed_config({"FCC_ENV_FILE": str(tmp_path / "missing.env")})
+        consolidate_managed_config(
+            {"MODELGLOT_ENV_FILE": str(tmp_path / "missing.env")}
+        )
 
     assert not managed.exists()
 
@@ -324,7 +316,7 @@ def test_pre_schema_malformed_explicit_file_fails_without_writing(
     explicit.write_text(original, encoding="utf-8")
 
     with pytest.raises(ValueError, match=r"malformed\.env.*line 1"):
-        consolidate_managed_config({"FCC_ENV_FILE": str(explicit)})
+        consolidate_managed_config({"MODELGLOT_ENV_FILE": str(explicit)})
 
     assert not managed.exists()
     assert explicit.read_text(encoding="utf-8") == original
@@ -335,11 +327,11 @@ def test_explicit_managed_path_is_deduplicated(
 ) -> None:
     managed, _legacy = _paths(monkeypatch, tmp_path)
 
-    result = consolidate_managed_config({"FCC_ENV_FILE": str(managed)})
+    result = consolidate_managed_config({"MODELGLOT_ENV_FILE": str(managed)})
 
     assert result.imported_from == ()
     assert dotenv_values_from_file(managed) == {
-        "FCC_CONFIG_SCHEMA": CONFIG_SCHEMA_VERSION
+        "MODELGLOT_CONFIG_SCHEMA": CONFIG_SCHEMA_VERSION
     }
 
 
@@ -370,7 +362,7 @@ def test_auth_state_is_materialized_once(
     legacy.parent.mkdir(parents=True)
     legacy.write_text(dotenv, encoding="utf-8")
 
-    consolidate_managed_config(process)
+    consolidate_managed_config(process | {"MODELGLOT_ENV_FILE": str(legacy)})
     values = dotenv_values_from_file(managed)
 
     assert values["PROXY_AUTH_ENABLED"] == enabled
@@ -397,7 +389,7 @@ def test_fresh_install_ignores_process_token(
     assert "ANTHROPIC_AUTH_TOKEN" not in values
     assert "PROXY_AUTH_ENABLED" not in values
     settings = ManagedConfigStore().read(process).settings
-    assert settings.proxy_auth_token == "freecc"
+    assert settings.proxy_auth_token == "modelglot"
     assert settings.proxy_auth_enabled is False
 
 
@@ -406,13 +398,13 @@ def test_only_managed_schema_marker_is_trusted(
 ) -> None:
     managed, legacy = _paths(monkeypatch, tmp_path)
     legacy.parent.mkdir(parents=True)
-    legacy.write_text("FCC_CONFIG_SCHEMA=99\nMODEL=deepseek/imported\n")
+    legacy.write_text("MODELGLOT_CONFIG_SCHEMA=99\nMODEL=deepseek/imported\n")
 
-    consolidate_managed_config({"FCC_CONFIG_SCHEMA": "99"})
+    consolidate_managed_config({"MODELGLOT_CONFIG_SCHEMA": "99"})
 
     values = dotenv_values_from_file(managed)
-    assert values["FCC_CONFIG_SCHEMA"] == "2"
-    assert values["MODEL"] == "deepseek/imported"
+    assert values["MODELGLOT_CONFIG_SCHEMA"] == "2"
+    assert "MODEL" not in values
 
 
 def test_unknown_managed_assignments_survive_canonicalization(
@@ -463,9 +455,9 @@ def test_duplicate_recognized_assignments_collapse_to_last_value(
 def test_concurrent_loaders_produce_one_valid_managed_file(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    managed, legacy = _paths(monkeypatch, tmp_path)
-    legacy.parent.mkdir(parents=True)
-    legacy.write_text("MODEL=deepseek/concurrent\n", encoding="utf-8")
+    managed, _legacy = _paths(monkeypatch, tmp_path)
+    managed.parent.mkdir(parents=True)
+    managed.write_text("MODEL=deepseek/concurrent\n", encoding="utf-8")
 
     def initialize_and_read(_index):
         store = ManagedConfigStore()
@@ -478,7 +470,7 @@ def test_concurrent_loaders_produce_one_valid_managed_file(
     assert {snapshot.settings.model for snapshot in snapshots} == {
         "deepseek/concurrent"
     }
-    assert dotenv_values_from_file(managed)["FCC_CONFIG_SCHEMA"] == "2"
+    assert dotenv_values_from_file(managed)["MODELGLOT_CONFIG_SCHEMA"] == "2"
     assert list(managed.parent.glob("*.tmp")) == []
 
 
@@ -517,7 +509,7 @@ def test_newer_managed_schema_fails_closed(
 ) -> None:
     managed, _legacy = _paths(monkeypatch, tmp_path)
     managed.parent.mkdir(parents=True)
-    managed.write_text("FCC_CONFIG_SCHEMA=3\n", encoding="utf-8")
+    managed.write_text("MODELGLOT_CONFIG_SCHEMA=3\n", encoding="utf-8")
 
     with pytest.raises(ValueError, match="unsupported schema"):
         consolidate_managed_config({})

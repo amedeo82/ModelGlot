@@ -37,7 +37,7 @@ def normalized_history(request: GeminiRequest) -> tuple[GeminiTurn, ...]:
                 if bundle is None:
                     raise GeminiConversionError(
                         "Caller-native Gemini signatures cannot be replayed through this gateway. "
-                        "Only FCC-issued thoughtSignature replay is supported."
+                        "Only ModelGlot-issued thoughtSignature replay is supported."
                     )
                 previous = bundles.get(bundle.response_id)
                 if previous is not None and previous != bundle:

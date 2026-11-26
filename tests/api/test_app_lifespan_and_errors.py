@@ -50,7 +50,7 @@ def _settings(**updates: object) -> Settings:
 
 
 @pytest.fixture(autouse=True)
-def _redirect_fcc_home(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+def _redirect_modelglot_home(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     home = tmp_path / "home"
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.setenv("USERPROFILE", str(home))
@@ -100,7 +100,7 @@ async def test_runtime_startup_logs_admin_url_without_printed_server_banner(
     ]
     assert len(startup) == 1
     assert record_extra(startup[0])["instance_id"] == runtime.instance_id
-    assert record_extra(startup[0])["fcc_version"] == package_version()
+    assert record_extra(startup[0])["modelglot_version"] == package_version()
 
 
 @pytest.mark.parametrize(

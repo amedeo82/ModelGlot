@@ -48,7 +48,7 @@ class NativeMessagesRequest:
 
 
 def restore_native_history(body: JsonObject, origin: ReplayOrigin) -> JsonObject:
-    """Unwrap only FCC-owned state, without changing native history."""
+    """Unwrap only ModelGlot-owned state, without changing native history."""
     result = deepcopy(body)
     messages = result.get("messages")
     if not isinstance(messages, list):

@@ -26,7 +26,7 @@ def _models() -> tuple[CatalogModel, ...]:
             max_output_tokens=8192,
         ),
         CatalogModel(
-            wire_slug="claude-3-freecc-no-thinking/open_router/plain-model",
+            wire_slug="claude-3-modelglot-no-thinking/open_router/plain-model",
             provider_model_ref="open_router/plain-model",
             display_name="No-thinking model",
             supports_reasoning=False,
@@ -45,41 +45,41 @@ def _models() -> tuple[CatalogModel, ...]:
 def test_hermes_config_pins_responses_catalog_and_fallbacks() -> None:
     managed = build_hermes_managed_config(
         _models(),
-        default_model_id="claude-3-freecc-no-thinking/open_router/plain-model",
+        default_model_id="claude-3-modelglot-no-thinking/open_router/plain-model",
         proxy_root_url="http://127.0.0.1:9191/",
         nonce="a1b2c3",
     )
 
-    assert managed.provider_ref == "custom:fcc-a1b2c3"
-    assert managed.key_env == "FCC_HERMES_A1B2C3"
+    assert managed.provider_ref == "custom:modelglot-a1b2c3"
+    assert managed.key_env == "MODELGLOT_HERMES_A1B2C3"
     assert managed.default_model == (
-        "claude-3-freecc-no-thinking/open_router/plain-model"
+        "claude-3-modelglot-no-thinking/open_router/plain-model"
     )
     assert managed.config["providers"] == {
-        "fcc-a1b2c3": {
+        "modelglot-a1b2c3": {
             "name": "ModelGlot",
             "api": "http://127.0.0.1:9191/v1",
-            "key_env": "FCC_HERMES_A1B2C3",
+            "key_env": "MODELGLOT_HERMES_A1B2C3",
             "extra_headers": {
-                "Authorization": "Bearer ${FCC_HERMES_A1B2C3}",
+                "Authorization": "Bearer ${MODELGLOT_HERMES_A1B2C3}",
             },
             "transport": "codex_responses",
-            "default_model": "claude-3-freecc-no-thinking/open_router/plain-model",
+            "default_model": "claude-3-modelglot-no-thinking/open_router/plain-model",
             "models": {
                 "nvidia_nim/vendor/model": {},
-                "claude-3-freecc-no-thinking/open_router/plain-model": {},
+                "claude-3-modelglot-no-thinking/open_router/plain-model": {},
                 "future_provider/unknown-model": {},
             },
             "discover_models": False,
         }
     }
     assert managed.config["model"] == {
-        "provider": "custom:fcc-a1b2c3",
-        "default": "claude-3-freecc-no-thinking/open_router/plain-model",
+        "provider": "custom:modelglot-a1b2c3",
+        "default": "claude-3-modelglot-no-thinking/open_router/plain-model",
         "base_url": "",
         "api_key": "",
         "api_mode": "codex_responses",
-        "default_headers": {"x-fcc-launch-id": "a1b2c3"},
+        "default_headers": {"x-modelglot-launch-id": "a1b2c3"},
     }
     assert managed.config["fallback_providers"] == []
     assert managed.config["fallback_model"] == []
@@ -92,7 +92,7 @@ def test_hermes_config_pins_responses_catalog_and_fallbacks() -> None:
                 "context_window": 131072,
                 "max_output_tokens": 8192,
             },
-            "claude-3-freecc-no-thinking/open_router/plain-model": {
+            "claude-3-modelglot-no-thinking/open_router/plain-model": {
                 "supports_reasoning": False,
                 "supports_vision": False,
                 "context_window": 200000,
@@ -126,7 +126,7 @@ def test_hermes_config_pins_responses_catalog_and_fallbacks() -> None:
     for task, task_config in auxiliary.items():
         assert isinstance(task_config, dict)
         expected: JsonObject = {
-            "provider": "custom:fcc-a1b2c3",
+            "provider": "custom:modelglot-a1b2c3",
             "model": "",
             "base_url": "",
             "api_key": "",
@@ -152,7 +152,7 @@ def test_hermes_config_uses_explicit_default() -> None:
     )
 
     assert managed.default_model == "nvidia_nim/vendor/model"
-    assert managed.key_env == "FCC_HERMES_ABC123"
+    assert managed.key_env == "MODELGLOT_HERMES_ABC123"
 
 
 def test_hermes_config_rejects_empty_catalog() -> None:

@@ -13,8 +13,8 @@ body:
   - type: textarea
     id: doctor
     attributes:
-      label: FCC doctor output
-      description: Run `fcc-doctor` and paste the JSON it copies to your clipboard. If copying is unavailable, copy the printed JSON from your terminal.
+      label: ModelGlot doctor output
+      description: Run `modelglot-doctor` and paste the JSON it copies to your clipboard. If copying is unavailable, copy the printed JSON from your terminal.
       render: json
     validations:
       required: true

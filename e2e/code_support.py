@@ -20,7 +20,9 @@ class CodeControl:
     def __init__(self, directory: Path):
         self.harness = FakeHarness()
         self.folder_picker = FolderPickerControl()
-        self.database = SQLiteDatabase(directory / "fcc.db", directory / "code.lock")
+        self.database = SQLiteDatabase(
+            directory / "modelglot.db", directory / "code.lock"
+        )
         self.service = CodeService(
             SQLiteCodeStore(self.database),
             self.harness,

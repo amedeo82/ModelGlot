@@ -46,7 +46,7 @@ FEATURE_INVENTORY: tuple[FeatureCoverage, ...] = (
         ("clients",),
         (
             "Codex executable",
-            "FCC_SMOKE_CODEX_FREE_MODEL and OpenRouter key for optional live inference",
+            "MODELGLOT_SMOKE_CODEX_FREE_MODEL and OpenRouter key for optional live inference",
         ),
         "local behavior must pass when Codex and native sandbox prerequisites are available; free inference is explicitly selected and pricing checked",
     ),
@@ -58,7 +58,7 @@ FEATURE_INVENTORY: tuple[FeatureCoverage, ...] = (
         ("test_provider_text_multiturn_e2e",),
         ("providers",),
         ("configured provider credentials or local provider endpoint",),
-        "missing providers are missing_env unless FCC_ALLOW_NO_PROVIDER_SMOKE=1",
+        "missing providers are missing_env unless MODELGLOT_ALLOW_NO_PROVIDER_SMOKE=1",
     ),
     FeatureCoverage(
         "drop_in_claude_code_replacement",
@@ -82,7 +82,7 @@ FEATURE_INVENTORY: tuple[FeatureCoverage, ...] = (
         ("api", "cli", "clients", "nvidia_nim_cli", "openrouter_free_cli"),
         (
             "configured provider",
-            "FCC_SMOKE_CLAUDE_BIN for real Claude CLI",
+            "MODELGLOT_SMOKE_CLAUDE_BIN for real Claude CLI",
             "NVIDIA_NIM_API_KEY",
             "OPENROUTER_API_KEY",
         ),
@@ -100,7 +100,7 @@ FEATURE_INVENTORY: tuple[FeatureCoverage, ...] = (
         ("test_claude_cli_prompt_when_available",),
         ("test_claude_auto_mode_openai_connected_e2e",),
         ("cli",),
-        ("Claude CLI", "FCC_SMOKE_MODEL_OPENAI and connected OpenAI account"),
+        ("Claude CLI", "MODELGLOT_SMOKE_MODEL_OPENAI and connected OpenAI account"),
         "skip only before launch when Claude or an explicit OpenAI smoke model is absent",
     ),
     FeatureCoverage(
@@ -119,11 +119,11 @@ FEATURE_INVENTORY: tuple[FeatureCoverage, ...] = (
         ("test_provider_codex_responses_text_e2e",),
         ("api", "providers"),
         ("configured provider credentials or local provider endpoint",),
-        "missing providers are missing_env unless FCC_ALLOW_NO_PROVIDER_SMOKE=1",
+        "missing providers are missing_env unless MODELGLOT_ALLOW_NO_PROVIDER_SMOKE=1",
     ),
     FeatureCoverage(
         "pi_cli_integration",
-        "Pi discovers FCC models and sends Anthropic Messages through the proxy",
+        "Pi discovers ModelGlot models and sends Anthropic Messages through the proxy",
         ("tests/cli/test_entrypoints.py",),
         ("test_probe_and_models_routes",),
         ("test_pi_cli_prompt_e2e",),
@@ -133,7 +133,7 @@ FEATURE_INVENTORY: tuple[FeatureCoverage, ...] = (
     ),
     FeatureCoverage(
         "opencode_cli_integration",
-        "OpenCode discovers FCC models and sends Responses through the proxy",
+        "OpenCode discovers ModelGlot models and sends Responses through the proxy",
         (
             "tests/cli/test_opencode_launcher.py",
             "tests/application/test_model_catalog.py",
@@ -151,7 +151,7 @@ FEATURE_INVENTORY: tuple[FeatureCoverage, ...] = (
     ),
     FeatureCoverage(
         "aider_cli_integration",
-        "Aider discovers FCC models and sends Anthropic Messages through the proxy",
+        "Aider discovers ModelGlot models and sends Anthropic Messages through the proxy",
         (
             "tests/cli/test_aider_config.py",
             "tests/cli/test_aider_launcher.py",
@@ -170,7 +170,7 @@ FEATURE_INVENTORY: tuple[FeatureCoverage, ...] = (
     ),
     FeatureCoverage(
         "cline_cli_integration",
-        "Cline discovers FCC models and sends Responses through the proxy",
+        "Cline discovers ModelGlot models and sends Responses through the proxy",
         (
             "tests/cli/test_cline_launcher.py",
             "tests/application/test_model_catalog.py",
@@ -188,7 +188,7 @@ FEATURE_INVENTORY: tuple[FeatureCoverage, ...] = (
     ),
     FeatureCoverage(
         "hermes_cli_integration",
-        "Hermes discovers FCC models and sends Responses through the proxy",
+        "Hermes discovers ModelGlot models and sends Responses through the proxy",
         (
             "tests/cli/test_hermes_config.py",
             "tests/cli/test_hermes_launcher.py",
@@ -201,7 +201,7 @@ FEATURE_INVENTORY: tuple[FeatureCoverage, ...] = (
     ),
     FeatureCoverage(
         "dsh_cli_integration",
-        "DeepSeek Harness discovers FCC models and sends Responses through the proxy",
+        "DeepSeek Harness discovers ModelGlot models and sends Responses through the proxy",
         (
             "tests/cli/test_dsh_config.py",
             "tests/cli/test_dsh_launcher.py",
@@ -221,7 +221,7 @@ FEATURE_INVENTORY: tuple[FeatureCoverage, ...] = (
     ),
     FeatureCoverage(
         "dsh_desktop_integration",
-        "DSH Desktop uses a persistent FCC model catalog and credential",
+        "DSH Desktop uses a persistent ModelGlot model catalog and credential",
         (
             "tests/harnesses/test_dsh_desktop_integration.py",
             "tests/harnesses/test_dsh_files.py",
@@ -235,13 +235,13 @@ FEATURE_INVENTORY: tuple[FeatureCoverage, ...] = (
         (
             "DSH Desktop >=0.2.0-rc.2",
             "Node.js",
-            "FCC_SMOKE_DSH_DESKTOP_BIN for a custom installation",
+            "MODELGLOT_SMOKE_DSH_DESKTOP_BIN for a custom installation",
         ),
         "skip when Desktop or Node is absent; native acceptance uses isolated profiles and local providers",
     ),
     FeatureCoverage(
         "grok_cli_integration",
-        "Grok Build discovers FCC models and sends Responses through the proxy",
+        "Grok Build discovers ModelGlot models and sends Responses through the proxy",
         (
             "tests/cli/test_grok_launcher.py",
             "tests/application/test_model_catalog.py",
@@ -256,7 +256,7 @@ FEATURE_INVENTORY: tuple[FeatureCoverage, ...] = (
     ),
     FeatureCoverage(
         "muse_cli_integration",
-        "Muse Code discovers FCC models and sends Responses through the proxy",
+        "Muse Code discovers ModelGlot models and sends Responses through the proxy",
         (
             "tests/cli/test_muse_launcher.py",
             "tests/api/test_model_listing.py",
@@ -274,7 +274,10 @@ FEATURE_INVENTORY: tuple[FeatureCoverage, ...] = (
         ("test_configured_provider_models_stream_successfully",),
         ("test_provider_matrix_presence_e2e", "test_provider_text_multiturn_e2e"),
         ("providers",),
-        ("configured provider credentials/endpoints", "optional FCC_SMOKE_MODEL_*"),
+        (
+            "configured provider credentials/endpoints",
+            "optional MODELGLOT_SMOKE_MODEL_*",
+        ),
         "selected providers missing credentials are failing missing_env",
     ),
     FeatureCoverage(
@@ -291,7 +294,7 @@ FEATURE_INVENTORY: tuple[FeatureCoverage, ...] = (
             "test_nvidia_nim_vision_function_output_e2e",
         ),
         ("nvidia_nim_vision",),
-        ("NVIDIA_NIM_API_KEY", "FCC_SMOKE_MODEL_NVIDIA_NIM_VISION"),
+        ("NVIDIA_NIM_API_KEY", "MODELGLOT_SMOKE_MODEL_NVIDIA_NIM_VISION"),
         "skip unless the dedicated vision target and explicit model are configured",
     ),
     FeatureCoverage(
@@ -487,7 +490,7 @@ FEATURE_INVENTORY: tuple[FeatureCoverage, ...] = (
             "test_voice_nim_backend_e2e",
         ),
         ("messaging", "voice"),
-        ("VOICE_NOTE_ENABLED", "FCC_SMOKE_RUN_VOICE", "WHISPER_DEVICE"),
+        ("VOICE_NOTE_ENABLED", "MODELGLOT_SMOKE_RUN_VOICE", "WHISPER_DEVICE"),
         "fake cancellation is required; backend transcription is opt-in",
     ),
     FeatureCoverage(
@@ -568,7 +571,7 @@ FEATURE_INVENTORY: tuple[FeatureCoverage, ...] = (
     ),
     FeatureCoverage(
         "native_update_check",
-        "The native tray checks and displays stable FCC update availability",
+        "The native tray checks and displays stable ModelGlot update availability",
         (
             "tests/cli/test_desktop_tray.py",
             "tests/cli/test_update_check.py",
@@ -584,7 +587,7 @@ FEATURE_INVENTORY: tuple[FeatureCoverage, ...] = (
         "package_cli_entrypoints",
         "Installed package scripts report version and start the server",
         ("tests/cli/test_entrypoints.py", "tests/core/test_version.py"),
-        ("test_fcc_server_entrypoint_starts_server",),
+        ("test_modelglot_server_entrypoint_starts_server",),
         (
             "test_entrypoint_server_e2e",
             "test_entrypoint_version_e2e",
@@ -607,7 +610,7 @@ FEATURE_INVENTORY: tuple[FeatureCoverage, ...] = (
         ),
         ("cli", "nvidia_nim_cli", "openrouter_free_cli"),
         (
-            "FCC_SMOKE_CLAUDE_BIN",
+            "MODELGLOT_SMOKE_CLAUDE_BIN",
             "configured provider",
             "NVIDIA_NIM_API_KEY",
             "OPENROUTER_API_KEY",

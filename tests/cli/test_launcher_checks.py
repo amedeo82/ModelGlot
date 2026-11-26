@@ -63,7 +63,7 @@ from tests.wire_payload import object_payload
         ("pi", "--extension --models", False),
     ],
 )
-def test_native_compatibility_precedes_fcc_setup(
+def test_native_compatibility_precedes_modelglot_setup(
     name: str, output: str, compatible: bool, launch_capture: LaunchCapture
 ) -> None:
     launch_capture.versions[name] = output
@@ -78,7 +78,7 @@ def test_native_compatibility_precedes_fcc_setup(
 @pytest.mark.parametrize(
     "error", (OSError("cannot execute"), subprocess.TimeoutExpired("probe", 5))
 )
-def test_native_probe_failure_stops_before_fcc(
+def test_native_probe_failure_stops_before_modelglot(
     name: str, error: Exception, launch_capture: LaunchCapture
 ) -> None:
     with patch.object(subprocess, "run", side_effect=error):

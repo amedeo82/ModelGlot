@@ -68,7 +68,7 @@ prove that ids and routing stayed untouched.
   model, one custom provider model, and one native Anthropic model, for the `claude`,
   `claude-desktop`, `messages`, and `responses` views;
 - the Admin API payload of `GET /admin/api/models`, including `model_labels`;
-- the generated `~/.fcc/codex-model-catalog.json`.
+- the generated `~/.modelglot/codex-model-catalog.json`.
 
 **Acceptance.** The baseline shows `display_name` equal to the provider/model reference for
 every provider-backed row, and shows the ids that must remain stable.
@@ -128,7 +128,7 @@ provider attribution, without touching ids or routing.
 
 ### S1.2 — Curated title table for the flagship models
 
-**Goal.** Guarantee a good title for the models FCC advertises most, independent of any
+**Goal.** Guarantee a good title for the models ModelGlot advertises most, independent of any
 external catalog.
 
 **Changes.**
@@ -193,7 +193,7 @@ reproducible across runs and platforms.
   shape, and reduce it to a map of `(models.dev provider id, model key) -> (name,
   description)` for the mapped providers only.
 - New module `src/free_claude_code/config/model_catalog_paths.py` (or an addition to
-  `config/paths.py:114`–`:118`) — the cache file path under `~/.fcc`, for example
+  `config/paths.py:114`–`:118`) — the cache file path under `~/.modelglot`, for example
   `models-dev-catalog.json`.
 - The writer reuses the atomic publish pattern of `runtime/codex_catalog.py:43`–`:62`
   (temporary file plus `replace`).
@@ -234,12 +234,12 @@ title is presentation only, so daily freshness is sufficient.
 
 ### S2.2 — Provider-id mapping and catalog integration
 
-**Goal.** Join the catalog to FCC provider/model references without guessing.
+**Goal.** Join the catalog to ModelGlot provider/model references without guessing.
 
 **Changes.**
 
 - New module `src/free_claude_code/config/model_catalog_mapping.py` — an explicit, frozen
-  mapping from FCC provider ids to models.dev provider ids, based on the table in the
+  mapping from ModelGlot provider ids to models.dev provider ids, based on the table in the
   analysis (`nvidia_nim` → `nvidia`, `open_router` → `openrouter`, `together` →
   `togetherai`, `gemini` → `google`, `novita` → `novita-ai`, `fireworks` → `fireworks-ai`,
   `github_copilot` → `github-copilot`, `azure_openai` → `azure`, `alibaba_cloud` →
@@ -254,7 +254,7 @@ title is presentation only, so daily freshness is sufficient.
 
 **Tests.**
 
-- New `tests/config/test_model_catalog_mapping.py`: every mapped FCC provider id exists in
+- New `tests/config/test_model_catalog_mapping.py`: every mapped ModelGlot provider id exists in
   `PROVIDER_CATALOG`; every models.dev provider id is a known catalog provider id; no
   provider maps to two different catalog providers.
 - `tests/application/test_model_titles.py` (extend): the catalog title is used when the
@@ -277,10 +277,10 @@ title is presentation only, so daily freshness is sufficient.
 **Changes.**
 
 - `src/free_claude_code/config/settings.py` — add settings with the project prefix:
-  - `FCC_MODEL_CATALOG_SOURCE` (default `models.dev`, allowed values `models.dev` and
+  - `MODELGLOT_MODEL_CATALOG_SOURCE` (default `models.dev`, allowed values `models.dev` and
     `none`): `none` disables the external catalog entirely and leaves curated plus
     heuristic titles;
-  - `FCC_MODEL_CATALOG_URL` (default `https://models.dev/api.json`): the catalog endpoint.
+  - `MODELGLOT_MODEL_CATALOG_URL` (default `https://models.dev/api.json`): the catalog endpoint.
 - The CLI doctor output (`cli/doctor.py`) reports the effective source, the cache path, the
   cache age, and the last refresh outcome.
 - README — a "Model display names" section explaining the resolution order, the cache, the
@@ -348,7 +348,7 @@ the doctor command states whether the descriptive titles are complete, degraded,
   (`modelDiscoveryEnabled: True` at `:263`) rather than through a rewritten
   `inferenceModels` array; no rewrite of user pins is introduced.
 - If the Desktop client is found to ignore discovery titles, add an explicit, opt-in
-  `labelOverride` only for models FCC itself pinned, never for user entries.
+  `labelOverride` only for models ModelGlot itself pinned, never for user entries.
 
 **Tests.**
 
@@ -364,7 +364,7 @@ the doctor command states whether the descriptive titles are complete, degraded,
 
 ### S3.3 — Admin UI and Codex catalog consistency
 
-**Goal.** Make every FCC surface show the same descriptive titles.
+**Goal.** Make every ModelGlot surface show the same descriptive titles.
 
 **Changes.**
 

@@ -154,11 +154,11 @@ def _merge_tool_groups(groups: list[list[JsonObject]]) -> list[JsonObject]:
 
 def search_function_name(reserved: Iterable[str]) -> str:
     names = set(reserved)
-    name = "fcc_tool_search"
+    name = "modelglot_tool_search"
     suffix = 0
     while name in names:
         suffix += 1
-        name = f"fcc_tool_search_{suffix}"
+        name = f"modelglot_tool_search_{suffix}"
     return name
 
 

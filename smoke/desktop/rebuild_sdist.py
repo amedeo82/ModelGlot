@@ -13,7 +13,7 @@ def check(directory: Path) -> None:
         raise ValueError("Run this portability check on Windows or Linux")
     source = next(directory.glob("*.tar.gz"))
     original = next(directory.glob("*.whl"))
-    with tempfile.TemporaryDirectory(prefix="fcc-sdist-rebuild-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="modelglot-sdist-rebuild-") as temporary:
         subprocess.run(
             ["uv", "build", "--wheel", str(source), "--out-dir", temporary],
             check=True,
@@ -22,7 +22,7 @@ def check(directory: Path) -> None:
         assert rebuilt.name == original.name
         with zipfile.ZipFile(original) as before, zipfile.ZipFile(rebuilt) as after:
             for architecture in ("arm64", "x86_64"):
-                name = f"free_claude_code/assets/macos/fcc-desktop-{architecture}"
+                name = f"free_claude_code/assets/macos/modelglot-desktop-{architecture}"
                 assert before.read(name) and before.read(name) == after.read(name)
                 print(f"Preserved {name}: {len(after.read(name))} bytes")
             entrypoints = next(

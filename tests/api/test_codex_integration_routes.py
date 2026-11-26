@@ -54,7 +54,7 @@ def test_routes_inspect_connect_and_disconnect(
     response = client.post(f"{ROOT}/connect")
     assert response.status_code == 200
     assert response.json()["connected"] is True
-    assert response.json()["provider"] == "fcc"
+    assert response.json()["provider"] == "modelglot"
     assert response.json()["selected_model"] == "user-choice"
     assert response.json()["supported_surfaces"] == [
         "codex_cli",
@@ -66,7 +66,9 @@ def test_routes_inspect_connect_and_disconnect(
     data = tomllib.loads(path.read_text())
     assert data["model"] == "user-choice"
     assert data["model_catalog_json"] == str(codex_model_catalog_path().resolve())
-    assert data["model_providers"]["fcc"]["base_url"] == "http://127.0.0.1:4321/v1"
+    assert (
+        data["model_providers"]["modelglot"]["base_url"] == "http://127.0.0.1:4321/v1"
+    )
     path.write_text(path.read_text().replace('"user-choice"', '"picker-choice"'))
     assert client.get(ROOT).json()["connected"] is True
     assert client.post(f"{ROOT}/disconnect").json()["connected"] is False
@@ -137,7 +139,7 @@ def test_pending_restart_and_shutdown_do_not_write(
     integration: tuple[TestClient, Path, ApplicationRuntime],
 ) -> None:
     client, path, runtime = integration
-    runtime._pending_fields = ["PORT"]
+    runtime._pending_fields = ["MODELGLOT_PORT"]
     assert client.post(f"{ROOT}/connect").status_code == 503
     assert client.post(f"{ROOT}/refresh").status_code == 503
     runtime._pending_fields = []

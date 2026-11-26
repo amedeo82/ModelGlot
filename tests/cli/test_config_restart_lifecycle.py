@@ -38,9 +38,9 @@ from tests.wire_payload import object_payload, response_object
 def test_harness_waits_through_owner_apply_restart(
     monkeypatch: pytest.MonkeyPatch, change_port: bool, owner_kind: str
 ) -> None:
-    monkeypatch.setenv("HOST", "127.0.0.1")
-    monkeypatch.setenv("FCC_OPEN_BROWSER", "0")
-    monkeypatch.delenv("PORT", raising=False)
+    monkeypatch.setenv("MODELGLOT_HOST", "127.0.0.1")
+    monkeypatch.setenv("MODELGLOT_OPEN_BROWSER", "0")
+    monkeypatch.delenv("MODELGLOT_PORT", raising=False)
     monkeypatch.delenv("LOG_LEVEL", raising=False)
     with socket.socket() as first, socket.socket() as second:
         first.bind(("127.0.0.1", 0))
@@ -51,7 +51,7 @@ def test_harness_waits_through_owner_apply_restart(
         next_port = second_address[1] if change_port else port
     store = ManagedConfigStore()
     store.initialize()
-    store.commit(dict(store.read().managed) | {"PORT": str(port)})
+    store.commit(dict(store.read().managed) | {"MODELGLOT_PORT": str(port)})
     runtimes = []
 
     def build(settings: Settings, restart_callback: RestartCallback):
@@ -67,7 +67,9 @@ def test_harness_waits_through_owner_apply_restart(
             return None
 
         monkeypatch.setattr(manager, "_start_pass", replace_start_pass)
-        database = SQLiteDatabase(paths.fcc_database_path(), paths.code_lock_path())
+        database = SQLiteDatabase(
+            paths.modelglot_database_path(), paths.code_lock_path()
+        )
         code = CodeService(SQLiteCodeStore(database), FakeHarness())
         runtime = ApplicationRuntime(
             manager,
@@ -105,7 +107,7 @@ def test_harness_waits_through_owner_apply_restart(
     monkeypatch.setattr(common, "SERVER_STARTUP_POLL_SECONDS", 0.01)
 
     def unexpected_spawn(_env):
-        pytest.fail("The existing FCC process must own its restart")
+        pytest.fail("The existing ModelGlot process must own its restart")
 
     monkeypatch.setattr(common, "_spawn_server", unexpected_spawn)
     restart_entered, release_restart = threading.Event(), threading.Event()
@@ -197,7 +199,7 @@ def test_harness_waits_through_owner_apply_restart(
             response = client.post(
                 f"http://127.0.0.1:{port}/admin/api/config/apply",
                 json={
-                    "values": {"PORT": str(next_port)}
+                    "values": {"MODELGLOT_PORT": str(next_port)}
                     if change_port
                     else {"LOG_LEVEL": "WARNING"}
                 },
@@ -238,8 +240,8 @@ def test_harness_waits_through_owner_apply_restart(
 def test_supervised_http_apply_finishes_and_reconnects(
     monkeypatch: pytest.MonkeyPatch, stop_during_commit: bool
 ) -> None:
-    monkeypatch.setenv("HOST", "127.0.0.1")
-    monkeypatch.delenv("PORT", raising=False)
+    monkeypatch.setenv("MODELGLOT_HOST", "127.0.0.1")
+    monkeypatch.delenv("MODELGLOT_PORT", raising=False)
     monkeypatch.delenv("LOG_LEVEL", raising=False)
     with socket.socket() as listener:
         listener.bind(("127.0.0.1", 0))
@@ -247,7 +249,7 @@ def test_supervised_http_apply_finishes_and_reconnects(
         port = address[1]
     store = ManagedConfigStore()
     store.initialize()
-    store.commit(dict(store.read().managed) | {"PORT": str(port)})
+    store.commit(dict(store.read().managed) | {"MODELGLOT_PORT": str(port)})
     runtimes = []
 
     def build(settings: Settings, restart_callback: RestartCallback):

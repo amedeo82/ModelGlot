@@ -77,7 +77,7 @@ def _probe_proxy(proxy_root_url: str, *, deadline: float) -> ProxyProbe:
         reason = exc.reason if isinstance(exc, URLError) else exc
         if isinstance(reason, TimeoutError):
             # Windows can time out connecting to an absent listener. Conversely,
-            # FCC reserves a listening socket before the HTTP app is ready.
+            # ModelGlot reserves a listening socket before the HTTP app is ready.
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 return ProxyProbe(ProxyState.STARTING, str(reason))
@@ -110,7 +110,11 @@ def _probe_proxy(proxy_root_url: str, *, deadline: float) -> ProxyProbe:
 def server_command() -> list[str]:
     """Run the installed platform owner with its normal process identity."""
 
-    name = "fcc-desktop" if sys.platform in {"win32", "darwin"} else "fcc-server"
+    name = (
+        "modelglot-desktop"
+        if sys.platform in {"win32", "darwin"}
+        else "modelglot-server"
+    )
     suffix = ".exe" if sys.platform == "win32" else ""
     sibling = Path(sys.executable).parent / f"{name}{suffix}"
     if sibling.is_file() and os.access(sibling, os.X_OK):
@@ -136,7 +140,7 @@ def _spawn_server(
         except OSError as exc:
             print(
                 f"Could not capture startup output in {log_path}: {exc}\n"
-                "FCC will start without early output capture.",
+                "ModelGlot will start without early output capture.",
                 file=sys.stderr,
             )
         return (
@@ -220,7 +224,11 @@ def _stop_owned_process(process: subprocess.Popen[bytes]) -> None:
 
 
 def _unreachable_message(proxy_root_url: str, probe: ProxyProbe, detail: str) -> str:
-    name = "fcc-desktop" if sys.platform in {"win32", "darwin"} else "fcc-server"
+    name = (
+        "modelglot-desktop"
+        if sys.platform in {"win32", "darwin"}
+        else "modelglot-server"
+    )
     return (
         f"ModelGlot proxy is not reachable at {proxy_root_url}: {probe.error}\n"
         f"{detail}\n"
@@ -258,9 +266,9 @@ def _wait_for_server(
                 process = None
             else:
                 name = (
-                    "fcc-desktop"
+                    "modelglot-desktop"
                     if sys.platform in {"win32", "darwin"}
-                    else "fcc-server"
+                    else "modelglot-server"
                 )
                 return f"{name} exited with code {exit_code} before it was ready."
         remaining = deadline - time.monotonic()
@@ -268,7 +276,7 @@ def _wait_for_server(
             time.sleep(min(SERVER_STARTUP_POLL_SECONDS, remaining))
     return (
         "ModelGlot did not become ready within "
-        f"{SERVER_STARTUP_TIMEOUT_SECONDS:g} seconds. If FCC is already running, "
+        f"{SERVER_STARTUP_TIMEOUT_SECONDS:g} seconds. If ModelGlot is already running, "
         "check its configured port or restart it."
     )
 
@@ -333,7 +341,7 @@ def ensure_proxy_available(
                 process, capture_path = _spawn_server(env)
             except OSError as exc:
                 return _unreachable_message(
-                    proxy_root_url, probe, f"Could not start FCC: {exc}"
+                    proxy_root_url, probe, f"Could not start ModelGlot: {exc}"
                 )
             print(
                 f"Starting ModelGlot at {proxy_root_url} "
@@ -344,13 +352,13 @@ def ensure_proxy_available(
         if isinstance(outcome, str):
             if process is not None:
                 if process.poll() is None:
-                    outcome += "\nFCC was left running for inspection."
+                    outcome += "\nModelGlot was left running for inspection."
                 outcome = _startup_diagnostics(outcome, capture_path)
             return _unreachable_message(proxy_root_url, probe, outcome)
         if outcome.state is ProxyState.HEALTHY:
             return None
         return _unreachable_message(
-            proxy_root_url, outcome, "Could not use the FCC endpoint."
+            proxy_root_url, outcome, "Could not use the ModelGlot endpoint."
         )
     except BaseException:
         if process is not None:

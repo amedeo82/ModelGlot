@@ -97,7 +97,7 @@ class ConversationDriver:
         self,
         text: str,
         *,
-        model: str = "fcc-smoke-default",
+        model: str = "modelglot-smoke-default",
         max_tokens: int = 256,
         extra: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
@@ -186,9 +186,9 @@ class ProviderMatrixDriver:
             )
 
         models = self.config.provider_smoke_models()
-        if not models and os.getenv("FCC_ALLOW_NO_PROVIDER_SMOKE") != "1":
+        if not models and os.getenv("MODELGLOT_ALLOW_NO_PROVIDER_SMOKE") != "1":
             fail_missing_env(
-                "no configured provider smoke models; set FCC_ALLOW_NO_PROVIDER_SMOKE=1 "
+                "no configured provider smoke models; set MODELGLOT_ALLOW_NO_PROVIDER_SMOKE=1 "
                 "only for no-provider smoke collection"
             )
         return models
@@ -235,7 +235,10 @@ class ClientProtocolDriver:
                         {"type": "text", "text": "Hello."},
                     ],
                 },
-                {"role": "user", "content": "Reply with exactly FCC_SMOKE_CLIENT"},
+                {
+                    "role": "user",
+                    "content": "Reply with exactly MODELGLOT_SMOKE_CLIENT",
+                },
             ],
             "thinking": {"type": "adaptive", "budget_tokens": 1024},
         }
@@ -254,7 +257,7 @@ class ClientProtocolDriver:
                             "type": "tool_use",
                             "id": "toolu_client_smoke",
                             "name": "echo_smoke",
-                            "input": {"value": "FCC_SMOKE_CLIENT"},
+                            "input": {"value": "MODELGLOT_SMOKE_CLIENT"},
                         }
                     ],
                 },
@@ -264,7 +267,7 @@ class ClientProtocolDriver:
                         {
                             "type": "tool_result",
                             "tool_use_id": "toolu_client_smoke",
-                            "content": "FCC_SMOKE_CLIENT",
+                            "content": "MODELGLOT_SMOKE_CLIENT",
                         }
                     ],
                 },
@@ -354,7 +357,7 @@ class FakePlatform:
         self.handler = handler
 
     def continue_message_sequence_after(self, previous: FakePlatform) -> None:
-        """Model platform-owned message IDs surviving an FCC restart."""
+        """Model platform-owned message IDs surviving an ModelGlot restart."""
         self._counter = previous._counter
 
     async def emit(self, incoming: IncomingMessage) -> None:
@@ -587,8 +590,8 @@ class FakePlatformDriver:
         self.platform = FakePlatform(self.platform_name)
         self.cli_manager = FakeCLIManager(self.event_batches)
         self.database = SQLiteDatabase(
-            self.tmp_path / f"{self.platform_name}-fcc.db",
-            self.tmp_path / f"{self.platform_name}-fcc.lock",
+            self.tmp_path / f"{self.platform_name}-modelglot.db",
+            self.tmp_path / f"{self.platform_name}-modelglot.lock",
         )
         self.session_store = SQLiteMessagingStore(self.database)
         self.workflow = MessagingWorkflow(
@@ -764,7 +767,7 @@ def default_cli_events(session_id: str) -> list[dict[str, Any]]:
                     {
                         "type": "tool_result",
                         "tool_use_id": "toolu_fake",
-                        "content": "Free Claude Code",
+                        "content": "ModelGlot",
                     },
                     {"type": "text", "text": "Fake platform answer."},
                 ]

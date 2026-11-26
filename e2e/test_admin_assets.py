@@ -214,19 +214,21 @@ def test_admin_removes_chat_drafts_and_preserves_other_storage(
 ):
     page.add_init_script("""(() => {
       for (let index = 0; index < 16; index++) {
-        sessionStorage.setItem(`fcc.chat.draft.${index}`, `old draft ${index}`);
+        sessionStorage.setItem(`modelglot.chat.draft.${index}`, `old draft ${index}`);
       }
       for (let index = 0; index < 16; index++) {
-        sessionStorage.setItem(`fcc.code.${index}`, `keep code draft ${index}`);
+        sessionStorage.setItem(`modelglot.code.${index}`, `keep code draft ${index}`);
       }
-      sessionStorage.setItem('fcc.chat.draftWithoutDot', 'keep unrelated key');
+      sessionStorage.setItem('modelglot.chat.draftWithoutDot', 'keep unrelated key');
       sessionStorage.setItem('other-admin-state', 'keep admin state');
     })();""")
     page.goto(f"{admin_base_url}/admin")
     expect(page.locator('[data-provider="nvidia_nim"]')).to_be_visible()
     assert page.evaluate("Object.fromEntries(Object.entries(sessionStorage))") == {
-        **{f"fcc.code.{index}": f"keep code draft {index}" for index in range(16)},
-        "fcc.chat.draftWithoutDot": "keep unrelated key",
+        **{
+            f"modelglot.code.{index}": f"keep code draft {index}" for index in range(16)
+        },
+        "modelglot.chat.draftWithoutDot": "keep unrelated key",
         "other-admin-state": "keep admin state",
     }
     expect(page.locator('.nav-link[data-view="providers"]')).to_have_attribute(
@@ -320,7 +322,7 @@ def test_model_picker_details_enforce_authority_and_safe_text_rendering(
     expect(page.locator('[data-provider="nvidia_nim"]')).to_be_visible()
 
     result: _ModelPickerResult = page.evaluate("""() => {
-      const helper = window.FccModelPickerDetails;
+      const helper = window.ModelGlotModelPickerDetails;
       const known = helper.viewModel('open_router/known', 'Known', {
         supports_reasoning: true,
         input_modalities: ['text', 'image', 'video'],
@@ -387,7 +389,7 @@ def test_model_picker_catalog_details_keep_provenance_conflicts_and_fallbacks(
     expect(page.locator('[data-provider="nvidia_nim"]')).to_be_visible()
 
     result: _CatalogDetailsResult = page.evaluate("""() => {
-      const helper = window.FccModelPickerDetails;
+      const helper = window.ModelGlotModelPickerDetails;
       const catalog = {
         source: 'models.dev', source_provider_id: 'nvidia',
         canonical_model_id: 'minimax/MiniMax-M3.1-Flash',
@@ -454,7 +456,7 @@ def test_model_picker_catalog_details_keep_provenance_conflicts_and_fallbacks(
     assert "Source: models.dev" in result["summaryText"]
     assert "Provider scope: nvidia" in result["summaryText"]
     assert "Stale cache" in result["summaryText"]
-    assert "not FCC runtime guarantees" in result["summaryText"]
+    assert "not ModelGlot runtime guarantees" in result["summaryText"]
     assert "MiniMax <b>Lab</b>" in result["summaryText"]
     assert "<b>Lab</b>" not in result["summaryHtml"]
     assert result["catalogBadges"] >= 7

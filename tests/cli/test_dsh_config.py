@@ -26,7 +26,7 @@ def _models() -> tuple[CatalogModel, ...]:
             max_output_tokens=8192,
         ),
         CatalogModel(
-            wire_slug="claude-3-freecc-no-thinking/open_router/plain-model",
+            wire_slug="claude-3-modelglot-no-thinking/open_router/plain-model",
             provider_model_ref="open_router/plain-model",
             display_name="No-thinking model",
             supports_reasoning=False,
@@ -66,12 +66,10 @@ def test_dsh_config_pins_responses_models_retries_and_private_state(
     }
 
     llm = _row_by_id(launch, "llm-pi-ai")
-    provider = object_payload(object_payload(llm["config"])["providers"])[
-        "free-claude-code"
-    ]
+    provider = object_payload(object_payload(llm["config"])["providers"])["modelglot"]
     assert provider == {
         "displayName": "ModelGlot",
-        "apiKeyEnv": "FCC_DSH_API_KEY",
+        "apiKeyEnv": "MODELGLOT_DSH_API_KEY",
         "api": "openai-responses",
         "baseURL": "http://127.0.0.1:9191/v1",
         "models": [
@@ -92,7 +90,7 @@ def test_dsh_config_pins_responses_models_retries_and_private_state(
                 "maxTokens": 8192,
             },
             {
-                "id": "claude-3-freecc-no-thinking/open_router/plain-model",
+                "id": "claude-3-modelglot-no-thinking/open_router/plain-model",
                 "name": "No-thinking model",
                 "reasoningEfforts": False,
                 "contextWindow": 200000,
@@ -122,7 +120,7 @@ def test_dsh_config_pins_responses_models_retries_and_private_state(
         "id": "agent-default-model",
         "name": "@deepseek-ai/dsh-agent-default-model",
         "config": {
-            "provider": "free-claude-code",
+            "provider": "modelglot",
             "model": "nvidia_nim/vendor/model",
         },
     }

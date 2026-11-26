@@ -55,7 +55,7 @@ def test_launch_default_is_server_selection_not_first_row_or_local_settings(
     name: str,
     launch_capture: LaunchCapture,
 ) -> None:
-    selected = "claude-3-freecc-no-thinking/open_router/Zulu"
+    selected = "claude-3-modelglot-no-thinking/open_router/Zulu"
     launch_capture.catalog = {
         "default_model_id": selected,
         "data": [
@@ -102,7 +102,7 @@ def test_launch_default_is_server_selection_not_first_row_or_local_settings(
             assert (
                 config["model"]
                 == object_payload(object_payload(config["agents"])["title"])["model"]
-                == f"free-claude-code/{selected}"
+                == f"modelglot/{selected}"
             )
         elif name == "cline":
             path = Path(env["CLINE_PROVIDER_SETTINGS_PATH"])
@@ -146,7 +146,7 @@ def test_launch_default_is_server_selection_not_first_row_or_local_settings(
 
 
 @pytest.mark.parametrize("name", tuple(name for name in HARNESSES if name != "dsh"))
-def test_help_receives_normal_fcc_setup(
+def test_help_receives_normal_modelglot_setup(
     name: str, launch_capture: LaunchCapture
 ) -> None:
     launch(name, ["--help"])
@@ -175,7 +175,7 @@ def test_help_does_not_bypass_failed_setup(
 
 
 @pytest.mark.parametrize("name", HARNESSES)
-def test_native_inputs_are_forwarded_without_fcc_model_or_command_policy(
+def test_native_inputs_are_forwarded_without_modelglot_model_or_command_policy(
     name: str, launch_capture: LaunchCapture
 ) -> None:
     args = [
@@ -246,7 +246,7 @@ def test_aider_native_settings_resolve_bare_and_transport_names_without_rewritin
     config = build_aider_config(
         (CatalogModel(wire_name, wire_name, "Model", False),),
         messages_url="http://localhost:8182/v1/messages",
-        api_key_env="FCC_AIDER_PROXY_AUTH_TEST123",
+        api_key_env="MODELGLOT_AIDER_PROXY_AUTH_TEST123",
         launch_id="launch-a",
     )
     entries = {entry["name"]: entry for entry in config.settings}

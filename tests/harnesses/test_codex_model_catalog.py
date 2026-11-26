@@ -16,7 +16,7 @@ def _models_payload(*model_ids: str) -> dict[str, Any]:
             {
                 "id": model_id,
                 "provider_model_ref": (
-                    model_id.removeprefix("claude-3-freecc-no-thinking/")
+                    model_id.removeprefix("claude-3-modelglot-no-thinking/")
                 ),
                 "display_name": model_id,
             }
@@ -109,11 +109,11 @@ def test_codex_catalog_deduplicates_direct_wire_ids() -> None:
 def test_codex_catalog_preserves_no_thinking_only_entries_for_routing() -> None:
     catalog = build_codex_model_catalog(
         catalog_models_from_response(
-            _models_payload("claude-3-freecc-no-thinking/open_router/plain-model")
+            _models_payload("claude-3-modelglot-no-thinking/open_router/plain-model")
         )
     )
 
-    assert _slugs(catalog) == ["claude-3-freecc-no-thinking/open_router/plain-model"]
+    assert _slugs(catalog) == ["claude-3-modelglot-no-thinking/open_router/plain-model"]
 
 
 def test_codex_catalog_ordering_and_priorities_are_deterministic() -> None:
@@ -171,7 +171,7 @@ def test_codex_catalog_projects_known_capabilities_and_preserves_unknown_default
                         "maxCompletionTokens": 8192,
                     },
                     {
-                        "id": "claude-3-freecc-no-thinking/provider/text-only",
+                        "id": "claude-3-modelglot-no-thinking/provider/text-only",
                         "provider_model_ref": "provider/text-only",
                         "supportsReasoning": False,
                         "inputModalities": ["text"],

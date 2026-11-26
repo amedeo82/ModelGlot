@@ -190,7 +190,7 @@ async def test_legacy_associated_messages_replay_into_every_transport(
         await _saved_reply(send("messages", history), "messages")
     assert json.dumps(history) == before
     body = json.dumps(bodies[-1])
-    assert "fcc:history" not in body
+    assert "modelglot:history" not in body
     assert body.count("Plan.") == int(readable)
     if destination == "chat":
         assert object_payload(array_payload(bodies[-1]["messages"])[0])[
@@ -334,7 +334,7 @@ def test_immediate_text_and_late_replay_survive_every_exit(terminal: str) -> Non
         if object_payload(e.data.get("delta", {})).get("type") == "signature_delta"
     ]
     assert signatures == ([] if terminal == "failure" else ["firstsecond"])
-    assert "fcc:history" not in "".join(frames)
+    assert "modelglot:history" not in "".join(frames)
 
 
 def test_request_copy_preserves_routing_and_does_not_join_across_messages() -> None:
@@ -371,7 +371,7 @@ def test_request_copy_preserves_routing_and_does_not_join_across_messages() -> N
     assert normalized.resolved_provider_model == "actual"
     assert len(normalized.messages) == 3
     assert request.model_dump_json() == before
-    assert "fcc:history:v2:" not in normalized.model_dump_json()
+    assert "modelglot:history:v2:" not in normalized.model_dump_json()
     assert normalize_messages_history(normalized) == normalized
 
 

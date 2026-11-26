@@ -87,7 +87,7 @@ Windows PowerShell:
 & ([scriptblock]::Create((irm "https://raw.githubusercontent.com/amedeo82/ModelGlot/main/scripts/install.ps1"))) -Ref main
 ```
 
-These commands install the current commit from the `main` branch. The installed version includes the VCS build identifier; run `fcc-server --version` to display it.
+These commands install the current commit from the `main` branch. The installed version includes the VCS build identifier; run `modelglot-server --version` to display it.
 
 When prompted, choose at least one coding agent and optionally enable [RTK](https://github.com/rtk-ai/rtk) + [Headroom](https://github.com/headroomlabs-ai/headroom) token optimization for supported agents.
 
@@ -117,7 +117,7 @@ Open **ModelGlot** from your desktop or Applications folder.
 Run:
 
 ```bash
-fcc-server
+modelglot-server
 ```
 
 ModelGlot opens the Admin UI after starting. On Windows and macOS, use the tray or
@@ -126,7 +126,7 @@ for project updates, restart, or quit. **Check for Updates** runs the release
 check in the background and shows the installed and latest stable versions in a
 native notification and in the tray menu. If an update is available, ModelGlot asks
 for confirmation before closing, installing it, and reopening. When using
-`fcc-server`, keep its terminal open.
+`modelglot-server`, keep its terminal open.
 
 > **Network exposure:** the current defaults bind the server to `0.0.0.0` and leave
 > Proxy Authentication disabled, so generation endpoints are reachable from other hosts
@@ -156,67 +156,67 @@ in Admin.
 Claude Code:
 
 ```bash
-fcc-claude
+modelglot-claude
 ```
 
 Codex:
 
 ```bash
-fcc-codex
+modelglot-codex
 ```
 
 Pi:
 
 ```bash
-fcc-pi
+modelglot-pi
 ```
 
 OpenCode 2:
 
 ```bash
-fcc-opencode
+modelglot-opencode
 ```
 
 Cline:
 
 ```bash
-fcc-cline
+modelglot-cline
 ```
 
 Hermes:
 
 ```bash
-fcc-hermes
+modelglot-hermes
 ```
 
 DeepSeek Harness Web:
 
 ```bash
-fcc-dsh
+modelglot-dsh
 ```
 
 Grok Build:
 
 ```bash
-fcc-grok
+modelglot-grok
 ```
 
 Muse Code:
 
 ```bash
-fcc-muse
+modelglot-muse
 ```
 
 Aider:
 
 ```bash
-fcc-aider
+modelglot-aider
 ```
 
 Antigravity CLI:
 
 ```bash
-fcc-agy
+modelglot-agy
 ```
 
 Pressing `Ctrl+C` while a native client is running exits that client and its ModelGlot launcher
@@ -463,7 +463,7 @@ For editor and app integrations, install the client, start ModelGlot, then open
 
 - **Claude Code in VS Code**: Install the [Claude Code extension](https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code).
 - **VS Code Chat**: Install the latest [VS Code](https://code.visualstudio.com/), connect, and select an ModelGlot model in its built-in Chat model picker.
-- **Claude Desktop**: Install [Claude Desktop](https://claude.ai/download). Fully quit it before connecting or disconnecting, then reopen it. The dedicated [ModelGlot 3P profile](docs/claude-desktop-fcc-profile.md) adds 1M-context metadata, official Anthropic plugin marketplaces, sealed-key continuity, and preserves custom model overrides. When the ModelGlot profile is active, Disconnect removes it and returns Desktop to the normal Claude sign-in path; it does not restore a previously active native profile.
+- **Claude Desktop**: Install [Claude Desktop](https://claude.ai/download). Fully quit it before connecting or disconnecting, then reopen it. The dedicated [ModelGlot 3P profile](docs/claude-desktop-modelglot-profile.md) adds 1M-context metadata, official Anthropic plugin marketplaces, sealed-key continuity, and preserves custom model overrides. When the ModelGlot profile is active, Disconnect removes it and returns Desktop to the normal Claude sign-in path; it does not restore a previously active native profile.
 - **Codex CLI, IDE & ChatGPT Desktop**: Install Codex CLI, the [Codex extension](https://marketplace.visualstudio.com/items?itemName=openai.chatgpt), or [ChatGPT Desktop](https://learn.chatgpt.com/docs/app), then connect. Select an ModelGlot model in the local Codex model picker and restart the client. ModelGlot routes only the local Codex workspace; Chat and cloud features continue to use OpenAI services.
 - **DeepSeek Harness Desktop**: Install and open the app once before connecting. Start a new session to use ModelGlot models.
 - **Claude Code in JetBrains ACP**: Install Claude Agent in JetBrains AI Assistant and start it once, then click **Connect** in ModelGlot. Reopen the IDE, select **Claude Code (ModelGlot)**, and start a new chat. After JetBrains updates the agent, restart ModelGlot before starting a new chat. Requires a local IDE in its standard installation locations.
@@ -484,16 +484,16 @@ are configuring.
 ## Use The API Directly
 
 Any client or SDK for these APIs can call ModelGlot. Set the base URL to
-`http://127.0.0.1:8082/v1` for OpenAI clients and `http://127.0.0.1:8082` for
+`http://127.0.0.1:16969/v1` for OpenAI clients and `http://127.0.0.1:16969` for
 Anthropic and Gemini clients.
 Every ModelGlot model works on every endpoint. If Proxy Authentication is enabled, use its token as the client's API key and send it as `Authorization: Bearer <token>`. Anthropic Messages and token-count requests also accept `x-api-key: <token>`. Gemini endpoints accept the token through `Authorization`, `x-goog-api-key`, or the `key` query parameter. The model-list endpoint uses Bearer authentication.
 
-List the available models with `curl "http://127.0.0.1:8082/v1/models?view=messages"`. Check server liveness with `curl "http://127.0.0.1:8082/health"`.
+List the available models with `curl "http://127.0.0.1:16969/v1/models?view=messages"`. Check server liveness with `curl "http://127.0.0.1:16969/health"`.
 
 [`POST /v1/messages`](https://platform.claude.com/docs/en/api/messages):
 
 ```bash
-curl http://127.0.0.1:8082/v1/messages \
+curl http://127.0.0.1:16969/v1/messages \
   -H "Content-Type: application/json" \
   -d '{
     "model": "nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b",
@@ -505,7 +505,7 @@ curl http://127.0.0.1:8082/v1/messages \
 `POST /v1/messages/count_tokens`:
 
 ```bash
-curl http://127.0.0.1:8082/v1/messages/count_tokens \
+curl http://127.0.0.1:16969/v1/messages/count_tokens \
   -H "Content-Type: application/json" \
   -d '{
     "model": "nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b",
@@ -516,7 +516,7 @@ curl http://127.0.0.1:8082/v1/messages/count_tokens \
 [`POST /v1/chat/completions`](https://platform.openai.com/docs/api-reference/chat/create):
 
 ```bash
-curl http://127.0.0.1:8082/v1/chat/completions \
+curl http://127.0.0.1:16969/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b",
@@ -527,7 +527,7 @@ curl http://127.0.0.1:8082/v1/chat/completions \
 [`POST /v1/responses`](https://platform.openai.com/docs/api-reference/responses/create):
 
 ```bash
-curl http://127.0.0.1:8082/v1/responses \
+curl http://127.0.0.1:16969/v1/responses \
   -H "Content-Type: application/json" \
   -d '{
     "model": "nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b",
@@ -538,7 +538,7 @@ curl http://127.0.0.1:8082/v1/responses \
 [`POST /v1/models/{model}:generateContent`](https://ai.google.dev/api/generate-content):
 
 ```bash
-curl http://127.0.0.1:8082/v1/models/nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b:generateContent \
+curl http://127.0.0.1:16969/v1/models/nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b:generateContent \
   -H "Content-Type: application/json" \
   -d '{"contents": [{"role": "user", "parts": [{"text": "Hello!"}]}]}'
 ```
@@ -658,7 +658,7 @@ Local Whisper with CUDA 13.0:
 & ([scriptblock]::Create((irm "https://raw.githubusercontent.com/amedeo82/ModelGlot/main/scripts/install.ps1"))) -Ref main -VoiceLocal -TorchBackend cu130
 ```
 
-After installing local support, restart `fcc-server`. In **Admin UI → Messaging → Voice**, enable voice notes, select `cpu` or `cuda`, and choose the Whisper model. Local gated models need `HUGGINGFACE_API_KEY`.
+After installing local support, restart `modelglot-server`. In **Admin UI → Messaging → Voice**, enable voice notes, select `cpu` or `cuda`, and choose the Whisper model. Local gated models need `HUGGINGFACE_API_KEY`.
 
 </details>
 
@@ -674,19 +674,19 @@ reference unchanged. Titles are resolved in this order:
 
 The provider name is included as secondary description text. The catalog is never required to
 serve a model list: an offline, cold, or stale cache degrades to curated, heuristic, or raw
-labels. The reduced cache is stored at `~/.fcc/models-dev-catalog.json` and `fcc-doctor` reports
+labels. The reduced cache is stored at `~/.modelglot/models-dev-catalog.json` and `modelglot-doctor` reports
 its source, age, and last refresh outcome. Cache schema v2 also retains bounded provider-scoped
 presentation facts; legacy caches remain readable. Validated models.dev provider/lab SVGs are
-cached under `~/.fcc/models-dev-logos` during the same background refresh and served same-origin.
+cached under `~/.modelglot/models-dev-logos` during the same background refresh and served same-origin.
 Missing or offline logos fall back to initials and never block model selection.
 
 External catalog access can be disabled completely:
 
 ```dotenv
-FCC_MODEL_CATALOG_SOURCE=none
+MODELGLOT_MODEL_CATALOG_SOURCE=none
 ```
 
-`FCC_MODEL_CATALOG_URL` may point to an operator-controlled compatible catalog endpoint. See
+`MODELGLOT_MODEL_CATALOG_URL` may point to an operator-controlled compatible catalog endpoint. See
 [`docs/model-display-names-analysis.md`](docs/model-display-names-analysis.md) for the design
 and [`docs/model-display-names-implementation-plan.md`](docs/model-display-names-implementation-plan.md)
 for the implementation contract.
@@ -697,13 +697,13 @@ Claude Code Terminal and Claude Desktop use the same ModelGlot model catalog and
 resolver. The Terminal discovers them through `GET /v1/models` and uses `display_name` as the
 picker title and `description` as the secondary provider label.
 
-Launch the Terminal through `fcc-claude` to configure the gateway URL, credential, and
+Launch the Terminal through `modelglot-claude` to configure the gateway URL, credential, and
 `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1` automatically. For a manual Claude Code
 launch, configure the same contract explicitly:
 
 ```bash
-export ANTHROPIC_BASE_URL="http://127.0.0.1:8082"
-export ANTHROPIC_AUTH_TOKEN="your-fcc-proxy-token"
+export ANTHROPIC_BASE_URL="http://127.0.0.1:16969"
+export ANTHROPIC_AUTH_TOKEN="your-modelglot-proxy-token"
 export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY="1"
 ```
 
@@ -726,7 +726,7 @@ and
 
 ## Manage Your Installation
 
-Run `fcc-server --version` to check the installed version without starting ModelGlot.
+Run `modelglot-server --version` to check the installed version without starting ModelGlot.
 
 ### Update
 
@@ -740,13 +740,13 @@ To check and install the latest stable release from a terminal instead, stop all
 running ModelGlot commands, then run:
 
 ```sh
-fcc-update
+modelglot-update
 ```
 
-Both the tray and `fcc-update` use the same stable-release channel. After an
+Both the tray and `modelglot-update` use the same stable-release channel. After an
 update attempt, ModelGlot tries to reopen automatically and reports startup failures;
-desktop updater output is stored in `~/.fcc/logs/desktop-update-*.log`. If
-`fcc-update` is unavailable or fails, try running the [install command](#install)
+desktop updater output is stored in `~/.modelglot/logs/desktop-update-*.log`. If
+`modelglot-update` is unavailable or fails, try running the [install command](#install)
 again.
 
 To reinstall ModelGlot or change optional components while already up to date, run the [installer](#install) directly.
@@ -776,7 +776,7 @@ Stop every running ModelGlot command and quit connected desktop/editor apps befo
 **Removes**
 
 - ModelGlot, including its desktop launcher and commands
-- `~/.fcc/`
+- `~/.modelglot/`
 
 **Keeps**
 
@@ -800,7 +800,7 @@ Windows PowerShell:
 For a problem after installation, run the command below and paste its output into your bug report.
 
 ```bash
-fcc-doctor
+modelglot-doctor
 ```
 
 - [Report bugs or request features](https://github.com/amedeo82/ModelGlot/issues)

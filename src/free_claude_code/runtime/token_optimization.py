@@ -226,7 +226,7 @@ class ExternalTokenOptimizationCollector:
         return payload
 
     def _run(self, argv: Sequence[str], *, rtk: bool = False) -> ProcessResult:
-        # Copy only process-launch/locale values. Provider credentials and FCC
+        # Copy only process-launch/locale values. Provider credentials and ModelGlot
         # configuration are neither needed by these CLIs nor allowed to cross
         # this process boundary.
         safe_names = {

@@ -46,7 +46,7 @@ def route() -> JsonObject:
     )
     row = next(row for row in rows if row["id"] == "llm-pi-ai")
     providers = object_payload(object_payload(row["config"])["providers"])
-    return object_payload(providers["free-claude-code"])
+    return object_payload(providers["modelglot"])
 
 
 async def settle(runtime: ApplicationRuntime):

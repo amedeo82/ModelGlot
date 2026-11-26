@@ -19,7 +19,7 @@ def write_previous_connection(path: Path, state: Path, model: str = "provider/mo
     models = object_payload(config.setdefault("customModels", {}))
     models[model] = {
         "modelName": "gemini-api://models/" + model,
-        "label": "FCC: " + model,
+        "label": "ModelGlot: " + model,
         "toolFormatterType": "TOOL_FORMATTER_TYPE_NONE",
         "modelFeatures": {"supportsToolCalls": True},
     }

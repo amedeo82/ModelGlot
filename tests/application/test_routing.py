@@ -23,7 +23,7 @@ from free_claude_code.core.reasoning import ReasoningControl, ReasoningEffort
     [
         ("", False),
         ("anthropic/", False),
-        ("claude-3-freecc-no-thinking/", True),
+        ("claude-3-modelglot-no-thinking/", True),
         ("desktop", False),
         ("desktop", True),
     ],
@@ -88,7 +88,7 @@ def test_super_replacement_does_not_redirect_other_endpoints(ref: str) -> None:
 
 @pytest.mark.parametrize(
     "prefix,off",
-    [("", False), ("anthropic/", False), ("claude-3-freecc-no-thinking/", True)],
+    [("", False), ("anthropic/", False), ("claude-3-modelglot-no-thinking/", True)],
 )
 @pytest.mark.parametrize(
     "suffix", ["openai/gpt-4.1", "vendor/opus", "sonnet", "haiku", "fable"]
@@ -371,7 +371,7 @@ def test_model_router_routes_no_thinking_gateway_model_directly(
 ) -> None:
     routed = ModelRouter(settings).resolve_messages_request(
         MessagesRequest(
-            model="claude-3-freecc-no-thinking/nvidia_nim/deepseek-ai/deepseek-v4-pro",
+            model="claude-3-modelglot-no-thinking/nvidia_nim/deepseek-ai/deepseek-v4-pro",
             max_tokens=100,
             messages=[Message(role="user", content="hello")],
         )
@@ -380,7 +380,7 @@ def test_model_router_routes_no_thinking_gateway_model_directly(
     assert routed.request.model == "deepseek-ai/deepseek-v4-pro"
     assert (
         routed.resolved.original_model
-        == "claude-3-freecc-no-thinking/nvidia_nim/deepseek-ai/deepseek-v4-pro"
+        == "claude-3-modelglot-no-thinking/nvidia_nim/deepseek-ai/deepseek-v4-pro"
     )
     assert routed.resolved.primary.provider_id == "nvidia_nim"
     assert routed.resolved.primary.provider_model == "deepseek-ai/deepseek-v4-pro"

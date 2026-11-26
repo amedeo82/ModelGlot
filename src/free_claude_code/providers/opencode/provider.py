@@ -168,7 +168,7 @@ class OpenCodeProvider(BaseProvider):
             "x-grok-session-id",
             "x-meta-ai-gateway-session-id",
             "x-tbh-session-id",
-            "x-fcc-launch-id",
+            "x-modelglot-launch-id",
         ):
             session_id = headers.get(name)
             if session_id and session_id.strip():

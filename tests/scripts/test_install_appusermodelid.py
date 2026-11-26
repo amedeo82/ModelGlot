@@ -36,7 +36,7 @@ def _csharp_source() -> str:
 
 
 def test_installer_defines_stable_appusermodelid() -> None:
-    assert '$FccAppUserModelId = "io.github.amedeo82.free-claude-code"' in (
+    assert '$ModelGlotAppUserModelId = "io.github.amedeo82.modelglot"' in (
         INSTALLER_TEXT
     )
     assert "9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3" in INSTALLER_TEXT
@@ -44,11 +44,10 @@ def test_installer_defines_stable_appusermodelid() -> None:
     assert "VT_LPWSTR = 31" in INSTALLER_TEXT
 
 
-def test_uninstaller_removes_current_and_legacy_notification_identities() -> None:
-    body = _function_body("function Remove-FccAppUserModelIds", UNINSTALLER_TEXT)
+def test_uninstaller_removes_only_modelglot_notification_identity() -> None:
+    body = _function_body("function Remove-ModelGlotAppUserModelId", UNINSTALLER_TEXT)
 
-    assert "io.github.amedeo82.free-claude-code" in UNINSTALLER_TEXT
-    assert "io.github.alishahryar1.free-claude-code" in UNINSTALLER_TEXT
+    assert "io.github.amedeo82.modelglot" in UNINSTALLER_TEXT
     assert "Software\\Classes\\AppUserModelId" in body
     assert "Remove-Item -LiteralPath $registryPath -Force" in body
 
@@ -70,11 +69,11 @@ def test_com_helper_uses_persistfile_and_property_store() -> None:
 
 
 def test_both_shortcuts_receive_appusermodelid_after_save() -> None:
-    body = _function_body("function Install-FccDesktopShortcuts")
+    body = _function_body("function Install-ModelGlotDesktopShortcuts")
 
-    assert 'Join-Path $env:USERPROFILE "Desktop\\Free Claude Code.lnk"' in body
+    assert 'Join-Path $env:USERPROFILE "Desktop\\ModelGlot.lnk"' in body
     assert (
-        'Join-Path $env:APPDATA "Microsoft\\Windows\\Start Menu\\Programs\\Free Claude Code.lnk"'
+        'Join-Path $env:APPDATA "Microsoft\\Windows\\Start Menu\\Programs\\ModelGlot.lnk"'
         in body
     )
     assert "$shortcutPaths = @($desktopShortcutPath, $startMenuShortcutPath)" in body
@@ -84,7 +83,7 @@ def test_both_shortcuts_receive_appusermodelid_after_save() -> None:
 
 
 def test_start_menu_identity_failure_is_explicit_and_desktop_is_best_effort() -> None:
-    body = _function_body("function Install-FccDesktopShortcuts")
+    body = _function_body("function Install-ModelGlotDesktopShortcuts")
 
     catch_index = body.index("catch {")
     required_index = body.index("if ($shortcutPath -eq $startMenuShortcutPath)")
@@ -99,8 +98,8 @@ def test_com_helper_sets_appusermodelid_idempotently(tmp_path: Path) -> None:
     if powershell is None:
         pytest.skip("Windows PowerShell is not available")
 
-    shortcut_path = tmp_path / "Free Claude Code.lnk"
-    app_user_model_id = "io.github.amedeo82.free-claude-code"
+    shortcut_path = tmp_path / "ModelGlot.lnk"
+    app_user_model_id = "io.github.amedeo82.modelglot"
     script_path = tmp_path / "set-aumid.ps1"
     script_path.write_text(
         f"""$ErrorActionPreference = "Stop"
@@ -112,8 +111,8 @@ $shell = New-Object -ComObject WScript.Shell
 $shortcut = $shell.CreateShortcut($shortcutPath)
 $shortcut.TargetPath = "$env:SystemRoot\\System32\\notepad.exe"
 $shortcut.Save()
-[FccShortcutAppUserModelId]::SetAppUserModelId($shortcutPath, "{app_user_model_id}")
-[FccShortcutAppUserModelId]::SetAppUserModelId($shortcutPath, "{app_user_model_id}")
+[ModelGlotShortcutAppUserModelId]::SetAppUserModelId($shortcutPath, "{app_user_model_id}")
+[ModelGlotShortcutAppUserModelId]::SetAppUserModelId($shortcutPath, "{app_user_model_id}")
 $application = New-Object -ComObject Shell.Application
 $folder = $application.NameSpace((Split-Path -Parent $shortcutPath))
 $item = $folder.ParseName((Split-Path -Leaf $shortcutPath))

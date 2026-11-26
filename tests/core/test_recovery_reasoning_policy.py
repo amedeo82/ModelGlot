@@ -67,8 +67,8 @@ def carrier(protocol: WireProtocol, native: JsonObject):
             True,
         ),
         ("native-ciphertext", False),
-        ("fcc:history:v1:malformed", False),
-        ("fcc:history:v99:future", False),
+        ("modelglot:history:v1:malformed", False),
+        ("modelglot:history:v99:future", False),
     ],
     ids=[
         "absent",

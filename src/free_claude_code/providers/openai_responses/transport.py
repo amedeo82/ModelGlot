@@ -214,7 +214,7 @@ class OpenAIResponsesTransport:
                 raise InvalidRequestError(
                     f"{self._provider_name} cannot represent Gemini control {field}"
                 )
-        response_id = f"fcc_{uuid.uuid4().hex}"
+        response_id = f"modelglot_{uuid.uuid4().hex}"
         return self._run_stream(
             self._prepare_body(prepared.body),
             request_id=request_id,

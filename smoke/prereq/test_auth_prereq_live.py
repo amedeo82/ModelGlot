@@ -12,12 +12,12 @@ pytestmark = [pytest.mark.live, pytest.mark.smoke_target("auth")]
 def test_bearer_auth_is_the_only_supported_header_shape(
     smoke_config: SmokeConfig, tmp_path: Path
 ) -> None:
-    token = "fcc-smoke-token"
+    token = "modelglot-smoke-token"
     home = tmp_path / "home"
-    env_file = home / ".fcc" / ".env"
+    env_file = home / ".modelglot" / ".env"
     env_file.parent.mkdir(parents=True)
     env_file.write_text(
-        "FCC_CONFIG_SCHEMA=1\n"
+        "MODELGLOT_CONFIG_SCHEMA=1\n"
         "PROXY_AUTH_ENABLED=true\n"
         f'ANTHROPIC_AUTH_TOKEN="{token}"\n',
         encoding="utf-8",
@@ -30,7 +30,7 @@ def test_bearer_auth_is_the_only_supported_header_shape(
             "USERPROFILE": str(home),
             "MESSAGING_PLATFORM": "none",
         },
-        env_unset={"ANTHROPIC_AUTH_TOKEN", "PROXY_AUTH_ENABLED", "FCC_ENV_FILE"},
+        env_unset={"ANTHROPIC_AUTH_TOKEN", "PROXY_AUTH_ENABLED", "MODELGLOT_ENV_FILE"},
         name="auth",
     ) as server:
         assert httpx.get(f"{server.base_url}/").status_code == 401

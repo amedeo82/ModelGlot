@@ -1,4 +1,4 @@
-"""Native reasoning survives conversion without trailing FCC replay records."""
+"""Native reasoning survives conversion without trailing ModelGlot replay records."""
 
 import asyncio
 import json
@@ -86,7 +86,7 @@ async def test_plain_reasoning_emits_no_artificial_replay_state(
                 for frame in chunk.frames
             ]
         )
-    assert "fcc:history:" not in stream
+    assert "modelglot:history:" not in stream
     events = parse_sse_text(stream)
     if wire == "messages":
         starts = [
@@ -149,7 +149,7 @@ async def test_late_opaque_metadata_finishes_before_answer(wire: str) -> None:
                 for frame in chunk.frames
             ]
         )
-    assert "fcc:history:" not in stream
+    assert "modelglot:history:" not in stream
     events = parse_sse_text(stream)
     if wire == "messages":
         starts = [

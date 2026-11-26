@@ -327,7 +327,7 @@ def test_settings_defaults_are_valid_and_nonempty() -> None:
     assert settings.whisper_model == "base"
     assert settings.enable_web_server_tools is True
     assert settings.proxy_auth_enabled is False
-    assert settings.proxy_auth_token == "freecc"
+    assert settings.proxy_auth_token == "modelglot"
     fields: list[tuple[str, object]] = list(settings)
     assert [
         name for name, value in fields if isinstance(value, str) and not value
@@ -363,7 +363,7 @@ def test_direct_settings_construction_performs_no_environment_io(
         ("MODEL", "model", "deepseek/deepseek-chat", "deepseek/deepseek-chat"),
         ("PROVIDER_RATE_LIMIT", "provider_rate_limit", "20", 20),
         ("HTTP_READ_TIMEOUT", "http_read_timeout", "600", 600.0),
-        ("FCC_OPEN_BROWSER", "open_admin_browser", "false", False),
+        ("MODELGLOT_OPEN_BROWSER", "open_admin_browser", "false", False),
         ("REASONING_POLICY", "reasoning_policy", "off", ReasoningPreference.OFF),
         ("GROQ_API_KEY", "groq_api_keys", " secret ", (SecretStr("secret"),)),
         ("OPENROUTER_PROXY", "open_router_proxy", " http://proxy ", "http://proxy"),
@@ -415,7 +415,7 @@ def test_process_auth_token_cannot_override_retained_default(
 ) -> None:
     snapshot = compose_settings_snapshot({}, {"ANTHROPIC_AUTH_TOKEN": process_token})
 
-    assert snapshot.settings.proxy_auth_token == "freecc"
+    assert snapshot.settings.proxy_auth_token == "modelglot"
     assert snapshot.sources["proxy_auth_token"] is ConfigSource.DEFAULT
 
 
@@ -468,7 +468,7 @@ def test_repair_invalid_managed_provider_proxies_removes_all_eligible_values() -
     managed = _write_managed_config(
         "\n".join(
             (
-                "FCC_CONFIG_SCHEMA=2",
+                "MODELGLOT_CONFIG_SCHEMA=2",
                 "MODEL=nvidia_nim/test-model",
                 "OPENROUTER_PROXY=http://proxy.example:notaport",
                 "GROQ_PROXY=https://proxy.example:8443",
@@ -494,7 +494,7 @@ def test_repair_invalid_managed_provider_proxies_removes_all_eligible_values() -
 def test_repair_valid_managed_provider_proxy_leaves_file_unchanged() -> None:
     managed = _write_managed_config(
         "# Keep this exact text on a no-op.\n"
-        "FCC_CONFIG_SCHEMA=2\n"
+        "MODELGLOT_CONFIG_SCHEMA=2\n"
         "OPENAI_PROXY=https://proxy.example:8443\n"
     )
     baseline = managed.read_bytes()
@@ -516,7 +516,7 @@ def test_repair_preserves_process_owned_managed_proxy(
 ) -> None:
     invalid_openai = "invalid://managed-proxy"
     managed = _write_managed_config(
-        "FCC_CONFIG_SCHEMA=2\n"
+        "MODELGLOT_CONFIG_SCHEMA=2\n"
         f"OPENAI_PROXY={invalid_openai}\n"
         "OPENROUTER_PROXY=invalid://unshadowed\n"
     )
@@ -535,7 +535,7 @@ def test_repair_preserves_process_owned_managed_proxy(
 
 def test_repair_propagates_atomic_write_failure_without_changing_source() -> None:
     managed = _write_managed_config(
-        "FCC_CONFIG_SCHEMA=2\nOPENAI_PROXY=invalid://managed-proxy\n"
+        "MODELGLOT_CONFIG_SCHEMA=2\nOPENAI_PROXY=invalid://managed-proxy\n"
     )
     baseline = managed.read_bytes()
 
@@ -554,7 +554,7 @@ def test_repair_propagates_atomic_write_failure_without_changing_source() -> Non
 
 def test_repair_is_idempotent_and_writes_only_once() -> None:
     managed = _write_managed_config(
-        "FCC_CONFIG_SCHEMA=2\nOPENAI_PROXY=invalid://managed-proxy\n"
+        "MODELGLOT_CONFIG_SCHEMA=2\nOPENAI_PROXY=invalid://managed-proxy\n"
     )
 
     with patch.object(
@@ -573,7 +573,9 @@ def test_repair_is_idempotent_and_writes_only_once() -> None:
 
 
 def test_repair_propagates_malformed_managed_config() -> None:
-    managed = _write_managed_config('FCC_CONFIG_SCHEMA=2\nOPENAI_PROXY="unterminated\n')
+    managed = _write_managed_config(
+        'MODELGLOT_CONFIG_SCHEMA=2\nOPENAI_PROXY="unterminated\n'
+    )
     baseline = managed.read_bytes()
 
     with pytest.raises(ValueError, match="Could not parse configuration file"):
@@ -586,7 +588,7 @@ def test_repair_propagates_config_lock_timeout(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     managed = _write_managed_config(
-        "FCC_CONFIG_SCHEMA=2\nOPENAI_PROXY=invalid://managed-proxy\n"
+        "MODELGLOT_CONFIG_SCHEMA=2\nOPENAI_PROXY=invalid://managed-proxy\n"
     )
     baseline = managed.read_bytes()
 
@@ -661,7 +663,7 @@ def test_model_fallbacks_reject_blank_and_duplicate_members(value: str) -> None:
 
 @pytest.mark.parametrize(
     "field",
-    ["MODEL", "HOST", "WHISPER_MODEL", "LOG_LEVEL", "ANTHROPIC_AUTH_TOKEN"],
+    ["MODEL", "MODELGLOT_HOST", "WHISPER_MODEL", "LOG_LEVEL", "ANTHROPIC_AUTH_TOKEN"],
 )
 def test_required_strings_reject_blank(field: str) -> None:
     with pytest.raises(ValidationError):
@@ -728,14 +730,14 @@ def test_model_ref_parsing(model_ref: str, provider: str, model: str) -> None:
     assert parse_model_name(model_ref) == model
 
 
-def test_paths_are_owned_by_fcc_home(
+def test_paths_are_owned_by_modelglot_home(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("USERPROFILE", str(tmp_path))
 
-    assert messaging_state_dir_path() == tmp_path / ".fcc" / "agent_workspace"
-    assert server_log_path() == tmp_path / ".fcc" / "logs" / "server.log"
+    assert messaging_state_dir_path() == tmp_path / ".modelglot" / "agent_workspace"
+    assert server_log_path() == tmp_path / ".modelglot" / "logs" / "server.log"
 
 
 @pytest.mark.parametrize("operation", ("assign", "delete"))

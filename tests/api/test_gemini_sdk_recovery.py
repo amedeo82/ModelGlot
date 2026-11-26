@@ -154,10 +154,10 @@ def test_sdk_recovers_and_replays_native_generation(
         )
 
     app = matrix_app("gemini", native_reply=upstream)
-    with TestClient(app) as fcc:
+    with TestClient(app) as modelglot:
 
         def bridge(request: httpx.Request):
-            return fcc.request(
+            return modelglot.request(
                 request.method,
                 str(request.url),
                 content=request.content,
@@ -233,7 +233,7 @@ def test_sdk_recovers_and_replays_native_generation(
                 assert signatures == [b"original-native-signature"]
             else:
                 assert len(signatures) == 1 and signatures[0].startswith(
-                    b"fcc:history:"
+                    b"modelglot:history:"
                 )
             assistant = types.Content(role="model", parts=parts)
             followup = types.Content(role="user", parts=[types.Part(text="next")])
@@ -332,10 +332,10 @@ async def test_sdk_chat_automatic_tool_result_preserves_recovered_history(
         return {"result": "ok"}
 
     app = matrix_app("gemini", native_reply=upstream)
-    with TestClient(app) as fcc:
+    with TestClient(app) as modelglot:
 
         def bridge(request: httpx.Request):
-            return fcc.request(
+            return modelglot.request(
                 request.method,
                 str(request.url),
                 content=request.content,

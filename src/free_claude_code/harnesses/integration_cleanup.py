@@ -1,4 +1,4 @@
-"""Disconnect native integrations before removing FCC's installed commands."""
+"""Disconnect native integrations before removing ModelGlot's installed commands."""
 
 import os
 from collections.abc import Callable
@@ -73,7 +73,7 @@ def _connection_settings(path: Path) -> Settings | None:
     if not _path_exists(path):
         return None
     # Cleanup must also work when an unrelated provider or model setting is invalid.
-    keys = {"HOST", "PORT", "ANTHROPIC_AUTH_TOKEN"}
+    keys = {"MODELGLOT_HOST", "MODELGLOT_PORT", "ANTHROPIC_AUTH_TOKEN"}
     managed = {
         key: value
         for key, value in dotenv_values_from_file(path).items()
@@ -94,7 +94,7 @@ def disconnect_integrations(paths: IntegrationPaths | None = None) -> None:
         settings = _connection_settings(paths.env)
     except OSError, ValueError:
         raise IntegrationCleanupError(
-            "Could not read FCC's connection settings. Correct the managed config "
+            "Could not read ModelGlot's connection settings. Correct the managed config "
             "or disconnect the integrations manually before uninstalling."
         ) from None
     url = local_proxy_root_url(settings) if settings is not None else None
@@ -155,5 +155,5 @@ def disconnect_integrations(paths: IntegrationPaths | None = None) -> None:
             raise IntegrationCleanupError(
                 f"Could not disconnect {name}. Check its local settings and permissions, "
                 "close the app, then retry. If its connection details changed, disconnect "
-                "it manually first. FCC and its recovery data were not removed."
+                "it manually first. ModelGlot and its recovery data were not removed."
             ) from None

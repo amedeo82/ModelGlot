@@ -114,14 +114,14 @@ through explicit configuration.
 - `src/free_claude_code/config/settings.py:750` — change the `host` default to `127.0.0.1`.
 - `src/free_claude_code/config/settings.py:753`–`:760` — add a model validator that rejects
   the combination "non-loopback host + authentication disabled" unless
-  `FCC_ALLOW_UNAUTHENTICATED_BINDING=1` is present; reject a default token (`freecc`) when
+  `MODELGLOT_ALLOW_UNAUTHENTICATED_BINDING=1` is present; reject a default token (`modelglot`) when
   authentication is enabled unless the operator explicitly accepts it
-  (e.g. `FCC_ALLOW_DEFAULT_AUTH_TOKEN=1`).
+  (e.g. `MODELGLOT_ALLOW_DEFAULT_AUTH_TOKEN=1`).
 - `src/free_claude_code/cli/commands.py:332`–`:339` — log the effective exposure at startup:
   bind address, whether authentication is enabled, and a warning when the port is reachable
   from non-loopback interfaces.
 - `src/free_claude_code/cli/doctor.py` — extend the diagnostic output with the same three
-  facts so `fcc-doctor` can surface an insecure setup.
+  facts so `modelglot-doctor` can surface an insecure setup.
 - `src/free_claude_code/config/paths.py` / `config/loader.py` — no change expected; only
   register the new settings if they are not already covered by the managed-config schema.
 - `README.md` — new "Network exposure and authentication" section stating the defaults, the
@@ -144,7 +144,7 @@ through explicit configuration.
 - A fresh install cannot serve `/v1/messages` from another machine without an explicit,
   documented configuration change.
 - The failure is a clear configuration error, not a silent bind.
-- `fcc-doctor` reports the effective exposure.
+- `modelglot-doctor` reports the effective exposure.
 - README documents the contract.
 
 **Risks.** Existing users who rely on LAN exposure will see a startup error. Mitigation: the
@@ -279,7 +279,7 @@ and configure an explicit allowlist with a comment explaining each entry.
 **Tests.** Extend `tests/contracts/test_uv_policy.py` with a case asserting the declared
 range is not an exact patch pin and that the lock mirrors it.
 
-**Acceptance.** `pip install free-claude-code` succeeds on 3.14.x other than 3.14.10;
+**Acceptance.** `pip install modelglot` succeeds on 3.14.x other than 3.14.10;
 `uv lock --check` passes; installers still resolve an interpreter.
 
 **Risks.** Low. Widening the range may surface interpreter differences; the extra CI job
@@ -557,7 +557,7 @@ night; the result is visible in the Actions tab without affecting PR status.
   emitted by `providers/failure_policy.py:91`–`:130` and `core/failures.py:9` to concrete
   user actions (missing key, model not found, quota exhausted, context window exceeded,
   provider cooldown).
-- `fcc-doctor` output extended with the same mapping (shared with S1.1 to avoid duplication).
+- `modelglot-doctor` output extended with the same mapping (shared with S1.1 to avoid duplication).
 
 **Effort.** 1 day.
 

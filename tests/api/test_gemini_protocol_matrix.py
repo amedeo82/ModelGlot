@@ -1,4 +1,4 @@
-"""Real FCC HTTP requests dispatch directly through each custom transport."""
+"""Real ModelGlot HTTP requests dispatch directly through each custom transport."""
 
 import base64
 import json

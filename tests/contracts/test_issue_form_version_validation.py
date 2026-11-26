@@ -72,7 +72,7 @@ def test_bug_forms_require_description_and_post_install_diagnostics() -> None:
     )
     assert all(field["type"] == "textarea" for field in post_fields)
     assert object_payload(post_fields[1]["attributes"])["render"] == "json"
-    assert "fcc-doctor" in string_payload(
+    assert "modelglot-doctor" in string_payload(
         object_payload(post_fields[1]["attributes"])["description"]
     )
     assert len(pre_fields) == 1
@@ -83,42 +83,50 @@ def test_bug_forms_require_description_and_post_install_diagnostics() -> None:
 @pytest.mark.parametrize(
     "body, valid, version",
     [
-        ('### FCC doctor output\n\n```json\n{"version":"1.2.3"}\n```', True, "1.2.3"),
         (
-            '### FCC doctor output\n\n<details>\n<summary>FCC doctor output</summary>\n\n```json\n{"version":"1.2.3"}\n```\n\n</details>',
+            '### ModelGlot doctor output\n\n```json\n{"version":"1.2.3"}\n```',
             True,
             "1.2.3",
         ),
         (
-            '### FCC doctor output\r\n\r\n<details>\r\n<summary>Diagnostics</summary>\r\n\r\n```json\r\n{"version":"1.2.3"}\r\n```\r\n\r\n</details>',
+            '### ModelGlot doctor output\n\n<details>\n<summary>ModelGlot doctor output</summary>\n\n```json\n{"version":"1.2.3"}\n```\n\n</details>',
             True,
             "1.2.3",
         ),
         (
-            "### FCC doctor output\n\n<details>\n<summary>Diagnostics</summary>\n\n```json\n{invalid}\n```\n\n</details>",
+            '### ModelGlot doctor output\r\n\r\n<details>\r\n<summary>Diagnostics</summary>\r\n\r\n```json\r\n{"version":"1.2.3"}\r\n```\r\n\r\n</details>',
+            True,
+            "1.2.3",
+        ),
+        (
+            "### ModelGlot doctor output\n\n<details>\n<summary>Diagnostics</summary>\n\n```json\n{invalid}\n```\n\n</details>",
             False,
             None,
         ),
         (
-            '### FCC doctor output\r\n\r\n```json\r\n{"version":"1.2.3"}\r\n```',
+            '### ModelGlot doctor output\r\n\r\n```json\r\n{"version":"1.2.3"}\r\n```',
             True,
             "1.2.3",
         ),
-        ('### FCC doctor output\n\n{"version":"0+unknown"}', True, None),
+        ('### ModelGlot doctor output\n\n{"version":"0+unknown"}', True, None),
         (
-            '### FCC doctor output\n\n{"version":"6.2.67.dev1+g123"}',
+            '### ModelGlot doctor output\n\n{"version":"6.2.67.dev1+g123"}',
             True,
             "6.2.67.dev1+g123",
         ),
         (
-            '### Describe the issue\n\nversion 9.9.9\n\n### FCC doctor output\n\n{"version":"1.2.3"}',
+            '### Describe the issue\n\nversion 9.9.9\n\n### ModelGlot doctor output\n\n{"version":"1.2.3"}',
             True,
             "1.2.3",
         ),
-        ("### FCC doctor output\n\n{invalid}", False, None),
-        ('### FCC doctor output\n\n{"version":123}', False, None),
-        ('### FCC doctor output\n\n{"version":"hello 1.2.3"}', False, None),
-        ("### FCC doctor output\n\n{}\n\n### FCC version\n\n1.2.3", False, None),
+        ("### ModelGlot doctor output\n\n{invalid}", False, None),
+        ('### ModelGlot doctor output\n\n{"version":123}', False, None),
+        ('### ModelGlot doctor output\n\n{"version":"hello 1.2.3"}', False, None),
+        (
+            "### ModelGlot doctor output\n\n{}\n\n### ModelGlot version\n\n1.2.3",
+            False,
+            None,
+        ),
         ("### Installation issue\n\nCannot install", True, None),
         ("unstructured issue 1.2.3", False, None),
     ],
@@ -155,9 +163,9 @@ def test_plain_doctor_report_can_be_collapsed_without_changing_its_data(
     doctor.main([])
     assert load_json_value(capsys.readouterr().out) == report
     assert load_json_value(copied[0]) == report
-    body = "### FCC doctor output\n\n" + copied[0]
+    body = "### ModelGlot doctor output\n\n" + copied[0]
     collapsed = _collapse_report(body)
-    assert collapsed.startswith("### FCC doctor output\n\n<details>\n")
+    assert collapsed.startswith("### ModelGlot doctor output\n\n<details>\n")
     assert (
         load_json_value(collapsed.split("```json\n", 1)[1].rsplit("```", 1)[0])
         == report
@@ -188,7 +196,7 @@ def test_collapsing_only_changes_doctor_section_and_is_idempotent(
 ) -> None:
     report = '{"version":"1.2.3","model":"$&```</details>"}'
     content = f"```json\n{report}\n```" if fenced else report
-    before = "### Describe the issue\n\nMy description and ![image](https://example.com/image.png)\n\n### FCC doctor output\n\n"
+    before = "### Describe the issue\n\nMy description and ![image](https://example.com/image.png)\n\n### ModelGlot doctor output\n\n"
     after = "\n\n### Other details\n\nKeep this text exactly.\n"
     body = (before + content + after).replace("\n", newline)
     collapsed = _collapse_report(body)
@@ -203,9 +211,9 @@ def test_collapsing_only_changes_doctor_section_and_is_idempotent(
     "body",
     [
         "### Installation issue\n\nCannot install",
-        "### FCC version\n\n1.2.3",
-        "### FCC doctor output\n\n{invalid}",
-        '### FCC doctor output\n\n{"version":"1.2.3"}\n\n### FCC doctor output\n\n{"version":"1.2.3"}',
+        "### ModelGlot version\n\n1.2.3",
+        "### ModelGlot doctor output\n\n{invalid}",
+        '### ModelGlot doctor output\n\n{"version":"1.2.3"}\n\n### ModelGlot doctor output\n\n{"version":"1.2.3"}',
     ],
 )
 def test_collapsing_leaves_other_or_invalid_reports_untouched(body: str) -> None:
@@ -218,7 +226,7 @@ def test_collapsing_leaves_other_or_invalid_reports_untouched(body: str) -> None
         ("0.0.0", "0.0.0"),
         ("1.22.333", "1.22.333"),
         ("The version is 1.22.333", "1.22.333"),
-        ("free-claude-code 4.11.4", "4.11.4"),
+        ("modelglot 4.11.4", "4.11.4"),
         ("v123.45.678", "123.45.678"),
         ("Version 4.6.1.", "4.6.1"),
     ],
@@ -240,8 +248,8 @@ def test_version_pattern_extracts_a_contained_version(
         ".4.6.1",
         "4.6.x",
         "none",
-        "free-claude-code",
-        "free-claude-code 4.6",
+        "modelglot",
+        "modelglot 4.6",
         "the version is 4.6.1.2",
         "upgraded from 4.6.1 to 4.11.4",
         "build4.6.1",
@@ -281,13 +289,13 @@ def test_numeric_version_comparison_uses_all_three_components() -> None:
 
 
 def test_field_pattern_extracts_the_issue_form_value() -> None:
-    body = """### FCC version
+    body = """### ModelGlot version
 
 4.6.1
 
 ### CLI
 
-Claude Code (fcc-claude)
+Claude Code (modelglot-claude)
 """
 
     match = re.search(_workflow_pattern("fieldPattern"), body, flags=re.MULTILINE)
@@ -301,8 +309,8 @@ def test_workflow_owns_one_idempotent_triage_state() -> None:
 
     assert "types: [opened, edited]" in workflow
     assert "issues: write" in workflow
-    assert "needs-fcc-version" in workflow
-    assert "<!-- fcc-version-validator -->" in workflow
+    assert "needs-modelglot-version" in workflow
+    assert "<!-- modelglot-version-validator -->" in workflow
     assert "github.rest.issues.createLabel" in workflow
     assert "github.rest.issues.addLabels" in workflow
     assert "github.rest.issues.removeLabel" in workflow
@@ -411,9 +419,9 @@ await run(github, context);
 comments.push({
   id: 102,
   user: { login: "github-actions[bot]" },
-  body: "<!-- fcc-version-outdated -->\nstale",
+  body: "<!-- modelglot-version-outdated -->\nstale",
 });
-liveIssue.labels = [{ name: "needs-fcc-version" }];
+liveIssue.labels = [{ name: "needs-modelglot-version" }];
 liveIssue.body = bodyFor("None");
 await run(github, context);
 
@@ -425,9 +433,9 @@ process.stdout.write(JSON.stringify({ calls, comments }));
         .replace(
             "__BODY_FOR__",
             (
-                "(value) => `### FCC version\\n\\n${value}\\n\\n### CLI\\n\\nClaude Code`"
+                "(value) => `### ModelGlot version\\n\\n${value}\\n\\n### CLI\\n\\nClaude Code`"
                 if form == "legacy"
-                else '(value) => value === "None" ? "### Installation issue\\n\\nCannot install" : `### FCC doctor output\\n\\n${JSON.stringify({version: value})}`'
+                else '(value) => value === "None" ? "### Installation issue\\n\\nCannot install" : `### ModelGlot doctor output\\n\\n${JSON.stringify({version: value})}`'
             ),
         )
     )
@@ -449,7 +457,7 @@ process.stdout.write(JSON.stringify({ calls, comments }));
         string_payload(object_payload(call["args"])["body"])
         for call in calls
         if call["name"] == "createComment"
-        and "fcc-version-outdated"
+        and "modelglot-version-outdated"
         in string_payload(object_payload(call["args"])["body"])
     )
     assert "`17.23.455`" in next(
@@ -481,10 +489,10 @@ def test_release_lookup_distinguishes_no_release_from_failure(
 const run = new Function("github", "context", __SOURCE__);
 const deleted = [];
 const github = {
-  paginate: async () => [{id: 42, user: {login: "github-actions[bot]"}, body: "<!-- fcc-version-outdated -->"}],
+  paginate: async () => [{id: 42, user: {login: "github-actions[bot]"}, body: "<!-- modelglot-version-outdated -->"}],
   rest: {
     issues: {
-      get: async () => ({data: {labels: [], body: "### FCC version\\n\\n1.2.3"}}),
+      get: async () => ({data: {labels: [], body: "### ModelGlot version\\n\\n1.2.3"}}),
       deleteComment: async ({comment_id}) => deleted.push(comment_id),
     },
     repos: {getLatestRelease: async () => {throw {status: __STATUS__};}},
@@ -517,19 +525,19 @@ process.stdout.write(JSON.stringify({failed, deleted}));
 def test_development_versions_are_accepted_without_stable_release_comparison(
     value: str,
 ) -> None:
-    assert _reported_version(f"free-claude-code {value}") == value
+    assert _reported_version(f"modelglot {value}") == value
     source = f"return (async () => {{\n{_workflow_script()}\n}})();"
     harness = """
 const run = new Function("github", "context", __SOURCE__);
 const calls = [];
 const github = {
   paginate: async () => [
-    {id: 1, user: {login: "github-actions[bot]"}, body: "<!-- fcc-version-validator -->"},
-    {id: 2, user: {login: "github-actions[bot]"}, body: "<!-- fcc-version-outdated -->"},
+    {id: 1, user: {login: "github-actions[bot]"}, body: "<!-- modelglot-version-validator -->"},
+    {id: 2, user: {login: "github-actions[bot]"}, body: "<!-- modelglot-version-outdated -->"},
   ],
   rest: {
     issues: {
-      get: async () => ({data: {labels: [{name: "needs-fcc-version"}], body: "### FCC version\\n\\nfree-claude-code " + __VERSION__}}),
+      get: async () => ({data: {labels: [{name: "needs-modelglot-version"}], body: "### ModelGlot version\\n\\nmodelglot " + __VERSION__}}),
       removeLabel: async () => calls.push("removeLabel"),
       deleteComment: async ({comment_id}) => calls.push(comment_id),
     },

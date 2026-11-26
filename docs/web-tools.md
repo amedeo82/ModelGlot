@@ -1,11 +1,11 @@
 # Web Tools
 
 Status: implemented
-Scope: `free-claude-code` on branch `custom/main`, aligned on 2026-11-17
+Scope: `modelglot` on branch `custom/main`, aligned on 2026-11-17
 Audience: users and maintainers
 
-Free Claude Code (FCC) can execute the Anthropic server-tool shapes used by Claude Code:
-`web_search_20250305` and forced `web_fetch_20250910`. The tools run locally in the FCC
+ModelGlot can execute the Anthropic server-tool shapes used by Claude Code:
+`web_search_20250305` and forced `web_fetch_20250910`. The tools run locally in the ModelGlot
 process and return Anthropic-compatible server-tool blocks to the client.
 
 ## Supported requests
@@ -19,12 +19,12 @@ process and return Anthropic-compatible server-tool blocks to the client.
 | Mixed Anthropic server tool plus client-defined tools | Not supported. |
 | Other Anthropic server-tool families or versions | Not supported. |
 
-Unsupported shapes return a request error that identifies the unsupported request. FCC does
+Unsupported shapes return a request error that identifies the unsupported request. ModelGlot does
 not silently forward an Anthropic server-tool request to a provider that cannot implement it.
 
 Automatic web search translates the server-tool request into a hidden provider tool named
-`fcc_web_search`. The upstream model proposes the search query, FCC performs the search, and
-FCC converts the results back to Anthropic `server_tool_use` and
+`modelglot_web_search`. The upstream model proposes the search query, ModelGlot performs the search, and
+ModelGlot converts the results back to Anthropic `server_tool_use` and
 `web_search_tool_result` blocks.
 
 ## Configuration
@@ -52,10 +52,10 @@ The settings are read from the runtime configuration snapshot used by each reque
 ## Search controls
 
 Claude Code can include `max_uses`, `allowed_domains`, or `blocked_domains` options on an
-automatic web-search request. FCC rejects an invalid domain, an invalid `max_uses` value, or
+automatic web-search request. ModelGlot rejects an invalid domain, an invalid `max_uses` value, or
 a request that combines allowed and blocked domains.
 
-Domain filters apply to the search results returned by FCC. They do not bypass the URL
+Domain filters apply to the search results returned by ModelGlot. They do not bypass the URL
 egress policy for `web_fetch`.
 
 ## Fetch security
@@ -77,7 +77,7 @@ intentional.
 
 ## Failure behavior
 
-A web-tool failure is returned as an Anthropic-compatible error block in the stream. FCC
+A web-tool failure is returned as an Anthropic-compatible error block in the stream. ModelGlot
 logs the failure type and target host without logging credentials or raw response content.
 If provider log settings explicitly enable raw payload logging, the normal privacy warning
 applies.

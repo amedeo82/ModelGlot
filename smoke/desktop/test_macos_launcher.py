@@ -26,7 +26,7 @@ def observed_launches(installed_desktop: InstalledDesktop) -> LaunchReports:
     output = installed["output"] / "terminal.json"
     output.unlink(missing_ok=True)
     output.with_suffix(".captured").unlink(missing_ok=True)
-    env = installed["launch_env"] | {"FCC_MACOS_PROBE_OUTPUT": str(output)}
+    env = installed["launch_env"] | {"MODELGLOT_MACOS_PROBE_OUTPUT": str(output)}
     with subprocess.Popen([str(installed["python"]), str(probe)], env=env) as process:
         try:
             terminal = wait_report(output, lambda r: "intersects_screen" in r, process)
@@ -38,7 +38,7 @@ def observed_launches(installed_desktop: InstalledDesktop) -> LaunchReports:
                 process.kill()
                 process.wait()
     # Preserve the pre-fix exec wrapper as the regression control.
-    legacy = installed["home"] / "Legacy FCC.app"
+    legacy = installed["home"] / "Legacy ModelGlot.app"
     contents = legacy / "Contents"
     (contents / "MacOS").mkdir(parents=True)
     (contents / "Info.plist").write_bytes(
@@ -48,7 +48,7 @@ def observed_launches(installed_desktop: InstalledDesktop) -> LaunchReports:
     (contents / "Resources/AppIcon.icns").write_bytes(
         (installed["app"] / "Contents/Resources/AppIcon.icns").read_bytes()
     )
-    executable = contents / "MacOS/fcc-desktop"
+    executable = contents / "MacOS/modelglot-desktop"
     executable.write_text(
         f"#!/bin/sh\nexec {shlex.quote(str(installed['python']))} {shlex.quote(str(probe))}\n"
     )
@@ -56,7 +56,7 @@ def observed_launches(installed_desktop: InstalledDesktop) -> LaunchReports:
     reports = []
     variants: tuple[tuple[str, Path, dict[str, str]], ...] = (
         ("legacy", legacy, {}),
-        ("native", installed["app"], {"FCC_NATIVE_CASE": "identity"}),
+        ("native", installed["app"], {"MODELGLOT_NATIVE_CASE": "identity"}),
     )
     for name, app, extra in variants:
         output = installed["output"] / f"{name}.json"
@@ -72,26 +72,26 @@ def observed_launches(installed_desktop: InstalledDesktop) -> LaunchReports:
     return terminal, legacy_report, native_report
 
 
-def test_finder_launch_keeps_fcc_bundle_identity(
+def test_finder_launch_keeps_modelglot_bundle_identity(
     installed_desktop: InstalledDesktop, observed_launches: LaunchReports
 ):
     _terminal, legacy, actual = observed_launches
-    assert legacy["bundle_id"] != "io.github.amedeo82.free-claude-code"
-    assert actual["bundle_id"] == "io.github.amedeo82.free-claude-code"
+    assert legacy["bundle_id"] != "io.github.amedeo82.modelglot"
+    assert actual["bundle_id"] == "io.github.amedeo82.modelglot"
     assert (
         Path(string_payload(actual["bundle_path"])).resolve()
         == installed_desktop["app"].resolve()
     )
     assert (
         Path(string_payload(actual["process_executable"])).resolve()
-        == (installed_desktop["app"] / "Contents/MacOS/fcc-desktop").resolve()
+        == (installed_desktop["app"] / "Contents/MacOS/modelglot-desktop").resolve()
     )
     assert actual["main_thread"]
     assert string_payload(actual["text_encoding"]).lower().replace("-", "") == "utf8"
     assert actual["executable"] == str(installed_desktop["python"])
     assert actual["prefix"] == str(installed_desktop["venv"])
     assert actual["server_command"] == [
-        str(installed_desktop["venv"] / "bin/fcc-desktop"),
+        str(installed_desktop["venv"] / "bin/modelglot-desktop"),
         "--auto-started",
     ]
 

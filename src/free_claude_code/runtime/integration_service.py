@@ -166,7 +166,7 @@ class IntegrationService:
                 if self._vscode_dirty:
                     update.state = "starting"
 
-        update.task = asyncio.create_task(drain(), name="fcc-vscode-models")
+        update.task = asyncio.create_task(drain(), name="modelglot-vscode-models")
 
     def _schedule_dsh_refresh(self) -> None:
         self._dsh_dirty = True
@@ -192,7 +192,7 @@ class IntegrationService:
                 if self._dsh_dirty:
                     update.state = "starting"
 
-        update.task = asyncio.create_task(drain(), name="fcc-dsh-desktop-models")
+        update.task = asyncio.create_task(drain(), name="modelglot-dsh-desktop-models")
 
     async def dsh_desktop_status(self) -> JsonObject:
         return await self._dsh_desktop("status")
@@ -243,7 +243,7 @@ class IntegrationService:
                     ):
                         return result
                 raise ApplicationUnavailableError(
-                    "FCC models changed during the check. Retry shortly."
+                    "ModelGlot models changed during the check. Retry shortly."
                 )
             if action == "disconnect":
                 return await self._run_integration(self._dsh_update, action, disconnect)
@@ -391,7 +391,7 @@ class IntegrationService:
                     return result
         except ValueError:
             raise InvalidRequestError(
-                "Could not configure VS Code Chat. Check chatLanguageModels.json for invalid JSON or conflicting FCC groups."
+                "Could not configure VS Code Chat. Check chatLanguageModels.json for invalid JSON or conflicting ModelGlot groups."
             ) from None
         except OSError:
             raise ApplicationUnavailableError(
@@ -445,7 +445,7 @@ class IntegrationService:
     def _check_integration_available(self) -> None:
         if self._is_draining() or self._has_pending_restart():
             raise ApplicationUnavailableError(
-                "Wait for FCC to restart before changing the integration."
+                "Wait for ModelGlot to restart before changing the integration."
             )
 
     async def _read_status(
@@ -480,7 +480,7 @@ class IntegrationService:
                 result["update"] = update.snapshot()
                 return result
         raise ApplicationUnavailableError(
-            "FCC configuration changed during the check. Retry shortly."
+            "ModelGlot configuration changed during the check. Retry shortly."
         )
 
     async def _run_integration(
@@ -527,7 +527,9 @@ class IntegrationService:
                         "Integration update failed: exc_type={}", type(exc).__name__
                     )
 
-            update.task = asyncio.create_task(run(), name="fcc-integration-update")
+            update.task = asyncio.create_task(
+                run(), name="modelglot-integration-update"
+            )
         return {"update": update.snapshot()}
 
     async def refresh_claude_vscode(self) -> JsonObject:
@@ -620,7 +622,7 @@ class IntegrationService:
             )
         except claude_desktop_integration.ManagedDesktopError:
             raise InvalidRequestError(
-                "Claude Desktop is managed by an organization, or its policy could not be read. FCC can configure only unmanaged Desktop installations."
+                "Claude Desktop is managed by an organization, or its policy could not be read. ModelGlot can configure only unmanaged Desktop installations."
             ) from None
         except claude_desktop_integration.PendingDisconnectError:
             raise InvalidRequestError(
@@ -632,11 +634,11 @@ class IntegrationService:
             ) from None
         except ValueError:
             raise InvalidRequestError(
-                "Could not configure Claude Desktop. Check its configuration JSON and FCC disconnect record, and ensure FCC uses a localhost address and a nonempty managed token."
+                "Could not configure Claude Desktop. Check its configuration JSON and ModelGlot disconnect record, and ensure ModelGlot uses a localhost address and a nonempty managed token."
             ) from None
         except OSError:
             raise ApplicationUnavailableError(
-                "Could not access Claude Desktop settings or the FCC disconnect record. Fully quit Claude Desktop, check file permissions, and retry."
+                "Could not access Claude Desktop settings or the ModelGlot disconnect record. Fully quit Claude Desktop, check file permissions, and retry."
             ) from None
 
     async def _claude_vscode(self, action: IntegrationAction) -> JsonObject:

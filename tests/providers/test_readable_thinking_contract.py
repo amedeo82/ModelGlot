@@ -314,7 +314,7 @@ async def test_owned_thinking_and_answer_stream_before_late_signature(
                 text in visible
                 for text in ("Native thought.", "Parsed thought.", "Answer.")
             ), visible
-            assert "fcc:history:" not in visible
+            assert "modelglot:history:" not in visible
             for event in suffix:
                 yield f"data: {json.dumps(event)}\n\n".encode()
 
@@ -336,9 +336,9 @@ async def test_owned_thinking_and_answer_stream_before_late_signature(
                 for text in ("Native thought.", "Parsed thought.", "Answer.")
             ):
                 delivered.set()
-    assert ("thoughtSignature" if wire == "gemini" else "fcc:history:") in "".join(
-        chunks
-    )
+    assert (
+        "thoughtSignature" if wire == "gemini" else "modelglot:history:"
+    ) in "".join(chunks)
 
 
 @pytest.mark.asyncio

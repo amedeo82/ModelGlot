@@ -58,7 +58,7 @@ def _public_http_error_message(detail: object) -> str:
 
 def create_app(services: ApiServices) -> FastAPI:
     """Create the HTTP adapter around explicitly supplied runtime services."""
-    app = FastAPI(title="Claude Code Proxy", version=package_version())
+    app = FastAPI(title="ModelGlot", version=package_version())
     app.state.services = services
     app.add_middleware(AdminNoStoreMiddleware)
     app.add_middleware(ClientRequestLifetimeMiddleware)

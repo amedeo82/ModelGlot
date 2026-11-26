@@ -111,8 +111,8 @@ def launch_capture(monkeypatch: pytest.MonkeyPatch) -> LaunchCapture:
     store.commit(
         dict(store.read({}).managed) | {"ANTHROPIC_AUTH_TOKEN": "launcher-test-token"}
     )
-    monkeypatch.setenv("HOST", "127.0.0.1")
-    monkeypatch.setenv("PORT", "8182")
+    monkeypatch.setenv("MODELGLOT_HOST", "127.0.0.1")
+    monkeypatch.setenv("MODELGLOT_PORT", "8182")
     monkeypatch.setenv("MODEL", "nvidia_nim/catalog-model:variant")
     for key in (
         "OPENCODE_CONFIG",

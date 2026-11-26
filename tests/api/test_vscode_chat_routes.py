@@ -104,7 +104,7 @@ def test_pending_restart_and_shutdown_reject_writes(
     integration: tuple[TestClient, Path, ApplicationRuntime],
 ) -> None:
     client, path, runtime = integration
-    runtime._pending_fields = ["PORT"]
+    runtime._pending_fields = ["MODELGLOT_PORT"]
     assert client.post(ROOT + "/connect").status_code == 503
     runtime._pending_fields = []
     runtime.begin_shutdown()

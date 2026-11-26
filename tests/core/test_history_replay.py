@@ -117,7 +117,7 @@ def test_foreign_readable_reasoning_keeps_context_without_ciphertext(
     assert "Search for the value." in rendered
     assert "[Earlier reasoning summary]" not in rendered
     assert "opaque-native" not in rendered
-    assert "fcc:" not in rendered
+    assert "modelglot:" not in rendered
     assert all(
         item.get("role") not in {"system", "developer"}
         for item in object_array(result.get("input", result.get("messages", [])))
@@ -167,7 +167,7 @@ def test_native_replay_connection_is_scoped_but_model_name_is_not_a_rule() -> No
 
 def test_codec_rejects_malformed_and_nonfinite_payloads() -> None:
     with pytest.raises(HistoryReplayError):
-        decode_replay("fcc:history:v1:broken")
+        decode_replay("modelglot:history:v1:broken")
     with pytest.raises(HistoryReplayError):
         encode_replay(
             ReplayRecord(_origin(), {"type": "reasoning", "extension": float("nan")})
