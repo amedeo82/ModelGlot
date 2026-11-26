@@ -25,7 +25,7 @@ class LaunchResources:
             if os.name != "nt":
                 base.chmod(0o700)
             directory = self._stack.enter_context(
-                tempfile.TemporaryDirectory(prefix="fcc-", dir=base)
+                tempfile.TemporaryDirectory(prefix="modelglot-", dir=base)
             )
             self._directory = Path(directory)
         return self._directory

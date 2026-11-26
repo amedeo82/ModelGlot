@@ -66,7 +66,7 @@ def _read(path: Path) -> TOMLDocument:
     except ParseError:
         raise ValueError("Invalid Codex TOML") from None
     providers = _child_table(document, "model_providers")
-    provider = _child_table(providers, "fcc")
+    provider = _child_table(providers, "modelglot")
     _child_table(provider, "auth")
     return document
 
@@ -80,25 +80,25 @@ def _same_catalog(value: object, catalog_path: Path) -> bool:
 
 
 def _recognizes_connection(document: TOMLDocument, proxy_root_url: str) -> bool:
-    provider = _child_table(_child_table(document, "model_providers"), "fcc")
-    return document.get("model_provider") == "fcc" and same_proxy_url(
+    provider = _child_table(_child_table(document, "model_providers"), "modelglot")
+    return document.get("model_provider") == "modelglot" and same_proxy_url(
         provider.get("base_url"), proxy_v1_url(proxy_root_url)
     )
 
 
 def recognizes_connection(path: Path, proxy_root_url: str) -> bool:
-    """Identify FCC independently of newly introduced managed settings."""
+    """Identify ModelGlot independently of newly introduced managed settings."""
     return _recognizes_connection(_read(path.resolve()), proxy_root_url)
 
 
 def _connected(document: TOMLDocument, catalog_path: Path, proxy_root_url: str) -> bool:
-    provider = _child_table(_child_table(document, "model_providers"), "fcc")
+    provider = _child_table(_child_table(document, "model_providers"), "modelglot")
     auth = _child_table(provider, "auth")
     return (
         _recognizes_connection(document, proxy_root_url)
         and _same_catalog(document.get("model_catalog_json"), catalog_path)
         and provider.get("wire_api") == "responses"
-        and auth.get("command") == "fcc-codex"
+        and auth.get("command") == "modelglot-codex"
         and auth.get("args") == [PRINT_PROXY_AUTH_TOKEN_FLAG]
     )
 
@@ -124,7 +124,7 @@ def _connect(
 
 
 def refresh_connected(path: Path, catalog_path: Path, proxy_root_url: str) -> bool:
-    """Refresh an existing FCC connection without selecting a provider or model."""
+    """Refresh an existing ModelGlot connection without selecting a provider or model."""
     path = path.resolve()
     document = _read(path)
     if not _recognizes_connection(document, proxy_root_url):
@@ -172,19 +172,19 @@ def _diagnostics(
     if connected:
         if not catalog_available:
             warnings.append(
-                "The FCC model catalog is unavailable. Refresh models, reconnect Codex, then restart Codex or ChatGPT Desktop."
+                "The ModelGlot model catalog is unavailable. Refresh models, reconnect Codex, then restart Codex or ChatGPT Desktop."
             )
         if selected_model is None:
             warnings.append(
-                "No Codex model is selected. Restart Codex or ChatGPT Desktop and choose an FCC model in the Codex model picker."
+                "No Codex model is selected. Restart Codex or ChatGPT Desktop and choose an ModelGlot model in the Codex model picker."
             )
         elif catalog_available and not selected_model_available:
             warnings.append(
-                "The selected Codex model is not in the FCC catalog. Restart Codex or ChatGPT Desktop and choose an FCC model in the Codex model picker."
+                "The selected Codex model is not in the ModelGlot catalog. Restart Codex or ChatGPT Desktop and choose an ModelGlot model in the Codex model picker."
             )
-        if provider != "fcc":
+        if provider != "modelglot":
             warnings.append(
-                "FCC is not the selected Codex provider. Reconnect Codex to select it."
+                "ModelGlot is not the selected Codex provider. Reconnect Codex to select it."
             )
 
     return {
@@ -203,7 +203,7 @@ def _diagnostics(
 def configure(
     path: Path, catalog_path: Path, proxy_root_url: str, connected: bool | None = None
 ) -> JsonObject:
-    """Inspect or edit FCC's entries without changing the user's selected model."""
+    """Inspect or edit ModelGlot's entries without changing the user's selected model."""
     path = path.resolve()
     catalog_path = catalog_path.resolve()
     document = _read(path)
@@ -211,8 +211,8 @@ def configure(
         _connect(path, document, catalog_path, proxy_root_url)
     elif connected is False:
         before = tomlkit.dumps(document)
-        _child_table(document, "model_providers").pop("fcc", None)
-        if document.get("model_provider") == "fcc":
+        _child_table(document, "model_providers").pop("modelglot", None)
+        if document.get("model_provider") == "modelglot":
             document.pop("model_provider")
         if _same_catalog(document.get("model_catalog_json"), catalog_path):
             document.pop("model_catalog_json")

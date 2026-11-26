@@ -14,7 +14,7 @@ from free_claude_code.core.interprocess_lock import InterprocessFileLock
 
 from .env_files import (
     ANTHROPIC_AUTH_TOKEN_ENV,
-    FCC_CONFIG_SCHEMA_ENV,
+    MODELGLOT_CONFIG_SCHEMA_ENV,
     dotenv_values_from_file,
 )
 from .env_migrations import (
@@ -86,11 +86,11 @@ class ManagedConfigStore:
                 "Managed configuration is missing; initialize it before reading."
             )
         managed = dotenv_values_from_file(self.path)
-        schema = managed.get(FCC_CONFIG_SCHEMA_ENV)
+        schema = managed.get(MODELGLOT_CONFIG_SCHEMA_ENV)
         if schema != CONFIG_SCHEMA_VERSION:
             raise ValueError(
                 f"Managed config {self.path} uses unsupported schema {schema!r}; "
-                f"initialize with a compatible FCC version (supports {CONFIG_SCHEMA_VERSION})."
+                f"initialize with a compatible ModelGlot version (supports {CONFIG_SCHEMA_VERSION})."
             )
         return managed
 

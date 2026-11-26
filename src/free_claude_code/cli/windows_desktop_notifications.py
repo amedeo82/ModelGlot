@@ -1,4 +1,4 @@
-"""Native Windows toast and balloon notifications for the FCC system tray."""
+"""Native Windows toast and balloon notifications for the ModelGlot system tray."""
 
 import ctypes
 import threading
@@ -73,7 +73,7 @@ class WindowsDesktopNotifier:
                     self._wait_for_identity()
                     if not self._toast_enabled():
                         logger.warning(
-                            "Windows notifications are disabled for FCC; using a balloon"
+                            "Windows notifications are disabled for ModelGlot; using a balloon"
                         )
                         self._toast_notifier = None
                     else:
@@ -100,7 +100,7 @@ class WindowsDesktopNotifier:
     def _start_identity_repair(self) -> None:
         thread = threading.Thread(
             target=self._repair_identity,
-            name="fcc-app-identity",
+            name="modelglot-app-identity",
             daemon=True,
         )
         self._identity_thread = thread

@@ -47,7 +47,12 @@ def test_native_bytes_can_be_reencoded_by_clients(padded: bool, urlsafe: bool) -
 
 
 @pytest.mark.parametrize(
-    "raw", [b"fcc:history:v1:invalid", b"fcc:history:v9:anything", b"fcc:history:\xff"]
+    "raw",
+    [
+        b"modelglot:history:v1:invalid",
+        b"modelglot:history:v9:anything",
+        b"modelglot:history:\xff",
+    ],
 )
 def test_recognized_malformed_native_replay_is_rejected(raw: bytes) -> None:
     with pytest.raises(HistoryReplayError):
@@ -62,7 +67,7 @@ def test_recognized_malformed_native_replay_is_rejected(raw: bytes) -> None:
         base64.b64encode(b"provider-owned bytes").decode(),
     ],
 )
-def test_non_fcc_signature_is_not_reinterpreted(value: str) -> None:
+def test_non_modelglot_signature_is_not_reinterpreted(value: str) -> None:
     assert decode_gemini_replay(value) is None
 
 

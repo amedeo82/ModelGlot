@@ -1,4 +1,4 @@
-"""Installed Antigravity CLI launcher with session-only FCC settings."""
+"""Installed Antigravity CLI launcher with session-only ModelGlot settings."""
 
 import re
 from collections.abc import Sequence
@@ -61,7 +61,7 @@ SPEC = HarnessSpec(
     compatibility_check=NativeCheck(
         ("--version",),
         lambda output: version_at_least(output, _VERSION_PATTERN, (1, 5, 9)),
-        "FCC requires Antigravity CLI 1.5.9 or newer for session-only settings.",
+        "ModelGlot requires Antigravity CLI 1.5.9 or newer for session-only settings.",
     ),
 )
 

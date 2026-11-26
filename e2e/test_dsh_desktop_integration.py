@@ -52,7 +52,7 @@ def test_connect_disconnect_preserves_native_settings(
     expect(opener).to_have_text("Disconnect")
     expect(opener).to_have_css("color", "rgb(239, 68, 68)")
     page.screenshot(path=str(tmp_path / "dsh-integrations.png"), full_page=True)
-    assert "free-claude-code" in patch.read_text()
+    assert "modelglot" in patch.read_text()
     page.reload()
     expect(opener).to_have_text("Disconnect")
     opener.click()
@@ -61,7 +61,7 @@ def test_connect_disconnect_preserves_native_settings(
     )
     dialog.get_by_role("button", name="Disconnect", exact=True).click()
     expect(opener).to_have_text("Connect")
-    assert "free-claude-code" not in patch.read_text()
+    assert "modelglot" not in patch.read_text()
     rows: list[JsonObject] = YAML().load(patch.read_text())
     assert rows[0] == {"id": "unrelated", "config": {"keep": "unchanged"}}
     expect(page.locator("#dirtyState")).to_have_text("No changes")
@@ -139,7 +139,7 @@ def test_superseded_connect_notice_matches_real_disconnect(
     assert not (home / "profiles/desktop/cordis.patch.yml").exists()
 
 
-def test_changed_fcc_setting_shows_connect_and_is_replaced(
+def test_changed_modelglot_setting_shows_connect_and_is_replaced(
     page: Page, admin_base_url: str, tmp_path: Path
 ):
     home = install(tmp_path)
@@ -150,7 +150,9 @@ def test_changed_fcc_setting_shows_connect_and_is_replaced(
     page.locator("#confirmDshDesktopIntegration").click()
     expect(opener).to_have_text("Disconnect")
     credentials = home / ".credentials.yaml"
-    credentials.write_text("version: 1\nrefs: {FCC_DSH_DESKTOP_API_KEY: edited}\n")
+    credentials.write_text(
+        "version: 1\nrefs: {MODELGLOT_DSH_DESKTOP_API_KEY: edited}\n"
+    )
     page.reload()
     expect(opener).to_have_text("Connect")
     opener.click()

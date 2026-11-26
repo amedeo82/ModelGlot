@@ -65,8 +65,8 @@ async def test_native_omissions_helpers_controls_and_cookie_isolation() -> None:
     del body["stream"]
     body.update(
         {
-            "original_model": "fcc",
-            "resolved_provider_model": "fcc",
+            "original_model": "modelglot",
+            "resolved_provider_model": "modelglot",
             "betas": ["a-beta", "b-beta"],
             "extra_body": {"new_option": {"data": True}},
             "stop_sequences": ["</severity>"],
@@ -439,7 +439,7 @@ async def test_cancelled_read_closes_response_without_retry(streaming: bool) -> 
 
 
 @pytest.mark.asyncio
-async def test_native_history_restores_matching_fcc_carriers_and_rejects_foreign() -> (
+async def test_native_history_restores_matching_modelglot_carriers_and_rejects_foreign() -> (
     None
 ):
     received = []

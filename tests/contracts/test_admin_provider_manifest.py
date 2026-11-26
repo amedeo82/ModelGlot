@@ -111,24 +111,24 @@ def test_openai_proxy_override_applies_to_catalog_proxy_field() -> None:
 
     assert entry.settings_attr == "openai_proxy"
     assert entry.restart_required is True
-    assert "restarts FCC" in entry.description
+    assert "restarts ModelGlot" in entry.description
 
 
 RUNTIME_DESCRIPTION_EXPECTATIONS: dict[str, tuple[str, ...]] = {
-    "PROXY_AUTH_ENABLED": ("restarts FCC",),
-    "ANTHROPIC_AUTH_TOKEN": ("restarts FCC",),
+    "PROXY_AUTH_ENABLED": ("restarts ModelGlot",),
+    "ANTHROPIC_AUTH_TOKEN": ("restarts ModelGlot",),
     "PROVIDER_RATE_LIMIT": ("rate window", "sliding", "greater than 0"),
     "PROVIDER_RATE_WINDOW": ("seconds", "greater than 0"),
     "PROVIDER_MAX_CONCURRENCY": ("simultaneous", "greater than 0"),
     "HTTP_READ_TIMEOUT": ("Seconds", "streaming"),
     "HTTP_WRITE_TIMEOUT": ("Seconds", "sending the request body"),
     "HTTP_CONNECT_TIMEOUT": ("Seconds", "TCP/TLS connection"),
-    "HOST": ("binds", "restarts FCC"),
-    "PORT": ("port", "restarts FCC"),
-    "FCC_OPEN_BROWSER": ("Admin UI",),
+    "MODELGLOT_HOST": ("binds", "restarts ModelGlot"),
+    "MODELGLOT_PORT": ("port", "restarts ModelGlot"),
+    "MODELGLOT_OPEN_BROWSER": ("Admin UI",),
 }
 
-_RESTART_EFFECT = "restarts FCC"
+_RESTART_EFFECT = "restarts ModelGlot"
 
 
 def test_every_runtime_field_describes_its_effect() -> None:
@@ -163,7 +163,7 @@ def test_runtime_field_description_covers_units_and_restart_effect(
 
 @pytest.mark.parametrize(
     "key",
-    ["HOST", "PORT", "PROXY_AUTH_ENABLED", "ANTHROPIC_AUTH_TOKEN"],
+    ["MODELGLOT_HOST", "MODELGLOT_PORT", "PROXY_AUTH_ENABLED", "ANTHROPIC_AUTH_TOKEN"],
 )
 def test_runtime_restart_fields_keep_their_restart_flag(key: str) -> None:
     assert FIELD_BY_KEY[key].restart_required is True

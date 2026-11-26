@@ -16,7 +16,7 @@ def test_real_disconnect_failure_keeps_retry_after_reload(
     monkeypatch: pytest.MonkeyPatch,
     status_failure: str,
 ):
-    profile = tmp_path / "Claude-3p/configLibrary" / f"{desktop.FCC_ID}.json"
+    profile = tmp_path / "Claude-3p/configLibrary" / f"{desktop.MODELGLOT_ID}.json"
     page.goto(admin_base_url + "/admin/integrations")
     opener = page.locator("#openClaudeDesktopIntegration")
     expect(opener).to_have_text("Connect")
@@ -43,7 +43,7 @@ def test_real_disconnect_failure_keeps_retry_after_reload(
                 ),
             )
         elif status_failure == "startup":
-            marker = tmp_path / ".fcc/claude-desktop-disconnect.json"
+            marker = tmp_path / ".modelglot/claude-desktop-disconnect.json"
             failed = {"state": "failed", "message": "Startup check failed"}
 
             def failed_update(route: Route):
@@ -85,7 +85,7 @@ def test_real_disconnect_failure_keeps_retry_after_reload(
     expect(dialog).not_to_be_visible()
     expect(opener).to_have_text("Connect")
     assert not profile.exists()
-    assert not (tmp_path / ".fcc/claude-desktop-disconnect.json").exists()
+    assert not (tmp_path / ".modelglot/claude-desktop-disconnect.json").exists()
 
 
 def test_desktop_connect_disconnect_and_retry(
@@ -97,7 +97,7 @@ def test_desktop_connect_disconnect_and_retry(
     expect(opener).to_have_text("Connect")
     expect(opener).to_be_enabled()
     dialog = page.locator("#claudeDesktopIntegrationDialog")
-    profile = tmp_path / "Claude-3p/configLibrary" / f"{desktop.FCC_ID}.json"
+    profile = tmp_path / "Claude-3p/configLibrary" / f"{desktop.MODELGLOT_ID}.json"
     for dismissal in ("close", "escape", "outside"):
         opener.click()
         expect(dialog).to_be_visible()

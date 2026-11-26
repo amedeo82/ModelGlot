@@ -1,4 +1,4 @@
-// Keep the application executable inside its bundle while running the installed FCC venv.
+// Keep the application executable inside its bundle while running the installed ModelGlot venv.
 #import <AppKit/AppKit.h>
 #include <dlfcn.h>
 #include <stdint.h>
@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef FCC_PYTHON_VERSION
+#ifndef MODELGLOT_PYTHON_VERSION
 #error "Build with the Python version required by pyproject.toml"
 #endif
 
@@ -14,12 +14,12 @@
 typedef struct PyInitConfig PyInitConfig;
 
 static int fail(NSString *reason) {
-    fprintf(stderr, "Free Claude Code: %s\n", reason.UTF8String);
+    fprintf(stderr, "ModelGlot: %s\n", reason.UTF8String);
     [NSApplication sharedApplication];
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"Free Claude Code could not start";
+    alert.messageText = @"ModelGlot could not start";
     alert.informativeText = [reason stringByAppendingString:
-        @"\n\nRerun the Free Claude Code installer to repair the desktop launcher."];
+        @"\n\nRerun the ModelGlot installer to repair the desktop launcher."];
     [alert addButtonWithTitle:@"OK"];
     [NSApp activateIgnoringOtherApps:YES];
     [alert runModal];
@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
             !library || ![files isReadableFileAtPath:library]) {
             return fail(@"The installed Python runtime is missing or inaccessible.");
         }
-        if (![settings[@"PythonVersion"] isEqual:@FCC_PYTHON_VERSION]) {
+        if (![settings[@"PythonVersion"] isEqual:@MODELGLOT_PYTHON_VERSION]) {
             return fail(@"The application and its Python configuration have different versions.");
         }
         void *runtime = dlopen(library.fileSystemRepresentation, RTLD_NOW | RTLD_GLOBAL);
@@ -71,8 +71,8 @@ int main(int argc, char **argv) {
 #undef LOAD
 
         const char *version = Py_GetVersion();
-        size_t expectedLength = strlen(FCC_PYTHON_VERSION);
-        if (strncmp(version, FCC_PYTHON_VERSION, expectedLength) != 0 ||
+        size_t expectedLength = strlen(MODELGLOT_PYTHON_VERSION);
+        if (strncmp(version, MODELGLOT_PYTHON_VERSION, expectedLength) != 0 ||
             (version[expectedLength] != ' ' && version[expectedLength] != '\0')) {
             return fail(@"The installed Python version does not match this desktop launcher.");
         }
@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
         }
         PyInitConfig_Free(config);
         int exitCode = Py_RunMain();
-        if (exitCode != 0) return fail(@"Free Claude Code could not finish starting. Check its logs for details.");
+        if (exitCode != 0) return fail(@"ModelGlot could not finish starting. Check its logs for details.");
         return 0;
     }
 }

@@ -1,4 +1,4 @@
-"""Installed DeepSeek Harness launcher with an FCC connection patch."""
+"""Installed DeepSeek Harness launcher with an ModelGlot connection patch."""
 
 import os
 import re
@@ -82,7 +82,7 @@ def _configure(
         proxy_root_url=ctx.proxy_root_url,
         credentials_path=credentials_path,
     )
-    patch_path = files.write_json("fcc.patch.yml", config)
+    patch_path = files.write_json("modelglot.patch.yml", config)
     patch_args = ["--patch", str(patch_path)]
     native_args = _launcher_options(args)
     if not args:
@@ -113,7 +113,7 @@ SPEC = HarnessSpec(
     compatibility_check=NativeCheck(
         ("--version",),
         _supported_version,
-        "FCC requires DeepSeek Harness >=0.2.0-rc.2.",
+        "ModelGlot requires DeepSeek Harness >=0.2.0-rc.2.",
     ),
 )
 

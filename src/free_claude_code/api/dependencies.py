@@ -16,7 +16,7 @@ def get_services(request: Request) -> ApiServices:
     """Return the complete services supplied when the app was constructed."""
     app: object = request.scope.get("app")
     if not isinstance(app, FastAPI):
-        raise RuntimeError("FCC dependencies require the FastAPI application.")
+        raise RuntimeError("ModelGlot dependencies require the FastAPI application.")
     return app_services(app)
 
 
@@ -24,7 +24,7 @@ def app_services(app: FastAPI) -> ApiServices:
     """Read the services attached by the application factory."""
     services: object = getattr(app.state, "services", None)
     if not isinstance(services, ApiServices):
-        raise RuntimeError("FCC application services are unavailable.")
+        raise RuntimeError("ModelGlot application services are unavailable.")
     return services
 
 

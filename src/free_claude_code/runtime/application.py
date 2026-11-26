@@ -203,7 +203,7 @@ class ApplicationRuntime:
                 logger.bind(
                     event="server.starting",
                     instance_id=self.instance_id,
-                    fcc_version=package_version(),
+                    modelglot_version=package_version(),
                 ).info("Starting Claude Code Proxy...")
                 await _await_owned_task(
                     asyncio.create_task(self._configuration.initialize())
@@ -220,19 +220,19 @@ class ApplicationRuntime:
                 self._startup_tasks.append(
                     asyncio.create_task(
                         run_sync_owned(remove_retired_chat_history),
-                        name="fcc-retired-chat-cleanup",
+                        name="modelglot-retired-chat-cleanup",
                     )
                 )
                 self._messaging.start()
                 self._startup_tasks.append(
                     asyncio.create_task(
-                        self._start_usage_store(), name="fcc-usage-startup"
+                        self._start_usage_store(), name="modelglot-usage-startup"
                     )
                 )
                 if self._code_service is not None:
                     self._startup_tasks.append(
                         asyncio.create_task(
-                            self._code_service.start(), name="fcc-code-startup"
+                            self._code_service.start(), name="modelglot-code-startup"
                         )
                     )
                 self._started = True

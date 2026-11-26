@@ -1,7 +1,7 @@
 # Analysis: Claude Code Terminal Model Discovery Improvements
 
 Status: partially implemented; remaining discovery improvements proposed
-Scope: `free-claude-code` on branch `custom/main`, aligned on 2026-11-16
+Scope: `modelglot` on branch `custom/main`, aligned on 2026-11-16
 Audience: maintainers and contributors
 
 This document records the current Claude Code Terminal model-discovery behavior, explains why
@@ -17,13 +17,13 @@ gate.
 
 ## 1. Problem Statement
 
-Free Claude Code already resolves descriptive model titles for every client projection. The
+ModelGlot already resolves descriptive model titles for every client projection. The
 Terminal and Desktop views share the same catalog and the same title resolver, so a second
 Terminal-specific title implementation would duplicate an existing feature and risk divergent
 labels.
 
 The remaining problem is operational: a Terminal session can keep showing the previous raw
-`provider/model` labels even though the live FCC endpoint now returns descriptive names.
+`provider/model` labels even though the live ModelGlot endpoint now returns descriptive names.
 The causes are the client-owned discovery cache, the opt-in nature of gateway discovery in
 manual Claude Code installations, and an authentication mismatch that can make the discovery
 request fail before the client reaches the model list.
@@ -67,24 +67,24 @@ Only the advertised ID encoding differs:
 | Surface | View | Provider model ID |
 | --- | --- | --- |
 | Claude Code Terminal | `claude` | `anthropic/<provider/model>` |
-| Claude Code Terminal, no thinking | `claude` | `claude-3-freecc-no-thinking/<provider/model>` |
-| Claude Desktop | `claude-desktop` | `claude-fcc/<hex(provider/model)>` |
-| Claude Desktop, no thinking | `claude-desktop` | `claude-3-fcc/<hex(provider/model)>` |
+| Claude Code Terminal, no thinking | `claude` | `claude-3-modelglot-no-thinking/<provider/model>` |
+| Claude Desktop | `claude-desktop` | `claude-modelglot/<hex(provider/model)>` |
+| Claude Desktop, no thinking | `claude-desktop` | `claude-3-modelglot/<hex(provider/model)>` |
 
 The existing test `tests/api/test_model_listing.py:199-208` already proves that the Terminal
 and Desktop rows carry the same title and description.
 
 ### 2.2 Terminal discovery flow
 
-The supported `fcc-claude` launcher prepares the Anthropic-compatible environment:
+The supported `modelglot-claude` launcher prepares the Anthropic-compatible environment:
 
 - `ANTHROPIC_BASE_URL`: `src/free_claude_code/harnesses/claude.py:11-16`;
 - `ANTHROPIC_AUTH_TOKEN`: `src/free_claude_code/harnesses/claude.py:15`;
 - `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1`:
   `src/free_claude_code/harnesses/claude.py:16`.
 
-Claude Code then requests `GET /v1/models?limit=1000`. FCC selects the default `claude`
-view unless an explicit query or `X-FCC-Model-View` header selects another view:
+Claude Code then requests `GET /v1/models?limit=1000`. ModelGlot selects the default `claude`
+view unless an explicit query or `X-ModelGlot-Model-View` header selects another view:
 `src/free_claude_code/api/routes.py:405-423`.
 
 The launcher test verifies the discovery environment at
@@ -103,19 +103,19 @@ when discovery fails and does not perform the request in the foreground of an in
 
 A local inspection on 2026-11-14 found a cache fetched on 2026-11-12, before the descriptive
 title implementation was installed. The cached rows still contained references such as
-`nvidia_nim/minimaxai/minimax-m3.1-flash`. The live FCC endpoint returned
+`nvidia_nim/minimaxai/minimax-m3.1-flash`. The live ModelGlot endpoint returned
 `MiniMax-M3.1-Flash` with description `NVIDIA NIM` for the same routing identity. This is
 direct evidence that the apparent Terminal regression was stale client state, not a missing
 Terminal projection.
 
 ### 2.4 Manual launch compatibility gap
 
-Gateway discovery is opt-in in Claude Code. `fcc-claude` enables it, but a user who starts
+Gateway discovery is opt-in in Claude Code. `modelglot-claude` enables it, but a user who starts
 `claude` directly must set `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1` in the environment
 or in a supported settings `env` block.
 
 Claude Code 2.1.248 and later can send both `Authorization` and `x-api-key` on the discovery
-request. FCC currently protects `GET /v1/models` with `require_proxy_auth`, which accepts
+request. ModelGlot currently protects `GET /v1/models` with `require_proxy_auth`, which accepts
 only Bearer authorization:
 
 - route dependency: `src/free_claude_code/api/routes.py:405-414`;
@@ -158,14 +158,14 @@ Anthropic's gateway compatibility guide defines the relevant Terminal behavior:
 | Cache | client-owned and refreshed at startup |
 | Failure behavior | fall back to the previous cache or built-in models |
 
-FCC's Terminal IDs satisfy the ID filter because they start with `anthropic/` or
-`claude-3-freecc-no-thinking/`.
+ModelGlot's Terminal IDs satisfy the ID filter because they start with `anthropic/` or
+`claude-3-modelglot-no-thinking/`.
 
 Source: [Claude Code gateway compatibility guide — Model discovery](https://code.claude.com/docs/en/llm-gateway-protocol#model-discovery).
 
 Claude Code also supports a user-owned `modelPicker` setting with `label` and `description`
 fields. That setting is useful for manual curation, but it is not the appropriate primary
-mechanism for FCC: it duplicates catalog data, can become stale, and may hide discovered
+mechanism for ModelGlot: it duplicates catalog data, can become stale, and may hide discovered
 models when `replaceBuiltInOptions` is enabled.
 
 Source: [Claude Code settings reference — modelPicker](https://code.claude.com/docs/en/settings-reference#modelpicker).
@@ -179,13 +179,13 @@ Source: [Claude Code settings reference — modelPicker](https://code.claude.com
 2. **Manual discovery works with supported credentials.** A discovery request authenticated
    with `x-api-key` is accepted when the configured proxy token matches.
 3. **The behavior is verified at the real-client boundary.** An opt-in live test proves that
-   Claude Code consumes and caches FCC's descriptive Terminal rows.
+   Claude Code consumes and caches ModelGlot's descriptive Terminal rows.
 4. **Operators can diagnose stale labels.** Documentation identifies the client-owned cache,
    the correct launcher and environment, and the safe recovery procedure.
 5. **Routing remains unchanged.** Authentication, cache, tests, and documentation must not
    alter advertised IDs, routing candidates, fallback order, capability facts, or provider
    requests.
-6. **FCC does not mutate client-owned state.** FCC must not delete the Claude Code cache or
+6. **ModelGlot does not mutate client-owned state.** ModelGlot must not delete the Claude Code cache or
    write `modelPicker` entries without an explicit product decision.
 
 ---
@@ -221,12 +221,12 @@ Add an opt-in E2E test that uses:
 
 - the real Claude Code binary when available;
 - an isolated `CLAUDE_CONFIG_DIR`;
-- an isolated FCC instance backed by a deterministic local provider;
-- the existing `FCC_SMOKE_CLAUDE_BIN` prerequisite convention.
+- an isolated ModelGlot instance backed by a deterministic local provider;
+- the existing `MODELGLOT_SMOKE_CLAUDE_BIN` prerequisite convention.
 
 The test starts Claude Code in a non-interactive mode, waits for gateway discovery, and
 asserts that the isolated cache contains a descriptive title and provider description for a
-known FCC model. It must skip cleanly when the Claude Code binary is unavailable and must
+known ModelGlot model. It must skip cleanly when the Claude Code binary is unavailable and must
 never use the developer's real `~/.claude` directory.
 
 ### 5.4 Document Terminal discovery and stale-cache recovery
@@ -234,7 +234,7 @@ never use the developer's real `~/.claude` directory.
 Update the README and project documentation with:
 
 - the shared Terminal/Desktop title behavior;
-- `fcc-claude` as the supported launcher;
+- `modelglot-claude` as the supported launcher;
 - the environment required for manual launches;
 - the client-owned cache location;
 - the requirement to restart Claude Code to refresh discovery;
@@ -273,7 +273,7 @@ produce divergent labels and violate the presentation-only design.
 
 ### 6.4 Add a strict minimum Claude Code version gate
 
-Rejected as a separate change. The FCC ID prefixes satisfy the historical ID filter, and the
+Rejected as a separate change. The ModelGlot ID prefixes satisfy the historical ID filter, and the
 installed Claude Code version supports the full contract. If a future compatibility baseline
 is needed, it should be justified by a separately tested capability rather than guessed from
 the newest release.

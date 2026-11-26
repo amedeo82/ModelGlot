@@ -471,12 +471,12 @@ def test_bootstrap_requires_modelglot_packaging(
     write(
         repo,
         "pyproject.toml",
-        '[project]\nname="free-claude-code"\ndynamic=["version"]\n',
+        '[project]\nname="other-package"\ndynamic=["version"]\n',
     )
     write(
         repo,
         "uv.lock",
-        '[[package]]\nname="free-claude-code"\nsource={editable="."}\n',
+        '[[package]]\nname="other-package"\nsource={editable="."}\n',
     )
     head = remote.advance("major: Incorrect package identity")
 

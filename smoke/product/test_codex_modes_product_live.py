@@ -1,4 +1,4 @@
-"""Installed Codex modes through FCC; local cases never use provider credentials."""
+"""Installed Codex modes through ModelGlot; local cases never use provider credentials."""
 
 import asyncio
 import json
@@ -23,7 +23,7 @@ from free_claude_code.config.env_migrations import (
     atomic_write_managed_config,
     settings_env_keys,
 )
-from free_claude_code.config.paths import FCC_DATABASE_FILENAME
+from free_claude_code.config.paths import MODELGLOT_DATABASE_FILENAME
 from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
 from free_claude_code.core.json_types import JsonObject
 from smoke.lib.child_process import run_captured_text
@@ -54,7 +54,7 @@ def _environment(tmp_path: Path, model: str) -> tuple[dict[str, str], set[str]]:
     print(version.stdout.strip())
     atomic_write_managed_config(
         {"ANTHROPIC_AUTH_TOKEN": "codex-mode-smoke", "PROXY_AUTH_ENABLED": "true"},
-        path=tmp_path / "home" / ".fcc" / ".env",
+        path=tmp_path / "home" / ".modelglot" / ".env",
     )
     native_home = tmp_path / "codex-home"
     native_home.mkdir()
@@ -67,7 +67,7 @@ def _environment(tmp_path: Path, model: str) -> tuple[dict[str, str], set[str]]:
         "HOME": str(tmp_path / "home"),
         "USERPROFILE": str(tmp_path / "home"),
         "CODEX_HOME": str(native_home),
-        "FCC_OPEN_BROWSER": "0",
+        "MODELGLOT_OPEN_BROWSER": "0",
         "MODEL": model,
         "MODEL_FABLE": model,
         "MODEL_OPUS": model,
@@ -86,7 +86,7 @@ def _environment(tmp_path: Path, model: str) -> tuple[dict[str, str], set[str]]:
     }
     # A fresh home excludes connected accounts and project configuration.
     unset = set(settings_env_keys())
-    unset.update({"FCC_ENV_FILE", "OPENAI_API_KEY", "CODEX_API_KEY"})
+    unset.update({"MODELGLOT_ENV_FILE", "OPENAI_API_KEY", "CODEX_API_KEY"})
     return env, unset
 
 
@@ -158,7 +158,7 @@ def _canned_provider(
                 # The child starts without the parent's history. Route the canned
                 # actor by that boundary, independently of task-message encoding.
                 child_request = child_finished is not None and not any(
-                    "FCC_PARENT_REVIEW_WORK"
+                    "MODELGLOT_PARENT_REVIEW_WORK"
                     in json.dumps(object_payload(message).get("content", ""))
                     for message in array_payload(request["messages"])
                     if object_payload(message)["role"] == "user"
@@ -203,7 +203,7 @@ def _canned_provider(
                         object_payload(functions[spawn_name])["parameters"]
                     )["properties"]
                     arguments: JsonObject = {
-                        "message": "FCC_CHILD_REVIEW_WORK: Execute the disposable local smoke command, then finish."
+                        "message": "MODELGLOT_CHILD_REVIEW_WORK: Execute the disposable local smoke command, then finish."
                     }
                     if "task_name" in object_payload(properties):
                         arguments["task_name"] = "smoke_child"
@@ -236,7 +236,7 @@ def _canned_provider(
                 else:
                     if child_request and child_finished is not None:
                         child_finished.set()
-                    delta = {"content": "FCC_MODE_SMOKE_DONE"}
+                    delta = {"content": "MODELGLOT_MODE_SMOKE_DONE"}
                     reason = "stop"
                 self.send_response(200)
                 self.send_header("Content-Type", "text/event-stream")
@@ -427,7 +427,7 @@ def test_codex_modes_local_e2e(smoke_config: SmokeConfig, tmp_path: Path) -> Non
                         smoke_config.timeout_s,
                     )
                 )
-            # A new FCC process must restore the original native settings when
+            # A new ModelGlot process must restore the original native settings when
             # resuming the conversation that last ran with Full access.
             with driver.run() as server:
                 asyncio.run(
@@ -508,7 +508,7 @@ async def _exercise_child_review(
                 async with asyncio.timeout(timeout_s):
                     await queue.get()
                     first = await send(
-                        "FCC_PARENT_REVIEW_WORK: Delegate a harmless local command to one child agent."
+                        "MODELGLOT_PARENT_REVIEW_WORK: Delegate a harmless local command to one child agent."
                     )
                     review = None
                     parent_done = False
@@ -599,7 +599,12 @@ def test_codex_child_review_local_e2e(
                 assert marker.read_text().strip() == "smoke"
                 with closing(
                     sqlite3.connect(
-                        (tmp_path / "home" / ".fcc" / FCC_DATABASE_FILENAME).as_uri()
+                        (
+                            tmp_path
+                            / "home"
+                            / ".modelglot"
+                            / MODELGLOT_DATABASE_FILENAME
+                        ).as_uri()
                         + "?mode=ro",
                         uri=True,
                     )
@@ -629,10 +634,10 @@ def test_codex_child_review_local_e2e(
 def test_codex_modes_free_provider_e2e(
     smoke_config: SmokeConfig, tmp_path: Path
 ) -> None:
-    model = os.getenv("FCC_SMOKE_CODEX_FREE_MODEL")
+    model = os.getenv("MODELGLOT_SMOKE_CODEX_FREE_MODEL")
     if not model:
         pytest.skip(
-            "missing_env: select FCC_SMOKE_CODEX_FREE_MODEL to run free live inference"
+            "missing_env: select MODELGLOT_SMOKE_CODEX_FREE_MODEL to run free live inference"
         )
     provider, name = model.split("/", 1)
     assert provider == "open_router", (

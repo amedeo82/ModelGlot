@@ -2,7 +2,7 @@
 
 Status: analisi completata; implementazione in corso
 Data: 2026-11-17
-Ambito: integrazione delle superfici desktop OpenAI con Free Claude Code (FCC)
+Ambito: integrazione delle superfici desktop OpenAI con ModelGlot
 Piano correlato: [`chatgpt-desktop-codex-desktop-integration-implementation-plan.md`](chatgpt-desktop-codex-desktop-integration-implementation-plan.md)
 
 ## 1. Sintesi
@@ -11,12 +11,12 @@ La fattibilità è alta per il workspace **Codex locale della ChatGPT desktop ap
 vecchio **Codex App/Codex Desktop**, perché entrambe le superfici leggono la configurazione
 Codex locale e possono usare un provider Responses personalizzato.
 
-FCC ha già implementato la parte essenziale di questa integrazione:
+ModelGlot ha già implementato la parte essenziale di questa integrazione:
 
 - scrive un provider Codex locale in `~/.codex/config.toml`;
 - usa il wire protocol OpenAI Responses;
 - autentica il client tramite un credential helper;
-- pubblica un catalogo locale dei modelli FCC;
+- pubblica un catalogo locale dei modelli ModelGlot;
 - conserva modello, commenti e altri provider dell'utente;
 - espone Connect, Refresh e Disconnect dalla Admin UI.
 
@@ -40,9 +40,9 @@ Il lavoro raccomandato non è quindi la creazione di una nuova integrazione dupl
 
 L'analisi distingue due direzioni spesso confuse.
 
-### 2.1 ChatGPT/Codex come provider upstream di FCC
+### 2.1 ChatGPT/Codex come provider upstream di ModelGlot
 
-FCC può già usare:
+ModelGlot può già usare:
 
 - una sottoscrizione ChatGPT tramite OAuth;
 - una API key OpenAI Platform;
@@ -51,9 +51,9 @@ FCC può già usare:
 Questo percorso riguarda `src/free_claude_code/providers/openai_codex/` e le impostazioni
 OAuth. È indipendente dalla configurazione del client desktop OpenAI.
 
-### 2.2 ChatGPT Desktop/Codex Desktop come client di FCC
+### 2.2 ChatGPT Desktop/Codex Desktop come client di ModelGlot
 
-Questo percorso fa usare a un client desktop OpenAI i modelli e i provider esposti da FCC.
+Questo percorso fa usare a un client desktop OpenAI i modelli e i provider esposti da ModelGlot.
 La configurazione viene applicata a `config.toml` nella Codex home dell'utente ed è il
 percorso oggetto di questo documento e del piano correlato.
 
@@ -67,7 +67,7 @@ per macOS, Windows e Linux. La stessa applicazione offre diverse superfici, tra 
 - Codex locale;
 - progetti, file e strumenti locali.
 
-Il termine storico “Codex App” o “Codex Desktop” continua a essere usato nel progetto FCC,
+Il termine storico “Codex App” o “Codex Desktop” continua a essere usato nel progetto ModelGlot,
 ma non rappresenta una terza integrazione separata. La superficie Codex desktop continua a
 usare la Codex home locale:
 
@@ -131,7 +131,7 @@ L'analisi non ha incluso:
 Nell'ambiente di analisi non erano presenti né `codex` su `PATH` né un pacchetto ChatGPT/Codex
 rilevabile, quindi non è stato possibile eseguire il test live.
 
-## 5. Architettura FCC attuale
+## 5. Architettura ModelGlot attuale
 
 ### 5.1 Percorso di configurazione
 
@@ -156,21 +156,21 @@ La stessa configurazione è condivisa da:
 
 Non serve quindi una seconda card di integrazione per ChatGPT Desktop.
 
-### 5.2 Provider FCC
+### 5.2 Provider ModelGlot
 
 Il provider generato è:
 
 ```toml
-model_provider = "fcc"
+model_provider = "modelglot"
 
-[model_providers.fcc]
-name = "Free Claude Code"
-base_url = "http://127.0.0.1:8082/v1"
+[model_providers.modelglot]
+name = "ModelGlot"
+base_url = "http://127.0.0.1:16969/v1"
 wire_api = "responses"
 stream_idle_timeout_ms = 2147483647
 
-[model_providers.fcc.auth]
-command = "fcc-codex"
+[model_providers.modelglot.auth]
+command = "modelglot-codex"
 args = ["--print-proxy-auth-token"]
 ```
 
@@ -187,7 +187,7 @@ scrive il token su stdout. Il launcher gestisce anche il flag interno
 
 ### 5.3 Modello e catalogo
 
-Connect non modifica il valore top-level `model`, ma imposta `model_provider = "fcc"` e
+Connect non modifica il valore top-level `model`, ma imposta `model_provider = "modelglot"` e
 aggiunge `model_catalog_json`. Il catalogo viene generato da:
 
 - `src/free_claude_code/harnesses/codex_model_catalog.py:49-101`;
@@ -201,9 +201,9 @@ capacità di input, contesto, tool e ulteriori metadata necessari al model picke
 `codex_integration.configure()`:
 
 - connette o verifica il provider;
-- fa merge senza sovrascrivere provider, modello o commenti non FCC;
+- fa merge senza sovrascrivere provider, modello o commenti non ModelGlot;
 - esegue refresh idempotente;
-- rimuove esclusivamente gli elementi FCC quando richiesto.
+- rimuove esclusivamente gli elementi ModelGlot quando richiesto.
 
 Riferimenti:
 
@@ -232,7 +232,7 @@ La configurazione Codex è protetta da test mirati:
 - flusso E2E della card Admin:
   `e2e/test_admin_integrations.py:65-157`.
 
-## 6. Contratto Codex gateway e conformità FCC
+## 6. Contratto Codex gateway e conformità ModelGlot
 
 OpenAI documenta i requisiti minimi di un gateway usato da Codex.
 
@@ -241,7 +241,7 @@ OpenAI documenta i requisiti minimi di un gateway usato da Codex.
 Il client deve usare `wire_api = "responses"` e il gateway deve accettare
 `POST /v1/responses`, restituire SSE incrementali e terminare con `response.completed`.
 
-FCC espone il contratto Responses, gestisce gli eventi terminali e mantiene la
+ModelGlot espone il contratto Responses, gestisce gli eventi terminali e mantiene la
 distinzione tra stream completato, incompleto e fallito:
 
 - `src/free_claude_code/core/openai_responses/provider_stream.py:105-109`;
@@ -254,7 +254,7 @@ Un percorso HTTP stateless può continuare una conversazione riproponendo input,
 tool call e tool result. `previous_response_id` è necessario soltanto quando il trasporto
 incrementale o WebSocket è attivo.
 
-FCC accetta `previous_response_id` nel modello di richiesta e lo rimuove prima del
+ModelGlot accetta `previous_response_id` nel modello di richiesta e lo rimuove prima del
 chiamata upstream native, perché il proprio percorso usa input replayed:
 
 - `src/free_claude_code/core/openai_responses/models.py:25`;
@@ -269,7 +269,7 @@ conversazione completa.
 Il gateway deve preservare `function_call`, `function_call_output`, `call_id` e la
 corrispondenza tra chiamata e risultato.
 
-FCC riconosce e converte questi elementi:
+ModelGlot riconosce e converte questi elementi:
 
 - `src/free_claude_code/core/openai_responses/messages_request.py:414-417`;
 - `src/free_claude_code/core/openai_responses/chat_request.py:104-122`;
@@ -277,7 +277,7 @@ FCC riconosce e converte questi elementi:
 
 ### 6.4 Autenticazione
 
-FCC utilizza un command-backed credential helper. Questo evita di scrivere il token del
+ModelGlot utilizza un command-backed credential helper. Questo evita di scrivere il token del
 proxy in `config.toml` e permette di ruotare il token senza modificare il file del client.
 
 Il token è esposto soltanto al processo Codex che lo richiede. Le API Admin restano
@@ -286,19 +286,19 @@ contenuto del TOML.
 
 ### 6.5 Catalogo
 
-OpenAI richiede metadata coerenti con la versione del client per gli alias custom. FCC
+OpenAI richiede metadata coerenti con la versione del client per gli alias custom. ModelGlot
 genera un catalogo locale, ma lo schema e le capability devono essere verificati contro
 il Codex CLI incluso nella desktop app.
 
 ## 7. Matrice di fattibilità
 
-| Superficie | Fattibilità | Stato FCC | Conclusione |
+| Superficie | Fattibilità | Stato ModelGlot | Conclusione |
 | --- | --- | --- | --- |
 | Codex CLI | Alta | Implementato e testato | Nessuna nuova integrazione necessaria |
 | Codex IDE extension | Alta | Condivide `config.toml` | Validazione live utile |
 | Codex locale in ChatGPT Desktop | Alta | Supporto implicito già presente | Consolidare e qualificare officially |
 | Vecchio Codex App/Desktop | Alta | Stessa Codex home | Trattare come alias, non come nuova card |
-| Chat standard in ChatGPT Desktop | Bassa | Nessun percorso supportato | Non promettere il routing FCC |
+| Chat standard in ChatGPT Desktop | Bassa | Nessun percorso supportato | Non promettere il routing ModelGlot |
 | ChatGPT Work locale/Cloud | Bassa | Fuori dal contratto `model_provider` locale | Richiede una superficie client differente |
 | Codex Cloud | Non supportata | Il provider custom non viene trasferito al cloud | Escludere |
 | Backend ChatGPT hosted | Non fattibile | Richiederebbe comportamento privato | Escludere |
@@ -319,7 +319,7 @@ né il tool loop nel suo processo.
 ### 8.3 Deriva dello schema del catalogo
 
 OpenAI raccomanda di abbinare il catalogo alla versione del client, usando per le desktop
-app la versione del CLI bundled. Il catalogo FCC è costruito dal progetto e non registra
+app la versione del CLI bundled. Il catalogo ModelGlot è costruito dal progetto e non registra
 una versione minima o una matrice di compatibilità.
 
 ### 8.4 Capability eccessivamente generiche
@@ -341,8 +341,8 @@ pubblicare capacità che il provider non implementa.
 
 ### 8.5 Modello selezionato e provider selezionato
 
-Connect imposta il provider FCC ma conserva il modello precedente. Se il modello non
-appartiene al catalogo FCC, l'utente deve selezionare un modello FCC dal picker. Lo stato
+Connect imposta il provider ModelGlot ma conserva il modello precedente. Se il modello non
+appartiene al catalogo ModelGlot, l'utente deve selezionare un modello ModelGlot dal picker. Lo stato
 corrente non rende questa condizione esplicita.
 
 ### 8.6 Riavvio obbligatorio
@@ -353,7 +353,7 @@ Il messaggio esistente dice “Restart Codex”, ma non distingue l'app desktop.
 
 ### 8.7 Esposizione di rete del proxy
 
-I default FCC storici espongono il proxy su `0.0.0.0` senza autenticazione proxy. Anche se
+I default ModelGlot storici espongono il proxy su `0.0.0.0` senza autenticazione proxy. Anche se
 il client usa `127.0.0.1`, il proxy può essere raggiungibile dalla rete locale.
 
 Riferimenti:
@@ -381,10 +381,10 @@ Non creare una card separata per ChatGPT Desktop e non duplicare la configurazio
 
 La documentazione e la UI devono indicare:
 
-- FCC sostituisce l'inferenza del workspace Codex locale;
+- ModelGlot sostituisce l'inferenza del workspace Codex locale;
 - Chat standard, Work Cloud e Codex Cloud restano servizi OpenAI e non vengono instradati
-  attraverso FCC;
-- l'utente deve selezionare un modello FCC e riavviare il client.
+  attraverso ModelGlot;
+- l'utente deve selezionare un modello ModelGlot e riavviare il client.
 
 ### 9.3 Diagnostica non sensibile
 
@@ -478,11 +478,11 @@ L'integrazione è considerata solida quando:
 - la card Admin identifica chiaramente ChatGPT Desktop, VS Code e CLI;
 - il testo chiarisce che è supportato solo il workspace Codex locale;
 - Connect produce una configurazione valida per la Codex home condivisa;
-- il model picker mostra i modelli FCC senza metadata capacità falsi;
+- il model picker mostra i modelli ModelGlot senza metadata capacità falsi;
 - un tool call locale viene completato in ChatGPT Desktop;
 - un follow-up conserva il contesto;
 - lo stream termina correttamente e non si blocca;
-- Disconnect rimuove soltanto gli elementi FCC;
+- Disconnect rimuove soltanto gli elementi ModelGlot;
 - la matrice registra app, sistema operativo e versione Codex bundled;
 - il proxy è raggiungibile soltanto dal loopback oppure protetto da autenticazione.
 

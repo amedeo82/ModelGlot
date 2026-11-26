@@ -41,15 +41,13 @@ def kimi_code_provider() -> OpenAIChatProvider:
     )
 
 
-def test_init_uses_subscription_endpoint_and_identifies_fcc(
+def test_init_uses_subscription_endpoint_and_identifies_modelglot(
     kimi_code_provider: OpenAIChatProvider,
 ) -> None:
     assert kimi_code_provider._api_key == "test-subscription-key"
     assert kimi_code_provider._base_url == "https://api.kimi.com/coding/v1"
     assert kimi_code_provider._provider_name == "KIMI_CODE"
-    assert kimi_code_provider._client.default_headers["User-Agent"] == (
-        "free-claude-code"
-    )
+    assert kimi_code_provider._client.default_headers["User-Agent"] == ("modelglot")
 
 
 def test_explicit_output_limit_uses_max_completion_tokens(

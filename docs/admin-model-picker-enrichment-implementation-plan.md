@@ -21,7 +21,7 @@ display value:   MiniMax-M3.1-Flash
 canonical value: nvidia_nim/minimaxai/minimax-m3.1-flash
 ```
 
-The canonical value is the FCC `provider_model_ref` used by configuration and routing. It is
+The canonical value is the ModelGlot `provider_model_ref` used by configuration and routing. It is
 not the models.dev `canonical_model_id` field. The display value is presentation only.
 
 > **Implementation update — 2026-11-19.** Model Routing now qualifies known-model display labels
@@ -37,7 +37,7 @@ not the models.dev `canonical_model_id` field. The display value is presentation
 > implementation request. Cache schema v2 retains bounded provider-scoped models.dev capabilities,
 > modalities, limits, lifecycle, open-weights, canonical lab identity, and freshness while reading
 > legacy title caches unchanged. The Admin response adds `model_details[].catalog` without
-> backfilling provider/FCC fields. Validated SVG provider/lab logos refresh only in the background
+> backfilling provider/ModelGlot fields. Validated SVG provider/lab logos refresh only in the background
 > and are served same-origin with restrictive CSP; missing or invalid assets fall back to initials.
 > Compact options and the selected detail card distinguish solid runtime facts from dashed Catalog
 > declarations in text as well as styling. Pricing remains excluded.
@@ -69,8 +69,8 @@ These apply to every step in this plan.
 7. **No fallback capabilities.** Never use `context_window_for_client()` or its default
    `200000` result to populate Admin model details. The API consumes raw catalog/provider
    facts instead.
-8. **Authority controls badges.** Provider identity may use the FCC provider catalog. Runtime
-   capabilities and numeric limits require provider-confirmed or explicitly curated FCC facts.
+8. **Authority controls badges.** Provider identity may use the ModelGlot provider catalog. Runtime
+   capabilities and numeric limits require provider-confirmed or explicitly curated ModelGlot facts.
    models.dev text may be shown as attributed editorial description; its limits, capabilities,
    modalities, cost, and dates do not become authoritative badges by default.
 9. **Compatibility is additive.** `models`, `model_labels`, and `failed_providers` retain their
@@ -219,12 +219,12 @@ reference.
 | Field | Meaning |
 | --- | --- |
 | `display_name` | Same resolved title as `model_labels` |
-| `provider_id` | FCC provider identifier |
+| `provider_id` | ModelGlot provider identifier |
 | `provider_label` | Human-readable provider badge text |
 | `description` | Optional model-purpose text |
 | `description_source` | Optional provenance such as `models.dev` |
 | `supports_reasoning` | Provider-confirmed boolean or `null` |
-| `input_modalities` | Provider-confirmed FCC-supported modalities or `null` |
+| `input_modalities` | Provider-confirmed modelglot-supported modalities or `null` |
 | `context_window_tokens` | Raw provider-confirmed limit or `null` |
 | `max_output_tokens` | Raw provider-confirmed limit or `null` |
 
@@ -272,7 +272,7 @@ contract, without presenting it as a public non-loopback API.
 
 ### S2.1 — Give the combobox an explicit canonical-value channel
 
-**Finding.** `FccModelCombobox.select()` writes the canonical reference into `input.value`, and
+**Finding.** `ModelGlotModelCombobox.select()` writes the canonical reference into `input.value`, and
 `readFieldValue` reads that value directly. Replacing it with a title without another identity
 channel would persist the title and break routing.
 
@@ -414,7 +414,7 @@ control editable.
   - authoritative known values produce the expected badges;
   - `null`, `false`, absent, and fallback values produce no positive capability badge;
   - catalog description never becomes a numeric limit badge;
-  - video and other FCC-unsupported modalities are omitted;
+  - video and other modelglot-unsupported modalities are omitted;
   - long and HTML-like descriptions are rendered as text, not markup;
   - custom/unknown values produce a minimal valid summary.
 
@@ -511,7 +511,7 @@ The following current behavior is the baseline for Wave 4:
 - `src/free_claude_code/providers/model_catalog_source.py:125-155` reduces every models.dev
   entry to `(name, description)` and discards all structured fields;
 - `src/free_claude_code/api/admin_routes.py:629-654` exposes provider attribution, editorial
-  description, reasoning, FCC input modalities, context, and output through `model_details`;
+  description, reasoning, ModelGlot input modalities, context, and output through `model_details`;
 - `src/free_claude_code/api/admin_static/model_picker_details.js:22-43` creates badges only for
   provider-confirmed reasoning, image input, context, and output;
 - tool calling, structured output, audio, video, PDF, lifecycle, open weights, logos, and
@@ -621,11 +621,11 @@ Wave 4 distinguishes three facts that must never be conflated:
 | --- | --- | --- |
 | Model/lab metadata | What is the underlying model generally declared to do? | MiniMax authorship, editorial purpose, open weights |
 | Hosting-provider catalog metadata | What does models.dev declare for this exact hosted model? | NVIDIA MiniMax `262144` context and tool calling |
-| FCC/provider runtime metadata | What is confirmed for the actual FCC request/translation path? | Provider-confirmed reasoning and FCC-supported text/image input |
+| ModelGlot/provider runtime metadata | What is confirmed for the actual ModelGlot request/translation path? | Provider-confirmed reasoning and modelglot-supported text/image input |
 
 Visual and precedence rules:
 
-- solid/success badges mean provider/FCC-confirmed runtime support;
+- solid/success badges mean provider/modelglot-confirmed runtime support;
 - dashed/info badges mean models.dev catalog declarations and always have an accessible source
   explanation;
 - neutral lifecycle/open-weights badges are not runtime capability assertions;
@@ -633,8 +633,8 @@ Visual and precedence rules:
 - an explicit provider runtime fact wins over a conflicting catalog fact;
 - a missing provider fact may produce a **catalog-only** badge, never a provider-confirmed one;
 - conflicting catalog values are not shown as a second contradictory runtime value;
-- audio/video/PDF may be displayed only as catalog declarations until the exact FCC route
-  supports them; they must not be presented as FCC runtime support;
+- audio/video/PDF may be displayed only as catalog declarations until the exact ModelGlot route
+  supports them; they must not be presented as ModelGlot runtime support;
 - missing cost is unknown and explicit `cost: 0` is not translated to “Free”; pricing is omitted
   from the initial Wave 4 UI;
 - compact token units use one documented convention, while the detail card shows the exact raw
@@ -649,7 +649,7 @@ contract without changing routing or provider runtime facts.
 
 **Decision gate — approved 2026-11-20.** The explicit implementation request approves the hybrid UX,
 provider-scoped catalog badges, dashed provenance treatment, description-conflict handling, and
-catalog-only treatment of modalities not supported by FCC. Pricing remains excluded unless a
+catalog-only treatment of modalities not supported by ModelGlot. Pricing remains excluded unless a
 separate decision approves it.
 
 **Changes.**
@@ -669,7 +669,7 @@ separate decision approves it.
 - `src/free_claude_code/application/model_catalog.py`:
   - add a separate catalog-metadata value object/field on `CatalogModel`;
   - keep all existing provider-owned fields unchanged;
-  - use the existing FCC-to-models.dev provider mapping, including `nvidia_nim -> nvidia`;
+  - use the existing modelglot-to-models.dev provider mapping, including `nvidia_nim -> nvidia`;
   - resolve the lab from the validated `canonical_model_id` rather than guessing from titles.
 - `tests/providers/test_model_catalog_source.py` and
   `tests/application/test_model_catalog.py`: add legacy, malformed, partial, stale, conflict,
@@ -682,7 +682,7 @@ separate decision approves it.
 - Gemma resolves NVIDIA `256000/16384`, not generic `262144/32768`.
 - `1M context` remains editorial text and never populates a numeric field.
 - Missing/`null` capability values remain unknown; explicit booleans are not string-coerced.
-- Unsupported/extra upstream fields are ignored and cannot change canonical FCC model IDs.
+- Unsupported/extra upstream fields are ignored and cannot change canonical ModelGlot model IDs.
 - No endpoint or selection interaction performs external I/O.
 
 **Documentation.** Update the cache-schema note and record the approved source-precedence table
@@ -784,7 +784,7 @@ keyboard, refresh, and custom-model contracts.
   - build separate compact-option and selected-detail view models;
   - render provider/lab identity, logos with fallback, icon-and-text capability badges,
     context/output, editorial description, canonical reference, lifecycle, and source metadata;
-  - render provider/FCC facts as solid badges and catalog declarations as dashed badges;
+  - render provider/ModelGlot facts as solid badges and catalog declarations as dashed badges;
   - never infer capabilities from titles/descriptions and never turn unknown into false;
   - use DOM nodes and `textContent`; external/catalog strings remain bounded plain text.
 - `src/free_claude_code/api/admin_static/model_combobox.js` and `admin.js`:
@@ -823,7 +823,7 @@ keyboard, refresh, and custom-model contracts.
   selected-model card rather than full details in every option.
 - Every catalog badge is distinguishable without color alone and has an accessible source
   explanation.
-- No audio/video/PDF badge claims FCC runtime support without provider/FCC evidence.
+- No audio/video/PDF badge claims ModelGlot runtime support without provider/ModelGlot evidence.
 - No canonical ID, routing candidate, fallback order, or Apply payload changes.
 
 **Documentation.** Add a concise Admin UI contract and link the HTML/SVG design references from
@@ -862,7 +862,7 @@ before changing its status to implemented.
 - All S4.1–S4.3 acceptance criteria pass together.
 - A stale or absent catalog never removes provider facts, blocks model selection, or changes
   routing.
-- The UI never silently promotes catalog data to provider/FCC authority.
+- The UI never silently promotes catalog data to provider/ModelGlot authority.
 - Source links in this plan resolve and the HTML prototype remains self-contained/offline.
 - Implementation status and measured test results are recorded here and in the analysis.
 
@@ -926,7 +926,7 @@ actual Apply request.
 - Canonical value everywhere in configuration, fallbacks, and Apply payloads is
   `nvidia_nim/minimaxai/minimax-m3.1-flash`.
 - `models` and `model_labels` are unchanged from baseline; `model_details` is additive.
-- No `1M` structured badge, fallback `200K` capability, “free” label, or FCC runtime video
+- No `1M` structured badge, fallback `200K` capability, “free” label, or ModelGlot runtime video
   promise appears. If Wave 4 ships, video is permitted only as an explicitly catalog-scoped
   declaration under S4.3.
 - Keyboard, responsive, custom-model, optional-model, locked-field, refresh, and persistence
@@ -987,7 +987,7 @@ or correct persistence.
 | Description `1M context` must not become a structured badge | S1.1, S3.1, S4.1, S4.3 |
 | models.dev `262144`, reasoning/tools/structured output, cost, date need policy | S4.1–S4.3 |
 | Provider-agnostic MiniMax `1M` and Gemma `262144` differ from NVIDIA rows | S4.1–S4.4 |
-| FCC exposes only text/image; no unqualified runtime video promise | S1.2, S3.1, S4.3 |
+| ModelGlot exposes only text/image; no unqualified runtime video promise | S1.2, S3.1, S4.3 |
 | Provider and lab logos need safe same-origin assets and fallback | S4.2, S4.3 |
 | Compact options plus selected detail are the approved-for-design hierarchy | S4.3, S4.4 |
 | Catalog provenance/freshness must be visible and unknown must stay unknown | S4.1–S4.4 |
@@ -1008,7 +1008,7 @@ or correct persistence.
 | Fallback rows save labels or lose API-key association | Fallback E2E | Update all consumers in S2.1; revert as one unit |
 | Catalog/default facts become authoritative badges | MiniMax fixture tests | Separate provider/catalog fields; solid/dashed semantics; omit unknowns |
 | Canonical model limits override host-specific values | MiniMax/Gemma API and browser fixtures | Use provider-scoped `api.json`; never parse descriptions |
-| Catalog modalities become FCC runtime promises | Video/audio/PDF provenance tests | Catalog-only dashed badges until FCC confirms the exact route |
+| Catalog modalities become ModelGlot runtime promises | Video/audio/PDF provenance tests | Catalog-only dashed badges until ModelGlot confirms the exact route |
 | Remote SVG leaks data or injects active content | Logo route/security tests | Background fetch, validation, same-origin serving, no inline external SVG |
 | Rich text introduces HTML injection | HTML-like-description test | DOM nodes plus `textContent`; no catalog `innerHTML` |
 | Long details break Model Routing layout | 390/900/1280px E2E | Compact rows plus selected detail; wrapping/stacking; independent visual rollback |

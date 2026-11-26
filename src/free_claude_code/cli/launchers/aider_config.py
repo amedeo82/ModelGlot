@@ -1,4 +1,4 @@
-"""Process-local Aider configuration for FCC model routing."""
+"""Process-local Aider configuration for ModelGlot model routing."""
 
 import re
 from dataclasses import dataclass, field
@@ -11,7 +11,7 @@ from free_claude_code.application.model_catalog import (
 from free_claude_code.core.json_types import JsonObject
 from free_claude_code.core.model_capabilities import ModelInputModality
 
-AIDER_API_KEY_ENV_PREFIX = "FCC_AIDER_PROXY_AUTH_"
+AIDER_API_KEY_ENV_PREFIX = "MODELGLOT_AIDER_PROXY_AUTH_"
 _AIDER_API_KEY_ENV_PATTERN = re.compile(rf"{AIDER_API_KEY_ENV_PREFIX}[A-Z0-9]+")
 
 
@@ -30,10 +30,10 @@ def build_aider_config(
     api_key_env: str,
     launch_id: str,
 ) -> AiderConfig:
-    """Project a non-empty FCC Messages catalog into Aider's file contracts."""
+    """Project a non-empty ModelGlot Messages catalog into Aider's file contracts."""
 
     if not models:
-        raise ValueError("Aider requires at least one routable FCC model")
+        raise ValueError("Aider requires at least one routable ModelGlot model")
     if _AIDER_API_KEY_ENV_PATTERN.fullmatch(api_key_env) is None:
         raise ValueError("invalid Aider proxy-auth environment variable name")
 
@@ -58,7 +58,7 @@ def build_aider_config(
                 "model": f"anthropic/{model.wire_slug}",
                 "api_base": messages_url,
                 "api_key": f"os.environ/{api_key_env}",
-                "extra_headers": {"x-fcc-launch-id": launch_id},
+                "extra_headers": {"x-modelglot-launch-id": launch_id},
             },
         }
         if model.supports_reasoning is not None:

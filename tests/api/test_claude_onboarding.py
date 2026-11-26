@@ -113,7 +113,7 @@ def test_pending_restart_and_shutdown_do_not_write(
     onboarding: tuple[TestClient, ApplicationRuntime, Path],
 ) -> None:
     client, runtime, path = onboarding
-    runtime._pending_fields = ["PORT"]
+    runtime._pending_fields = ["MODELGLOT_PORT"]
     assert client.post(f"{ROOT}/complete").status_code == 503
     runtime._pending_fields = []
     runtime.begin_shutdown()

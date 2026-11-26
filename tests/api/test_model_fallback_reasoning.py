@@ -50,7 +50,7 @@ def test_from_client_default_reaches_primary_and_inherited_fallback(
 @pytest.mark.parametrize("wire_api", ["messages", "responses"])
 @pytest.mark.parametrize("root_effort", ["high", "off"])
 @pytest.mark.parametrize("fallback_effort", ["inherit", "client"])
-def test_from_client_bypasses_fcc_policy_while_inherit_keeps_it(
+def test_from_client_bypasses_modelglot_policy_while_inherit_keeps_it(
     wire_api: str, root_effort: str, fallback_effort: str
 ) -> None:
     primary = ControlledFallbackProvider(failure=execution_failure("primary failed"))

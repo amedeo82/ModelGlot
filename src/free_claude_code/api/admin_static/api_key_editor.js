@@ -1,5 +1,5 @@
 /* Ordered masked credentials. Saved references travel with rows, never positions. */
-window.FccApiKeyEditor = class {
+window.ModelGlotApiKeyEditor = class {
   constructor(field, onChange) {
     this.field = field;
     this.onChange = onChange;
@@ -185,7 +185,7 @@ window.FccApiKeyEditor = class {
         row.classList.add("dragging");
       });
       handle.addEventListener("dragend", () => { this.dragged = null; row.classList.remove("dragging"); });
-      const input = window.FccFormControls.configure(document.createElement("input"));
+      const input = window.ModelGlotFormControls.configure(document.createElement("input"));
       input.id = `field-${this.field.key}-${index + 1}`;
       input.type = "password";
       input.autocomplete = "off";

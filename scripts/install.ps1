@@ -35,9 +35,9 @@ $RtkReleaseBaseUrl = "https://github.com/rtk-ai/rtk/releases/download/v$RtkVersi
 $RtkWindowsAssetName = "rtk-x86_64-pc-windows-msvc.zip"
 $RtkWindowsAssetSha256 = "3a1e114edce9080f8a10663e9c87488363a82f14a5ca8aab2ad416817f89d47c"
 $UvInstallUrl = "https://astral.sh/uv/install.ps1"
-$FccRepository = "https://github.com/amedeo82/ModelGlot"
-$FccRawBase = "https://raw.githubusercontent.com/amedeo82/ModelGlot"
-$FccGitBase = "$FccRepository.git"
+$ModelGlotRepository = "https://github.com/amedeo82/ModelGlot"
+$ModelGlotRawBase = "https://raw.githubusercontent.com/amedeo82/ModelGlot"
+$ModelGlotGitBase = "$ModelGlotRepository.git"
 $script:InstallClaudeCode = $true
 $script:InstallCodex = $true
 $script:InstallPi = $true
@@ -52,21 +52,21 @@ $script:InstallAgy = $true
 $script:PiAvailable = $false
 $script:MuseAvailable = $false
 $script:EnableRtkHeadroom = $RtkHeadroom.IsPresent
-$FccInstallVersion = [Environment]::GetEnvironmentVariable("FCC_INSTALL_VERSION")
-$environmentRef = [Environment]::GetEnvironmentVariable("FCC_INSTALL_REF")
+$ModelGlotInstallVersion = [Environment]::GetEnvironmentVariable("MODELGLOT_INSTALL_VERSION")
+$environmentRef = [Environment]::GetEnvironmentVariable("MODELGLOT_INSTALL_REF")
 if ($PSBoundParameters.ContainsKey("Ref")) {
-    $FccInstallRef = $Ref
+    $ModelGlotInstallRef = $Ref
 }
 elseif ($null -ne $environmentRef) {
-    $FccInstallRef = $environmentRef
+    $ModelGlotInstallRef = $environmentRef
 }
-elseif ($FccInstallVersion) {
-    $FccInstallRef = ""
+elseif ($ModelGlotInstallVersion) {
+    $ModelGlotInstallRef = ""
 }
 else {
-    $FccInstallRef = "main"
+    $ModelGlotInstallRef = "main"
 }
-$FccReleasePattern = '\A(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\z'
+$ModelGlotReleasePattern = '\A(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\z'
 $script:InstallLog = ""
 $script:InstallLogWarning = $false
 $script:InstallSteps = [ordered] @{}
@@ -75,29 +75,27 @@ $script:InstallStepOutcome = "Completed"
 $script:InstallerPath = $PSCommandPath
 $script:InstallStageNumber = 0
 $script:InstallStageCount = 0
-$script:FccVerified = $false
+$script:ModelGlotVerified = $false
 $script:DesktopReady = $false
 $script:HeadroomPath = ""
-$FccAppUserModelId = "io.github.amedeo82.free-claude-code"
-$FccCommands = @(
-    # Include retired entry points so updates reject older FCC processes before replacement.
-    "fcc-desktop",
-    "fcc-server",
-    "fcc-claude",
-    "fcc-codex",
-    "fcc-pi",
-    "fcc-opencode",
-    "fcc-cline",
-    "fcc-hermes",
-    "fcc-dsh",
-    "fcc-grok",
-    "fcc-muse",
-    "fcc-aider",
-    "fcc-agy",
-    "fcc-doctor",
-    "fcc-update",
-    "fcc-init",
-    "free-claude-code"
+$ModelGlotAppUserModelId = "io.github.amedeo82.modelglot"
+$ModelGlotCommands = @(
+    "modelglot-desktop",
+    "modelglot-server",
+    "modelglot-claude",
+    "modelglot-codex",
+    "modelglot-pi",
+    "modelglot-opencode",
+    "modelglot-cline",
+    "modelglot-hermes",
+    "modelglot-dsh",
+    "modelglot-grok",
+    "modelglot-muse",
+    "modelglot-aider",
+    "modelglot-agy",
+    "modelglot-doctor",
+    "modelglot-update",
+    "modelglot-init"
 )
 
 function Show-Usage {
@@ -111,7 +109,7 @@ Options:
   -VoiceLocal            Install local Whisper voice transcription support.
   -TorchBackend VALUE    Use a uv PyTorch backend, such as cu130. Requires local voice.
   -RtkHeadroom           Install and configure RTK + Headroom token optimization.
-  -Update                Skip when FCC is already this release or newer.
+  -Update                Skip when ModelGlot is already this release or newer.
   -DryRun                Print commands without running them.
   -Help                  Show this help text.
 "@
@@ -143,7 +141,7 @@ function Write-InstallLog {
 function Initialize-InstallLog {
     if ($DryRun) { return }
     try {
-        $directory = Join-Path $env:USERPROFILE ".fcc\logs"
+        $directory = Join-Path $env:USERPROFILE ".modelglot\logs"
         [void] [IO.Directory]::CreateDirectory($directory)
         $script:InstallLog = Join-Path $directory ("install-$(Get-Date -Format yyyyMMdd-HHmmss)-$([guid]::NewGuid().ToString('N')).log")
         Write-InstallLog "Starting ModelGlot installer"
@@ -183,13 +181,13 @@ function Get-InstallerRetryCommand {
     $options = @()
     $prefix = ""
     $installerRef = "main"
-    if ($FccInstallRef) {
-        $installerRef = $FccInstallRef
-        $options += @("-Ref", $FccInstallRef)
+    if ($ModelGlotInstallRef) {
+        $installerRef = $ModelGlotInstallRef
+        $options += @("-Ref", $ModelGlotInstallRef)
     }
-    elseif ($FccInstallVersion) {
-        $prefix = "`$env:FCC_INSTALL_VERSION = '$FccInstallVersion'; "
-        $installerRef = "v$FccInstallVersion"
+    elseif ($ModelGlotInstallVersion) {
+        $prefix = "`$env:MODELGLOT_INSTALL_VERSION = '$ModelGlotInstallVersion'; "
+        $installerRef = "v$ModelGlotInstallVersion"
     }
     if ($VoiceLocal) { $options += "-VoiceLocal" }
     if ($TorchBackend) { $options += @("-TorchBackend", $TorchBackend) }
@@ -197,7 +195,7 @@ function Get-InstallerRetryCommand {
     if ($script:InstallerPath -and (Test-Path -LiteralPath $script:InstallerPath -PathType Leaf)) {
         return $prefix + "& " + (Format-Command $script:InstallerPath $options)
     }
-    return $prefix + "& ([scriptblock]::Create((irm '$FccRawBase/$installerRef/scripts/install.ps1'))) " + (($options | ForEach-Object { Format-Argument $_ }) -join " ")
+    return $prefix + "& ([scriptblock]::Create((irm '$ModelGlotRawBase/$installerRef/scripts/install.ps1'))) " + (($options | ForEach-Object { Format-Argument $_ }) -join " ")
 }
 
 function Show-InstallReport {
@@ -328,29 +326,29 @@ function Read-CodingAgentSelection {
     param(
         [string] $CommandName,
         [string] $DisplayName,
-        [string] $FccCommand
+        [string] $ModelGlotCommand
     )
 
     if (Find-InstalledCodingAgent $CommandName) {
         Write-Host "$DisplayName already installed; will verify."
         return $true
     }
-    return Read-YesNo -Prompt "Install $DisplayName for ${FccCommand}?"
+    return Read-YesNo -Prompt "Install $DisplayName for ${ModelGlotCommand}?"
 }
 
 function Select-CodingAgents {
     while ($true) {
-        $script:InstallClaudeCode = Read-CodingAgentSelection claude "Claude Code" fcc-claude
-        $script:InstallCodex = Read-CodingAgentSelection codex Codex fcc-codex
-        $script:InstallPi = Read-CodingAgentSelection pi Pi fcc-pi
-        $script:InstallOpenCode = Read-CodingAgentSelection opencode OpenCode fcc-opencode
-        $script:InstallCline = Read-CodingAgentSelection cline "Cline CLI" fcc-cline
-        $script:InstallHermes = Read-CodingAgentSelection hermes "Hermes Agent" fcc-hermes
-        $script:InstallDsh = Read-CodingAgentSelection dsh "DeepSeek Harness" fcc-dsh
-        $script:InstallGrok = Read-CodingAgentSelection grok "Grok Build" fcc-grok
-        $script:InstallMuse = Read-CodingAgentSelection muse "Muse Code" fcc-muse
-        $script:InstallAider = Read-CodingAgentSelection aider Aider fcc-aider
-        $script:InstallAgy = Read-CodingAgentSelection agy "Antigravity CLI" fcc-agy
+        $script:InstallClaudeCode = Read-CodingAgentSelection claude "Claude Code" modelglot-claude
+        $script:InstallCodex = Read-CodingAgentSelection codex Codex modelglot-codex
+        $script:InstallPi = Read-CodingAgentSelection pi Pi modelglot-pi
+        $script:InstallOpenCode = Read-CodingAgentSelection opencode OpenCode modelglot-opencode
+        $script:InstallCline = Read-CodingAgentSelection cline "Cline CLI" modelglot-cline
+        $script:InstallHermes = Read-CodingAgentSelection hermes "Hermes Agent" modelglot-hermes
+        $script:InstallDsh = Read-CodingAgentSelection dsh "DeepSeek Harness" modelglot-dsh
+        $script:InstallGrok = Read-CodingAgentSelection grok "Grok Build" modelglot-grok
+        $script:InstallMuse = Read-CodingAgentSelection muse "Muse Code" modelglot-muse
+        $script:InstallAider = Read-CodingAgentSelection aider Aider modelglot-aider
+        $script:InstallAgy = Read-CodingAgentSelection agy "Antigravity CLI" modelglot-agy
 
         if ($script:InstallClaudeCode -or $script:InstallCodex -or $script:InstallPi -or $script:InstallOpenCode -or $script:InstallCline -or $script:InstallHermes -or $script:InstallDsh -or $script:InstallGrok -or $script:InstallMuse -or $script:InstallAider -or $script:InstallAgy) {
             break
@@ -563,9 +561,9 @@ function Add-NpmBinDirectories {
     }
 }
 
-function Assert-NoFccProcessesRunning {
+function Assert-NoModelGlotProcessesRunning {
     $running = @()
-    foreach ($commandName in $FccCommands) {
+    foreach ($commandName in $ModelGlotCommands) {
         $processes = @(Get-Process -Name $commandName -ErrorAction SilentlyContinue)
         foreach ($process in $processes) {
             $running += "$commandName (PID $($process.Id))"
@@ -573,7 +571,7 @@ function Assert-NoFccProcessesRunning {
     }
 
     if ($running.Count -gt 0) {
-        throw "ModelGlot or legacy Free Claude Code is still running ($($running -join ', ')). Stop those processes, then rerun the installer."
+        throw "ModelGlot is still running ($($running -join ', ')). Stop those processes, then rerun the installer."
     }
 }
 
@@ -598,7 +596,7 @@ function Invoke-DownloadedPowerShellInstaller {
         return
     }
 
-    $temporaryScript = Join-Path ([IO.Path]::GetTempPath()) ("fcc-install-" + [guid]::NewGuid().ToString("N") + ".ps1")
+    $temporaryScript = Join-Path ([IO.Path]::GetTempPath()) ("modelglot-install-" + [guid]::NewGuid().ToString("N") + ".ps1")
     try {
         Write-Host "+ irm $Url -OutFile $(Format-Argument $temporaryScript)"
         Invoke-RestMethod -Uri $Url -OutFile $temporaryScript -ErrorAction Stop
@@ -708,7 +706,7 @@ function Install-Rtk {
         return
     }
 
-    $temporaryRoot = Join-Path ([IO.Path]::GetTempPath()) ("fcc-rtk-" + [guid]::NewGuid().ToString("N"))
+    $temporaryRoot = Join-Path ([IO.Path]::GetTempPath()) ("modelglot-rtk-" + [guid]::NewGuid().ToString("N"))
     $archivePath = Join-Path $temporaryRoot $RtkWindowsAssetName
     $extractPath = Join-Path $temporaryRoot "extracted"
     try {
@@ -999,7 +997,7 @@ function Test-SupportedStableVersion {
 function Read-OpenCodeVersionOutput {
     param([string] $OpenCodePath)
 
-    $temporaryRoot = Join-Path ([IO.Path]::GetTempPath()) ("fcc-opencode-version-" + [guid]::NewGuid().ToString("N"))
+    $temporaryRoot = Join-Path ([IO.Path]::GetTempPath()) ("modelglot-opencode-version-" + [guid]::NewGuid().ToString("N"))
     $stdoutPath = Join-Path $temporaryRoot "stdout.txt"
     $stderrPath = Join-Path $temporaryRoot "stderr.txt"
     $process = $null
@@ -1104,7 +1102,7 @@ function Install-OpenCode {
     }
     $archiveUrl = "$OpenCodeReleaseBaseUrl/$($release.version)/$assetName"
 
-    $temporaryRoot = Join-Path ([IO.Path]::GetTempPath()) ("fcc-opencode-" + [guid]::NewGuid().ToString("N"))
+    $temporaryRoot = Join-Path ([IO.Path]::GetTempPath()) ("modelglot-opencode-" + [guid]::NewGuid().ToString("N"))
     $archivePath = Join-Path $temporaryRoot $assetName
     $extractPath = Join-Path $temporaryRoot "extracted"
     $temporaryInstallPath = Join-Path $installDirectory (".opencode-" + [guid]::NewGuid().ToString("N") + ".exe")
@@ -1824,16 +1822,16 @@ function Ensure-Uv {
 
 function Get-PackageSpec {
     $spec = if ($VoiceLocal) { "modelglot[voice_local]" } else { "modelglot" }
-    if ($FccInstallRef) {
-        return "$spec @ git+$FccGitBase@$FccInstallRef"
+    if ($ModelGlotInstallRef) {
+        return "$spec @ git+$ModelGlotGitBase@$ModelGlotInstallRef"
     }
-    if ($FccInstallVersion) { $spec += "==$FccInstallVersion" }
+    if ($ModelGlotInstallVersion) { $spec += "==$ModelGlotInstallVersion" }
     elseif ($DryRun) { $spec += "==<selected-release>" }
     return $spec
 }
 
-function Install-FreeClaudeCode {
-    Assert-NoFccProcessesRunning
+function Install-ModelGlot {
+    Assert-NoModelGlotProcessesRunning
     $packageSpec = Get-PackageSpec
     $arguments = @(
         "tool",
@@ -1860,7 +1858,7 @@ function Install-FreeClaudeCode {
     Invoke-NativeCommand -FilePath $uvPath -Arguments $arguments
 }
 
-function Export-FccDesktopIcon {
+function Export-ModelGlotDesktopIcon {
     param(
         [string] $DesktopCommand,
         [string] $IconPath
@@ -1894,19 +1892,19 @@ function Export-FccDesktopIcon {
     }
 }
 
-function Configure-AndConfirmFreeClaudeCode {
+function Configure-AndConfirmModelGlot {
     Start-InstallStep "PATH configuration"
-    $iconPath = Join-Path $env:USERPROFILE ".fcc\app-icon.ico"
+    $iconPath = Join-Path $env:USERPROFILE ".modelglot\app-icon.ico"
     if ($DryRun) {
         Write-Host "+ uv tool update-shell"
         Write-Host "+ uv tool dir --bin"
-        Write-Host "+ verify fcc-desktop, fcc-server, fcc-claude, fcc-codex, fcc-pi, fcc-opencode, fcc-cline, fcc-hermes, fcc-dsh, fcc-grok, fcc-muse, fcc-aider, and fcc-agy in the uv tool bin directory"
-        Write-Host "+ fcc-server --version"
-        Export-FccDesktopIcon `
-            -DesktopCommand "<uv-tool-bin>\fcc-desktop.exe" `
+        Write-Host "+ verify modelglot-desktop, modelglot-server, modelglot-claude, modelglot-codex, modelglot-pi, modelglot-opencode, modelglot-cline, modelglot-hermes, modelglot-dsh, modelglot-grok, modelglot-muse, modelglot-aider, and modelglot-agy in the uv tool bin directory"
+        Write-Host "+ modelglot-server --version"
+        Export-ModelGlotDesktopIcon `
+            -DesktopCommand "<uv-tool-bin>\modelglot-desktop.exe" `
             -IconPath $iconPath
-        Install-FccDesktopShortcuts `
-            -DesktopCommand "<uv-tool-bin>\fcc-desktop.exe" `
+        Install-ModelGlotDesktopShortcuts `
+            -DesktopCommand "<uv-tool-bin>\modelglot-desktop.exe" `
             -IconPath $iconPath
         return
     }
@@ -1917,13 +1915,13 @@ function Configure-AndConfirmFreeClaudeCode {
     }
     Invoke-NativeCommand -FilePath $uvCommand.Source -Arguments @("tool", "update-shell")
     $toolBin = Add-UvToolBinDirectory -UvPath $uvCommand.Source
-    Start-InstallStep "FCC verification"
+    Start-InstallStep "ModelGlot verification"
     $toolBinPath = ([IO.Path]::GetFullPath($toolBin)).TrimEnd(
         [IO.Path]::DirectorySeparatorChar,
         [IO.Path]::AltDirectorySeparatorChar
     )
     $installedCommands = @{}
-    foreach ($commandName in @("fcc-desktop", "fcc-server", "fcc-claude", "fcc-codex", "fcc-pi", "fcc-opencode", "fcc-cline", "fcc-hermes", "fcc-dsh", "fcc-grok", "fcc-muse", "fcc-aider", "fcc-agy", "fcc-doctor", "fcc-update.cmd")) {
+    foreach ($commandName in @("modelglot-desktop", "modelglot-server", "modelglot-claude", "modelglot-codex", "modelglot-pi", "modelglot-opencode", "modelglot-cline", "modelglot-hermes", "modelglot-dsh", "modelglot-grok", "modelglot-muse", "modelglot-aider", "modelglot-agy", "modelglot-doctor", "modelglot-update.cmd")) {
         $command = Get-ApplicationCommand $commandName
         if (-not $command) {
             throw "ModelGlot installation did not create '$commandName'."
@@ -1938,14 +1936,14 @@ function Configure-AndConfirmFreeClaudeCode {
         $installedCommands[$commandName] = $command.Source
     }
 
-    Write-Host (Invoke-Utf8NativeCapture -FilePath $installedCommands["fcc-server"] -Arguments @("--version"))
-    $script:FccVerified = $true
+    Write-Host (Invoke-Utf8NativeCapture -FilePath $installedCommands["modelglot-server"] -Arguments @("--version"))
+    $script:ModelGlotVerified = $true
     Start-InstallStep "Desktop integration"
-    Export-FccDesktopIcon `
-        -DesktopCommand $installedCommands["fcc-desktop"] `
+    Export-ModelGlotDesktopIcon `
+        -DesktopCommand $installedCommands["modelglot-desktop"] `
         -IconPath $iconPath
-    Install-FccDesktopShortcuts `
-        -DesktopCommand $installedCommands["fcc-desktop"] `
+    Install-ModelGlotDesktopShortcuts `
+        -DesktopCommand $installedCommands["modelglot-desktop"] `
         -IconPath $iconPath
 }
 
@@ -1976,12 +1974,12 @@ function Set-ShortcutAppUserModelId {
         [string] $AppUserModelId
     )
 
-    if (-not ("FccShortcutAppUserModelId" -as [type])) {
+    if (-not ("ModelGlotShortcutAppUserModelId" -as [type])) {
         Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
 
-public static class FccShortcutAppUserModelId
+public static class ModelGlotShortcutAppUserModelId
 {
     private const uint CLSCTX_INPROC_SERVER = 1;
     private const ushort VT_LPWSTR = 31;
@@ -2162,21 +2160,21 @@ public static class FccShortcutAppUserModelId
 '@
     }
 
-    [FccShortcutAppUserModelId]::SetAppUserModelId($ShortcutPath, $AppUserModelId)
+    [ModelGlotShortcutAppUserModelId]::SetAppUserModelId($ShortcutPath, $AppUserModelId)
 }
 
-function Install-FccDesktopShortcuts {
+function Install-ModelGlotDesktopShortcuts {
     param(
         [string] $DesktopCommand,
         [string] $IconPath
     )
 
-    $desktopShortcutPath = Join-Path $env:USERPROFILE "Desktop\Free Claude Code.lnk"
-    $startMenuShortcutPath = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Free Claude Code.lnk"
+    $desktopShortcutPath = Join-Path $env:USERPROFILE "Desktop\ModelGlot.lnk"
+    $startMenuShortcutPath = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\ModelGlot.lnk"
     $shortcutPaths = @($desktopShortcutPath, $startMenuShortcutPath)
     foreach ($shortcutPath in $shortcutPaths) {
         Write-Host "+ create shortcut $(Format-Argument $shortcutPath) -> $(Format-Argument $DesktopCommand)"
-        Write-Host "+ set System.AppUserModel.ID $(Format-Argument $FccAppUserModelId) on $(Format-Argument $shortcutPath)"
+        Write-Host "+ set System.AppUserModel.ID $(Format-Argument $ModelGlotAppUserModelId) on $(Format-Argument $shortcutPath)"
     }
     if ($DryRun) {
         return
@@ -2187,13 +2185,13 @@ function Install-FccDesktopShortcuts {
         if (Test-Path -LiteralPath $shortcutPath) {
             try {
                 $existingShortcut = $shell.CreateShortcut($shortcutPath)
-                $isFccShortcut = Test-EquivalentPath -Left $existingShortcut.TargetPath -Right $DesktopCommand
+                $isModelGlotShortcut = Test-EquivalentPath -Left $existingShortcut.TargetPath -Right $DesktopCommand
             }
             catch {
-                $isFccShortcut = $false
+                $isModelGlotShortcut = $false
             }
-            if (-not $isFccShortcut) {
-                Write-Host "A shortcut not managed by Free Claude Code already exists at $shortcutPath; leaving it unchanged."
+            if (-not $isModelGlotShortcut) {
+                Write-Host "A shortcut not managed by ModelGlot already exists at $shortcutPath; leaving it unchanged."
                 continue
             }
         }
@@ -2208,7 +2206,7 @@ function Install-FccDesktopShortcuts {
         try {
             Set-ShortcutAppUserModelId `
                 -ShortcutPath $shortcutPath `
-                -AppUserModelId $FccAppUserModelId
+                -AppUserModelId $ModelGlotAppUserModelId
         }
         catch {
             if ($shortcutPath -eq $startMenuShortcutPath) {
@@ -2225,44 +2223,44 @@ function Show-InstallerNextSteps {
     if ($script:DesktopReady) {
         Write-Host "Open the ModelGlot desktop shortcut to run it in the background."
     }
-    Write-Host "For terminal use, start the proxy with: fcc-server"
+    Write-Host "For terminal use, start the proxy with: modelglot-server"
     if ($script:InstallClaudeCode) {
-        Write-Host "Run Claude Code with: fcc-claude"
+        Write-Host "Run Claude Code with: modelglot-claude"
     }
     if ($script:InstallCodex) {
-        Write-Host "Run Codex with: fcc-codex"
+        Write-Host "Run Codex with: modelglot-codex"
     }
     if ($script:PiAvailable) {
-        Write-Host "Run Pi with: fcc-pi"
+        Write-Host "Run Pi with: modelglot-pi"
     }
     if ($script:InstallOpenCode) {
-        Write-Host "Run OpenCode with: fcc-opencode"
+        Write-Host "Run OpenCode with: modelglot-opencode"
     }
     if ($script:InstallCline) {
-        Write-Host "Run Cline with: fcc-cline"
+        Write-Host "Run Cline with: modelglot-cline"
     }
     if ($script:InstallHermes) {
-        Write-Host "Run Hermes Agent with: fcc-hermes"
+        Write-Host "Run Hermes Agent with: modelglot-hermes"
     }
     if ($script:InstallDsh) {
-        Write-Host "Run DeepSeek Harness with: fcc-dsh"
+        Write-Host "Run DeepSeek Harness with: modelglot-dsh"
     }
     if ($script:InstallGrok) {
-        Write-Host "Run Grok Build with: fcc-grok"
+        Write-Host "Run Grok Build with: modelglot-grok"
     }
     if ($script:MuseAvailable) {
-        Write-Host "Run Muse Code with: fcc-muse"
+        Write-Host "Run Muse Code with: modelglot-muse"
     }
     if ($script:InstallAider) {
-        Write-Host "Run Aider with: fcc-aider"
+        Write-Host "Run Aider with: modelglot-aider"
     }
     if ($script:InstallAgy) {
-        Write-Host "Run Antigravity CLI with: fcc-agy"
+        Write-Host "Run Antigravity CLI with: modelglot-agy"
     }
 
 }
 
-function Get-InstalledFccVersion {
+function Get-InstalledModelGlotVersion {
     # Look where uv usually lives without changing the PATH the installer preserves.
     $originalPath = $env:Path
     $originalErrorPreference = $ErrorActionPreference
@@ -2274,14 +2272,10 @@ function Get-InstalledFccVersion {
         $global:LASTEXITCODE = $null
         $listing = @(& $uv.Source tool list 2>$null)
         if ($LASTEXITCODE -ne 0) { return $null }
-        $legacyVersion = $null
         foreach ($line in $listing) {
             if ("$line" -cmatch '\Amodelglot v(\S+)') { return $Matches[1] }
-            if (-not $legacyVersion -and "$line" -cmatch '\Afree-claude-code v(\S+)') {
-                $legacyVersion = $Matches[1]
-            }
         }
-        return $legacyVersion
+        return $null
     }
     catch { return $null }
     finally {
@@ -2290,7 +2284,7 @@ function Get-InstalledFccVersion {
     }
 }
 
-function Compare-FccVersions {
+function Compare-ModelGlotVersions {
     # Returns older, current, or newer for an installed version against a release.
     param([string] $Installed, [string] $Release)
 
@@ -2310,24 +2304,24 @@ function Compare-FccVersions {
     return "older"
 }
 
-function Test-FccUpdateNeeded {
-    if ($FccInstallRef) {
-        Write-Host "Refreshing ModelGlot from $FccInstallRef."
+function Test-ModelGlotUpdateNeeded {
+    if ($ModelGlotInstallRef) {
+        Write-Host "Refreshing ModelGlot from $ModelGlotInstallRef."
         return $true
     }
-    $installed = Get-InstalledFccVersion
+    $installed = Get-InstalledModelGlotVersion
     if (-not $installed) { return $true }
-    $comparison = Compare-FccVersions -Installed $installed -Release $FccInstallVersion
+    $comparison = Compare-ModelGlotVersions -Installed $installed -Release $ModelGlotInstallVersion
     if ($comparison -eq "current") {
         Write-Host "ModelGlot $installed is already up to date."
         return $false
     }
     if ($comparison -eq "newer") {
-        Write-Host "ModelGlot $installed is newer than the published version $FccInstallVersion. No update needed."
+        Write-Host "ModelGlot $installed is newer than the published version $ModelGlotInstallVersion. No update needed."
         return $false
     }
     if ($comparison -eq "older") {
-        Write-Host "ModelGlot update available: $installed -> $FccInstallVersion."
+        Write-Host "ModelGlot update available: $installed -> $ModelGlotInstallVersion."
     }
     return $true
 }
@@ -2336,31 +2330,31 @@ function Invoke-SelectedReleaseInstaller {
     param([hashtable] $InstallerArguments)
 
     try {
-        if (-not $FccInstallVersion) {
-            $releaseBase = "$FccRepository/releases"
+        if (-not $ModelGlotInstallVersion) {
+            $releaseBase = "$ModelGlotRepository/releases"
             $response = Invoke-WebRequest -Uri "$releaseBase/latest" -UseBasicParsing -TimeoutSec 10 -MaximumRedirection 5
             $selectedUrl = if ($response.BaseResponse.PSObject.Properties['ResponseUri']) {
                 $response.BaseResponse.ResponseUri.AbsoluteUri
             } else { $response.BaseResponse.RequestMessage.RequestUri.AbsoluteUri }
             $prefix = "$releaseBase/tag/v"
-            if (-not $selectedUrl.StartsWith($prefix, [StringComparison]::Ordinal)) { throw "GitHub returned an unexpected FCC release URL." }
-            $FccInstallVersion = $selectedUrl.Substring($prefix.Length)
-            if ($FccInstallVersion -cnotmatch $FccReleasePattern) { throw "GitHub did not return a canonical FCC release version." }
+            if (-not $selectedUrl.StartsWith($prefix, [StringComparison]::Ordinal)) { throw "GitHub returned an unexpected ModelGlot release URL." }
+            $ModelGlotInstallVersion = $selectedUrl.Substring($prefix.Length)
+            if ($ModelGlotInstallVersion -cnotmatch $ModelGlotReleasePattern) { throw "GitHub did not return a canonical ModelGlot release version." }
         }
-        $text = Invoke-RestMethod -Uri "$FccRawBase/v$FccInstallVersion/scripts/install.ps1" -TimeoutSec 10 -MaximumRedirection 5
-        if ($text -isnot [string] -or [string]::IsNullOrWhiteSpace($text)) { throw "The installer for FCC $FccInstallVersion was empty or invalid." }
+        $text = Invoke-RestMethod -Uri "$ModelGlotRawBase/v$ModelGlotInstallVersion/scripts/install.ps1" -TimeoutSec 10 -MaximumRedirection 5
+        if ($text -isnot [string] -or [string]::IsNullOrWhiteSpace($text)) { throw "The installer for ModelGlot $ModelGlotInstallVersion was empty or invalid." }
         $installer = [scriptblock]::Create($text)
     } catch {
         Write-Host "Retry: $(Get-InstallerRetryCommand)"
         throw
     }
     $previousContext = @{}
-    foreach ($name in @('FCC_INSTALL_VERSION', '_FCC_INSTALLER_RELEASE')) {
+    foreach ($name in @('MODELGLOT_INSTALL_VERSION', '_MODELGLOT_INSTALLER_RELEASE')) {
         $previousContext[$name] = Get-Item -LiteralPath "Env:$name" -ErrorAction SilentlyContinue
     }
     try {
-        $env:FCC_INSTALL_VERSION = $FccInstallVersion
-        $env:_FCC_INSTALLER_RELEASE = $FccInstallVersion
+        $env:MODELGLOT_INSTALL_VERSION = $ModelGlotInstallVersion
+        $env:_MODELGLOT_INSTALLER_RELEASE = $ModelGlotInstallVersion
         & $installer @InstallerArguments
     } finally {
         foreach ($name in $previousContext.Keys) {
@@ -2408,10 +2402,10 @@ function Read-ToolchainRequirements {
 }
 
 function Get-ReleaseToolchain {
-    $metadataRef = if ($FccInstallRef) { $FccInstallRef } else { "v$FccInstallVersion" }
-    $metadataUrl = "$FccRawBase/$metadataRef/pyproject.toml"
+    $metadataRef = if ($ModelGlotInstallRef) { $ModelGlotInstallRef } else { "v$ModelGlotInstallVersion" }
+    $metadataUrl = "$ModelGlotRawBase/$metadataRef/pyproject.toml"
     $text = Invoke-RestMethod -Uri $metadataUrl -TimeoutSec 10 -MaximumRedirection 5 -ErrorAction Stop
-    if ($text -isnot [string]) { throw "Invalid pyproject.toml response for FCC $metadataRef." }
+    if ($text -isnot [string]) { throw "Invalid pyproject.toml response for ModelGlot $metadataRef." }
     return Read-ToolchainRequirements -Text $text
 }
 
@@ -2425,15 +2419,15 @@ if ($RemainingArgs.Count -gt 0) {
     throw "Unknown option: $($RemainingArgs -join ' ')"
 }
 
-if ($FccInstallRef) {
-    if ($FccInstallRef -cnotmatch '\A[A-Za-z0-9._/-]+\z' -or $FccInstallRef.Contains("..") -or $FccInstallRef.Contains("//") -or $FccInstallRef.StartsWith("/") -or $FccInstallRef.EndsWith("/") -or $FccInstallRef.Contains("@{")) {
+if ($ModelGlotInstallRef) {
+    if ($ModelGlotInstallRef -cnotmatch '\A[A-Za-z0-9._/-]+\z' -or $ModelGlotInstallRef.Contains("..") -or $ModelGlotInstallRef.Contains("//") -or $ModelGlotInstallRef.StartsWith("/") -or $ModelGlotInstallRef.EndsWith("/") -or $ModelGlotInstallRef.Contains("@{")) {
         throw "-Ref must be a valid Git branch or tag name."
     }
-    if ($FccInstallVersion) { throw "-Ref and FCC_INSTALL_VERSION cannot be used together." }
+    if ($ModelGlotInstallVersion) { throw "-Ref and MODELGLOT_INSTALL_VERSION cannot be used together." }
 }
 
-if ($FccInstallVersion -and $FccInstallVersion -cnotmatch $FccReleasePattern) {
-    throw "FCC_INSTALL_VERSION must be a canonical major.minor.patch release."
+if ($ModelGlotInstallVersion -and $ModelGlotInstallVersion -cnotmatch $ModelGlotReleasePattern) {
+    throw "MODELGLOT_INSTALL_VERSION must be a canonical major.minor.patch release."
 }
 
 if ((-not [string]::IsNullOrWhiteSpace($TorchBackend)) -and (-not $VoiceLocal)) {
@@ -2442,22 +2436,22 @@ if ((-not [string]::IsNullOrWhiteSpace($TorchBackend)) -and (-not $VoiceLocal)) 
 
 if (-not $DryRun) {
     # A public pin requests a release; only the consumed marker skips dispatch.
-    $installerRelease = [Environment]::GetEnvironmentVariable("_FCC_INSTALLER_RELEASE")
-    if ($installerRelease -and $installerRelease -cne $FccInstallVersion) { throw "Invalid FCC release handoff." }
-    Remove-Item Env:_FCC_INSTALLER_RELEASE -ErrorAction SilentlyContinue
-    if (-not $installerRelease -and -not $FccInstallRef) {
+    $installerRelease = [Environment]::GetEnvironmentVariable("_MODELGLOT_INSTALLER_RELEASE")
+    if ($installerRelease -and $installerRelease -cne $ModelGlotInstallVersion) { throw "Invalid ModelGlot release handoff." }
+    Remove-Item Env:_MODELGLOT_INSTALLER_RELEASE -ErrorAction SilentlyContinue
+    if (-not $installerRelease -and -not $ModelGlotInstallRef) {
         $installerParameters = @{} + $PSBoundParameters
         Invoke-SelectedReleaseInstaller -InstallerArguments $installerParameters
         return
     }
-    if ($Update -and -not (Test-FccUpdateNeeded)) {
+    if ($Update -and -not (Test-ModelGlotUpdateNeeded)) {
         return
     }
     try {
         $requirements = Get-ReleaseToolchain
     } catch {
-        if ($FccInstallVersion) {
-            Write-Host "Could not load toolchain requirements for FCC $FccInstallVersion."
+        if ($ModelGlotInstallVersion) {
+            Write-Host "Could not load toolchain requirements for ModelGlot $ModelGlotInstallVersion."
             Write-Host "Retry: $(Get-InstallerRetryCommand)"
         }
         throw
@@ -2477,8 +2471,8 @@ try {
     $script:OriginalOpenCodeSearchPath = $env:Path
     Add-KnownBinDirectories
     $script:InstallCline = [bool] ((Get-ApplicationCommand "cline") -or (Get-ApplicationCommand "npm"))
-    Write-Step "Checking for running ModelGlot or legacy Free Claude Code processes"
-    Assert-NoFccProcessesRunning
+    Write-Step "Checking for running ModelGlot processes"
+    Assert-NoModelGlotProcessesRunning
 
     if (-not (Test-InteractiveInstaller)) {
         $hasDsh = [bool] (Get-ApplicationCommand "dsh")
@@ -2510,7 +2504,7 @@ try {
             $selectedAgents += $choice[0]
         }
     }
-    foreach ($name in @("FCC package", "PATH configuration", "FCC verification", "Desktop integration")) {
+    foreach ($name in @("ModelGlot package", "PATH configuration", "ModelGlot verification", "Desktop integration")) {
         $script:InstallSteps[$name] = "Not attempted"
     }
     if ($script:EnableRtkHeadroom) {
@@ -2535,10 +2529,10 @@ try {
 
     Ensure-SelectedCodingAgents
 
-    Start-InstallStep "FCC package" "Installing or updating ModelGlot"
-    Install-FreeClaudeCode
+    Start-InstallStep "ModelGlot package" "Installing or updating ModelGlot"
+    Install-ModelGlot
 
-    Configure-AndConfirmFreeClaudeCode
+    Configure-AndConfirmModelGlot
 
     if ($script:EnableRtkHeadroom) {
         Start-InstallStep "Headroom verification"
@@ -2561,7 +2555,7 @@ finally {
     if ($cancelled) { Complete-InstallStep "Cancelled" }
     elseif (-not $installSucceeded) { Complete-InstallStep "Failed" }
     Show-InstallReport -Succeeded $installSucceeded -Cancelled $cancelled
-    if ($script:FccVerified) { Show-InstallerNextSteps }
+    if ($script:ModelGlotVerified) { Show-InstallerNextSteps }
 }
 
 if ($DryRun) { Write-Host "Dry run complete. No changes were made." }

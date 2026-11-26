@@ -7,9 +7,9 @@ GATEWAY_MODEL_ID_PREFIX = "anthropic"
 # Claude Code currently treats any model id containing ``claude-3-`` as not
 # supporting thinking. This intentionally uses that client-side capability
 # heuristic while keeping the real provider/model ref reversible for routing.
-NO_THINKING_GATEWAY_MODEL_ID_PREFIX = "claude-3-freecc-no-thinking"
-DESKTOP_MODEL_PREFIX = "claude-fcc"
-DESKTOP_NO_THINKING_PREFIX = "claude-3-fcc"
+NO_THINKING_GATEWAY_MODEL_ID_PREFIX = "claude-3-modelglot-no-thinking"
+DESKTOP_MODEL_PREFIX = "claude-modelglot"
+DESKTOP_NO_THINKING_PREFIX = "claude-3-modelglot"
 
 
 def desktop_model_id(provider_model_ref: str, *, no_thinking: bool = False) -> str:

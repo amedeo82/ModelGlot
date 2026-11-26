@@ -51,7 +51,7 @@ def _set_thought_signature(tool_call: JsonObject, signature: str) -> None:
 
 
 def apply_native_message_signatures(messages: Sequence[JsonValue]) -> None:
-    """Translate caller-native signatures, leaving FCC provenance carriers intact."""
+    """Translate caller-native signatures, leaving ModelGlot provenance carriers intact."""
     for message in messages:
         if not isinstance(message, dict) or message.get("role") != "assistant":
             continue

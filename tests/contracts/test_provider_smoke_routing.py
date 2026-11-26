@@ -37,7 +37,7 @@ def test_provider_smoke_isolates_tiers_and_reasoning(
         clear_settings_cache()
         router = ModelRouter(get_settings())
         for alias in (
-            "fcc-smoke-default",
+            "modelglot-smoke-default",
             "claude-fable-5",
             "claude-opus-4-7",
             "claude-sonnet-4-5-20250929",

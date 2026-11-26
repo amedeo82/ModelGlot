@@ -6,8 +6,8 @@ Scope: revalidated at commit `4946962c` on 2026-11-17
 Audience: maintainers and contributors
 
 This plan adds a read-only **Token optimization** Admin view in four delivery waves:
-external-tool summaries, FCC usage normalization, durable aggregates, and optional trends
-and export. RTK and Headroom retain ownership of their savings ledgers. FCC owns provider
+external-tool summaries, ModelGlot usage normalization, durable aggregates, and optional trends
+and export. RTK and Headroom retain ownership of their savings ledgers. ModelGlot owns provider
 request usage, model attribution, and known model context limits. The implementation must
 not turn these different measurements into an exact combined total or a billing claim.
 
@@ -66,10 +66,10 @@ Effort values are rough developer-days for a contributor familiar with the repos
 | External command execution | Direct argument vector resolved with `shutil.which`; never a shell |
 | External failures | Separate `not_installed`, `timeout`, `invalid_output`, and `error` states |
 | Refresh | On view activation/manual refresh; short TTL and single-flight to avoid process storms |
-| External and FCC data | Separate endpoints and cards so either can load or fail independently |
+| External and ModelGlot data | Separate endpoints and cards so either can load or fail independently |
 | Usage record | Canonical nullable token fields with explicit gateway/provider model identities |
 | Retry accounting | Persist attempts for diagnosis only if needed; user-facing totals count one final logical request |
-| Persistence | Existing FCC SQLite database and migration registry; no second database |
+| Persistence | Existing ModelGlot SQLite database and migration registry; no second database |
 | Context utilization | Show only when both occupancy and a confirmed positive model limit are available |
 | Cost | Deferred to Wave 4 and excluded from the default response |
 | Export | CSV of the same filtered aggregate rows; no raw request content or hidden metadata |
@@ -87,7 +87,7 @@ Normalize inclusive provider totals without double counting cache or reasoning t
 - `reasoning_tokens`: the reported reasoning subset of output, never added again to output;
 - `total_tokens`: provider total when reported; otherwise a derived value only when every
   required component is known;
-- `estimated_input_tokens`: FCC's pre-flight estimate, stored separately and excluded from
+- `estimated_input_tokens`: ModelGlot's pre-flight estimate, stored separately and excluded from
   provider-reported sums.
 
 Use `core/anthropic/usage.py::anthropic_input_usage_fields` for inclusive input partitions.
@@ -354,7 +354,7 @@ when only one is installed; no configuration or provider behavior changed.
 
 ---
 
-## Wave 2 — Canonical FCC Usage Instrumentation
+## Wave 2 — Canonical ModelGlot Usage Instrumentation
 
 ### S2.1 — Canonical usage model and protocol normalization
 
@@ -432,7 +432,7 @@ successful request counts; provider and gateway/provider model fields are not co
   planned for SQLite. It is explicitly process-local and ephemeral in this step.
 - Add `AdminRuntimePort.usage(...)` and `GET /admin/api/usage` with strict filter parsing,
   allow-listed groupings, maximum range, deterministic ordering, and empty-result behavior.
-- Populate the Wave 1 view with a separate FCC usage section labeled “since server start.” Do
+- Populate the Wave 1 view with a separate ModelGlot usage section labeled “since server start.” Do
   not merge it with RTK/Headroom totals. Leave context rows empty until S3.3.
 
 **Tests.**
@@ -441,7 +441,7 @@ successful request counts; provider and gateway/provider model fields are not co
   filter/group/order behavior, null sums, and retry semantics.
 - `tests/api/test_admin.py`: valid/invalid filters, range bound, loopback/no-store, empty data,
   and sanitized runtime errors.
-- Extend the browser suite for loading, empty, populated, filter, and independent external/FCC
+- Extend the browser suite for loading, empty, populated, filter, and independent external/ModelGlot
   failure states.
 
 **Acceptance.** Aggregate fixtures match hand-computed counts, unknown token values do not
@@ -487,7 +487,7 @@ lifecycle and permissions.
   and no prompt/raw payload columns.
 
 **Acceptance.** Existing databases upgrade without data loss, duplicate delivery cannot double
-count, and usage storage shares the existing FCC file and transaction lifecycle.
+count, and usage storage shares the existing ModelGlot file and transaction lifecycle.
 
 **Effort.** 2 days.
 
@@ -566,14 +566,14 @@ unknown context is visibly unavailable rather than fabricated.
 
 - Add allow-listed daily buckets to usage aggregates and, separately, parse
   `rtk gain --daily --format json` if the observed schema remains compatible.
-- Render separate FCC usage and RTK savings charts with accessible tabular equivalents. Keep
+- Render separate ModelGlot usage and RTK savings charts with accessible tabular equivalents. Keep
   Headroom trends separate unless its report supplies a compatible, validated time series.
 - Cache and bound bucket counts; use UTC explicitly and document partial current-day buckets.
 
 **Tests.** Bucket boundaries, timezone conversion, missing days, retention truncation, empty
 series, external schema drift, and accessible chart/table parity.
 
-**Acceptance.** No line or stacked chart visually implies additive RTK/Headroom/FCC totals.
+**Acceptance.** No line or stacked chart visually implies additive RTK/Headroom/ModelGlot totals.
 
 **Effort.** 1 day.
 
@@ -629,7 +629,7 @@ Before completing each wave, verify:
   `RTK_TELEMETRY_DISABLED=1` is present for RTK.
 - No raw stderr, local path, command history, prompt, completion, tool argument, credential,
   or environment value reaches API/HTML/CSV.
-- One absent or failing tool does not hide the other tool or FCC usage. Slow external collection
+- One absent or failing tool does not hide the other tool or ModelGlot usage. Slow external collection
   does not block other Admin views or generation.
 - Provider writes are best-effort; database lock/failure cannot change client response success.
 - No duplicate successful request totals arise from retries, fallback, repeated terminal usage,
@@ -643,10 +643,10 @@ Before completing each wave, verify:
 
 - **Wave 1:** remove/hide the navigation entry and endpoint registration. Collector code is
   inert without the Admin call; provider request handling is untouched.
-- **Wave 2:** detach the usage observer/finalizer sink and hide the FCC usage section. Existing
+- **Wave 2:** detach the usage observer/finalizer sink and hide the ModelGlot usage section. Existing
   wire streams and request outcomes remain authoritative; no migration exists before Wave 3.
 - **Wave 3:** disable the usage sink while leaving migration 6 and retained metadata in place.
-  Never down-migrate or delete the shared FCC database as part of feature rollback. Re-enable
+  Never down-migrate or delete the shared ModelGlot database as part of feature rollback. Re-enable
   only after idempotent writes are verified.
 - **Wave 4:** remove trends/export/cost routes independently; underlying aggregate data and
   earlier read-only cards remain valid.

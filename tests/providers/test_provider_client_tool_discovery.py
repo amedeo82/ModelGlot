@@ -89,7 +89,7 @@ async def test_provider_discovery_call_and_result_round_trip(
             args = '{"query":"agent"}'
         elif step == 2:
             name = string_payload(
-                next(name for name in functions if name != "fcc_tool_search")
+                next(name for name in functions if name != "modelglot_tool_search")
             )
             if not native:
                 assert len(string_payload(name)) <= 64

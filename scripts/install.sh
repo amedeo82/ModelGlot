@@ -19,20 +19,19 @@ RTK_VERSION="0.44.2"
 HEADROOM_PACKAGE="headroom-ai[mcp]==0.40.0"
 RTK_RELEASE_BASE_URL="https://github.com/rtk-ai/rtk/releases/download/v$RTK_VERSION"
 UV_INSTALL_URL="https://astral.sh/uv/install.sh"
-FCC_REPOSITORY="https://github.com/amedeo82/ModelGlot"
-FCC_RAW_BASE="https://raw.githubusercontent.com/amedeo82/ModelGlot"
-FCC_GIT_BASE="$FCC_REPOSITORY.git"
-# Include retired entry points so updates reject older FCC processes before replacement.
-FCC_COMMANDS="fcc-desktop fcc-server fcc-claude fcc-codex fcc-pi fcc-opencode fcc-cline fcc-hermes fcc-dsh fcc-grok fcc-muse fcc-aider fcc-agy fcc-doctor fcc-update fcc-init free-claude-code"
+MODELGLOT_REPOSITORY="https://github.com/amedeo82/ModelGlot"
+MODELGLOT_RAW_BASE="https://raw.githubusercontent.com/amedeo82/ModelGlot"
+MODELGLOT_GIT_BASE="$MODELGLOT_REPOSITORY.git"
+MODELGLOT_COMMANDS="modelglot-desktop modelglot-server modelglot-claude modelglot-codex modelglot-pi modelglot-opencode modelglot-cline modelglot-hermes modelglot-dsh modelglot-grok modelglot-muse modelglot-aider modelglot-agy modelglot-doctor modelglot-update modelglot-init"
 
 dry_run=0
 update_only=0
 voice_local=0
-fcc_install_version=${FCC_INSTALL_VERSION:-}
-if [ -n "$fcc_install_version" ] && [ -z "${FCC_INSTALL_REF+x}" ]; then
-    fcc_install_ref=""
+modelglot_install_version=${MODELGLOT_INSTALL_VERSION:-}
+if [ -n "$modelglot_install_version" ] && [ -z "${MODELGLOT_INSTALL_REF+x}" ]; then
+    modelglot_install_ref=""
 else
-    fcc_install_ref=${FCC_INSTALL_REF-main}
+    modelglot_install_ref=${MODELGLOT_INSTALL_REF-main}
 fi
 install_claude=1
 install_codex=1
@@ -63,7 +62,7 @@ install_step_outcome=Completed
 install_stage_number=0
 install_stage_count=0
 install_cancelled=0
-fcc_verified=0
+modelglot_verified=0
 desktop_ready=0
 installer_path=$0
 # With a piped installer, $0 names the shell, which may be an existing binary.
@@ -82,7 +81,7 @@ Options:
   --voice-local            Install local Whisper voice transcription support.
   --torch-backend VALUE    Use a uv PyTorch backend, such as cu130. Requires local voice.
   --rtk-headroom           Install and configure RTK + Headroom token optimization.
-  --update                 Skip when FCC is already this release or newer.
+  --update                 Skip when ModelGlot is already this release or newer.
   --dry-run                Print commands without running them.
   --help                   Show this help text.
 USAGE
@@ -109,8 +108,8 @@ write_install_log() {
 initialize_install_log() {
     [ "$dry_run" -eq 0 ] || return 0
     log_timestamp=$(date '+%Y%m%d-%H%M%S' 2>/dev/null) || log_timestamp=unknown
-    install_log="${HOME:-}/.fcc/logs/install-$log_timestamp-$$.log"
-    if [ -n "${HOME:-}" ] && (umask 077; mkdir -p "$HOME/.fcc/logs" && set -C && : >"$install_log") 2>/dev/null; then
+    install_log="${HOME:-}/.modelglot/logs/install-$log_timestamp-$$.log"
+    if [ -n "${HOME:-}" ] && (umask 077; mkdir -p "$HOME/.modelglot/logs" && set -C && : >"$install_log") 2>/dev/null; then
         write_install_log "Starting ModelGlot installer"
     else
         install_log=""
@@ -151,31 +150,31 @@ start_install_step() {
 print_installer_retry() {
     printf 'Retry: '
     if [ -f "$installer_path" ]; then
-        if [ -n "$fcc_install_version" ]; then
-            printf 'FCC_INSTALL_VERSION='
-            shell_quote "$fcc_install_version"
+        if [ -n "$modelglot_install_version" ]; then
+            printf 'MODELGLOT_INSTALL_VERSION='
+            shell_quote "$modelglot_install_version"
             printf ' '
         fi
         printf 'sh '
         shell_quote "$installer_path"
     else
         installer_source_ref=main
-        if [ -n "$fcc_install_ref" ]; then
-            installer_source_ref=$fcc_install_ref
-        elif [ -n "$fcc_install_version" ]; then
-            installer_source_ref="v$fcc_install_version"
+        if [ -n "$modelglot_install_ref" ]; then
+            installer_source_ref=$modelglot_install_ref
+        elif [ -n "$modelglot_install_version" ]; then
+            installer_source_ref="v$modelglot_install_version"
         fi
-        printf "curl -fsSL '%s/%s/scripts/install.sh' | " "$FCC_RAW_BASE" "$installer_source_ref"
-        if [ -n "$fcc_install_version" ]; then
-            printf 'FCC_INSTALL_VERSION='
-            shell_quote "$fcc_install_version"
+        printf "curl -fsSL '%s/%s/scripts/install.sh' | " "$MODELGLOT_RAW_BASE" "$installer_source_ref"
+        if [ -n "$modelglot_install_version" ]; then
+            printf 'MODELGLOT_INSTALL_VERSION='
+            shell_quote "$modelglot_install_version"
             printf ' '
         fi
         printf 'sh -s --'
     fi
-    if [ -n "$fcc_install_ref" ]; then
+    if [ -n "$modelglot_install_ref" ]; then
         printf ' --ref '
-        shell_quote "$fcc_install_ref"
+        shell_quote "$modelglot_install_ref"
     fi
     [ "$voice_local" -eq 0 ] || printf ' --voice-local'
     if [ -n "$torch_backend" ]; then
@@ -217,7 +216,7 @@ finish_install() {
             fi
         fi
         [ -z "$install_log" ] || printf 'Installer log: %s\n' "$install_log"
-        if [ "$fcc_verified" -eq 1 ]; then show_installer_next_steps; fi
+        if [ "$modelglot_verified" -eq 1 ]; then show_installer_next_steps; fi
     fi
     cleanup
     exit "$install_exit_code"
@@ -302,64 +301,64 @@ choose_coding_agents() {
     exec 4>"$selection_output"
 
     while :; do
-        if select_coding_agent claude "Claude Code" fcc-claude; then
+        if select_coding_agent claude "Claude Code" modelglot-claude; then
             install_claude=1
         else
             install_claude=0
         fi
-        if select_coding_agent codex Codex fcc-codex; then
+        if select_coding_agent codex Codex modelglot-codex; then
             install_codex=1
         else
             install_codex=0
         fi
-        if select_coding_agent pi Pi fcc-pi; then
+        if select_coding_agent pi Pi modelglot-pi; then
             install_pi=1
         else
             install_pi=0
         fi
-        if select_coding_agent opencode OpenCode fcc-opencode; then
+        if select_coding_agent opencode OpenCode modelglot-opencode; then
             install_opencode=1
         else
             install_opencode=0
         fi
 
-        if select_coding_agent cline "Cline CLI" fcc-cline; then
+        if select_coding_agent cline "Cline CLI" modelglot-cline; then
             install_cline=1
         else
             install_cline=0
         fi
 
-        if select_coding_agent hermes "Hermes Agent" fcc-hermes; then
+        if select_coding_agent hermes "Hermes Agent" modelglot-hermes; then
             install_hermes=1
         else
             install_hermes=0
         fi
 
-        if select_coding_agent dsh "DeepSeek Harness" fcc-dsh; then
+        if select_coding_agent dsh "DeepSeek Harness" modelglot-dsh; then
             install_dsh=1
         else
             install_dsh=0
         fi
 
-        if select_coding_agent grok "Grok Build" fcc-grok; then
+        if select_coding_agent grok "Grok Build" modelglot-grok; then
             install_grok=1
         else
             install_grok=0
         fi
 
-        if select_coding_agent muse "Muse Code" fcc-muse; then
+        if select_coding_agent muse "Muse Code" modelglot-muse; then
             install_muse=1
         else
             install_muse=0
         fi
 
-        if select_coding_agent aider Aider fcc-aider; then
+        if select_coding_agent aider Aider modelglot-aider; then
             install_aider=1
         else
             install_aider=0
         fi
 
-        if select_coding_agent agy "Antigravity CLI" fcc-agy; then
+        if select_coding_agent agy "Antigravity CLI" modelglot-agy; then
             install_agy=1
         else
             install_agy=0
@@ -502,7 +501,7 @@ add_npm_bin_directories() {
     fi
 }
 
-fcc_process_ids() {
+modelglot_process_ids() {
     command_name=$1
 
     if command -v pgrep >/dev/null 2>&1; then
@@ -528,10 +527,10 @@ fcc_process_ids() {
         ' || true
 }
 
-assert_no_fcc_processes_running() {
+assert_no_modelglot_processes_running() {
     running=""
-    for command_name in $FCC_COMMANDS; do
-        process_ids=$(fcc_process_ids "$command_name")
+    for command_name in $MODELGLOT_COMMANDS; do
+        process_ids=$(modelglot_process_ids "$command_name")
         [ -n "$process_ids" ] || continue
 
         for process_id in $process_ids; do
@@ -583,7 +582,7 @@ download_and_run() {
         return 0
     fi
 
-    temporary_file=$(mktemp "${TMPDIR:-/tmp}/fcc-install.XXXXXX") || fail "Unable to create a temporary file for $label."
+    temporary_file=$(mktemp "${TMPDIR:-/tmp}/modelglot-install.XXXXXX") || fail "Unable to create a temporary file for $label."
     print_command curl -fsSL "$url" -o "$temporary_file"
     if curl -fsSL "$url" -o "$temporary_file"; then
         :
@@ -723,7 +722,7 @@ install_rtk() {
     fi
 
     [ -n "${HOME:-}" ] || fail "HOME is required to install RTK."
-    temporary_file=$(mktemp "${TMPDIR:-/tmp}/fcc-rtk.XXXXXX") || fail "Unable to create a temporary RTK archive."
+    temporary_file=$(mktemp "${TMPDIR:-/tmp}/modelglot-rtk.XXXXXX") || fail "Unable to create a temporary RTK archive."
     print_command curl -fsSL "$rtk_archive_url" -o "$temporary_file"
     if curl -fsSL "$rtk_archive_url" -o "$temporary_file"; then
         :
@@ -954,7 +953,7 @@ opencode_rtk_plugin() {
 }
 
 assert_no_opencode_processes_running() {
-    [ -z "$(fcc_process_ids opencode)$(fcc_process_ids opencode2)" ] ||
+    [ -z "$(modelglot_process_ids opencode)$(modelglot_process_ids opencode2)" ] ||
         fail "Close OpenCode before replacing its executable or RTK plugin, then rerun the installer."
 }
 
@@ -1387,7 +1386,7 @@ ensure_agy() {
             return 0
         fi
     fi
-    [ -z "$(fcc_process_ids agy)" ] || fail "Close Antigravity CLI before replacing its executable, then rerun the installer."
+    [ -z "$(modelglot_process_ids agy)" ] || fail "Close Antigravity CLI before replacing its executable, then rerun the installer."
     if command -v agy >/dev/null 2>&1; then
         run agy update
     else
@@ -1605,12 +1604,12 @@ parse_args() {
             --ref)
                 shift
                 [ "$#" -gt 0 ] || fail "--ref requires a value."
-                fcc_install_ref=$1
-                [ -n "$fcc_install_ref" ] || fail "--ref requires a non-empty value."
+                modelglot_install_ref=$1
+                [ -n "$modelglot_install_ref" ] || fail "--ref requires a non-empty value."
                 ;;
             --ref=*)
-                fcc_install_ref=${1#*=}
-                [ -n "$fcc_install_ref" ] || fail "--ref requires a non-empty value."
+                modelglot_install_ref=${1#*=}
+                [ -n "$modelglot_install_ref" ] || fail "--ref requires a non-empty value."
                 ;;
             --voice-local)
                 voice_local=1
@@ -1648,20 +1647,20 @@ parse_args() {
 }
 
 validate_args() {
-    if [ -n "$fcc_install_ref" ]; then
-        case "$fcc_install_ref" in
+    if [ -n "$modelglot_install_ref" ]; then
+        case "$modelglot_install_ref" in
             *[!A-Za-z0-9._/-]*|*..*|*//*|/*|*/|*@\{*) fail "--ref must be a valid Git branch or tag name." ;;
         esac
-        if [ -n "$fcc_install_version" ]; then
-            fail "--ref and FCC_INSTALL_VERSION cannot be used together."
+        if [ -n "$modelglot_install_version" ]; then
+            fail "--ref and MODELGLOT_INSTALL_VERSION cannot be used together."
         fi
     fi
-    if [ -n "$fcc_install_version" ]; then
-        case "$fcc_install_version" in
-            *[!0-9.]*) fail "FCC_INSTALL_VERSION must be a canonical major.minor.patch release." ;;
+    if [ -n "$modelglot_install_version" ]; then
+        case "$modelglot_install_version" in
+            *[!0-9.]*) fail "MODELGLOT_INSTALL_VERSION must be a canonical major.minor.patch release." ;;
         esac
-        printf '%s\n' "$fcc_install_version" | grep -Eq '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$' ||
-            fail "FCC_INSTALL_VERSION must be a canonical major.minor.patch release."
+        printf '%s\n' "$modelglot_install_version" | grep -Eq '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$' ||
+            fail "MODELGLOT_INSTALL_VERSION must be a canonical major.minor.patch release."
     fi
     if [ -n "$torch_backend" ] && [ "$voice_local" -ne 1 ]; then
         fail "--torch-backend requires --voice-local."
@@ -1674,19 +1673,19 @@ package_spec() {
     else
         printf '%s' 'modelglot'
     fi
-    if [ -n "$fcc_install_ref" ]; then
-        printf ' @ git+%s@%s' "$FCC_GIT_BASE" "$fcc_install_ref"
+    if [ -n "$modelglot_install_ref" ]; then
+        printf ' @ git+%s@%s' "$MODELGLOT_GIT_BASE" "$modelglot_install_ref"
         return 0
     fi
-    if [ -n "$fcc_install_version" ]; then
-        printf '==%s' "$fcc_install_version"
+    if [ -n "$modelglot_install_version" ]; then
+        printf '==%s' "$modelglot_install_version"
     elif [ "$dry_run" -eq 1 ]; then
         printf '%s' '==<selected-release>'
     fi
 }
 
-install_free_claude_code() {
-    assert_no_fcc_processes_running
+install_modelglot() {
+    assert_no_modelglot_processes_running
     spec=$(package_spec)
 
     set -- uv tool install --force --refresh-package modelglot
@@ -1707,26 +1706,26 @@ install_free_claude_code() {
     run "$@" "$spec"
 }
 
-configure_and_verify_free_claude_code() {
+configure_and_verify_modelglot() {
     start_install_step "PATH configuration"
     run uv tool update-shell
 
     if [ "$dry_run" -eq 1 ]; then
         print_command uv tool dir --bin
-        printf '+ verify fcc-desktop, fcc-server, fcc-claude, fcc-codex, fcc-pi, fcc-opencode, fcc-cline, fcc-hermes, fcc-dsh, fcc-grok, fcc-muse, fcc-aider, and fcc-agy in the uv tool bin directory\n'
-        print_command fcc-server --version
+        printf '+ verify modelglot-desktop, modelglot-server, modelglot-claude, modelglot-codex, modelglot-pi, modelglot-opencode, modelglot-cline, modelglot-hermes, modelglot-dsh, modelglot-grok, modelglot-muse, modelglot-aider, and modelglot-agy in the uv tool bin directory\n'
+        print_command modelglot-server --version
         return 0
     fi
 
     add_uv_tool_bin_directory
-    start_install_step "FCC verification"
+    start_install_step "ModelGlot verification"
 
-    for command_name in fcc-desktop fcc-server fcc-claude fcc-codex fcc-pi fcc-opencode fcc-cline fcc-hermes fcc-dsh fcc-grok fcc-muse fcc-aider fcc-agy fcc-doctor fcc-update; do
+    for command_name in modelglot-desktop modelglot-server modelglot-claude modelglot-codex modelglot-pi modelglot-opencode modelglot-cline modelglot-hermes modelglot-dsh modelglot-grok modelglot-muse modelglot-aider modelglot-agy modelglot-doctor modelglot-update; do
         [ -x "$tool_bin/$command_name" ] || fail "ModelGlot installation did not create $tool_bin/$command_name."
     done
 
-    run "$tool_bin/fcc-server" --version
-    fcc_verified=1
+    run "$tool_bin/modelglot-server" --version
+    modelglot_verified=1
 }
 
 shell_quote() {
@@ -1737,55 +1736,55 @@ shell_quote() {
 install_macos_desktop_app() {
     [ "$(uname -s)" = "Darwin" ] || return 0
     if [ "$dry_run" -eq 1 ]; then
-        print_command fcc-desktop --install-macos-app
+        print_command modelglot-desktop --install-macos-app
         return 0
     fi
-    run "$tool_bin/fcc-desktop" --install-macos-app
+    run "$tool_bin/modelglot-desktop" --install-macos-app
 }
 
 show_installer_next_steps() {
     if [ "$desktop_ready" -eq 1 ]; then
         printf '\nModelGlot is installed and verified. Open ModelGlot from Applications or the desktop to run it in the background.\n'
-        printf 'For terminal use, start the proxy with: fcc-server\n'
+        printf 'For terminal use, start the proxy with: modelglot-server\n'
     else
-        printf '\nModelGlot is installed and verified. Start the proxy with: fcc-server\n'
+        printf '\nModelGlot is installed and verified. Start the proxy with: modelglot-server\n'
     fi
     if [ "$install_claude" -eq 1 ]; then
-        printf 'Run Claude Code with: fcc-claude\n'
+        printf 'Run Claude Code with: modelglot-claude\n'
     fi
     if [ "$install_codex" -eq 1 ]; then
-        printf 'Run Codex with: fcc-codex\n'
+        printf 'Run Codex with: modelglot-codex\n'
     fi
     if [ "$pi_available" -eq 1 ]; then
-        printf 'Run Pi with: fcc-pi\n'
+        printf 'Run Pi with: modelglot-pi\n'
     fi
     if [ "$install_opencode" -eq 1 ]; then
-        printf 'Run OpenCode with: fcc-opencode\n'
+        printf 'Run OpenCode with: modelglot-opencode\n'
     fi
     if [ "$install_cline" -eq 1 ]; then
-        printf 'Run Cline with: fcc-cline\n'
+        printf 'Run Cline with: modelglot-cline\n'
     fi
     if [ "$install_hermes" -eq 1 ]; then
-        printf 'Run Hermes Agent with: fcc-hermes\n'
+        printf 'Run Hermes Agent with: modelglot-hermes\n'
     fi
     if [ "$install_dsh" -eq 1 ]; then
-        printf 'Run DeepSeek Harness with: fcc-dsh\n'
+        printf 'Run DeepSeek Harness with: modelglot-dsh\n'
     fi
     if [ "$install_grok" -eq 1 ]; then
-        printf 'Run Grok Build with: fcc-grok\n'
+        printf 'Run Grok Build with: modelglot-grok\n'
     fi
     if [ "$install_muse" -eq 1 ]; then
-        printf 'Run Muse Code with: fcc-muse\n'
+        printf 'Run Muse Code with: modelglot-muse\n'
     fi
     if [ "$install_aider" -eq 1 ]; then
-        printf 'Run Aider with: fcc-aider\n'
+        printf 'Run Aider with: modelglot-aider\n'
     fi
     if [ "$install_agy" -eq 1 ]; then
-        printf 'Run Antigravity CLI with: fcc-agy\n'
+        printf 'Run Antigravity CLI with: modelglot-agy\n'
     fi
 }
 
-installed_fcc_version() {
+installed_modelglot_version() {
     # Look where uv usually lives without changing the PATH the installer preserves.
     listing=$(
         add_known_bin_directories
@@ -1794,17 +1793,15 @@ installed_fcc_version() {
     ) || return 1
     version=$(printf '%s\n' "$listing" | awk '
         $1 == "modelglot" && $2 ~ /^v/ { current = substr($2, 2) }
-        $1 == "free-claude-code" && $2 ~ /^v/ && legacy == "" { legacy = substr($2, 2) }
         END {
             if (current != "") print current
-            else if (legacy != "") print legacy
         }
     ')
     [ -n "$version" ] || return 1
     printf '%s\n' "$version"
 }
 
-compare_fcc_versions() {
+compare_modelglot_versions() {
     # Prints older, current, or newer for an installed version against a release.
     printf '%s %s\n' "$1" "$2" | awk '
         function parse(value, parts) {
@@ -1827,43 +1824,43 @@ compare_fcc_versions() {
     '
 }
 
-fcc_update_is_needed() {
-    if [ -n "$fcc_install_ref" ]; then
-        printf 'Refreshing ModelGlot from %s.\n' "$fcc_install_ref"
+modelglot_update_is_needed() {
+    if [ -n "$modelglot_install_ref" ]; then
+        printf 'Refreshing ModelGlot from %s.\n' "$modelglot_install_ref"
         return 0
     fi
-    installed=$(installed_fcc_version) || return 0
-    comparison=$(compare_fcc_versions "$installed" "$fcc_install_version") || return 0
+    installed=$(installed_modelglot_version) || return 0
+    comparison=$(compare_modelglot_versions "$installed" "$modelglot_install_version") || return 0
     case "$comparison" in
         current)
             printf 'ModelGlot %s is already up to date.\n' "$installed"
             return 1
             ;;
         newer)
-            printf 'ModelGlot %s is newer than the published version %s. No update needed.\n' "$installed" "$fcc_install_version"
+            printf 'ModelGlot %s is newer than the published version %s. No update needed.\n' "$installed" "$modelglot_install_version"
             return 1
             ;;
     esac
-    printf 'ModelGlot update available: %s -> %s.\n' "$installed" "$fcc_install_version"
+    printf 'ModelGlot update available: %s -> %s.\n' "$installed" "$modelglot_install_version"
 }
 
 dispatch_release() {
-    release_base="$FCC_REPOSITORY/releases"
-    if [ -z "$fcc_install_version" ]; then
+    release_base="$MODELGLOT_REPOSITORY/releases"
+    if [ -z "$modelglot_install_version" ]; then
         selected_url=$(curl -fsSL --max-time 10 --max-redirs 5 -o /dev/null -w '%{url_effective}' "$release_base/latest") ||
-            fail "Could not resolve the latest completed FCC release."
+            fail "Could not resolve the latest completed ModelGlot release."
         case "$selected_url" in
-            "$release_base/tag/v"[0-9]*) fcc_install_version=${selected_url#"$release_base/tag/v"} ;;
-            *) fail "GitHub returned an unexpected FCC release URL." ;;
+            "$release_base/tag/v"[0-9]*) modelglot_install_version=${selected_url#"$release_base/tag/v"} ;;
+            *) fail "GitHub returned an unexpected ModelGlot release URL." ;;
         esac
         validate_args
     fi
-    if ! selected_installer=$(curl -fsSL --max-time 10 --max-redirs 5 "$FCC_RAW_BASE/v$fcc_install_version/scripts/install.sh") ||
+    if ! selected_installer=$(curl -fsSL --max-time 10 --max-redirs 5 "$MODELGLOT_RAW_BASE/v$modelglot_install_version/scripts/install.sh") ||
         [ -z "$selected_installer" ] || ! sh -n -c "$selected_installer"; then
         print_installer_retry >&2
-        fail "Could not load the installer for FCC $fcc_install_version."
+        fail "Could not load the installer for ModelGlot $modelglot_install_version."
     fi
-    FCC_INSTALL_VERSION=$fcc_install_version _FCC_INSTALLER_RELEASE=$fcc_install_version exec sh -c "$selected_installer" sh "$@"
+    MODELGLOT_INSTALL_VERSION=$modelglot_install_version _MODELGLOT_INSTALLER_RELEASE=$modelglot_install_version exec sh -c "$selected_installer" sh "$@"
 }
 
 parse_toolchain_requirements() {
@@ -1905,21 +1902,21 @@ parse_toolchain_requirements() {
 }
 
 load_toolchain() {
-    if [ -n "$fcc_install_ref" ]; then
-        metadata_ref=$fcc_install_ref
-        metadata_label=$fcc_install_ref
+    if [ -n "$modelglot_install_ref" ]; then
+        metadata_ref=$modelglot_install_ref
+        metadata_label=$modelglot_install_ref
     else
-        metadata_ref="v$fcc_install_version"
-        metadata_label=$fcc_install_version
+        metadata_ref="v$modelglot_install_version"
+        metadata_label=$modelglot_install_version
     fi
-    metadata_url="$FCC_RAW_BASE/$metadata_ref/pyproject.toml"
+    metadata_url="$MODELGLOT_RAW_BASE/$metadata_ref/pyproject.toml"
     if ! toolchain_text=$(curl -fsSL --max-time 10 --max-redirs 5 "$metadata_url"); then
         print_installer_retry >&2
-        fail "Could not fetch toolchain requirements for FCC $metadata_label."
+        fail "Could not fetch toolchain requirements for ModelGlot $metadata_label."
     fi
     if ! toolchain_versions=$(printf '%s\n' "$toolchain_text" | parse_toolchain_requirements); then
         print_installer_retry >&2
-        fail "Invalid Python or uv requirement in FCC $metadata_label pyproject.toml."
+        fail "Invalid Python or uv requirement in ModelGlot $metadata_label pyproject.toml."
     fi
     PYTHON_VERSION=${toolchain_versions%% *}
     MIN_UV_VERSION=${toolchain_versions#* }
@@ -1929,11 +1926,11 @@ parse_args "$@"
 validate_args
 if [ "$dry_run" -eq 0 ]; then
     # Consume this invocation's handoff before any prerequisite processes run.
-    installer_release=${_FCC_INSTALLER_RELEASE:-}
-    [ -z "$installer_release" ] || [ "$installer_release" = "$fcc_install_version" ] || fail "Invalid FCC release handoff."
-    unset _FCC_INSTALLER_RELEASE
-    [ -n "$fcc_install_ref" ] || [ -n "$installer_release" ] || dispatch_release "$@"
-    if [ "$update_only" -eq 1 ] && ! fcc_update_is_needed; then
+    installer_release=${_MODELGLOT_INSTALLER_RELEASE:-}
+    [ -z "$installer_release" ] || [ "$installer_release" = "$modelglot_install_version" ] || fail "Invalid ModelGlot release handoff."
+    unset _MODELGLOT_INSTALLER_RELEASE
+    [ -n "$modelglot_install_ref" ] || [ -n "$installer_release" ] || dispatch_release "$@"
+    if [ "$update_only" -eq 1 ] && ! modelglot_update_is_needed; then
         exit 0
     fi
     load_toolchain
@@ -1952,7 +1949,7 @@ if ! command -v hermes >/dev/null 2>&1 && ! hermes_platform_is_supported; then
     install_hermes=0
 fi
 step "Checking for running ModelGlot processes"
-assert_no_fcc_processes_running
+assert_no_modelglot_processes_running
 
 if ! installer_is_interactive && ! command -v dsh >/dev/null 2>&1; then
     if [ "$dry_run" -eq 1 ] && command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
@@ -1990,7 +1987,7 @@ printf '\n'
 [ -z "$torch_backend" ] || printf '  PyTorch backend: %s\n' "$torch_backend"
 [ "$enable_rtk_headroom" -eq 0 ] || printf '  Run RTK + Headroom setup for supported selected agents.\n'
 printf 'Press Ctrl+C to cancel. You can rerun the installer afterward.\n'
-pending_steps=$(printf 'uv\n%s\nFCC package\nPATH configuration\nFCC verification\n' "$pending_steps"
+pending_steps=$(printf 'uv\n%s\nModelGlot package\nPATH configuration\nModelGlot verification\n' "$pending_steps"
     [ "$(uname -s)" != Darwin ] || printf 'Desktop integration\n'
     [ "$enable_rtk_headroom" -eq 0 ] || printf 'Headroom verification\nRTK configuration\nHeadroom configuration\n'
 )
@@ -2030,10 +2027,10 @@ ensure_uv
 
 ensure_selected_coding_agents
 
-start_install_step "FCC package" "Installing or updating ModelGlot"
-install_free_claude_code
+start_install_step "ModelGlot package" "Installing or updating ModelGlot"
+install_modelglot
 
-configure_and_verify_free_claude_code
+configure_and_verify_modelglot
 
 if [ "$(uname -s)" = "Darwin" ]; then
     start_install_step "Desktop integration" "Installing the ModelGlot desktop launcher"

@@ -1,4 +1,4 @@
-"""Custom endpoint resource ownership using FCC's existing wire transports."""
+"""Custom endpoint resource ownership using ModelGlot's existing wire transports."""
 
 from collections.abc import AsyncIterator, Mapping
 from typing import override

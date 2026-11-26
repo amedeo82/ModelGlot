@@ -410,7 +410,7 @@ async def probe_health():
 )
 async def list_models(
     view: ModelCatalogView | None = None,
-    x_fcc_model_view: ModelCatalogView | None = Header(default=None),
+    x_modelglot_model_view: ModelCatalogView | None = Header(default=None),
     services: ApiServices = Depends(get_services),
     _auth=Depends(require_proxy_auth),
 ):
@@ -420,7 +420,7 @@ async def list_models(
     return build_models_list_response(
         snapshot.settings,
         snapshot,
-        view=view or x_fcc_model_view or ModelCatalogView.CLAUDE,
+        view=view or x_modelglot_model_view or ModelCatalogView.CLAUDE,
     )
 
 

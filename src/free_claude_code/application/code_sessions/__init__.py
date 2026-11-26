@@ -1,4 +1,4 @@
-"""Persistent native coding conversations owned by FCC."""
+"""Persistent native coding conversations owned by ModelGlot."""
 
 from .models import (
     CodeConflictError,

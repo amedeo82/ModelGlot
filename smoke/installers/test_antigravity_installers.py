@@ -120,8 +120,8 @@ def test_agy_update_failure_stops(agy_harness: InstallerHarness):
 
 def test_agy_running_process_prevents_replacement(agy_harness: InstallerHarness):
     _installed(agy_harness, "1.5.8")
-    agy_harness.env["FCC_RUNNING_COMMAND"] = "agy"
-    agy_harness.env["FCC_RUNNING_PHASE"] = "early"
+    agy_harness.env["MODELGLOT_RUNNING_COMMAND"] = "agy"
+    agy_harness.env["MODELGLOT_RUNNING_PHASE"] = "early"
     result = _ensure(agy_harness)
     assert result.returncode != 0
     assert "Close Antigravity" in result.stdout + result.stderr
@@ -155,7 +155,7 @@ def test_agy_windows_default_install_directory_is_discovered(
 
 
 @pytest.mark.parametrize("selected", [False, True])
-def test_agy_selection_preserves_native_settings_and_verifies_fcc(
+def test_agy_selection_preserves_native_settings_and_verifies_modelglot(
     agy_harness: InstallerHarness, selected: bool
 ):
     windows = os.name == "nt"
@@ -180,12 +180,12 @@ def test_agy_selection_preserves_native_settings_and_verifies_fcc(
     calls = agy_harness.calls()
     assert ("agy-install" in calls) is selected
     assert ("agy:--version" in calls) is selected
-    assert "fcc-server:--version" in calls
+    assert "modelglot-server:--version" in calls
     assert settings.read_text() == original
-    assert not (home / ".fcc/antigravity-integration.json").exists()
+    assert not (home / ".modelglot/antigravity-integration.json").exists()
     if selected:
         assert "Connect Antigravity CLI" not in result.stdout
-        assert "Run Antigravity CLI with: fcc-agy" in result.stdout
+        assert "Run Antigravity CLI with: modelglot-agy" in result.stdout
         assert not any(
             f"{command}:--version" in calls
             for command in CODING_AGENTS

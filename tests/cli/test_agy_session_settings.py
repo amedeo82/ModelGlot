@@ -1,4 +1,4 @@
-"""FCC configures Antigravity for the child session without a saved connection."""
+"""ModelGlot configures Antigravity for the child session without a saved connection."""
 
 from collections.abc import Mapping
 from pathlib import Path
@@ -54,7 +54,7 @@ def test_fresh_launch_uses_temporary_settings(launch_capture: LaunchCapture) -> 
         ["--print=--settings"],
     ],
 )
-def test_user_arguments_follow_fcc_defaults_without_interpretation(
+def test_user_arguments_follow_modelglot_defaults_without_interpretation(
     args: list[str], launch_capture: LaunchCapture
 ) -> None:
     launch("agy", args)

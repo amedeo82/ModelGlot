@@ -74,7 +74,7 @@ async def mistral_wire(
     )
     try:
         async with httpx.AsyncClient(
-            transport=httpx.ASGITransport(app=app), base_url="http://fcc.test"
+            transport=httpx.ASGITransport(app=app), base_url="http://modelglot.test"
         ) as client:
             yield client, requests
     finally:
@@ -93,7 +93,7 @@ async def mistral_wire(
         "x-grok-session-id",
         "x-meta-ai-gateway-session-id",
         "x-tbh-session-id",
-        "x-fcc-launch-id",
+        "x-modelglot-launch-id",
     ],
 )
 async def test_affinity_for_existing_harness_identity(

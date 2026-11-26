@@ -156,12 +156,12 @@ class TestManagedClaudeSession:
 
         session = ManagedClaudeSession(
             workspace_path="/tmp/test",
-            proxy_root_url="http://localhost:8082",
+            proxy_root_url="http://localhost:16969",
             allowed_dirs=["/home/user/projects"],
-            auth_token="freecc",
+            auth_token="modelglot",
         )
         assert session.workspace == os.path.normpath(os.path.abspath("/tmp/test"))
-        assert session.proxy_root_url == "http://localhost:8082"
+        assert session.proxy_root_url == "http://localhost:16969"
         assert not session.is_busy
 
     def test_session_extract_session_id(self) -> None:
@@ -202,7 +202,7 @@ class TestManagedClaudeSession:
         from free_claude_code.cli.managed.session import ManagedClaudeSession
 
         session = ManagedClaudeSession(
-            "/tmp", "http://localhost:8082", auth_token="freecc"
+            "/tmp", "http://localhost:16969", auth_token="modelglot"
         )
 
         # Mock subprocess
@@ -248,7 +248,7 @@ class TestManagedClaudeSession:
         from free_claude_code.cli.managed.session import ManagedClaudeSession
 
         session = ManagedClaudeSession(
-            "/tmp", "http://localhost:8082", auth_token="freecc"
+            "/tmp", "http://localhost:16969", auth_token="modelglot"
         )
 
         mock_process = AsyncMock()
@@ -277,7 +277,7 @@ class TestManagedClaudeSession:
         from free_claude_code.cli.managed.session import ManagedClaudeSession
 
         session = ManagedClaudeSession(
-            "/tmp", "http://localhost:8082", auth_token="freecc"
+            "/tmp", "http://localhost:16969", auth_token="modelglot"
         )
 
         mock_process = AsyncMock()
@@ -306,7 +306,7 @@ class TestManagedClaudeSession:
         from free_claude_code.cli.managed.session import ManagedClaudeSession
 
         session = ManagedClaudeSession(
-            "/tmp", "http://localhost:8082", auth_token="freecc"
+            "/tmp", "http://localhost:16969", auth_token="modelglot"
         )
 
         mock_process = AsyncMock()
@@ -336,7 +336,7 @@ class TestManagedClaudeSession:
         from free_claude_code.cli.managed.session import ManagedClaudeSession
 
         session = ManagedClaudeSession(
-            "/tmp", "http://localhost:8082", auth_token="freecc"
+            "/tmp", "http://localhost:16969", auth_token="modelglot"
         )
 
         mock_process = AsyncMock()
@@ -369,7 +369,7 @@ class TestManagedClaudeSession:
         from free_claude_code.cli.managed.session import ManagedClaudeSession
 
         session = ManagedClaudeSession(
-            "/tmp", "http://localhost:8082", auth_token="freecc"
+            "/tmp", "http://localhost:16969", auth_token="modelglot"
         )
 
         mock_process = AsyncMock()
@@ -399,7 +399,7 @@ class TestManagedClaudeSession:
         from free_claude_code.cli.managed.session import ManagedClaudeSession
 
         session = ManagedClaudeSession(
-            "/tmp", "http://localhost:8082", auth_token="freecc"
+            "/tmp", "http://localhost:16969", auth_token="modelglot"
         )
 
         mock_process = AsyncMock()
@@ -429,7 +429,7 @@ class TestManagedClaudeSession:
         from free_claude_code.cli.managed.session import ManagedClaudeSession
 
         session = ManagedClaudeSession(
-            "/tmp", "http://localhost:8082", auth_token="freecc"
+            "/tmp", "http://localhost:16969", auth_token="modelglot"
         )
 
         mock_process = AsyncMock()
@@ -485,7 +485,7 @@ class TestManagedClaudeSession:
         from free_claude_code.cli.managed.session import ManagedClaudeSession
 
         session = ManagedClaudeSession(
-            "/tmp", "http://localhost:8082", auth_token="freecc"
+            "/tmp", "http://localhost:16969", auth_token="modelglot"
         )
 
         mock_process = MagicMock()
@@ -510,7 +510,7 @@ class TestManagedClaudeSession:
         from free_claude_code.cli.managed.session import ManagedClaudeSession
 
         session = ManagedClaudeSession(
-            "/tmp", "http://localhost:8082", auth_token="freecc"
+            "/tmp", "http://localhost:16969", auth_token="modelglot"
         )
 
         mock_process = MagicMock()
@@ -542,7 +542,7 @@ class TestManagedClaudeSession:
         from free_claude_code.cli.managed.session import ManagedClaudeSession
 
         session = ManagedClaudeSession(
-            "/tmp", "http://localhost:8082", auth_token="freecc"
+            "/tmp", "http://localhost:16969", auth_token="modelglot"
         )
 
         mock_process = AsyncMock()
@@ -573,7 +573,7 @@ class TestManagedClaudeSession:
         from free_claude_code.cli.managed.session import ManagedClaudeSession
 
         session = ManagedClaudeSession(
-            "/tmp", "http://localhost:8082", auth_token="freecc"
+            "/tmp", "http://localhost:16969", auth_token="modelglot"
         )
 
         mock_process = AsyncMock()
@@ -602,7 +602,7 @@ class TestManagedClaudeSession:
         from free_claude_code.cli.managed.session import ManagedClaudeSession
 
         session = ManagedClaudeSession(
-            "/tmp", "http://localhost:8082", auth_token="freecc"
+            "/tmp", "http://localhost:16969", auth_token="modelglot"
         )
 
         mock_process = AsyncMock()
@@ -620,7 +620,7 @@ class TestManagedClaudeSession:
             # Check env var
             kwargs = mock_exec.call_args.kwargs
             env: dict[str, str] = kwargs["env"]
-            assert env["ANTHROPIC_BASE_URL"] == "http://localhost:8082"
+            assert env["ANTHROPIC_BASE_URL"] == "http://localhost:16969"
 
     @pytest.mark.asyncio
     async def test_start_task_sets_proxy_auth_token(self) -> None:
@@ -628,7 +628,7 @@ class TestManagedClaudeSession:
         from free_claude_code.cli.managed.session import ManagedClaudeSession
 
         session = ManagedClaudeSession(
-            "/tmp", "http://localhost:8082", auth_token="proxy-token"
+            "/tmp", "http://localhost:16969", auth_token="proxy-token"
         )
 
         mock_process = AsyncMock()
@@ -661,8 +661,8 @@ class TestManagedClaudeSession:
 
         session = ManagedClaudeSession(
             "/tmp",
-            "http://localhost:8082",
-            auth_token="freecc",
+            "http://localhost:16969",
+            auth_token="modelglot",
         )
 
         mock_process = AsyncMock()
@@ -681,7 +681,7 @@ class TestManagedClaudeSession:
                 pass
 
             env: dict[str, str] = mock_exec.call_args.kwargs["env"]
-            assert env["ANTHROPIC_AUTH_TOKEN"] == "freecc"
+            assert env["ANTHROPIC_AUTH_TOKEN"] == "modelglot"
 
     @pytest.mark.asyncio
     async def test_start_task_allowed_dirs(self) -> None:
@@ -690,9 +690,9 @@ class TestManagedClaudeSession:
 
         session = ManagedClaudeSession(
             "/tmp",
-            "http://localhost:8082",
+            "http://localhost:16969",
             allowed_dirs=["/dir1", "/dir2"],
-            auth_token="freecc",
+            auth_token="modelglot",
         )
 
         mock_process = AsyncMock()
@@ -718,7 +718,7 @@ class TestManagedClaudeSession:
         from free_claude_code.cli.managed.session import ManagedClaudeSession
 
         session = ManagedClaudeSession(
-            "/tmp", "http://localhost:8082", auth_token="freecc"
+            "/tmp", "http://localhost:16969", auth_token="modelglot"
         )
 
         mock_process = AsyncMock()
@@ -742,7 +742,7 @@ class TestManagedClaudeSession:
         from free_claude_code.cli.managed.session import ManagedClaudeSession
 
         session = ManagedClaudeSession(
-            "/tmp", "http://localhost:8082", auth_token="freecc"
+            "/tmp", "http://localhost:16969", auth_token="modelglot"
         )
 
         mock_process = MagicMock()
@@ -768,8 +768,8 @@ class TestManagedClaudeSessionManager:
 
         manager = ManagedClaudeSessionManager(
             workspace_path="/tmp/test",
-            proxy_root_url="http://localhost:8082",
-            auth_token="freecc",
+            proxy_root_url="http://localhost:16969",
+            auth_token="modelglot",
         )
 
         session, sid, is_new = await manager.get_or_create_session()
@@ -784,8 +784,8 @@ class TestManagedClaudeSessionManager:
 
         manager = ManagedClaudeSessionManager(
             workspace_path="/tmp/test",
-            proxy_root_url="http://localhost:8082",
-            auth_token="freecc",
+            proxy_root_url="http://localhost:16969",
+            auth_token="modelglot",
         )
 
         # Create first session
@@ -804,8 +804,8 @@ class TestManagedClaudeSessionManager:
 
         manager = ManagedClaudeSessionManager(
             workspace_path="/tmp/test",
-            proxy_root_url="http://localhost:8082",
-            auth_token="freecc",
+            proxy_root_url="http://localhost:16969",
+            auth_token="modelglot",
         )
 
         stats = manager.get_stats()

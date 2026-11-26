@@ -82,7 +82,7 @@ def test_numbered_rows_edit_reorder_save_and_reopen(page: Page, admin_base_url: 
             "OPENAI_API_KEY": '["oa-first","oa-second"]',
             "ZAI_API_KEY": '["zai-first","zai-second","zai-third"]',
             "OPENCODE_API_KEY": '["oc-first","oc-second"]',
-            "FCC_CUSTOM_PROVIDERS": json.dumps(
+            "MODELGLOT_CUSTOM_PROVIDERS": json.dumps(
                 [
                     {
                         "provider_id": CUSTOM_ID,

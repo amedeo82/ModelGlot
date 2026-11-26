@@ -1,4 +1,4 @@
-"""Installed Antigravity uses the real FCC launcher against isolated HTTP fixtures."""
+"""Installed Antigravity uses the real ModelGlot launcher against isolated HTTP fixtures."""
 
 import asyncio
 import json
@@ -31,13 +31,13 @@ from tests.wire_payload import decode_object, string_payload
 
 pytestmark = [pytest.mark.live, pytest.mark.smoke_target("clients")]
 
-_MARKER = "FCC_ANTIGRAVITY_OK"
+_MARKER = "MODELGLOT_ANTIGRAVITY_OK"
 
 
 def _reply(wire: str, calls: list[Path], reasoning: bool):
     if wire == "openai_chat":
         deltas: list[JsonObject] = (
-            [{"reasoning_content": "FCC_NATIVE_THOUGHT"}] if reasoning else []
+            [{"reasoning_content": "MODELGLOT_NATIVE_THOUGHT"}] if reasoning else []
         )
         deltas.append(
             {
@@ -64,7 +64,7 @@ def _reply(wire: str, calls: list[Path], reasoning: bool):
                 {
                     "type": "reasoning",
                     "id": "rs_native",
-                    "encrypted_content": "FCC_OPAQUE",
+                    "encrypted_content": "MODELGLOT_OPAQUE",
                 }
             ]
             if reasoning
@@ -115,8 +115,8 @@ def _reply(wire: str, calls: list[Path], reasoning: bool):
         [
             {
                 "type": "thinking",
-                "thinking": "FCC_NATIVE_THOUGHT",
-                "signature": "FCC_SIGNED",
+                "thinking": "MODELGLOT_NATIVE_THOUGHT",
+                "signature": "MODELGLOT_SIGNED",
             }
         ]
         if reasoning
@@ -190,9 +190,11 @@ def test_native_launcher_session_tools_and_resume(
     if native is None:
         pytest.skip("Antigravity CLI is not installed")
     launcher = Path(sys.executable).with_name(
-        "fcc-agy.exe" if os.name == "nt" else "fcc-agy"
+        "modelglot-agy.exe" if os.name == "nt" else "modelglot-agy"
     )
-    assert launcher.is_file(), "Install the current FCC project before native smoke"
+    assert launcher.is_file(), (
+        "Install the current ModelGlot project before native smoke"
+    )
     home, workspace = tmp_path / "home", tmp_path / "workspace"
     workspace.mkdir()
     first, second, picture = (
@@ -200,17 +202,17 @@ def test_native_launcher_session_tools_and_resume(
         workspace / "second.txt",
         workspace / "fixture.png",
     )
-    first.write_text("FCC_FIRST_CONTENT")
-    second.write_text("FCC_SECOND_CONTENT")
+    first.write_text("MODELGLOT_FIRST_CONTENT")
+    second.write_text("MODELGLOT_SECOND_CONTENT")
     Image.new("RGB", (1, 1), "red").save(picture)
     native_settings = home / ".gemini/antigravity-cli/settings.json"
     native_settings.parent.mkdir(parents=True)
-    original = {"fccSmokeUnrelated": {"keep": True}}
+    original = {"modelglotSmokeUnrelated": {"keep": True}}
     native_settings.write_text(json.dumps(original))
-    connection = home / ".fcc/antigravity-integration.json"
+    connection = home / ".modelglot/antigravity-integration.json"
     if previous_connection:
         write_previous_connection(native_settings, connection)
-    monkeypatch.setattr(paths, "config_dir_path", lambda: home / ".fcc")
+    monkeypatch.setattr(paths, "config_dir_path", lambda: home / ".modelglot")
     monkeypatch.setattr(env_migrations, "legacy_env_paths", lambda: ())
     monkeypatch.setattr(env_migrations, "verified_checkout_env_path", lambda: None)
     sent: list[JsonObject] = []
@@ -242,7 +244,7 @@ def test_native_launcher_session_tools_and_resume(
     selected = f"{config.provider_id}/agy-backend:variant"
     token = "synthetic-agy-proxy"
     env_migrations.atomic_write_managed_config(
-        {"ANTHROPIC_AUTH_TOKEN": token}, path=home / ".fcc/.env"
+        {"ANTHROPIC_AUTH_TOKEN": token}, path=home / ".modelglot/.env"
     )
     app = create_test_app(
         Settings(
@@ -300,7 +302,7 @@ def test_native_launcher_session_tools_and_resume(
         HOST="127.0.0.1",
         PORT=str(port),
         ANTHROPIC_AUTH_TOKEN=token,
-        FCC_OPEN_BROWSER="0",
+        MODELGLOT_OPEN_BROWSER="0",
         PATH=str(Path(native).parent) + os.pathsep + env.get("PATH", ""),
     )
     for key in ("LOCALAPPDATA", "APPDATA", "TEMP"):
@@ -336,7 +338,7 @@ def test_native_launcher_session_tools_and_resume(
         while not server.started and time.monotonic() < deadline:
             time.sleep(0.05)
         assert server.started
-        assert "FCC:" in run("models", "models")
+        assert "ModelGlot:" in run("models", "models")
         assert load_json_value(native_settings.read_text()) == original
         assert not connection.exists()
         assert token not in native_settings.read_text()
@@ -365,13 +367,16 @@ def test_native_launcher_session_tools_and_resume(
         assert len(main) >= 2
         followup = json.dumps(main[1])
         if mode == "parallel":
-            assert "FCC_FIRST_CONTENT" in followup and "FCC_SECOND_CONTENT" in followup
+            assert (
+                "MODELGLOT_FIRST_CONTENT" in followup
+                and "MODELGLOT_SECOND_CONTENT" in followup
+            )
         if mode == "image":
             assert "image/png" in followup and "iVBOR" in followup
         assert {
-            "openai_chat": "FCC_NATIVE_THOUGHT",
-            "openai_responses": "FCC_OPAQUE",
-            "anthropic_messages": "FCC_SIGNED",
+            "openai_chat": "MODELGLOT_NATIVE_THOUGHT",
+            "openai_responses": "MODELGLOT_OPAQUE",
+            "anthropic_messages": "MODELGLOT_SIGNED",
         }[wire] in followup
         assert all(body["model"] == "agy-backend:variant" for body in sent)
         assert f"/v1beta/models/{selected}:streamGenerateContent" in ingress

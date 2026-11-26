@@ -154,7 +154,7 @@ def write(path: Path, value: JsonValue):
 
 
 def profile(root: Path):
-    return root / "configLibrary" / f"{desktop.FCC_ID}.json"
+    return root / "configLibrary" / f"{desktop.MODELGLOT_ID}.json"
 
 
 def meta(root: Path):
@@ -200,7 +200,7 @@ def test_fresh_connection_and_disconnect_preserve_native_library(
         )["connected"]
         is True
     )
-    assert read(meta(root))["appliedId"] == desktop.FCC_ID
+    assert read(meta(root))["appliedId"] == desktop.MODELGLOT_ID
     assert read(mode(root))["deploymentMode"] == "3p"
     assert read(profile(root))["inferenceGatewayApiKey"] == TOKEN
     assert read(profile(root))["modelDiscoveryEnabled"] is True
@@ -253,6 +253,19 @@ def test_fresh_connection_and_disconnect_preserve_native_library(
         root, URL, TOKEN, False, disconnect_path=claude_desktop_disconnect_path()
     )
     assert {p: p.read_bytes() for p in root.rglob("*.json")} == after
+
+
+def test_gateway_profile_entry_is_named_modelglot(tmp_path: Path) -> None:
+    desktop.configure(
+        tmp_path, URL, TOKEN, True, disconnect_path=claude_desktop_disconnect_path()
+    )
+
+    entries = read(meta(tmp_path))["entries"]
+    assert {
+        entry["id"]: entry["name"]
+        for entry in entries
+        if entry["id"] == desktop.MODELGLOT_ID
+    } == {desktop.MODELGLOT_ID: "ModelGlot"}
 
 
 def test_refresh_preserves_custom_marketplaces_and_restores_owned_defaults(
@@ -435,7 +448,7 @@ def test_refresh_repairs_registered_profile_header_without_changing_selection(
     assert meta(tmp_path).read_bytes() == metadata
     assert read(profile(tmp_path))["inferenceCustomHeaders"] == {
         "X-Other": "preserved",
-        "X-FCC-Model-View": "claude-desktop",
+        "X-ModelGlot-Model-View": "claude-desktop",
     }
 
 
@@ -451,8 +464,8 @@ def test_disconnect_recovers_every_failure_boundary(
     write(
         meta(tmp_path),
         {
-            "appliedId": desktop.FCC_ID,
-            "entries": [{"id": desktop.FCC_ID, "name": "FCC"}],
+            "appliedId": desktop.MODELGLOT_ID,
+            "entries": [{"id": desktop.MODELGLOT_ID, "name": "ModelGlot"}],
         },
     )
     default = tmp_path / "configLibrary" / f"{desktop.DEFAULT_ID}.json"
@@ -470,7 +483,7 @@ def test_disconnect_recovers_every_failure_boundary(
             if path == mode(tmp_path)
             else "selection"
             if any(
-                object_payload(e)["id"] == desktop.FCC_ID
+                object_payload(e)["id"] == desktop.MODELGLOT_ID
                 for e in array_payload(value.get("entries", []))
             )
             else "metadata"
@@ -630,7 +643,7 @@ def test_disconnect_recovers_orphan_after_delete_failure(
             disconnect_path=claude_desktop_disconnect_path(),
         )
     assert read(mode(tmp_path))["deploymentMode"] == "1p"
-    assert read(meta(tmp_path))["appliedId"] != desktop.FCC_ID
+    assert read(meta(tmp_path))["appliedId"] != desktop.MODELGLOT_ID
     monkeypatch.setattr(Path, "unlink", unlink)
     desktop.configure(
         tmp_path, URL, TOKEN, False, disconnect_path=claude_desktop_disconnect_path()
@@ -645,8 +658,8 @@ def test_disconnect_last_entry_creates_default(tmp_path: Path) -> None:
     write(
         meta(tmp_path),
         {
-            "appliedId": desktop.FCC_ID,
-            "entries": [{"id": desktop.FCC_ID, "name": "FCC"}],
+            "appliedId": desktop.MODELGLOT_ID,
+            "entries": [{"id": desktop.MODELGLOT_ID, "name": "ModelGlot"}],
         },
     )
     (tmp_path / "configLibrary" / f"{desktop.DEFAULT_ID}.json").unlink()
@@ -668,8 +681,14 @@ def test_disconnect_last_entry_creates_default(tmp_path: Path) -> None:
         [],
         {},
         {"entries": []},
-        {"entries": [{"id": desktop.FCC_ID, "name": "FCC"}], "appliedId": []},
-        {"entries": [{"id": desktop.FCC_ID, "name": "FCC"}], "appliedId": {}},
+        {
+            "entries": [{"id": desktop.MODELGLOT_ID, "name": "ModelGlot"}],
+            "appliedId": [],
+        },
+        {
+            "entries": [{"id": desktop.MODELGLOT_ID, "name": "ModelGlot"}],
+            "appliedId": {},
+        },
         {
             "entries": [{"id": "../../other", "name": "Other"}],
             "appliedId": "../../other",
@@ -806,7 +825,7 @@ def test_retry_preserves_a_later_external_choice(
     }
     desktop.configure(tmp_path, URL, TOKEN, False, disconnect_path=record)
     expected = metadata | {
-        "entries": [e for e in metadata["entries"] if e["id"] != desktop.FCC_ID]
+        "entries": [e for e in metadata["entries"] if e["id"] != desktop.MODELGLOT_ID]
     }
     assert read(meta(tmp_path)) == expected
     assert all(p.read_bytes() == content for p, content in before.items())
@@ -964,7 +983,7 @@ def test_unrelated_invalid_profile_is_not_read_on_disconnect(tmp_path: Path) -> 
     assert other_path.read_text(encoding="utf-8") == "not json"
 
 
-def test_pending_removal_handles_missing_profile_and_later_fcc_selection(
+def test_pending_removal_handles_missing_profile_and_later_modelglot_selection(
     tmp_path: Path,
 ) -> None:
     record = claude_desktop_disconnect_path()

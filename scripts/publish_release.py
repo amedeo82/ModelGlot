@@ -189,7 +189,7 @@ class Publisher:
                 "draft=true",
             )
         print(f"Publishing {tag} from {target}")
-        with tempfile.TemporaryDirectory(prefix="fcc-release-") as temporary:
+        with tempfile.TemporaryDirectory(prefix="modelglot-release-") as temporary:
             root = Path(temporary).resolve()
             source, dist = root / "source", root / "dist"
             dist.mkdir()

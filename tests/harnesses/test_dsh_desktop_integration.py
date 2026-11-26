@@ -1,4 +1,4 @@
-"""FCC compares and changes only its native DSH Desktop entries."""
+"""ModelGlot compares and changes only its native DSH Desktop entries."""
 
 import copy
 import json
@@ -16,7 +16,7 @@ from tests.wire_payload import object_array, object_payload
 
 URL = "http://127.0.0.1:8182"
 TOKEN = "desktop-test-token"
-ROUTE = "free-claude-code"
+ROUTE = "modelglot"
 REF = desktop.DSH_DESKTOP_API_KEY
 
 
@@ -112,7 +112,7 @@ def test_connect_status_disconnect_and_reconnect(home: Path) -> None:
         "missing-token",
     ],
 )
-def test_status_requires_all_fcc_keys_and_connect_replaces_them(
+def test_status_requires_all_modelglot_keys_and_connect_replaces_them(
     home: Path, field: str
 ) -> None:
     connect(home)
@@ -199,7 +199,7 @@ def test_other_settings_accounts_comments_tags_and_peer_files_are_preserved(
     assert peer.read_text() == "unreadable unrelated profile, even if it names " + REF
 
 
-def test_disconnect_removes_all_fcc_copies_and_preserves_other_default(
+def test_disconnect_removes_all_modelglot_copies_and_preserves_other_default(
     home: Path,
 ) -> None:
     connect(home)

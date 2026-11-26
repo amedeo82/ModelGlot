@@ -55,7 +55,10 @@ def test_conversion_error_returns_http_400_without_generation(mode: str) -> None
     payload: JsonObject = {"model": "open_router/test-model"}
     if mode == "responses":
         payload["input"] = [
-            {"type": "reasoning", "encrypted_content": "fcc:history:v2:unsupported"}
+            {
+                "type": "reasoning",
+                "encrypted_content": "modelglot:history:v2:unsupported",
+            }
         ]
         path = "/v1/responses"
     else:
@@ -64,7 +67,10 @@ def test_conversion_error_returns_http_400_without_generation(mode: str) -> None
             {
                 "role": "assistant",
                 "content": [
-                    {"type": "redacted_thinking", "data": "fcc:history:v2:unsupported"}
+                    {
+                        "type": "redacted_thinking",
+                        "data": "modelglot:history:v2:unsupported",
+                    }
                 ],
             }
         ]

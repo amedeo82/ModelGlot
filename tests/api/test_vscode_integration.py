@@ -240,7 +240,7 @@ def test_pending_restart_and_shutdown_do_not_write(
     integration: tuple[TestClient, Path, ApplicationRuntime],
 ) -> None:
     client, path, runtime = integration
-    runtime._pending_fields = ["PORT"]
+    runtime._pending_fields = ["MODELGLOT_PORT"]
     assert client.post(f"{ROOT}/connect").status_code == 503
     assert client.post(f"{ROOT}/refresh").status_code == 503
     runtime._pending_fields = []

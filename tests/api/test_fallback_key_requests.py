@@ -190,7 +190,7 @@ def test_fallback_sequence_uses_each_rows_selected_key(
         ANTHROPIC_API_KEY=KEYS,
         PROVIDER_RATE_LIMIT=1000,
         PROVIDER_RATE_WINDOW=1,
-        FCC_CUSTOM_PROVIDERS=custom,
+        MODELGLOT_CUSTOM_PROVIDERS=custom,
         MODEL_FALLBACKS=[
             {"model": model, "reasoning": "off", "api_key_number": 2},
             {"model": model, "reasoning": "off", "api_key_number": 3},

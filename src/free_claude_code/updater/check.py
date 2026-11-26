@@ -123,7 +123,7 @@ class _Arguments(argparse.Namespace):
 def main(argv: list[str] | None = None) -> int:
     """Return 10 to authorize installation, 0 to skip, or 1 on check failure."""
 
-    parser = argparse.ArgumentParser(prog="_fcc-update-check")
+    parser = argparse.ArgumentParser(prog="_modelglot-update-check")
     parser.add_argument("--print-version", action="store_true")
     arguments = _Arguments()
     parser.parse_args(argv, namespace=arguments)

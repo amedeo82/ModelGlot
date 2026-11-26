@@ -1,4 +1,4 @@
-"""Test-only instrumentation installed in a disposable FCC environment."""
+"""Test-only instrumentation installed in a disposable ModelGlot environment."""
 
 import asyncio
 import multiprocessing
@@ -39,11 +39,11 @@ def subprocess_checks() -> JsonObject:
     from free_claude_code.runtime.folder_picker import NativeFolderPicker
 
     expected = str(Path.home())
-    os.environ["FCC_NATIVE_DIALOG_RESULT"] = expected
+    os.environ["MODELGLOT_NATIVE_DIALOG_RESULT"] = expected
     try:
         selected = asyncio.run(NativeFolderPicker().pick_folder(expected))
     finally:
-        del os.environ["FCC_NATIVE_DIALOG_RESULT"]
+        del os.environ["MODELGLOT_NATIVE_DIALOG_RESULT"]
     context = cast(DefaultContext, multiprocessing.get_context("spawn"))
     queue: Queue[dict[str, str | None]] = context.Queue()
     child = context.Process(target=_spawned_child, args=(queue,))
@@ -63,11 +63,11 @@ def subprocess_checks() -> JsonObject:
 
 def install():
     global _installed
-    case = os.environ.get("FCC_NATIVE_CASE")
+    case = os.environ.get("MODELGLOT_NATIVE_CASE")
     if not case or _installed:
         return
     _installed = True
-    if "FCC_NATIVE_DIALOG_RESULT" in os.environ:
+    if "MODELGLOT_NATIVE_DIALOG_RESULT" in os.environ:
         original_exec = os.execv
 
         def dialog_exec(
@@ -76,12 +76,12 @@ def install():
             /,
         ) -> Never:
             if path == "/usr/bin/osascript":
-                print(os.environ["FCC_NATIVE_DIALOG_RESULT"], flush=True)
+                print(os.environ["MODELGLOT_NATIVE_DIALOG_RESULT"], flush=True)
                 raise SystemExit(0)
             original_exec(path, tuple(argv))
 
         patch.object(os, "execv", dialog_exec).start()
-    identity = import_module("fcc_identity_probe")
+    identity = import_module("modelglot_identity_probe")
     if case == "identity":
         from free_claude_code.cli import desktop_entrypoint
 
@@ -109,7 +109,7 @@ def install():
     original_run = PystrayDesktopTray.run
 
     def observed_run(self: PystrayDesktopTray, setup: Callable[[], None]):
-        output = Path(os.environ["FCC_MACOS_PROBE_OUTPUT"])
+        output = Path(os.environ["MODELGLOT_MACOS_PROBE_OUTPUT"])
         control = output.with_suffix(".command")
         process_report: Callable[[], JsonObject] | None = getattr(
             identity, "process_report", None

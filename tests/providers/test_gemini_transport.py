@@ -601,7 +601,7 @@ async def test_google_replay_survives_client_replacement_and_preserves_edited_ar
                 object_payload(object_payload(target)["function"])["arguments"]
             )
         ) == {"path": "edited"}
-    assert "fcc:history" not in json.dumps(sent[1])
+    assert "modelglot:history" not in json.dumps(sent[1])
 
 
 @pytest.mark.asyncio

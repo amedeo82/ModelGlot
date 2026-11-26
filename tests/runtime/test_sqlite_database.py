@@ -31,7 +31,7 @@ from tests.fixture_types import DatabaseFactory
 async def test_transactions_reuse_connections_until_database_closes(
     database_factory: DatabaseFactory, tmp_path: Path
 ) -> None:
-    database = database_factory(tmp_path / "fcc.db", tmp_path / "fcc.lock")
+    database = database_factory(tmp_path / "modelglot.db", tmp_path / "modelglot.lock")
     await database.start()
     observed: list[sqlite3.Connection] = []
 
@@ -67,7 +67,7 @@ def _deleted_count(connection: sqlite3.Connection) -> int:
 async def test_queued_writers_leave_workers_available_and_drain_on_close(
     database_factory: DatabaseFactory, tmp_path: Path
 ) -> None:
-    database = database_factory(tmp_path / "fcc.db", tmp_path / "fcc.lock")
+    database = database_factory(tmp_path / "modelglot.db", tmp_path / "modelglot.lock")
     await database.start()
     entered, release = threading.Event(), threading.Event()
     limiter = to_thread.current_default_thread_limiter()
@@ -111,8 +111,8 @@ async def test_queued_writers_leave_workers_available_and_drain_on_close(
         assert not closing_task.done()
         with pytest.raises(sqlite3.OperationalError, match="closed"):
             await database.run(lambda c: None)
-        other = database_factory(database.path, tmp_path / "fcc.lock")
-        with pytest.raises(sqlite3.OperationalError, match="another FCC"):
+        other = database_factory(database.path, tmp_path / "modelglot.lock")
+        with pytest.raises(sqlite3.OperationalError, match="another ModelGlot"):
             await other.start()
     finally:
         release.set()
@@ -121,7 +121,7 @@ async def test_queued_writers_leave_workers_available_and_drain_on_close(
             await closing_task
         limiter.total_tokens = previous_limit
     assert outcomes[:12] == [str(i) for i in range(12)]
-    reopened = database_factory(database.path, tmp_path / "fcc.lock")
+    reopened = database_factory(database.path, tmp_path / "modelglot.lock")
     await reopened.start()
     assert (
         await reopened.run(
@@ -136,7 +136,7 @@ async def test_queued_writers_leave_workers_available_and_drain_on_close(
 async def test_reader_leases_are_bounded_and_can_move_between_threads(
     database_factory: DatabaseFactory, tmp_path: Path
 ) -> None:
-    database = database_factory(tmp_path / "fcc.db", tmp_path / "fcc.lock")
+    database = database_factory(tmp_path / "modelglot.db", tmp_path / "modelglot.lock")
     await database.start()
     four_readers, release = threading.Event(), threading.Event()
     observed: list[sqlite3.Connection] = []
@@ -200,7 +200,7 @@ async def test_reader_leases_are_bounded_and_can_move_between_threads(
 async def test_failed_transactions_discard_the_connection(
     database_factory: DatabaseFactory, tmp_path: Path, failure: str
 ) -> None:
-    database = database_factory(tmp_path / "fcc.db", tmp_path / "fcc.lock")
+    database = database_factory(tmp_path / "modelglot.db", tmp_path / "modelglot.lock")
     await database.start()
     observed: list[sqlite3.Connection] = []
 
@@ -256,7 +256,7 @@ async def test_failed_transactions_discard_the_connection(
 async def test_checkout_timeout_uses_sqlite_error_contract(
     database_factory: DatabaseFactory, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    database = database_factory(tmp_path / "fcc.db", tmp_path / "fcc.lock")
+    database = database_factory(tmp_path / "modelglot.db", tmp_path / "modelglot.lock")
     await database.start()
 
     def timeout():
@@ -273,7 +273,7 @@ async def test_checkout_timeout_uses_sqlite_error_contract(
 async def test_startup_failure_disposes_connections_before_releasing_owner(
     tmp_path: Path, cancel: bool, initialized_database: Path
 ) -> None:
-    shutil.copyfile(initialized_database, tmp_path / "fcc.db")
+    shutil.copyfile(initialized_database, tmp_path / "modelglot.db")
     entered, release = threading.Event(), threading.Event()
     observed: list[sqlite3.Connection] = []
 
@@ -287,14 +287,16 @@ async def test_startup_failure_disposes_connections_before_releasing_owner(
             if not cancel:
                 raise sqlite3.OperationalError("injected startup failure")
 
-    database = GatedDatabase(tmp_path / "fcc.db", tmp_path / "fcc.lock")
+    database = GatedDatabase(tmp_path / "modelglot.db", tmp_path / "modelglot.lock")
     starting = asyncio.create_task(database.start())
     try:
         assert await asyncio.to_thread(entered.wait, 3)
         if cancel:
             starting.cancel()
-        competing = sqlite_database.SQLiteDatabase(database.path, tmp_path / "fcc.lock")
-        with pytest.raises(sqlite3.OperationalError, match="another FCC"):
+        competing = sqlite_database.SQLiteDatabase(
+            database.path, tmp_path / "modelglot.lock"
+        )
+        with pytest.raises(sqlite3.OperationalError, match="another ModelGlot"):
             await competing.start()
         await competing.close()
     finally:
@@ -307,7 +309,9 @@ async def test_startup_failure_disposes_connections_before_releasing_owner(
         assert observed[0] is not None
         with pytest.raises(sqlite3.ProgrammingError, match="closed"):
             observed[0].execute("SELECT 1")
-        reopened = sqlite_database.SQLiteDatabase(database.path, tmp_path / "fcc.lock")
+        reopened = sqlite_database.SQLiteDatabase(
+            database.path, tmp_path / "modelglot.lock"
+        )
         try:
             await reopened.start()
         finally:
@@ -319,7 +323,7 @@ async def test_startup_failure_disposes_connections_before_releasing_owner(
 @pytest.fixture(scope="module")
 def initialized_database(tmp_path_factory: pytest.TempPathFactory):
     """Build the schema once, outside the ownership test's synchronization window."""
-    path = tmp_path_factory.mktemp("initialized-database") / "fcc.db"
+    path = tmp_path_factory.mktemp("initialized-database") / "modelglot.db"
     initialize_database(path)
     return path
 
@@ -365,7 +369,7 @@ def test_connection_setup_failure_closes_raw_connection(
 
     monkeypatch.setattr(sqlite_database.sqlite3, "connect", create)
     with pytest.raises(sqlite3.OperationalError, match="configuration"):
-        sqlite_database._connect(tmp_path / "fcc.db")
+        sqlite_database._connect(tmp_path / "modelglot.db")
     with pytest.raises(sqlite3.ProgrammingError, match="closed"):
         observed[0].execute("SELECT 1")
 
@@ -375,7 +379,7 @@ async def test_partial_pool_creation_cleans_up_writer(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     database = sqlite_database.SQLiteDatabase(
-        tmp_path / "fcc.db", tmp_path / "fcc.lock"
+        tmp_path / "modelglot.db", tmp_path / "modelglot.lock"
     )
     create_pool = database._pool
     observed: list[sqlite3.Connection] = []
@@ -397,7 +401,9 @@ async def test_partial_pool_creation_cleans_up_writer(
         assert observed[0] is not None
         with pytest.raises(sqlite3.ProgrammingError, match="closed"):
             observed[0].execute("SELECT 1")
-        other = sqlite_database.SQLiteDatabase(database.path, tmp_path / "fcc.lock")
+        other = sqlite_database.SQLiteDatabase(
+            database.path, tmp_path / "modelglot.lock"
+        )
         try:
             await other.start()
         finally:
@@ -410,7 +416,7 @@ async def test_partial_pool_creation_cleans_up_writer(
 async def test_disposal_failure_retains_owner_and_can_be_retried(
     database_factory: DatabaseFactory, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    database = database_factory(tmp_path / "fcc.db", tmp_path / "fcc.lock")
+    database = database_factory(tmp_path / "modelglot.db", tmp_path / "modelglot.lock")
     await database.start()
     reader_connections = []
     await database.run(lambda c: reader_connections.append(c), write=False)
@@ -426,13 +432,13 @@ async def test_disposal_failure_retains_owner_and_can_be_retried(
             await database.close()
         with pytest.raises(sqlite3.ProgrammingError, match="closed"):
             reader_connections[0].execute("SELECT 1")
-        competing = database_factory(database.path, tmp_path / "fcc.lock")
-        with pytest.raises(sqlite3.OperationalError, match="another FCC"):
+        competing = database_factory(database.path, tmp_path / "modelglot.lock")
+        with pytest.raises(sqlite3.OperationalError, match="another ModelGlot"):
             await competing.start()
     finally:
         monkeypatch.setattr(writer, "dispose", dispose)
         await database.close()
-    reopened = database_factory(database.path, tmp_path / "fcc.lock")
+    reopened = database_factory(database.path, tmp_path / "modelglot.lock")
     await reopened.start()
 
 
@@ -527,7 +533,7 @@ def snapshot(path: Path) -> dict[str, list[dict[str, object]]]:
 def test_historical_database_moves_and_upgrades_without_losing_records(
     tmp_path: Path, version: int
 ) -> None:
-    old, target = tmp_path / "code/code.db", tmp_path / "fcc.db"
+    old, target = tmp_path / "code/code.db", tmp_path / "modelglot.db"
     historical_database(old, version)
     before = snapshot(old)
     for _ in range(2):
@@ -548,7 +554,7 @@ def test_historical_database_moves_and_upgrades_without_losing_records(
 
 
 def test_fresh_database_uses_only_destination_and_is_repeatable(tmp_path: Path) -> None:
-    target, old = tmp_path / "fcc.db", tmp_path / "code/code.db"
+    target, old = tmp_path / "modelglot.db", tmp_path / "code/code.db"
     initialize_database(target, old)
     initialize_database(target, old)
     assert not old.exists()
@@ -556,7 +562,7 @@ def test_fresh_database_uses_only_destination_and_is_repeatable(tmp_path: Path) 
 
 
 def test_usage_event_identity_indexes_and_context_provenance(tmp_path: Path) -> None:
-    target = tmp_path / "fcc.db"
+    target = tmp_path / "modelglot.db"
     historical_database(target, 5)
     initialize_database(target)
     token_columns = (
@@ -674,7 +680,7 @@ def test_usage_event_identity_indexes_and_context_provenance(tmp_path: Path) -> 
 def test_usage_event_counts_and_timestamps_reject_negative_values(
     tmp_path: Path, column: str
 ) -> None:
-    target = tmp_path / "fcc.db"
+    target = tmp_path / "modelglot.db"
     initialize_database(target)
     with (
         closing(sqlite3.connect(target)) as connection,
@@ -702,7 +708,7 @@ def test_usage_event_counts_and_timestamps_reject_negative_values(
 def test_usage_event_enums_status_and_attempt_are_checked(
     tmp_path: Path, column: str, value: object
 ) -> None:
-    target = tmp_path / "fcc.db"
+    target = tmp_path / "modelglot.db"
     initialize_database(target)
     with closing(sqlite3.connect(target)) as connection:
         connection.execute(
@@ -717,7 +723,7 @@ def test_usage_event_enums_status_and_attempt_are_checked(
 
 
 def test_attempt_events_require_an_execution_identity(tmp_path: Path) -> None:
-    target = tmp_path / "fcc.db"
+    target = tmp_path / "modelglot.db"
     initialize_database(target)
     with (
         closing(sqlite3.connect(target)) as connection,
@@ -730,7 +736,7 @@ def test_attempt_events_require_an_execution_identity(tmp_path: Path) -> None:
 
 
 def test_two_databases_are_preserved_without_choosing_a_winner(tmp_path: Path) -> None:
-    old, target = tmp_path / "code/code.db", tmp_path / "fcc.db"
+    old, target = tmp_path / "code/code.db", tmp_path / "modelglot.db"
     historical_database(old, 1)
     historical_database(target, 3)
     before = [path.read_bytes() for path in (old, target)]
@@ -740,7 +746,7 @@ def test_two_databases_are_preserved_without_choosing_a_winner(tmp_path: Path) -
 
 
 @pytest.mark.parametrize("suffix", ["-wal", "-shm", "-journal"])
-@pytest.mark.parametrize("location", ["fcc.db", "code/code.db"])
+@pytest.mark.parametrize("location", ["modelglot.db", "code/code.db"])
 def test_orphan_journals_are_not_treated_as_a_fresh_database(
     tmp_path: Path, suffix: str, location: str
 ) -> None:
@@ -748,16 +754,16 @@ def test_orphan_journals_are_not_treated_as_a_fresh_database(
     orphan.parent.mkdir(parents=True, exist_ok=True)
     orphan.write_bytes(b"preserve")
     with pytest.raises(sqlite3.DatabaseError, match="journal"):
-        initialize_database(tmp_path / "fcc.db", tmp_path / "code/code.db")
+        initialize_database(tmp_path / "modelglot.db", tmp_path / "code/code.db")
     assert orphan.read_bytes() == b"preserve"
-    assert not (tmp_path / "fcc.db").exists()
+    assert not (tmp_path / "modelglot.db").exists()
 
 
 @pytest.mark.parametrize("version", [-1, 7])
 def test_unsupported_version_is_not_moved_or_mutated(
     tmp_path: Path, version: int
 ) -> None:
-    old, target = tmp_path / "code/code.db", tmp_path / "fcc.db"
+    old, target = tmp_path / "code/code.db", tmp_path / "modelglot.db"
     historical_database(old, 3)
     with closing(sqlite3.connect(old)) as connection:
         connection.execute(f"PRAGMA user_version={version}")
@@ -774,7 +780,7 @@ def test_unsupported_version_is_not_moved_or_mutated(
 def test_unrecognized_schema_is_not_blessed_or_moved(
     tmp_path: Path, statement: str
 ) -> None:
-    old, target = tmp_path / "code.db", tmp_path / "fcc.db"
+    old, target = tmp_path / "code.db", tmp_path / "modelglot.db"
     with closing(sqlite3.connect(old)) as connection:
         connection.execute(statement)
     with pytest.raises(sqlite3.DatabaseError, match="schema"):
@@ -783,7 +789,7 @@ def test_unrecognized_schema_is_not_blessed_or_moved(
 
 
 def test_committed_wal_survives_unclean_exit_and_relocation(tmp_path: Path) -> None:
-    old, target = tmp_path / "code/code.db", tmp_path / "fcc.db"
+    old, target = tmp_path / "code/code.db", tmp_path / "modelglot.db"
     historical_database(old, 3)
     subprocess.run(
         [
@@ -811,7 +817,7 @@ os._exit(0)
 def test_failed_rename_preserves_source_and_can_retry(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    old, target = tmp_path / "code/code.db", tmp_path / "fcc.db"
+    old, target = tmp_path / "code/code.db", tmp_path / "modelglot.db"
     historical_database(old, 3)
     before = snapshot(old)
     with monkeypatch.context() as patch:
@@ -835,7 +841,7 @@ def test_failed_rename_preserves_source_and_can_retry(
 def test_migration_failure_after_move_rolls_back_and_retries_at_destination(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failing_version: int
 ) -> None:
-    old, target = tmp_path / "code/code.db", tmp_path / "fcc.db"
+    old, target = tmp_path / "code/code.db", tmp_path / "modelglot.db"
     historical_database(old, 0)
     migrations = sqlite_database.MIGRATIONS
     original = migrations[failing_version - 1][1]
@@ -880,7 +886,7 @@ def test_migration_failure_after_move_rolls_back_and_retries_at_destination(
 def test_fresh_schema_failure_rolls_back_all_ddl(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    target = tmp_path / "fcc.db"
+    target = tmp_path / "modelglot.db"
     original = sqlite_database.MIGRATIONS[0][1]
 
     def fail_upgrade(connection: sqlite3.Connection):
@@ -901,7 +907,7 @@ def test_fresh_schema_failure_rolls_back_all_ddl(
 def test_current_schema_does_not_execute_historical_migrations(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    target = tmp_path / "fcc.db"
+    target = tmp_path / "modelglot.db"
     historical_database(target, 3)
     initialize_database(target)
 
@@ -919,7 +925,7 @@ def test_current_schema_does_not_execute_historical_migrations(
 def test_messaging_schema_failure_rolls_back_without_changing_code_history(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    target = tmp_path / "fcc.db"
+    target = tmp_path / "modelglot.db"
     historical_database(target, 3)
     before = snapshot(target)
     migrations = sqlite_database.MIGRATIONS
@@ -955,7 +961,7 @@ def test_messaging_schema_failure_rolls_back_without_changing_code_history(
 def test_usage_schema_failure_rolls_back_without_changing_saved_history(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    target = tmp_path / "fcc.db"
+    target = tmp_path / "modelglot.db"
     historical_database(target, 5)
     before = snapshot(target)
     migrations = sqlite_database.MIGRATIONS
@@ -1004,7 +1010,7 @@ def test_usage_schema_failure_rolls_back_without_changing_saved_history(
 def test_busy_wal_is_not_renamed_and_retries_after_reader_closes(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    old, target = tmp_path / "code/code.db", tmp_path / "fcc.db"
+    old, target = tmp_path / "code/code.db", tmp_path / "modelglot.db"
     historical_database(old, 3)
     connect = sqlite_database._connect
 
@@ -1036,7 +1042,7 @@ def test_busy_wal_is_not_renamed_and_retries_after_reader_closes(
 def test_redirected_legacy_storage_is_not_moved(tmp_path: Path, redirect: str) -> None:
     elsewhere = tmp_path / "elsewhere/code.db"
     historical_database(elsewhere, 3)
-    old, target = tmp_path / "code/code.db", tmp_path / "fcc.db"
+    old, target = tmp_path / "code/code.db", tmp_path / "modelglot.db"
     try:
         if redirect == "directory":
             old.parent.symlink_to(elsewhere.parent, target_is_directory=True)
@@ -1058,7 +1064,7 @@ async def test_restart_recovery_runs_after_current_schema_relocation(
 ) -> None:
     old, target, lock = (
         tmp_path / "code/code.db",
-        tmp_path / "fcc.db",
+        tmp_path / "modelglot.db",
         tmp_path / "code/code.lock",
     )
     historical_database(old, 3)
@@ -1087,7 +1093,7 @@ async def test_old_owner_blocks_move_and_new_owner_uses_same_lock(
 ) -> None:
     old, target, lock = (
         tmp_path / "code/code.db",
-        tmp_path / "fcc.db",
+        tmp_path / "modelglot.db",
         tmp_path / "code/code.lock",
     )
     historical_database(old, 3)
@@ -1095,7 +1101,7 @@ async def test_old_owner_blocks_move_and_new_owner_uses_same_lock(
     second = SQLiteCodeStore(database_factory(target, lock, legacy_path=old))
     await first.start()
     try:
-        with pytest.raises(CodeUnavailableError, match="another FCC"):
+        with pytest.raises(CodeUnavailableError, match="another ModelGlot"):
             await second.start()
         assert old.exists() and not target.exists()
     finally:
@@ -1113,7 +1119,7 @@ async def test_old_owner_blocks_move_and_new_owner_uses_same_lock(
 
 @pytest.mark.skipif(os.name == "nt", reason="POSIX permission contract")
 def test_relocated_database_keeps_private_permissions(tmp_path: Path) -> None:
-    old, target = tmp_path / "code/code.db", tmp_path / "fcc.db"
+    old, target = tmp_path / "code/code.db", tmp_path / "modelglot.db"
     historical_database(old, 3)
     old.chmod(0o600)
     initialize_database(target, old)
@@ -1132,7 +1138,7 @@ async def test_production_startup_keeps_http_available_and_chat_cleanup_independ
     from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
     from free_claude_code.runtime.retired_chat import remove_retired_chat_history
 
-    old, target = paths.legacy_code_database_path(), paths.fcc_database_path()
+    old, target = paths.legacy_code_database_path(), paths.modelglot_database_path()
     historical_database(old, 3)
     chat = paths.config_dir_path() / "chat/chat.db"
     chat.parent.mkdir()

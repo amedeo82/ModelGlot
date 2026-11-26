@@ -4,7 +4,7 @@
     const element = document.createElement(tag);
     if (className) element.className = className;
     element.textContent = text;
-    return window.FccFormControls.configure(element);
+    return window.ModelGlotFormControls.configure(element);
   }
   function button(label, className, action) {
     const element = node("button", className, label);
@@ -89,7 +89,7 @@
     input.setAttribute("aria-label", "Selected model");
     let committed = value,
       optionsSignature = JSON.stringify(values());
-    const combobox = new window.FccModelCombobox(input, {
+    const combobox = new window.ModelGlotModelCombobox(input, {
       listboxId: `${id}-options`,
       label: "model",
       values,

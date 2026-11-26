@@ -117,7 +117,7 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: ci-timings-input-v1
-          path: ${{ runner.temp }}/fcc-ci-timings/baseline/
+          path: ${{ runner.temp }}/modelglot-ci-timings/baseline/
           if-no-files-found: error
           retention-days: 30
 
@@ -154,7 +154,7 @@ jobs:
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           artifact-ids: ${{ needs.prepare-shards.outputs.timings_input_id }}
-          path: ${{ runner.temp }}/fcc-ci-timings/baseline/
+          path: ${{ runner.temp }}/modelglot-ci-timings/baseline/
 
       - name: Prepare shard timing file
         run: uv run --locked python -m scripts.ci_timings start
@@ -165,7 +165,7 @@ jobs:
           --splits ${{ matrix.shards }} --group ${{ matrix.shard }}
           --splitting-algorithm=least_duration
           --store-durations --clean-durations
-          --durations-path "${{ runner.temp }}/fcc-ci-timings/working/durations.json"
+          --durations-path "${{ runner.temp }}/modelglot-ci-timings/working/durations.json"
 
       - name: Record shard timings
         run: uv run --locked python -m scripts.ci_timings record
@@ -174,7 +174,7 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: ci-timings-shard-v1-pytest-${{ matrix.os }}-${{ matrix.shard }}-of-${{ matrix.shards }}-attempt-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/fcc-ci-timings/result/
+          path: ${{ runner.temp }}/modelglot-ci-timings/result/
           if-no-files-found: error
           retention-days: 30
 
@@ -213,7 +213,7 @@ jobs:
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           artifact-ids: ${{ needs.prepare-shards.outputs.timings_input_id }}
-          path: ${{ runner.temp }}/fcc-ci-timings/baseline/
+          path: ${{ runner.temp }}/modelglot-ci-timings/baseline/
 
       - name: Prepare shard timing file
         run: uv run --locked python -m scripts.ci_timings start
@@ -227,7 +227,7 @@ jobs:
           --splits ${{ matrix.shards }} --group ${{ matrix.shard }}
           --splitting-algorithm=least_duration
           --store-durations --clean-durations
-          --durations-path "${{ runner.temp }}/fcc-ci-timings/working/durations.json"
+          --durations-path "${{ runner.temp }}/modelglot-ci-timings/working/durations.json"
 
       - name: Record shard timings
         run: uv run --locked python -m scripts.ci_timings record
@@ -236,7 +236,7 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: ci-timings-shard-v1-playwright-${{ matrix.os }}-${{ matrix.shard }}-of-${{ matrix.shards }}-attempt-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/fcc-ci-timings/result/
+          path: ${{ runner.temp }}/modelglot-ci-timings/result/
           if-no-files-found: error
           retention-days: 30
 
@@ -285,13 +285,13 @@ jobs:
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           artifact-ids: ${{ needs.prepare-shards.outputs.timings_input_id }}
-          path: ${{ runner.temp }}/fcc-ci-timings/baseline/
+          path: ${{ runner.temp }}/modelglot-ci-timings/baseline/
 
       - name: Download current-attempt shard timings
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           pattern: ci-timings-shard-v1-*-attempt-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/fcc-ci-timings/shards/
+          path: ${{ runner.temp }}/modelglot-ci-timings/shards/
 
       - name: Merge complete timing maps
         id: merge
@@ -302,7 +302,7 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: ci-timings-complete-v1-attempt-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/fcc-ci-timings/complete/
+          path: ${{ runner.temp }}/modelglot-ci-timings/complete/
           if-no-files-found: error
           retention-days: 30
 

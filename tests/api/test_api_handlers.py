@@ -666,7 +666,7 @@ async def test_messages_handler_tolerates_required_thinking_for_classifier() -> 
         web_tools=StubWebToolsClient(),
     )
     request = MessagesRequest(
-        model="claude-3-freecc-no-thinking/nvidia_nim/test-model",
+        model="claude-3-modelglot-no-thinking/nvidia_nim/test-model",
         max_tokens=100,
         stream=True,
         system=_LEGACY_CLASSIFIER_SYSTEM,
@@ -690,7 +690,7 @@ async def test_messages_handler_tolerates_required_thinking_for_classifier() -> 
             "stage": "routing",
             "event": "free_claude_code.api.route.safety_classifier_policy",
             "source": "api",
-            "model": "claude-3-freecc-no-thinking/nvidia_nim/test-model",
+            "model": "claude-3-modelglot-no-thinking/nvidia_nim/test-model",
             "classifier_stop_sequence": "</block>",
             "reasoning_changed": True,
             "stop_sequence_removed": True,

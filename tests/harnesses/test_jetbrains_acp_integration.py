@@ -108,11 +108,11 @@ def test_lifecycle_preserves_other_agents_and_refreshes_owned_settings(
             "default_mcp_settings": {"use_idea_mcp": True},
         },
     )
-    assert not jb.configure(config, "http://localhost:8082", "token")["connected"]
-    assert jb.configure(config, "http://localhost:8082", "token", True)["connected"]
+    assert not jb.configure(config, "http://localhost:16969", "token")["connected"]
+    assert jb.configure(config, "http://localhost:16969", "token", True)["connected"]
     assert registry.read_bytes() == original
     saved = decode_object(config.read_text())
-    entry = object_payload(saved["agent_servers"])["Claude Code (FCC)"]
+    entry = object_payload(saved["agent_servers"])["Claude Code (ModelGlot)"]
     assert object_payload(entry)["command"] == str(node)
     assert object_payload(entry)["args"] == [str(script), "--hide-claude-auth"]
     assert (
@@ -130,7 +130,7 @@ def test_lifecycle_preserves_other_agents_and_refreshes_owned_settings(
     _, updated = install(registry, systems, version="0.80.0")
     assert jb.refresh_connected(config, "http://localhost:9090", "rotated")
     refreshed = object_payload(decode_object(config.read_text())["agent_servers"])[
-        "Claude Code (FCC)"
+        "Claude Code (ModelGlot)"
     ]
     assert array_payload(object_payload(refreshed)["args"])[0] == str(updated)
     assert (
@@ -182,9 +182,9 @@ def test_missing_installation_never_creates_config(
     files: tuple[Path, Path, Path],
 ) -> None:
     config, _, _ = files
-    assert not jb.refresh_connected(config, "http://localhost:8082", "token")
+    assert not jb.refresh_connected(config, "http://localhost:16969", "token")
     with pytest.raises(jb.SetupError):
-        jb.configure(config, "http://localhost:8082", "token", True)
+        jb.configure(config, "http://localhost:16969", "token", True)
     assert not config.exists()
 
 
@@ -194,7 +194,7 @@ def test_missing_installation_never_creates_config(
         "{",
         "[]",
         '{"agent_servers":[]}',
-        '{"agent_servers":{"Claude Code (FCC)":{"command":"other"}}}',
+        '{"agent_servers":{"Claude Code (ModelGlot)":{"command":"other"}}}',
         '{"agent_servers":{},"agent_servers":{}}',
     ],
 )
@@ -205,7 +205,7 @@ def test_invalid_or_unowned_configuration_is_never_overwritten(
     config.write_text(source)
     for action in [None, True, False]:
         with pytest.raises(ValueError):
-            jb.configure(config, "http://localhost:8082", "token", action)
+            jb.configure(config, "http://localhost:16969", "token", action)
         assert config.read_text() == source
 
 
@@ -214,15 +214,15 @@ def test_status_and_disconnect_do_not_discover_or_run_programs(
 ) -> None:
     config, registry, systems = files
     install(registry, systems)
-    jb.configure(config, "http://localhost:8082", "token", True)
+    jb.configure(config, "http://localhost:16969", "token", True)
     monkeypatch.setattr(jb, "registry_path", lambda: pytest.fail("registry access"))
 
     def replace_run(*a: object, **k: object):
         return pytest.fail("subprocess")
 
     monkeypatch.setattr(jb.subprocess, "run", replace_run)
-    assert jb.configure(config, "http://localhost:8082", "token")["connected"]
-    assert not jb.configure(config, "http://localhost:8082", "token", False)[
+    assert jb.configure(config, "http://localhost:16969", "token")["connected"]
+    assert not jb.configure(config, "http://localhost:16969", "token", False)[
         "connected"
     ]
 
@@ -233,7 +233,7 @@ def test_unusable_installation_preserves_connected_entry(
 ) -> None:
     config, registry, systems = files
     _, script = install(registry, systems)
-    jb.configure(config, "http://localhost:8082", "token", True)
+    jb.configure(config, "http://localhost:16969", "token", True)
     before = config.read_bytes()
     package = script.parent.parent / "package.json"
     metadata = decode_object(package.read_text())
@@ -255,9 +255,9 @@ def test_unusable_installation_preserves_connected_entry(
         monkeypatch.setattr(jb.subprocess, "run", run_probe)
     write(package, metadata)
     with pytest.raises(jb.SetupError):
-        jb.refresh_connected(config, "http://localhost:8082", "new")
+        jb.refresh_connected(config, "http://localhost:16969", "new")
     assert config.read_bytes() == before
-    assert jb.configure(config, "http://localhost:8082", "new")["connected"]
+    assert jb.configure(config, "http://localhost:16969", "new")["connected"]
 
 
 @pytest.mark.parametrize(
@@ -285,9 +285,9 @@ def test_platform_layout_and_launch(
     assert system_root() == tmp_path / cache / "JetBrains"
     config, registry, systems = files
     node, script = install(registry, systems)
-    jb.configure(config, "http://localhost:8082", "token", True)
+    jb.configure(config, "http://localhost:16969", "token", True)
     entry = object_payload(decode_object(config.read_text())["agent_servers"])[
-        "Claude Code (FCC)"
+        "Claude Code (ModelGlot)"
     ]
     assert object_payload(entry)["command"] == str(node)
     assert array_payload(object_payload(entry)["args"])[0] == str(script)
@@ -298,9 +298,9 @@ def test_previous_ide_is_preferred_and_system_node_is_fallback(
 ) -> None:
     config, registry, systems = files
     node, script = install(registry, systems, ide="Z IDE")
-    jb.configure(config, "http://localhost:8082", "token", True)
+    jb.configure(config, "http://localhost:16969", "token", True)
     install(registry, systems, ide="A IDE")
-    assert not jb.refresh_connected(config, "http://localhost:8082", "token")
+    assert not jb.refresh_connected(config, "http://localhost:16969", "token")
     system = config.parent / "system node.exe"
     system.touch()
     node.unlink()
@@ -309,9 +309,9 @@ def test_previous_ide_is_preferred_and_system_node_is_fallback(
         return str(system)
 
     monkeypatch.setattr(jb.shutil, "which", replace_which)
-    jb.refresh_connected(config, "http://localhost:8082", "token")
+    jb.refresh_connected(config, "http://localhost:16969", "token")
     entry = object_payload(decode_object(config.read_text())["agent_servers"])[
-        "Claude Code (FCC)"
+        "Claude Code (ModelGlot)"
     ]
     assert object_payload(entry)["command"] == str(system.resolve())
     assert array_payload(object_payload(entry)["args"])[0] == str(script)
@@ -331,7 +331,7 @@ def test_timed_out_node_leaves_config_unchanged(
 
     monkeypatch.setattr(jb.subprocess, "run", timeout)
     with pytest.raises(jb.SetupError):
-        jb.configure(config, "http://localhost:8082", "token", True)
+        jb.configure(config, "http://localhost:16969", "token", True)
     assert config.read_bytes() == before
 
 
@@ -350,5 +350,5 @@ def test_failed_atomic_replace_preserves_existing_config(
 
     monkeypatch.setattr(config_file.os, "replace", fail)
     with pytest.raises(PermissionError):
-        jb.configure(config, "http://localhost:8082", "token", True)
+        jb.configure(config, "http://localhost:16969", "token", True)
     assert config.read_bytes() == before

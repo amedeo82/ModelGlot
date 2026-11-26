@@ -1,4 +1,4 @@
-"""Model-list response construction for FCC clients."""
+"""Model-list response construction for ModelGlot clients."""
 
 from enum import StrEnum
 from typing import Literal
@@ -22,7 +22,7 @@ from free_claude_code.core.gateway_model_ids import (
 from free_claude_code.core.model_capabilities import ModelInputModality
 
 DISCOVERED_MODEL_CREATED_AT = "1970-01-01T00:00:00Z"
-# Keep clients waiting while FCC owns transport retries and cancellation.
+# Keep clients waiting while ModelGlot owns transport retries and cancellation.
 _INFERENCE_IDLE_TIMEOUT_SECONDS = 2_147_483
 _REASONING_EFFORTS = ("none", "minimal", "low", "medium", "high", "xhigh", "max")
 
@@ -57,7 +57,7 @@ class MuseMetadataEnvelope(BaseModel):
 class ModelResponse(BaseModel):
     object: Literal["model"] = "model"
     created: int = 0
-    owned_by: str = "free-claude-code"
+    owned_by: str = "modelglot"
     created_at: str
     display_name: str
     description: str | None = None

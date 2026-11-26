@@ -116,7 +116,9 @@ async def test_awaitable_restart_callback_is_not_executed_under_apply_lock(
     manager = ProviderRuntimeManager(_settings("nvidia_nim/old"))
     configuration = AsyncMock(spec=ConfigurationService)
     prepared = _prepared(
-        _settings("nvidia_nim/old", port=9090), tmp_path, pending_fields=("PORT",)
+        _settings("nvidia_nim/old", port=9090),
+        tmp_path,
+        pending_fields=("MODELGLOT_PORT",),
     )
     configuration.prepare.return_value = prepared
     configuration.commit.return_value = prepared.applied_response()
@@ -140,7 +142,9 @@ async def test_awaitable_restart_callback_is_not_executed_under_apply_lock(
         "free_claude_code.runtime.application.check_credentials",
         AsyncMock(return_value=()),
     ):
-        apply = asyncio.create_task(runtime.apply_admin_config({"PORT": "9090"}))
+        apply = asyncio.create_task(
+            runtime.apply_admin_config({"MODELGLOT_PORT": "9090"})
+        )
         try:
             done, _ = await asyncio.wait({apply}, timeout=2)
             assert apply in done, "restart callback deadlocked with runtime.close"
@@ -149,7 +153,7 @@ async def test_awaitable_restart_callback_is_not_executed_under_apply_lock(
             restart = result["restart"]
             assert isinstance(restart, dict)
             assert restart["automatic"] is False
-            assert runtime._pending_fields == ["PORT"]
+            assert runtime._pending_fields == ["MODELGLOT_PORT"]
             assert callback_tasks == []
             callback.assert_called_once_with()
         finally:
@@ -161,7 +165,7 @@ async def test_awaitable_restart_callback_is_not_executed_under_apply_lock(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("pending", [(), ("PORT",)])
+@pytest.mark.parametrize("pending", [(), ("MODELGLOT_PORT",)])
 @pytest.mark.parametrize("fail", [False, True])
 async def test_cancelled_commit_settles_before_shutdown(
     tmp_path: Path, pending: tuple[str, ...], fail: bool
@@ -225,7 +229,7 @@ async def test_cancellation_at_finalization_handoff_prevents_persistence(
     previous_cancellation: bool,
 ) -> None:
     monkeypatch.delenv("MODEL", raising=False)
-    monkeypatch.delenv("PORT", raising=False)
+    monkeypatch.delenv("MODELGLOT_PORT", raising=False)
     store = ManagedConfigStore()
     store.initialize()
     initial = store.read()
@@ -239,7 +243,9 @@ async def test_cancellation_at_finalization_handoff_prevents_persistence(
         transcriber=None,
         restart_callback=restart,
     )
-    updates = {"PORT": "8123"} if restart_required else {"MODEL": "nvidia_nim/new"}
+    updates = (
+        {"MODELGLOT_PORT": "8123"} if restart_required else {"MODEL": "nvidia_nim/new"}
+    )
 
     async def run_apply():
         if previous_cancellation:

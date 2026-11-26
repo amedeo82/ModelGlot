@@ -31,7 +31,7 @@ def test_claude_owns_permission_selection(
     assert env["CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY"] == "1"
     assert env["CLAUDE_CODE_DISABLE_ADVISOR_TOOL"] == "1"
     assert env["CLAUDE_CODE_AUTO_MODE_SERVER"] == "0"
-    # Settings-file provider, endpoint and auth values cannot bypass FCC.
+    # Settings-file provider, endpoint and auth values cannot bypass ModelGlot.
     assert env["CLAUDE_CODE_PROVIDER_MANAGED_BY_HOST"] == "1"
 
 

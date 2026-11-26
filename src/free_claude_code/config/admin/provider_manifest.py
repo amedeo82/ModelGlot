@@ -19,7 +19,7 @@ class ProviderFieldOverride(TypedDict, total=False):
 
 _PROVIDER_FIELD_OVERRIDES: dict[str, ProviderFieldOverride] = {
     "ANTHROPIC_API_KEY": {
-        "description": "Anthropic API access with separate usage billing. Messages requests use Anthropic tools and client thinking controls. Native fallback uses other Anthropic models. FCC local web tools apply to compatibility routes.",
+        "description": "Anthropic API access with separate usage billing. Messages requests use Anthropic tools and client thinking controls. Native fallback uses other Anthropic models. ModelGlot local web tools apply to compatibility routes.",
     },
     "OPENAI_API_KEY": {
         "label": "OpenAI API Keys",
@@ -29,7 +29,7 @@ _PROVIDER_FIELD_OVERRIDES: dict[str, ProviderFieldOverride] = {
         "description": (
             "Optional network proxy. Leave blank unless you use one. "
             "Used for OpenAI sign-in and ChatGPT Codex requests. "
-            "Changing it restarts FCC."
+            "Changing it restarts ModelGlot."
         ),
         "restart_required": True,
     },

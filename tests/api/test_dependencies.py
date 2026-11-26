@@ -21,7 +21,7 @@ from tests.api.support import create_test_app
 def _request(
     *,
     headers: dict[str, str],
-    token: str = "freecc",
+    token: str = "modelglot",
     enabled: bool = True,
 ) -> tuple[Request, Settings]:
     request = Request(
@@ -67,7 +67,7 @@ def test_get_settings_reads_current_request_runtime_settings() -> None:
         Settings.model_construct(
             model="deepseek/test-model",
             proxy_auth_enabled=False,
-            proxy_auth_token="freecc",
+            proxy_auth_token="modelglot",
         )
     )
 

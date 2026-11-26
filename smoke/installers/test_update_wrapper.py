@@ -16,12 +16,12 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 RAW_URL = "https://raw.githubusercontent.com/amedeo82/ModelGlot"
 REPOSITORY_URL = "https://github.com/amedeo82/ModelGlot"
-SCRIPTS = ("fcc-update", "fcc-update.cmd")
+SCRIPTS = ("modelglot-update", "modelglot-update.cmd")
+UPSTREAM_SCRIPTS = ("other-update", "other-update.cmd")
 INSTALLED = "1.0.0"
 LATEST = {
     "current": INSTALLED,
     "newer-installed": "0.9.0",
-    "legacy-current": INSTALLED,
 }
 
 
@@ -73,7 +73,12 @@ def installer_server(body: str, status: int, latest: str):
         thread.join()
 
 
-def fixture_wheel(area: Path, url: str, package: str = "modelglot"):
+def fixture_wheel(
+    area: Path,
+    url: str,
+    package: str = "modelglot",
+    scripts: tuple[str, ...] = SCRIPTS,
+):
     dist = f"{package.replace('-', '_')}-{INSTALLED}"
     wheel = area / f"{dist}-py3-none-any.whl"
     with zipfile.ZipFile(wheel, "w") as archive:
@@ -85,8 +90,15 @@ def fixture_wheel(area: Path, url: str, package: str = "modelglot"):
             f"{dist}.dist-info/WHEEL",
             "Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n",
         )
-        for name in SCRIPTS:
-            source = (ROOT / "scripts/update" / name).read_text(encoding="utf-8")
+        for name in scripts:
+            source_path = ROOT / "scripts/update" / name
+            source = (
+                source_path.read_text(encoding="utf-8")
+                if source_path.is_file()
+                else "@echo off\nrem upstream fixture\n"
+                if name.endswith(".cmd")
+                else "#!/bin/sh\nexit 0\n"
+            )
             archive.writestr(
                 f"{dist}.data/scripts/{name}", source.replace(RAW_URL, url)
             )
@@ -109,7 +121,6 @@ def fixture_wheel(area: Path, url: str, package: str = "modelglot"):
         "real-installer",
         "current",
         "newer-installed",
-        "legacy-current",
     ],
 )
 def test_installed_update_delegates_and_survives_replacement(
@@ -121,7 +132,9 @@ def test_installed_update_delegates_and_survives_replacement(
     area = tmp_path / "José 测试 & (spaces) ! apostrophe'"
     area.mkdir()
     env = {
-        key: value for key, value in os.environ.items() if key != "FCC_INSTALL_VERSION"
+        key: value
+        for key, value in os.environ.items()
+        if key != "MODELGLOT_INSTALL_VERSION"
     }
     env.update(
         UV_TOOL_DIR=str(area / "tools"),
@@ -129,19 +142,18 @@ def test_installed_update_delegates_and_survives_replacement(
         UV_CACHE_DIR=str(area / "cache"),
         UV_NO_CONFIG="1",
         UV_PYTHON_DOWNLOADS="never",
-        FCC_TEST_LAUNCHER=str(
-            area / "bin" / ("fcc-update.cmd" if os.name == "nt" else "fcc-update")
+        MODELGLOT_TEST_LAUNCHER=str(
+            area
+            / "bin"
+            / ("modelglot-update.cmd" if os.name == "nt" else "modelglot-update")
         ),
     )
     real_installer = outcome in {
         "real-installer",
         "current",
         "newer-installed",
-        "legacy-current",
     }
-    installed_package = (
-        "free-claude-code" if outcome == "legacy-current" else "modelglot"
-    )
+    installed_package = "modelglot"
     if os.name == "nt":
         powershell = shutil.which("powershell")
         if powershell is None:
@@ -149,8 +161,8 @@ def test_installed_update_delegates_and_survives_replacement(
         env["PSMODULEPATH"] = powershell_module_paths[powershell]
         body = """param([switch] $Update, [switch] $VoiceLocal, [string] $TorchBackend, [string] $Ref)
 $answer = Read-Host 'Continue'
-Write-Output "installer:$Update|$VoiceLocal|$TorchBackend|$answer|$env:FCC_INSTALL_VERSION"
-[IO.File]::WriteAllText($env:FCC_TEST_LAUNCHER, 'exit /b 99')
+Write-Output "installer:$Update|$VoiceLocal|$TorchBackend|$answer|$env:MODELGLOT_INSTALL_VERSION"
+[IO.File]::WriteAllText($env:MODELGLOT_TEST_LAUNCHER, 'exit /b 99')
 """
         arguments = "-VoiceLocal -TorchBackend cu130"
         expected = "installer:True|True|cu130|yes|"
@@ -159,8 +171,8 @@ Write-Output "installer:$Update|$VoiceLocal|$TorchBackend|$answer|$env:FCC_INSTA
         )
     else:
         body = """read -r answer
-printf 'installer:%s|%s|%s|%s|%s|%s\\n' "$1" "$2" "$3" "$4" "$answer" "${FCC_INSTALL_VERSION-}"
-printf 'exit 99\\n' > "$FCC_TEST_LAUNCHER"
+printf 'installer:%s|%s|%s|%s|%s|%s\\n' "$1" "$2" "$3" "$4" "$answer" "${MODELGLOT_INSTALL_VERSION-}"
+printf 'exit 99\\n' > "$MODELGLOT_TEST_LAUNCHER"
 """
         arguments = ["--voice-local", "--torch-backend", "cu130"]
         expected = "installer:--update|--voice-local|--torch-backend|cu130|yes|"
@@ -171,11 +183,15 @@ printf 'exit 99\\n' > "$FCC_TEST_LAUNCHER"
         if os.name == "nt":
             # The real installer binds the options the stub reports.
             body = body.split("\n", 1)[1]
-            body += 'Write-Output "marker:[$env:_FCC_INSTALLER_RELEASE]"\nreturn\n'
+            body += (
+                'Write-Output "marker:[$env:_MODELGLOT_INSTALLER_RELEASE]"\nreturn\n'
+            )
             boundary = "\nInitialize-InstallLog\n"
             expected = "installer:True|True|cu130|yes|"
         else:
-            body += 'printf "marker:[%s]\\n" "${_FCC_INSTALLER_RELEASE-}"\nexit 0\n'
+            body += (
+                'printf "marker:[%s]\\n" "${_MODELGLOT_INSTALLER_RELEASE-}"\nexit 0\n'
+            )
             boundary = "\ninitialize_install_log\n"
             expected = "installer:--update|--voice-local|--torch-backend|cu130|yes|"
         assert source.count(boundary) == 1
@@ -184,6 +200,21 @@ printf 'exit 99\\n' > "$FCC_TEST_LAUNCHER"
     with installer_server(
         body, 503 if outcome == "download-error" else 200, latest
     ) as (url, requests):
+        upstream_wheel = fixture_wheel(area, url, "other-cli", UPSTREAM_SCRIPTS)
+        upstream_install = subprocess.run(
+            [
+                uv,
+                "tool",
+                "install",
+                "--python",
+                getattr(sys, "_base_executable", sys.executable),
+                str(upstream_wheel),
+            ],
+            env=env,
+            capture_output=True,
+            timeout=90,
+        )
+        assert upstream_install.returncode == 0, upstream_install.stderr
         wheel = fixture_wheel(area, url, installed_package)
         result = subprocess.run(
             [
@@ -199,7 +230,7 @@ printf 'exit 99\\n' > "$FCC_TEST_LAUNCHER"
             timeout=90,
         )
         assert result.returncode == 0, result.stderr
-        launcher = env["FCC_TEST_LAUNCHER"]
+        launcher = env["MODELGLOT_TEST_LAUNCHER"]
         command = (
             f'"{os.environ.get("COMSPEC", "cmd.exe")}" /d /s /c ""{launcher}" {arguments}"'
             if os.name == "nt"
@@ -244,7 +275,7 @@ printf 'exit 99\\n' > "$FCC_TEST_LAUNCHER"
             else:
                 expected_message = (
                     "is already up to date."
-                    if outcome in {"current", "legacy-current"}
+                    if outcome == "current"
                     else "is newer than the published version"
                 )
                 assert expected_message in output
@@ -259,3 +290,4 @@ printf 'exit 99\\n' > "$FCC_TEST_LAUNCHER"
         )
         assert result.returncode == 0, result.stderr
         assert not any((area / "bin" / name).exists() for name in SCRIPTS)
+        assert all((area / "bin" / name).is_file() for name in UPSTREAM_SCRIPTS)

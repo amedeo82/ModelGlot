@@ -60,8 +60,8 @@ def test_windows_confirmation_uses_native_yes_no_dialog(
     call = message_box.calls[0]
     assert isinstance(call[1], str)
     assert isinstance(call[2], str)
-    assert "FCC 2.0.0 is available" in call[1]
-    assert "FCC will close" in call[1]
+    assert "ModelGlot 2.0.0 is available" in call[1]
+    assert "ModelGlot will close" in call[1]
     assert call[2] == "ModelGlot update"
 
 
@@ -118,8 +118,8 @@ def test_windows_launcher_pins_release_and_detaches(
 
     def installed_commands() -> tuple[str, str]:
         return (
-            r"C:\Users\Test\.local\bin\fcc-update.cmd",
-            r"C:\Users\Test\.local\bin\fcc-desktop.exe",
+            r"C:\Users\Test\.local\bin\modelglot-update.cmd",
+            r"C:\Users\Test\.local\bin\modelglot-desktop.exe",
         )
 
     monkeypatch.setattr(desktop_update.sys, "platform", "win32")
@@ -141,10 +141,10 @@ def test_windows_launcher_pins_release_and_detaches(
 
     command = popen.commands[0]
     script = base64.b64decode(command[-1]).decode("utf-16-le")
-    assert "$env:FCC_INSTALL_VERSION = '2.0.0'" in script
-    assert "$env:FCC_INSTALL_REF = ''" in script
-    assert "fcc-update.cmd" in script
-    assert "fcc-desktop.exe" in script
+    assert "$env:MODELGLOT_INSTALL_VERSION = '2.0.0'" in script
+    assert "$env:MODELGLOT_INSTALL_REF = ''" in script
+    assert "modelglot-update.cmd" in script
+    assert "modelglot-desktop.exe" in script
     assert f"$parentPid = {os.getpid()}" in script
     assert popen.kwargs[0]["creationflags"] != 0
     assert log_path.parent == tmp_path / "logs"
@@ -159,8 +159,8 @@ def test_macos_launcher_waits_then_reopens_app(
 
     def installed_commands() -> tuple[str, str]:
         return (
-            "/Users/Test/.local/bin/fcc-update",
-            "/Users/Test/.local/bin/fcc-desktop",
+            "/Users/Test/.local/bin/modelglot-update",
+            "/Users/Test/.local/bin/modelglot-desktop",
         )
 
     monkeypatch.setattr(desktop_update.sys, "platform", "darwin")
@@ -177,14 +177,14 @@ def test_macos_launcher_waits_then_reopens_app(
     assert len(command) == 2
     assert command[0] == "/bin/sh"
     helper = Path(command[1])
-    assert helper.name.startswith("fcc-desktop-update-")
-    assert "/Users/Test/.local/bin/fcc-update" not in command
+    assert helper.name.startswith("modelglot-desktop-update-")
+    assert "/Users/Test/.local/bin/modelglot-update" not in command
     script = helper.read_text(encoding="utf-8")
-    assert "FCC_INSTALL_VERSION=2.0.0" in script
-    assert "FCC_INSTALL_REF=''" in script
+    assert "MODELGLOT_INSTALL_VERSION=2.0.0" in script
+    assert "MODELGLOT_INSTALL_REF=''" in script
     assert "kill -0" in script
     assert "/usr/bin/open" in script
-    assert shlex.quote("/Users/Test/.local/bin/fcc-desktop") in script
+    assert shlex.quote("/Users/Test/.local/bin/modelglot-desktop") in script
     assert popen.kwargs[0]["start_new_session"] is True
     helper.unlink()
 
@@ -194,7 +194,7 @@ def test_macos_launcher_removes_helper_when_spawn_fails(
     tmp_path: Path,
 ) -> None:
     def installed_commands() -> tuple[str, str]:
-        return ("/usr/local/bin/fcc-update", "/usr/local/bin/fcc-desktop")
+        return ("/usr/local/bin/modelglot-update", "/usr/local/bin/modelglot-desktop")
 
     monkeypatch.setattr(desktop_update.sys, "platform", "darwin")
     monkeypatch.setattr(
@@ -228,8 +228,8 @@ def test_installed_commands_prefer_update_next_to_desktop(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    desktop = tmp_path / "fcc-desktop"
-    update = tmp_path / "fcc-update"
+    desktop = tmp_path / "modelglot-desktop"
+    update = tmp_path / "modelglot-update"
     desktop.write_text("desktop", encoding="utf-8")
     update.write_text("update", encoding="utf-8")
     monkeypatch.setattr(desktop_update.sys, "platform", "darwin")
@@ -242,15 +242,15 @@ def test_installed_commands_find_update_in_managed_runtime_without_path(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    bundle = tmp_path / "Free Claude Code.app/Contents/MacOS"
+    bundle = tmp_path / "ModelGlot.app/Contents/MacOS"
     bundle.mkdir(parents=True)
-    desktop = bundle / "fcc-desktop"
+    desktop = bundle / "modelglot-desktop"
     desktop.write_text("desktop", encoding="utf-8")
     runtime = tmp_path / "runtime/bin"
     runtime.mkdir(parents=True)
     python = runtime / "python"
     python.write_text("python", encoding="utf-8")
-    update = runtime / "fcc-update"
+    update = runtime / "modelglot-update"
     update.write_text("update", encoding="utf-8")
     monkeypatch.setattr(desktop_update.sys, "platform", "darwin")
     monkeypatch.setattr(desktop_update.sys, "argv", [str(desktop)])

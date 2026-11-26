@@ -1,4 +1,4 @@
-"""Lightweight entrypoint for the optional FCC desktop shell."""
+"""Lightweight entrypoint for the optional ModelGlot desktop shell."""
 
 import subprocess
 import sys
@@ -27,10 +27,10 @@ def launch(argv: Sequence[str] | None = None) -> None:
         return
     auto_started = args == ("--auto-started",)
     if args and not auto_started:
-        print("Usage: fcc-desktop [--export-icon PATH]", file=sys.stderr)
+        print("Usage: modelglot-desktop [--export-icon PATH]", file=sys.stderr)
         raise SystemExit(2)
     if sys.platform not in {"darwin", "win32"}:
-        print("FCC Desktop is supported on Windows and macOS.", file=sys.stderr)
+        print("ModelGlot Desktop is supported on Windows and macOS.", file=sys.stderr)
         raise SystemExit(1)
 
     enable_dpi_awareness()

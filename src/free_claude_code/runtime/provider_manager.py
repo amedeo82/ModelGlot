@@ -710,7 +710,7 @@ class ProviderRuntimeManager:
         self._current.file_state = "starting"
         if self._publication_task is None or self._publication_task.done():
             self._publication_task = asyncio.create_task(
-                self._publish_catalog(), name="fcc-model-catalog"
+                self._publish_catalog(), name="modelglot-model-catalog"
             )
         return self._publication_task
 

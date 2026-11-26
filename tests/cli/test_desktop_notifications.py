@@ -55,29 +55,29 @@ def test_pystray_notifier_uses_icon_notification_api() -> None:
 
     notifier.notify(
         DesktopNotification(
-            title="Free Claude Code",
+            title="ModelGlot",
             message="Server is running.",
             level=NotificationLevel.SUCCESS,
         )
     )
 
-    assert icon.notifications == [("Server is running.", "Free Claude Code — Success")]
+    assert icon.notifications == [("Server is running.", "ModelGlot — Success")]
 
 
 @pytest.mark.parametrize(
     ("level", "expected"),
     [
-        (NotificationLevel.INFO, "Free Claude Code"),
-        (NotificationLevel.SUCCESS, "Free Claude Code — Success"),
-        (NotificationLevel.WARNING, "Free Claude Code — Warning"),
-        (NotificationLevel.ERROR, "Free Claude Code — Error"),
+        (NotificationLevel.INFO, "ModelGlot"),
+        (NotificationLevel.SUCCESS, "ModelGlot — Success"),
+        (NotificationLevel.WARNING, "ModelGlot — Warning"),
+        (NotificationLevel.ERROR, "ModelGlot — Error"),
     ],
 )
 def test_notification_title_uses_consistent_brand_and_severity(
     level: NotificationLevel, expected: str
 ) -> None:
     notification = DesktopNotification(
-        title="Free Claude Code",
+        title="ModelGlot",
         message="Server is running.",
         level=level,
     )
@@ -91,8 +91,8 @@ def test_user_facing_notifications_do_not_expose_upstream_repository() -> None:
 
     notifier.notify(
         DesktopNotification(
-            title="Free Claude Code",
-            message="FCC update available.",
+            title="ModelGlot",
+            message="ModelGlot update available.",
             level=NotificationLevel.INFO,
         )
     )
@@ -100,7 +100,7 @@ def test_user_facing_notifications_do_not_expose_upstream_repository() -> None:
     rendered = " ".join(value for pair in icon.notifications for value in pair)
     assert "alishahryar1" not in rendered.lower()
     assert "github.com" not in rendered.lower()
-    assert APP_USER_MODEL_ID == "io.github.amedeo82.free-claude-code"
+    assert APP_USER_MODEL_ID == "io.github.amedeo82.modelglot"
 
 
 def test_windows_notifier_sets_branded_icon_and_native_style() -> None:
@@ -109,7 +109,7 @@ def test_windows_notifier_sets_branded_icon_and_native_style() -> None:
 
     notifier.notify(
         DesktopNotification(
-            title="Free Claude Code",
+            title="ModelGlot",
             message="Update available.",
             level=NotificationLevel.WARNING,
         )
@@ -119,7 +119,7 @@ def test_windows_notifier_sets_branded_icon_and_native_style() -> None:
     assert code == 1
     assert flags == 0x10
     assert values["szInfo"] == "Update available."
-    assert values["szInfoTitle"] == "Free Claude Code — Warning"
+    assert values["szInfoTitle"] == "ModelGlot — Warning"
     assert values["hBalloonIcon"] == 123
     assert values["dwInfoFlags"] == 0x02 | 0x04 | 0x20
 
@@ -130,7 +130,7 @@ def test_windows_notifier_maps_success_to_information_style() -> None:
 
     notifier.notify(
         DesktopNotification(
-            title="Free Claude Code",
+            title="ModelGlot",
             message="Up to date.",
             level=NotificationLevel.SUCCESS,
         )
@@ -148,13 +148,13 @@ def test_windows_notifier_falls_back_without_native_handles() -> None:
 
     notifier.notify(
         DesktopNotification(
-            title="Free Claude Code",
+            title="ModelGlot",
             message="Fallback.",
             level=NotificationLevel.INFO,
         )
     )
 
-    assert icon.notifications == [("Fallback.", "Free Claude Code")]
+    assert icon.notifications == [("Fallback.", "ModelGlot")]
 
 
 def test_windows_notifier_falls_back_when_native_balloon_fails() -> None:
@@ -172,13 +172,13 @@ def test_windows_notifier_falls_back_when_native_balloon_fails() -> None:
 
     notifier.notify(
         DesktopNotification(
-            title="Free Claude Code",
+            title="ModelGlot",
             message="Fallback.",
             level=NotificationLevel.ERROR,
         )
     )
 
-    assert icon.notifications == [("Fallback.", "Free Claude Code — Error")]
+    assert icon.notifications == [("Fallback.", "ModelGlot — Error")]
 
 
 @pytest.mark.skipif(
@@ -235,7 +235,7 @@ def test_windows_notifier_uses_branded_toast(
 
     notifier.notify(
         DesktopNotification(
-            title="Free Claude Code",
+            title="ModelGlot",
             message="Server is running.",
             level=NotificationLevel.SUCCESS,
         )
@@ -244,7 +244,7 @@ def test_windows_notifier_uses_branded_toast(
     assert icon.messages == []
     assert toast_notifier.notification is not None
     document = toast_notifier.notification.content.get_xml()
-    assert "Free Claude Code — Success" in document
+    assert "ModelGlot — Success" in document
     assert "Server is running." in document
     assert 'placement="appLogoOverride"' in document
     assert "file:///" in document
@@ -303,7 +303,7 @@ def test_windows_notifier_falls_back_when_toast_is_disabled(
 
     notifier.notify(
         DesktopNotification(
-            title="Free Claude Code",
+            title="ModelGlot",
             message="Fallback.",
             level=NotificationLevel.INFO,
         )
@@ -371,7 +371,7 @@ def test_windows_notifier_keeps_native_toasts_when_setting_lookup_fails(
 
     notifier.notify(
         DesktopNotification(
-            title="Free Claude Code",
+            title="ModelGlot",
             message="Server is running.",
             level=NotificationLevel.SUCCESS,
         )

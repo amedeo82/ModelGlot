@@ -3,7 +3,7 @@
 Status: in progress
 Data: 2026-11-17
 Analisi di riferimento: [`chatgpt-desktop-codex-desktop-integration-analysis.md`](chatgpt-desktop-codex-desktop-integration-analysis.md)
-Obiettivo: qualificare e rendere ufficiale l'uso del workspace Codex locale della ChatGPT desktop app e del Codex client legacy attraverso FCC.
+Obiettivo: qualificare e rendere ufficiale l'uso del workspace Codex locale della ChatGPT desktop app e del Codex client legacy attraverso ModelGlot.
 
 ## 1. Principi di esecuzione
 
@@ -17,7 +17,7 @@ Non sono previsti:
 - una card Admin separata per ChatGPT Desktop;
 - il routing della modalità Chat standard;
 - il supporto di Codex Cloud, ChatGPT Work cloud o Work Cloud;
-- l'autenticazione cloud OpenAI tramite FCC;
+- l'autenticazione cloud OpenAI tramite ModelGlot;
 - la modifica del contratto Responses già conforme.
 
 Ogni step deve essere implementato in un branch o worktree separato, con test e rollback
@@ -63,7 +63,7 @@ supportate e riprodurre il comportamento reale.
    - percorso della Codex home e presenza di `CODEX_HOME`;
    - modalità di installazione e presenza del binario;
    - comportamento di Connect, Refresh e Disconnect;
-   - comparsa del provider FCC nel model picker;
+   - comparsa del provider ModelGlot nel model picker;
    - completamento di una richiesta Responses;
    - esecuzione di un tool call;
    - comportamento al riavvio dell'app.
@@ -95,7 +95,7 @@ supportate e riprodurre il comportamento reale.
 
 - test manuale della matrice;
 - confronto della configurazione generata con quella prevista;
-- verifica che un token FCC non compaia nei log o in `config.toml`.
+- verifica che un token ModelGlot non compaia nei log o in `config.toml`.
 
 **Rollback**
 
@@ -123,11 +123,11 @@ senza creare una nuova integrazione.
    - ChatGPT Desktop (Codex locale).
 2. Aggiungere una descrizione breve che distingua workspace Codex locale e funzioni cloud.
 3. Mostrare i passaggi:
-   - selezionare un modello FCC nel model picker;
+   - selezionare un modello ModelGlot nel model picker;
    - riavviare o riaprire il client;
-   - verificare che la sessione stia usando il provider FCC.
+   - verificare che la sessione stia usando il provider ModelGlot.
 4. Aggiornare README, docs e test E2E che ricercano il vecchio titolo.
-5. Evitare la promessa che la modalità Chat standard venga servita da FCC.
+5. Evitare la promessa che la modalità Chat standard venga servita da ModelGlot.
 
 **File coinvolti**
 
@@ -142,7 +142,7 @@ senza creare una nuova integrazione.
 
 - Il nome della nuova card elenca le tre superfici locali.
 - Il testo identifica esplicitamente “Codex locale”.
-- Il testo dichiara che Chat standard e le superfici cloud non usano FCC.
+- Il testo dichiara che Chat standard e le superfici cloud non usano ModelGlot.
 - I test E2E vengono aggiornati e verificano il nuovo copy.
 - Nessun riferimento utente-visibile a “Codex App” resta ambiguo.
 
@@ -186,8 +186,8 @@ client non supportato, senza esporre segreti.
 4. Aggiungere warning per:
    - catalogo assente o non leggibile;
    - modello top-level assente;
-   - modello non presente nel catalogo FCC;
-   - provider selezionato diverso da FCC;
+   - modello non presente nel catalogo ModelGlot;
+   - provider selezionato diverso da ModelGlot;
    - versione client incompatibile quando già rilevata.
 5. Esporre i dati nelle route Admin esistenti senza creare endpoint duplicati.
 6. Redigere i test per verificare l'assenza di token, auth header e secret nei payload.
@@ -284,7 +284,7 @@ commit per agevolare il rollback.
 
 **Obiettivo**
 
-Dimostrare che Codex locale usa correttamente FCC per testo, tool call e tool output.
+Dimostrare che Codex locale usa correttamente ModelGlot per testo, tool call e tool output.
 
 **Attività**
 
@@ -364,7 +364,7 @@ client.
 - Refresh è idempotente.
 - Il messaggio indica il riavvio necessario.
 - Il test E2E copre l'intero lifecycle.
-- Disconnect rimuove solo gli elementi FCC.
+- Disconnect rimuove solo gli elementi ModelGlot.
 
 **Test**
 
@@ -535,7 +535,7 @@ Fornire una procedura completa per setup, diagnosi e ripristino.
 1. Documentare la configurazione richiesta:
    - Codex home corretta;
    - `CODEX_HOME` quando si usa WSL o un'istanza separata;
-   - provider FCC;
+   - provider ModelGlot;
    - base URL;
    - credential helper;
    - catalogo locale.
@@ -549,7 +549,7 @@ Fornire una procedura completa per setup, diagnosi e ripristino.
 3. Documentare il rollback manuale:
    - backup di `config.toml`;
    - Disconnect dalla UI;
-   - verifica che il file non contenga più il provider FCC;
+   - verifica che il file non contenga più il provider ModelGlot;
    - riavvio del client.
 4. Raccomandare `HOST=127.0.0.1` oppure Proxy Authentication quando il proxy è in ascolto
    su tutte le interfacce.
@@ -684,13 +684,13 @@ Copre:
 Il rollback non richiede una migrazione dati. La procedura prevista è:
 
 1. eseguire Disconnect dalla UI;
-2. verificare la rimozione del provider FCC e del riferimento al catalogo;
+2. verificare la rimozione del provider ModelGlot e del riferimento al catalogo;
 3. ripristinare il backup di `config.toml`, se disponibile;
 4. riavviare il client;
 5. verificare il ripristino del provider/model precedente;
 6. se necessario, ripristinare la versione precedente del proxy.
 
-Il rollback deve preservare provider, modello, commenti e sezioni non FCC già presenti.
+Il rollback deve preservare provider, modello, commenti e sezioni non ModelGlot già presenti.
 
 ## 10. Metriche di completamento
 

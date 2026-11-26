@@ -333,7 +333,7 @@ class AnthropicMessagesTransport:
             prepared = build_gemini_messages_request(request, options)
         except ValueError as error:
             raise InvalidRequestError(str(error)) from error
-        response_id = f"fcc_{uuid.uuid4().hex}"
+        response_id = f"modelglot_{uuid.uuid4().hex}"
         return self._stream(
             prepared.body,
             betas=(),

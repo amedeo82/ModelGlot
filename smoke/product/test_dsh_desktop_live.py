@@ -108,9 +108,9 @@ def test_dsh_desktop_native_composition_e2e(
         "fixture-only",
         ModelCatalog((model,), model.wire_slug),
     )
-    assert composed()["providers"] == ["free-claude-code", "native-user-provider"]
+    assert composed()["providers"] == ["modelglot", "native-user-provider"]
     assert composed()["default"] == {
-        "provider": "free-claude-code",
+        "provider": "modelglot",
         "model": "fixture/model",
     }
     rows = dsh_files.read_yaml(path, sequence=True)
@@ -169,7 +169,7 @@ except TimeoutError:
 import { spawnSync } from 'node:child_process';
 await withFileLock(process.argv[1], async () => {
   const child = spawnSync(process.argv[2], ['-c', process.argv[3], process.argv[1] + '.lock'], { encoding: 'utf8' });
-  if (child.status !== 0) throw new Error(child.stderr || 'FCC did not honor the native lock');
+  if (child.status !== 0) throw new Error(child.stderr || 'ModelGlot did not honor the native lock');
 });
 """
     )
@@ -194,7 +194,7 @@ await withFileLock(process.argv[1], async () => {
 def test_dsh_desktop_live_catalog_credentials_and_restart_e2e(
     smoke_config: SmokeConfig, tmp_path: Path
 ) -> None:
-    executable = os.environ.get("FCC_SMOKE_DSH_DESKTOP_BIN")
+    executable = os.environ.get("MODELGLOT_SMOKE_DSH_DESKTOP_BIN")
     if not executable and os.name == "nt":
         executable = str(
             Path(os.environ["LOCALAPPDATA"])
@@ -206,7 +206,7 @@ def test_dsh_desktop_live_catalog_credentials_and_restart_e2e(
         or not (node := shutil.which("node"))
     ):
         pytest.skip(
-            "missing_env: installed DSH Desktop and Node required; set FCC_SMOKE_DSH_DESKTOP_BIN for a custom installation"
+            "missing_env: installed DSH Desktop and Node required; set MODELGLOT_SMOKE_DSH_DESKTOP_BIN for a custom installation"
         )
     credentials = _provider_credential_env_keys()
     env = _isolated_dsh_env(
@@ -239,16 +239,16 @@ def test_dsh_desktop_live_catalog_credentials_and_restart_e2e(
         _stop_attached_process(process)
     witness = tmp_path / "witness.txt"
     witness.write_text("DESKTOP_TOOL_WITNESS", encoding="utf-8")
-    model = "fcc-desktop-native"
+    model = "modelglot-desktop-native"
     full_model = f"lmstudio/{model}"
-    first = DshProvider(model, "FCC_DESKTOP_DONE", read_path=str(witness))
-    second = DshProvider(model, "FCC_DESKTOP_UPDATED", read_path=str(witness))
+    first = DshProvider(model, "MODELGLOT_DESKTOP_DONE", read_path=str(witness))
+    second = DshProvider(model, "MODELGLOT_DESKTOP_UPDATED", read_path=str(witness))
 
     def server_env(upstream: str, token: str, name: str) -> dict[str, str]:
         root = tmp_path / name
-        (root / ".fcc").mkdir(parents=True)
-        (root / ".fcc/.env").write_text(
-            f"FCC_CONFIG_SCHEMA=1\nANTHROPIC_AUTH_TOKEN={token}\nPROXY_AUTH_ENABLED=true\n",
+        (root / ".modelglot").mkdir(parents=True)
+        (root / ".modelglot/.env").write_text(
+            f"MODELGLOT_CONFIG_SCHEMA=1\nANTHROPIC_AUTH_TOKEN={token}\nPROXY_AUTH_ENABLED=true\n",
             encoding="utf-8",
         )
         return _local_provider_overrides(full_model, upstream) | {
@@ -264,13 +264,13 @@ def test_dsh_desktop_live_catalog_credentials_and_restart_e2e(
         SmokeServerDriver(
             smoke_config,
             name="dsh-desktop-native",
-            env_overrides=server_env(upstream, "desktop-first", "fcc-first"),
+            env_overrides=server_env(upstream, "desktop-first", "modelglot-first"),
             env_unset=credentials,
         ).run() as server,
         SmokeServerDriver(
             smoke_config,
             name="dsh-desktop-rotated",
-            env_overrides=server_env(updated, "desktop-rotated", "fcc-second"),
+            env_overrides=server_env(updated, "desktop-rotated", "modelglot-second"),
             env_unset=credentials,
         ).run() as rotated,
     ):
@@ -286,7 +286,7 @@ def test_dsh_desktop_live_catalog_credentials_and_restart_e2e(
                 catalog,
             )
 
-        configure(server.base_url, "desktop-first", "FCC Desktop Fixture")
+        configure(server.base_url, "desktop-first", "ModelGlot Desktop Fixture")
         config_file.write_text(
             json.dumps(options | {"phase": "exercise"}), encoding="utf-8"
         )
@@ -328,7 +328,7 @@ def test_dsh_desktop_live_catalog_credentials_and_restart_e2e(
                     continue
                 if event.get("action") == "refresh":
                     configure(
-                        rotated.base_url, "desktop-rotated", "FCC Updated Fixture"
+                        rotated.base_url, "desktop-rotated", "ModelGlot Updated Fixture"
                     )
                 elif event.get("action") == "disconnect":
                     assert not desktop.disconnect(home)["connected"]
@@ -338,7 +338,7 @@ def test_dsh_desktop_live_catalog_credentials_and_restart_e2e(
                     )
                 elif event.get("action") == "reconnect":
                     configure(
-                        rotated.base_url, "desktop-rotated", "FCC Updated Fixture"
+                        rotated.base_url, "desktop-rotated", "ModelGlot Updated Fixture"
                     )
                 elif event.get("action") == "final_disconnect":
                     assert not desktop.disconnect(home)["connected"]
@@ -368,7 +368,7 @@ def test_dsh_desktop_live_catalog_credentials_and_restart_e2e(
             "DESKTOP_TOOL_WITNESS" in json.dumps(item["body"]) for item in requests
         )
     saved = (home / "profiles/desktop/cordis.patch.yml").read_text(encoding="utf-8")
-    assert "free-claude-code" not in saved
+    assert "modelglot" not in saved
     assert (
         "ui-settings-account" in saved
-    )  # Native onboarding writes survived all FCC edits.
+    )  # Native onboarding writes survived all ModelGlot edits.

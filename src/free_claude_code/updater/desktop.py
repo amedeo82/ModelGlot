@@ -1,4 +1,4 @@
-"""Native confirmation and detached stable-release updates for FCC Desktop."""
+"""Native confirmation and detached stable-release updates for ModelGlot Desktop."""
 
 import base64
 import ctypes
@@ -76,8 +76,8 @@ def confirm_update(latest: str) -> bool:
 
     _validate_release(latest)
     message = (
-        f"FCC {latest} is available. Install it now?\n\n"
-        "FCC will close during the update and reopen when it finishes."
+        f"ModelGlot {latest} is available. Install it now?\n\n"
+        "ModelGlot will close during the update and reopen when it finishes."
     )
     if sys.platform == "win32":
         return _windows_confirmation(message)
@@ -90,8 +90,8 @@ def launch_update(latest: str, log_directory: Path) -> Path:
     """Launch a detached updater and return its output log path.
 
     The native helper waits for this desktop process to exit, delegates to the
-    installed fcc-update command with the detected release pinned, and reopens
-    FCC after either success or failure.
+    installed modelglot-update command with the detected release pinned, and reopens
+    ModelGlot after either success or failure.
     """
 
     _validate_release(latest)
@@ -148,21 +148,25 @@ def _installed_commands() -> tuple[str, str]:
         discovered = shutil.which(sys.argv[0])
         if discovered is None:
             raise FileNotFoundError(
-                "Could not locate the installed fcc-desktop command."
+                "Could not locate the installed modelglot-desktop command."
             )
         executable = Path(discovered)
     desktop = str(executable.absolute())
-    update_name = "fcc-update.cmd" if sys.platform == "win32" else "fcc-update"
+    update_name = (
+        "modelglot-update.cmd" if sys.platform == "win32" else "modelglot-update"
+    )
     candidates = (
         executable.with_name(update_name),
         Path(sys.executable).with_name(update_name),
     )
     update = next(
         (str(candidate.absolute()) for candidate in candidates if candidate.is_file()),
-        shutil.which("fcc-update"),
+        shutil.which("modelglot-update"),
     )
     if update is None:
-        raise FileNotFoundError("Could not locate the installed fcc-update command.")
+        raise FileNotFoundError(
+            "Could not locate the installed modelglot-update command."
+        )
     return update, desktop
 
 
@@ -232,7 +236,7 @@ $deadline = [DateTime]::UtcNow.AddSeconds({_PARENT_EXIT_TIMEOUT_SECONDS})
 $updateStatus = 0
 while (Get-Process -Id $parentPid -ErrorAction SilentlyContinue) {{
     if ([DateTime]::UtcNow -ge $deadline) {{
-        Write-Error 'FCC did not close in time for the update.'
+        Write-Error 'ModelGlot did not close in time for the update.'
         $updateStatus = 1
         break
     }}
@@ -240,8 +244,8 @@ while (Get-Process -Id $parentPid -ErrorAction SilentlyContinue) {{
 }}
 if ($updateStatus -eq 0) {{
     try {{
-        $env:FCC_INSTALL_VERSION = '{latest}'
-        $env:FCC_INSTALL_REF = ''
+        $env:MODELGLOT_INSTALL_VERSION = '{latest}'
+        $env:MODELGLOT_INSTALL_REF = ''
         & {update}
         $updateStatus = $LASTEXITCODE
     }} catch {{
@@ -258,7 +262,7 @@ try {{
 if ($updateStatus -ne 0) {{
     Add-Type -AssemblyName System.Windows.Forms
     [void] [System.Windows.Forms.MessageBox]::Show(
-        'The FCC update could not be installed. FCC will reopen. Run fcc-update from a terminal for details.',
+        'The ModelGlot update could not be installed. ModelGlot will reopen. Run modelglot-update from a terminal for details.',
         'ModelGlot update',
         [System.Windows.Forms.MessageBoxButtons]::OK,
         [System.Windows.Forms.MessageBoxIcon]::Error
@@ -287,13 +291,13 @@ def _macos_update_script(
     update_command: str,
     desktop_command: str,
 ) -> str:
-    app = shlex.quote(str(Path.home() / "Applications/Free Claude Code.app"))
+    app = shlex.quote(str(Path.home() / "Applications/ModelGlot.app"))
     update = shlex.quote(update_command)
     desktop = shlex.quote(desktop_command)
     error_script = shlex.quote(
-        'display dialog "The FCC update could not be completed and FCC could not '
+        'display dialog "The ModelGlot update could not be completed and ModelGlot could not '
         "reopen automatically. Open ModelGlot from Applications or run "
-        'fcc-update from Terminal for details." buttons {"OK"} '
+        'modelglot-update from Terminal for details." buttons {"OK"} '
         'default button "OK" with icon stop with title "ModelGlot update"'
     )
     return f"""trap 'rm -f "$0"' EXIT
@@ -302,14 +306,14 @@ deadline=$(( $(date +%s) + {_PARENT_EXIT_TIMEOUT_SECONDS} ))
 update_status=0
 while kill -0 "$parent_pid" 2>/dev/null; do
     if [ "$(date +%s)" -ge "$deadline" ]; then
-        printf '%s\n' 'FCC did not close in time for the update.' >&2
+        printf '%s\n' 'ModelGlot did not close in time for the update.' >&2
         update_status=1
         break
     fi
     sleep 0.25
 done
 if [ "$update_status" -eq 0 ]; then
-    FCC_INSTALL_VERSION={shlex.quote(latest)} FCC_INSTALL_REF='' {update}
+    MODELGLOT_INSTALL_VERSION={shlex.quote(latest)} MODELGLOT_INSTALL_REF='' {update}
     update_status=$?
 fi
 if ! /usr/bin/open {app} >/dev/null 2>&1; then
@@ -317,7 +321,7 @@ if ! /usr/bin/open {app} >/dev/null 2>&1; then
     fallback_pid=$!
     sleep 0.25
     if ! kill -0 "$fallback_pid" 2>/dev/null; then
-        printf '%s\n' 'FCC could not be reopened automatically.' >&2
+        printf '%s\n' 'ModelGlot could not be reopened automatically.' >&2
         update_status=1
     fi
 fi
@@ -329,7 +333,9 @@ exit "$update_status"
 
 
 def _macos_helper_command(script: str) -> list[str]:
-    descriptor, name = tempfile.mkstemp(prefix="fcc-desktop-update-", suffix=".sh")
+    descriptor, name = tempfile.mkstemp(
+        prefix="modelglot-desktop-update-", suffix=".sh"
+    )
     with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as stream:
         stream.write(script)
     os.chmod(name, 0o700)

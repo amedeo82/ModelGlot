@@ -925,7 +925,7 @@ async def test_interrupted_discovery_can_continue_through_native_transport() -> 
             "type": "function_call",
             "id": "fc_search",
             "call_id": "search",
-            "name": "fcc_tool_search",
+            "name": "modelglot_tool_search",
             "status": "incomplete",
             "arguments": '{"query":',
         }

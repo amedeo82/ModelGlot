@@ -1,4 +1,4 @@
-"""Copilot subscription models dispatched through FCC's three HTTP egresses."""
+"""Copilot subscription models dispatched through ModelGlot's three HTTP egresses."""
 
 import asyncio
 import sys

@@ -366,7 +366,7 @@
 
   function renderTrends() {
     const dayRows = usageReport?.group_by === "day" ? usageReport.rows : [];
-    renderTrend("fccTrend", "fccTrendValues", dayRows, "output_tokens", "fcc");
+    renderTrend("modelglotTrend", "modelglotTrendValues", dayRows, "output_tokens", "modelglot");
     renderTrend("rtkTrend", "rtkTrendValues", report?.optimizations.rtk.daily || [], "tokens_saved", "rtk");
   }
 
@@ -411,7 +411,7 @@
         return true;
       } catch (error) {
         if (request !== usageRequest) return false;
-        usageError = `Could not load FCC provider usage.${usageReport ? " Last valid usage remains visible." : ""}`;
+        usageError = `Could not load ModelGlot provider usage.${usageReport ? " Last valid usage remains visible." : ""}`;
         renderUsageRegions();
         return false;
       } finally {
@@ -435,5 +435,5 @@
     void refreshUsage();
   });
 
-  window.fccTokenOptimization = { refresh, refreshUsage, setActive, renderExternal, renderUsage };
+  window.modelglotTokenOptimization = { refresh, refreshUsage, setActive, renderExternal, renderUsage };
 })();

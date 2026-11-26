@@ -28,7 +28,7 @@ def test_pending_disconnect_survives_runtime_restart(
 ) -> None:
     settings = Settings(host="127.0.0.1", port=4321, proxy_auth_token="original")
     root = desktop.config_root()
-    profile = root / "configLibrary" / f"{desktop.FCC_ID}.json"
+    profile = root / "configLibrary" / f"{desktop.MODELGLOT_ID}.json"
     unlink = Path.unlink
 
     def fail(path: Path, missing_ok: bool = False):
@@ -89,7 +89,7 @@ def test_desktop_routes_connect_disconnect_and_hide_credentials(
     assert response.status_code == 200
     assert response_object(response)["connected"] is True
     assert "desktop-secret" not in response.text
-    profile = root / "configLibrary" / f"{desktop.FCC_ID}.json"
+    profile = root / "configLibrary" / f"{desktop.MODELGLOT_ID}.json"
     assert (
         decode_object(profile.read_text())["inferenceGatewayBaseUrl"]
         == "http://127.0.0.1:4321"
@@ -146,7 +146,7 @@ def test_desktop_model_view_preserves_labels_and_query_precedence() -> None:
         }
     )
     with TestClient(create_test_app(settings)) as client:
-        headers = {"X-FCC-Model-View": "claude-desktop"}
+        headers = {"X-ModelGlot-Model-View": "claude-desktop"}
         payload = response_object(client.get("/v1/models", headers=headers))
         models = [
             row
@@ -170,7 +170,7 @@ def test_desktop_model_view_preserves_labels_and_query_precedence() -> None:
         )
         assert (
             client.get(
-                "/v1/models", headers={"X-FCC-Model-View": "invalid"}
+                "/v1/models", headers={"X-ModelGlot-Model-View": "invalid"}
             ).status_code
             == 422
         )
@@ -188,7 +188,12 @@ def test_desktop_model_view_preserves_labels_and_query_precedence() -> None:
 
 @pytest.mark.parametrize(
     "model",
-    ["claude-fcc/", "claude-fcc/zz", "claude-fcc", desktop_model_id("unknown/model")],
+    [
+        "claude-modelglot/",
+        "claude-modelglot/zz",
+        "claude-modelglot",
+        desktop_model_id("unknown/model"),
+    ],
 )
 def test_invalid_desktop_model_never_routes_to_default(model: str) -> None:
     with pytest.raises(InvalidRequestError):

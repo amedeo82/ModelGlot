@@ -17,7 +17,7 @@ if sys.platform != "win32":
     )
 
 
-APP_USER_MODEL_ID = "io.github.amedeo82.free-claude-code"
+APP_USER_MODEL_ID = "io.github.amedeo82.modelglot"
 
 
 class FakeRun:
@@ -51,7 +51,7 @@ def test_register_app_user_model_id_writes_branded_identity(
 
     registered = windows_app_identity.register_app_user_model_id(
         APP_USER_MODEL_ID,
-        Path("C:/Users/test/.fcc/app-icon.ico"),
+        Path("C:/Users/test/.modelglot/app-icon.ico"),
     )
 
     assert registered is True
@@ -63,8 +63,8 @@ def test_register_app_user_model_id_writes_branded_identity(
     )
     values = {call.args[1]: call.args[4] for call in set_value.call_args_list}
     assert values == {
-        "DisplayName": "Free Claude Code",
-        "IconUri": str(Path("C:/Users/test/.fcc/app-icon.ico")),
+        "DisplayName": "ModelGlot",
+        "IconUri": str(Path("C:/Users/test/.modelglot/app-icon.ico")),
         "IconBackgroundColor": "FF000000",
     }
 
@@ -169,7 +169,7 @@ def test_ensure_start_menu_shortcut_invokes_powershell_helper(
     monkeypatch.setattr(
         windows_app_identity,
         "desktop_launcher_path",
-        lambda: Path("C:/tools/fcc-desktop.exe"),
+        lambda: Path("C:/tools/modelglot-desktop.exe"),
     )
     monkeypatch.setattr(windows_app_identity.subprocess, "run", run)
 
@@ -185,7 +185,7 @@ def test_ensure_start_menu_shortcut_invokes_powershell_helper(
     assert "Bypass" in command
     assert command[-6:] == [
         "-TargetPath",
-        "C:\\tools\\fcc-desktop.exe",
+        "C:\\tools\\modelglot-desktop.exe",
         "-IconPath",
         str(tmp_path / "app-icon.ico"),
         "-AppUserModelId",
@@ -235,14 +235,14 @@ def test_ensure_start_menu_shortcut_without_powershell(
 def test_desktop_launcher_path_prefers_the_desktop_command(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    launcher = tmp_path / "fcc-desktop.exe"
+    launcher = tmp_path / "modelglot-desktop.exe"
     launcher.write_bytes(b"")
     interpreter = tmp_path / "pythonw.exe"
     interpreter.write_bytes(b"")
     monkeypatch.setattr(
         windows_app_identity.sys,
         "argv",
-        [str(tmp_path / "fcc-desktop.exe")],
+        [str(tmp_path / "modelglot-desktop.exe")],
     )
     monkeypatch.setattr(
         windows_app_identity.sys,
@@ -334,7 +334,7 @@ def test_notifier_repairs_the_identity_before_showing_the_first_toast(
     notifier = windows_desktop_notifications.WindowsDesktopNotifier(FakeIcon())
     notifier.notify(
         DesktopNotification(
-            title="Free Claude Code",
+            title="ModelGlot",
             message="Server is running.",
             level=NotificationLevel.SUCCESS,
         )

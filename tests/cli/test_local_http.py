@@ -1,4 +1,4 @@
-"""Local FCC transport must never escape through an outbound proxy."""
+"""Local ModelGlot transport must never escape through an outbound proxy."""
 
 import threading
 from collections.abc import Generator
@@ -45,8 +45,8 @@ def test_proxy_preflight_connects_directly_when_http_proxy_is_configured(
         monkeypatch.delenv("NO_PROXY", raising=False)
         monkeypatch.delenv("no_proxy", raising=False)
 
-        with _status_server(200) as (fcc_url, fcc_hits):
-            assert ensure_proxy_available(fcc_url, env={}) is None
+        with _status_server(200) as (modelglot_url, modelglot_hits):
+            assert ensure_proxy_available(modelglot_url, env={}) is None
 
-    assert fcc_hits == ["/health"]
+    assert modelglot_hits == ["/health"]
     assert forward_proxy_hits == []

@@ -38,7 +38,7 @@ _BROWSER_HANDOFF_SECONDS = 5.0
 def _start_admin_browser(
     settings: Settings, eligible: Callable[[], bool], *, instance_id: str
 ) -> threading.Event:
-    """Hand off an optional browser action without keeping FCC alive."""
+    """Hand off an optional browser action without keeping ModelGlot alive."""
     completed = threading.Event()
     url = local_admin_url(settings)
     browser_logger = logger.bind(instance_id=instance_id)
@@ -58,7 +58,7 @@ def _start_admin_browser(
 
     try:
         threading.Thread(
-            target=open_browser, name="fcc-open-admin-browser", daemon=True
+            target=open_browser, name="modelglot-open-admin-browser", daemon=True
         ).start()
     except Exception as exc:
         browser_logger.warning(
@@ -76,18 +76,18 @@ def serve(*, console_logging: bool = True) -> None:
         if exc.errno == errno.EADDRINUSE:
             _log_port_in_use(get_settings())
         else:
-            logger.error("Could not start FCC: {}", exc)
+            logger.error("Could not start ModelGlot: {}", exc)
         raise SystemExit(1) from None
 
 
 def _log_port_in_use(settings: Settings) -> None:
-    """Explain a busy port, telling a running FCC apart from another program."""
+    """Explain a busy port, telling a running ModelGlot apart from another program."""
     status = None
     try:
-        status = _external_fcc_status(settings, timeout=1.5)
+        status = _external_modelglot_status(settings, timeout=1.5)
         other_program = status is None
     except HTTPError as exc:
-        # Admin rejects non-loopback requests, so a 403 cannot rule out FCC.
+        # Admin rejects non-loopback requests, so a 403 cannot rule out ModelGlot.
         other_program = exc.code != 403
     except ValueError:
         other_program = True
@@ -95,27 +95,27 @@ def _log_port_in_use(settings: Settings) -> None:
         other_program = False
     if status is not None and status["status"] == "running":
         logger.error(
-            "FCC is already running on port {}. Use it at {}, or stop it before "
+            "ModelGlot is already running on port {}. Use it at {}, or stop it before "
             "starting another instance.",
             settings.port,
             local_admin_url(settings),
         )
     elif status is not None:
         logger.error(
-            "The FCC instance on port {} is still stopping. Try again in a moment.",
+            "The ModelGlot instance on port {} is still stopping. Try again in a moment.",
             settings.port,
         )
     elif other_program:
         logger.error(
-            "Could not start FCC: port {} is already in use by another program. "
-            "Stop that program, or set PORT to a free port in {}.",
+            "Could not start ModelGlot: port {} is already in use by another program. "
+            "Stop that program, or set MODELGLOT_PORT to a free port in {}.",
             settings.port,
             managed_env_path(),
         )
     else:
         logger.error(
-            "Could not start FCC: port {} is already in use. If FCC is not already "
-            "running, stop the program using it, or set PORT to a free port in {}.",
+            "Could not start ModelGlot: port {} is already in use. If ModelGlot is not already "
+            "running, stop the program using it, or set MODELGLOT_PORT to a free port in {}.",
             settings.port,
             managed_env_path(),
         )
@@ -131,7 +131,7 @@ class ServerStatus(StrEnum):
 
 
 class ServerSupervisor:
-    """Own one FCC server lifecycle, including config-driven restarts."""
+    """Own one ModelGlot server lifecycle, including config-driven restarts."""
 
     def __init__(self, *, console_logging: bool = True) -> None:
         self._console_logging = console_logging
@@ -182,7 +182,9 @@ class ServerSupervisor:
         with self._lock:
             self._run_scheduled = False
             if self._running:
-                raise RuntimeError("The FCC server supervisor is already running.")
+                raise RuntimeError(
+                    "The ModelGlot server supervisor is already running."
+                )
             if self.stop_event.is_set():
                 return
             self._running = True
@@ -197,7 +199,7 @@ class ServerSupervisor:
                         return
                     raise OSError(
                         errno.EADDRINUSE,
-                        "Another FCC server already owns this configuration.",
+                        "Another ModelGlot server already owns this configuration.",
                     )
                 while not self._is_stop_requested():
                     with self._lock:
@@ -408,10 +410,10 @@ def load_server_settings() -> Settings:
     return get_settings()
 
 
-def _external_fcc_status(
+def _external_modelglot_status(
     settings: Settings, *, timeout: float
 ) -> dict[str, Any] | None:
-    """Return the status payload an FCC instance reports on this port, or None for other servers."""
+    """Return the status payload an ModelGlot instance reports on this port, or None for other servers."""
     url = f"{local_proxy_root_url(settings)}/admin/api/status"
     with open_local_request(Request(url), timeout=timeout) as response:
         payload = load_json_value(response.read().decode("utf-8"))
@@ -431,12 +433,12 @@ def _external_fcc_status(
 def open_admin_when_ready(
     settings: Settings, *, stop_event: threading.Event | None = None
 ) -> bool:
-    """Recognize an external FCC instance and attempt to open its local Admin page."""
+    """Recognize an external ModelGlot instance and attempt to open its local Admin page."""
     stop = stop_event or threading.Event()
     deadline = time.monotonic() + 30.0
     while not stop.is_set() and time.monotonic() < deadline:
         try:
-            status = _external_fcc_status(settings, timeout=1.5)
+            status = _external_modelglot_status(settings, timeout=1.5)
             if status is None:
                 return False
             if status["status"] == "running" and not stop.is_set():

@@ -58,7 +58,7 @@ These apply to every step in this plan.
 9. **Presentation-only scope.** No step may change advertised model IDs, provider/model
    references, routing candidate lists, fallback order, capability facts, or provider request
    payloads.
-10. **Client-owned state remains untouched.** FCC must not delete, rewrite, or synthesize
+10. **Client-owned state remains untouched.** ModelGlot must not delete, rewrite, or synthesize
     files under `~/.claude` unless a later proposal explicitly approves that product
     decision.
 
@@ -132,7 +132,7 @@ supports.
 
 **Acceptance.**
 
-- `fcc-claude` remains compatible because it uses Bearer authentication.
+- `modelglot-claude` remains compatible because it uses Bearer authentication.
 - Manual Claude Code installations using `ANTHROPIC_API_KEY` can complete discovery.
 - No route other than the Anthropic-compatible discovery route changes credential
   acceptance.
@@ -158,7 +158,7 @@ smoke expectations.
 - Run the existing authentication, route, and smoke-manifest tests.
 
 **Acceptance.** The manifests describe both Bearer-only and Anthropic-compatible route
-contracts without claiming that every FCC endpoint accepts `x-api-key`.
+contracts without claiming that every ModelGlot endpoint accepts `x-api-key`.
 
 **Effort.** 0.5 day.
 
@@ -187,7 +187,7 @@ The contract must assert:
 - a known model has the expected descriptive title and provider attribution;
 - the no-thinking row differs only by the ` (no thinking)` suffix;
 - the Terminal IDs remain `anthropic/<provider/model>` and
-  `claude-3-freecc-no-thinking/<provider/model>`;
+  `claude-3-modelglot-no-thinking/<provider/model>`;
 - the Desktop IDs remain the existing hex-encoded IDs;
 - native Anthropic passthrough rows retain their current label and description policy;
 - custom-provider titles retain their current provider-specific shape;
@@ -211,32 +211,32 @@ credential.
   `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1`, `ANTHROPIC_BASE_URL`, and
   `ANTHROPIC_AUTH_TOKEN`.
 - `tests/harnesses/test_claude_integration.py` — retain coverage that user-owned settings
-  are preserved while the FCC discovery entry remains correct.
+  are preserved while the ModelGlot discovery entry remains correct.
 
 **Tests.**
 
 Cover:
 
-- `fcc-claude` sets discovery to `1`;
-- inherited `ANTHROPIC_*` variables cannot replace the FCC base URL or token;
+- `modelglot-claude` sets discovery to `1`;
+- inherited `ANTHROPIC_*` variables cannot replace the ModelGlot base URL or token;
 - `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` is removed for supported discovery behavior;
 - the managed integration preserves unrelated user environment entries;
 - a direct `claude` launch is documented as requiring the same opt-in variable.
 
-**Acceptance.** Every FCC-owned Terminal launch path enables discovery, and no user-owned
+**Acceptance.** Every modelglot-owned Terminal launch path enables discovery, and no user-owned
 setting is silently removed.
 
 **Effort.** 0.5 day.
 
 ### S2.3 — Add an isolated live Claude Code discovery test
 
-**Goal.** Verify the real client consumes and caches FCC's descriptive Terminal rows.
+**Goal.** Verify the real client consumes and caches ModelGlot's descriptive Terminal rows.
 
 **Changes.**
 
-- New `e2e/test_claude_model_discovery.py` — start an isolated FCC instance backed by the
+- New `e2e/test_claude_model_discovery.py` — start an isolated ModelGlot instance backed by the
   existing deterministic local-provider test infrastructure.
-- Use `FCC_SMOKE_CLAUDE_BIN` when present, consistent with the existing Claude CLI smoke
+- Use `MODELGLOT_SMOKE_CLAUDE_BIN` when present, consistent with the existing Claude CLI smoke
   convention (`smoke/features.py:53-90`).
 - Set an isolated `CLAUDE_CONFIG_DIR` for every launched Claude Code process.
 - Use an isolated model and a minimal deterministic prompt.
@@ -258,7 +258,7 @@ The live test must:
 - avoid provider credentials and network inference dependencies by using the local test
   provider.
 
-**Acceptance.** An available Claude Code binary completes discovery against FCC and stores
+**Acceptance.** An available Claude Code binary completes discovery against ModelGlot and stores
 the descriptive Terminal presentation in its isolated cache.
 
 **Effort.** 1.5 days.
@@ -301,7 +301,7 @@ knowledge of Claude Code internals.
 - `README.md:560-617` — extend "Model Display Names" with a "Claude Code Terminal"
   subsection that explains:
   - Terminal and Desktop use the same descriptive-title implementation;
-  - `fcc-claude` is the supported launcher;
+  - `modelglot-claude` is the supported launcher;
   - direct `claude` launches require
     `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1`, `ANTHROPIC_BASE_URL`, and a supported
     credential;
@@ -397,7 +397,7 @@ Then run the complete local CI sequence:
 .\scripts\ci.ps1
 ```
 
-Also run the focused live discovery test when `FCC_SMOKE_CLAUDE_BIN` and its local
+Also run the focused live discovery test when `MODELGLOT_SMOKE_CLAUDE_BIN` and its local
 prerequisites are available.
 
 **Acceptance.** The full deterministic suite passes. The live test passes when its explicit
@@ -432,12 +432,12 @@ path without referring to unimplemented plans.
 | Analysis finding | Plan step |
 | --- | --- |
 | Terminal and Desktop already share one title implementation (§2.1) | S2.1 |
-| FCC launcher enables discovery (§2.2) | S2.2 |
+| ModelGlot launcher enables discovery (§2.2) | S2.2 |
 | Claude Code owns and refreshes the discovery cache (§2.3) | S2.3, S3.1 |
 | Manual `x-api-key` discovery receives HTTP 401 (§2.4) | S1.1 |
 | Real-client cache behavior is not verified (§2.5) | S2.3 |
 | Authentication contracts are declared in manifests | S1.2, S2.4 |
-| FCC must not mutate `~/.claude` (§4, §6) | S3.1 |
+| ModelGlot must not mutate `~/.claude` (§4, §6) | S3.1 |
 | Routing must remain unchanged (§4) | S4.1 |
 | Operators need stale-cache diagnostics | S3.1 |
 | The public capability must be explicit | S2.4 |

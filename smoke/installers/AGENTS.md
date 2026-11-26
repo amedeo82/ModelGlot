@@ -22,7 +22,7 @@ These rules apply to installer, uninstaller, and harness lifecycle tests here.
   or user configuration to save startup time. Clean up processes you launch.
 - Diagnose slowness with per-test durations and timings inside subprocesses. Do not
   increase timeouts or add sleeps without identifying the operation being delayed.
-- Run these checks explicitly with `FCC_LIVE_SMOKE=1` and
+- Run these checks explicitly with `MODELGLOT_LIVE_SMOKE=1` and
   `uv run pytest smoke/installers`. Select focused cases when checking a component.
 - Reuse pytest's capture handler for logs. Do not create a logging cycle between
   Python logging and Loguru while adding diagnostics.

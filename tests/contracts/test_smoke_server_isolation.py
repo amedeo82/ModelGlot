@@ -17,7 +17,7 @@ from free_claude_code.config.env_migrations import (
 from free_claude_code.config.loader import ManagedConfigStore, get_settings
 from free_claude_code.core.interprocess_lock import InterprocessFileLock
 from free_claude_code.core.json_types import load_json_value
-from smoke.lib.child_process import cmd_fcc_server
+from smoke.lib.child_process import cmd_modelglot_server
 from smoke.lib.config import SmokeConfig
 from smoke.lib.server import RunningServer, start_server
 
@@ -27,7 +27,7 @@ def smoke_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     home = tmp_path / "user-home"
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.setenv("USERPROFILE", str(home))
-    monkeypatch.setattr(paths, "config_dir_path", lambda: home / ".fcc")
+    monkeypatch.setattr(paths, "config_dir_path", lambda: home / ".modelglot")
     store = ManagedConfigStore()
     store.initialize({})
     values = dict(store.read({}).managed)
@@ -69,7 +69,7 @@ def probe_command():
             settings = get_settings()
             print(json.dumps({
                 'config': str(paths.config_dir_path()),
-                'database': str(paths.fcc_database_path()),
+                'database': str(paths.modelglot_database_path()),
                 'owner': str(paths.server_owner_lock_path()),
                 'auth': str(paths.openai_auth_path()),
                 'auth_lock': str(paths.openai_auth_lock_path()),
@@ -92,7 +92,7 @@ def probe_command():
                     server.serve_forever()
         entrypoints.serve = serve
     """)
-    return [sys.executable, "-c", probe + "\n" + cmd_fcc_server()[-1]]
+    return [sys.executable, "-c", probe + "\n" + cmd_modelglot_server()[-1]]
 
 
 def snapshot(server: RunningServer):
@@ -148,8 +148,11 @@ def test_explicit_smoke_home_remains_authoritative(
 ) -> None:
     home = tmp_path / "caller-home"
     atomic_write_managed_config(
-        {"FCC_CONFIG_SCHEMA": CONFIG_SCHEMA_VERSION, "ANTHROPIC_AUTH_TOKEN": "caller"},
-        path=home / ".fcc" / ".env",
+        {
+            "MODELGLOT_CONFIG_SCHEMA": CONFIG_SCHEMA_VERSION,
+            "ANTHROPIC_AUTH_TOKEN": "caller",
+        },
+        path=home / ".modelglot" / ".env",
     )
     with start_server(
         smoke_config,
@@ -158,11 +161,11 @@ def test_explicit_smoke_home_remains_authoritative(
         env_unset={"NVIDIA_NIM_API_KEY", "GROQ_API_KEY", "ANTHROPIC_AUTH_TOKEN"},
     ) as server:
         state = snapshot(server)
-    assert state["config"] == str(home / ".fcc")
+    assert state["config"] == str(home / ".modelglot")
     assert state["keys"] == []
     assert state["token"] != "managed-proxy-token"
-    assert state["auth"] == str(home / ".fcc" / "auth" / "openai.json")
-    assert (home / ".fcc").is_dir()
+    assert state["auth"] == str(home / ".modelglot" / "auth" / "openai.json")
+    assert (home / ".modelglot").is_dir()
 
 
 @pytest.mark.parametrize("failure", ["health", "spawn"])
@@ -198,7 +201,7 @@ def test_failed_smoke_start_cleans_private_state(
         start_server(replace(smoke_config, timeout_s=0.1), command=command),
     ):
         pytest.fail("startup should fail")
-    assert not Path(captured["FCC_SMOKE_CONFIG_DIR"]).exists()
+    assert not Path(captured["MODELGLOT_SMOKE_CONFIG_DIR"]).exists()
 
 
 class WindowsPermissionError(PermissionError):
@@ -227,7 +230,7 @@ def test_smoke_cleanup_waits_for_windows_handle_release(
         server_runtime.TemporaryDirectory, "cleanup", sharing_violation_once
     )
     with server_runtime.server_environment({}, caller_home=False) as env:
-        private = Path(env["FCC_SMOKE_CONFIG_DIR"])
+        private = Path(env["MODELGLOT_SMOKE_CONFIG_DIR"])
         assert private.is_dir()
     assert len(attempts) == 2
     assert not private.exists()

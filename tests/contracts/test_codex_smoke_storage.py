@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from free_claude_code.config.paths import FCC_DATABASE_FILENAME
+from free_claude_code.config.paths import MODELGLOT_DATABASE_FILENAME
 from smoke.product import test_codex_modes_product_live as smoke
 
 
@@ -16,10 +16,10 @@ from smoke.product import test_codex_modes_product_live as smoke
 def test_child_review_smoke_reads_canonical_database_without_creating_files(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, database_exists: bool
 ) -> None:
-    home = tmp_path / "home/.fcc"
+    home = tmp_path / "home/.modelglot"
     home.mkdir(parents=True)
     (home / "code").mkdir()
-    database_path = home / FCC_DATABASE_FILENAME
+    database_path = home / MODELGLOT_DATABASE_FILENAME
     if database_exists:
         with closing(sqlite3.connect(database_path)) as connection, connection:
             connection.execute("CREATE TABLE code_sessions(id, native_thread_id)")

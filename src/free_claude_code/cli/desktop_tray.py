@@ -115,7 +115,7 @@ class PystrayDesktopTray:
             enabled=restart_enabled,
         )
         self._icon = Icon(
-            "free-claude-code",
+            "modelglot",
             _create_icon(),
             "ModelGlot",
             self._build_menu(),
@@ -163,14 +163,14 @@ class PystrayDesktopTray:
                 return
             thread = threading.Thread(
                 target=self._watch_server_status,
-                name="fcc-server-status",
+                name="modelglot-server-status",
                 daemon=True,
             )
             self._status_thread = thread
         try:
             thread.start()
         except RuntimeError as exc:
-            logger.error("Could not start the FCC server status watcher: {}", exc)
+            logger.error("Could not start the ModelGlot server status watcher: {}", exc)
             with self._update_lock:
                 self._status_thread = None
 
@@ -221,7 +221,7 @@ class PystrayDesktopTray:
         self._refresh_menu()
         thread = threading.Thread(
             target=self._run_update_check,
-            name="fcc-update-check",
+            name="modelglot-update-check",
             daemon=True,
         )
         start_error: RuntimeError | None = None
@@ -236,12 +236,12 @@ class PystrayDesktopTray:
             except RuntimeError as exc:
                 start_error = exc
         if start_error is not None:
-            logger.error("Could not start the FCC update check: {}", start_error)
+            logger.error("Could not start the ModelGlot update check: {}", start_error)
             self._update_thread = None
             self._finish_update_check(
                 UpdateCheckResult(
                     status=UpdateStatus.FAILED,
-                    message="Could not check for FCC updates. Please retry.",
+                    message="Could not check for ModelGlot updates. Please retry.",
                     detail=str(start_error),
                 )
             )
@@ -250,10 +250,10 @@ class PystrayDesktopTray:
         try:
             result = check_for_updates()
         except Exception as exc:
-            logger.exception("Unexpected FCC update check failure")
+            logger.exception("Unexpected ModelGlot update check failure")
             result = UpdateCheckResult(
                 status=UpdateStatus.FAILED,
-                message="Could not check for FCC updates. Please retry.",
+                message="Could not check for ModelGlot updates. Please retry.",
                 detail=str(exc),
             )
         self._finish_update_check(result)
@@ -269,7 +269,7 @@ class PystrayDesktopTray:
         self._refresh_menu()
         if result.status is UpdateStatus.FAILED:
             logger.error(
-                "FCC update check failed: {}",
+                "ModelGlot update check failed: {}",
                 result.detail or result.message,
             )
         level = {
@@ -288,17 +288,17 @@ class PystrayDesktopTray:
                 return
         latest = result.latest
         if latest is None:
-            logger.error("FCC update result has no release to install")
+            logger.error("ModelGlot update result has no release to install")
             self._finish_update_offer()
             self._notify(
-                "Could not start the FCC update. Run fcc-update from a terminal.",
+                "Could not start the ModelGlot update. Run modelglot-update from a terminal.",
                 level=NotificationLevel.ERROR,
             )
             return
         try:
             confirmed = confirm_update(latest)
         except Exception:
-            logger.exception("Could not display the FCC update confirmation")
+            logger.exception("Could not display the ModelGlot update confirmation")
             self._finish_update_offer()
             self._notify(
                 "Could not display the update confirmation. Please retry.",
@@ -316,19 +316,19 @@ class PystrayDesktopTray:
         try:
             log_path = launch_update(latest, config_dir_path() / "logs")
         except Exception:
-            logger.exception("Could not launch the FCC update installer")
+            logger.exception("Could not launch the ModelGlot update installer")
             with self._update_lock:
                 if not self._closed:
                     self._update_status_label = _update_status_text(result)
             self._finish_update_offer()
             self._notify(
-                "Could not start the FCC update. Run fcc-update from a terminal.",
+                "Could not start the ModelGlot update. Run modelglot-update from a terminal.",
                 level=NotificationLevel.ERROR,
             )
             return
-        logger.info("FCC desktop updater started; output: {}", log_path)
+        logger.info("ModelGlot desktop updater started; output: {}", log_path)
         self._notify(
-            f"Installing FCC {latest}. FCC will close and reopen when it finishes.",
+            f"Installing ModelGlot {latest}. ModelGlot will close and reopen when it finishes.",
             level=NotificationLevel.INFO,
         )
         self._controller.quit()
@@ -359,7 +359,7 @@ class PystrayDesktopTray:
                 )
             )
         except Exception:
-            logger.exception("Could not display the FCC desktop notification")
+            logger.exception("Could not display the ModelGlot desktop notification")
 
     def _set_server_status(self, label: str) -> None:
         with self._update_lock:
@@ -381,7 +381,7 @@ class PystrayDesktopTray:
             else:
                 self._icon.update_menu()
         except Exception:
-            logger.exception("Could not refresh the FCC tray menu")
+            logger.exception("Could not refresh the ModelGlot tray menu")
 
     def _update_menu_on_main_thread(self) -> None:
         with self._update_lock:
@@ -390,7 +390,7 @@ class PystrayDesktopTray:
         try:
             self._icon.update_menu()
         except Exception:
-            logger.exception("Could not refresh the FCC tray menu")
+            logger.exception("Could not refresh the ModelGlot tray menu")
 
     def _restart_server(self, _icon: Icon, _item: MenuItem) -> None:
         with self._update_lock:
@@ -399,22 +399,22 @@ class PystrayDesktopTray:
             self._restart_active = True
         self._set_server_status("◌ Restarting…")
         self._notify(
-            "Restarting the FCC server…",
+            "Restarting the ModelGlot server…",
             level=NotificationLevel.INFO,
         )
         try:
             self._controller.restart_server()
         except Exception:
-            logger.exception("Could not restart the FCC server")
+            logger.exception("Could not restart the ModelGlot server")
             self._finish_restart(
                 "○ Restart failed",
-                "Could not restart the FCC server.",
+                "Could not restart the ModelGlot server.",
                 NotificationLevel.ERROR,
             )
             return
         thread = threading.Thread(
             target=self._wait_for_restart,
-            name="fcc-restart-status",
+            name="modelglot-restart-status",
             daemon=True,
         )
         with self._update_lock:
@@ -422,10 +422,10 @@ class PystrayDesktopTray:
         try:
             thread.start()
         except RuntimeError as exc:
-            logger.error("Could not start the FCC restart watcher: {}", exc)
+            logger.error("Could not start the ModelGlot restart watcher: {}", exc)
             self._finish_restart(
                 "○ Restart failed",
-                "Could not restart the FCC server.",
+                "Could not restart the ModelGlot server.",
                 NotificationLevel.ERROR,
             )
 
@@ -460,14 +460,14 @@ class PystrayDesktopTray:
             if status is ServerStatus.STOPPED:
                 self._finish_restart(
                     _server_status_text(status),
-                    "The FCC server stopped during restart.",
+                    "The ModelGlot server stopped during restart.",
                     NotificationLevel.ERROR,
                 )
                 return
             time.sleep(0.25)
         self._finish_restart(
             "◌ Restart timed out",
-            "The FCC server did not restart in time.",
+            "The ModelGlot server did not restart in time.",
             NotificationLevel.WARNING,
         )
 
@@ -500,14 +500,14 @@ def _server_status_text(status: ServerStatus) -> str:
 
 def _server_status_message(status: ServerStatus) -> str:
     if status is ServerStatus.RUNNING:
-        return "FCC server is running."
+        return "ModelGlot server is running."
     if status is ServerStatus.STARTING:
-        return "FCC server is starting."
+        return "ModelGlot server is starting."
     if status is ServerStatus.STOPPING:
-        return "FCC server is stopping."
+        return "ModelGlot server is stopping."
     if status is ServerStatus.STOPPED:
-        return "FCC server is stopped."
-    return "FCC server status is unknown."
+        return "ModelGlot server is stopped."
+    return "ModelGlot server status is unknown."
 
 
 def _create_icon() -> Image.Image:

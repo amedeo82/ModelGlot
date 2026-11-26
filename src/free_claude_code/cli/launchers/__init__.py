@@ -1,1 +1,1 @@
-"""Installed FCC client CLI launchers."""
+"""Installed ModelGlot client CLI launchers."""

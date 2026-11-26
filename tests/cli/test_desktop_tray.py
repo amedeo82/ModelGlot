@@ -163,7 +163,7 @@ def test_status_menu_action_updates_visible_status_row(tray: TrayFixture) -> Non
 
     assert instance._server_status_item.text == "● Running"
     assert not instance._server_status_item.enabled
-    assert icon.notifications == [("FCC server is running.", "ModelGlot")]
+    assert icon.notifications == [("ModelGlot server is running.", "ModelGlot")]
 
 
 @pytest.mark.parametrize(
@@ -239,7 +239,7 @@ def test_restart_menu_action_updates_visible_status_row(tray: TrayFixture) -> No
     assert instance._server_status_item.text == "● Running"
     assert cast(Mock, instance._controller.restart_server).call_count == 1
     assert icon.notifications == [
-        ("Restarting the FCC server…", "ModelGlot"),
+        ("Restarting the ModelGlot server…", "ModelGlot"),
         ("Server restarted.", "ModelGlot"),
     ]
 
@@ -291,7 +291,7 @@ def test_update_check_exposes_checking_state(
             status=UpdateStatus.UP_TO_DATE,
             installed="1.10.0",
             latest="1.10.0",
-            message="FCC 1.10.0 is already up to date.",
+            message="ModelGlot 1.10.0 is already up to date.",
         )
 
     monkeypatch.setattr(desktop_tray, "check_for_updates", check)
@@ -319,7 +319,7 @@ def test_notification_failure_does_not_break_update_result(
         status=UpdateStatus.UP_TO_DATE,
         installed="1.10.0",
         latest="1.10.0",
-        message="FCC 1.10.0 is already up to date.",
+        message="ModelGlot 1.10.0 is already up to date.",
     )
     monkeypatch.setattr(desktop_tray, "check_for_updates", lambda: result)
 
@@ -345,7 +345,7 @@ def test_stop_during_update_check_suppresses_late_notification(
             status=UpdateStatus.UP_TO_DATE,
             installed="1.10.0",
             latest="1.10.0",
-            message="FCC 1.10.0 is already up to date.",
+            message="ModelGlot 1.10.0 is already up to date.",
         )
 
     monkeypatch.setattr(desktop_tray, "check_for_updates", check)
@@ -370,7 +370,7 @@ def test_stop_during_update_check_suppresses_late_notification(
                 status=UpdateStatus.AVAILABLE,
                 installed="1.9.0",
                 latest="1.10.0",
-                message="FCC update available: 1.9.0 to 1.10.0.",
+                message="ModelGlot update available: 1.9.0 to 1.10.0.",
             ),
             "● Update available: 1.9.0 → 1.10.0",
             desktop_tray.NotificationLevel.INFO,
@@ -380,7 +380,7 @@ def test_stop_during_update_check_suppresses_late_notification(
                 status=UpdateStatus.UP_TO_DATE,
                 installed="1.10.0",
                 latest="1.10.0",
-                message="FCC 1.10.0 is already up to date.",
+                message="ModelGlot 1.10.0 is already up to date.",
             ),
             "● Up to date: 1.10.0",
             desktop_tray.NotificationLevel.SUCCESS,
@@ -390,7 +390,7 @@ def test_stop_during_update_check_suppresses_late_notification(
                 status=UpdateStatus.LOCAL_NEWER,
                 installed="1.11.0",
                 latest="1.10.0",
-                message="FCC 1.11.0 is newer than the published version 1.10.0.",
+                message="ModelGlot 1.11.0 is newer than the published version 1.10.0.",
             ),
             "◌ Installed version is newer: 1.11.0",
             desktop_tray.NotificationLevel.WARNING,
@@ -430,7 +430,7 @@ def test_available_update_prompts_and_declining_preserves_retry(
         status=UpdateStatus.AVAILABLE,
         installed="1.9.0",
         latest="1.10.0",
-        message="FCC update available: 1.9.0 to 1.10.0.",
+        message="ModelGlot update available: 1.9.0 to 1.10.0.",
     )
     confirm = Mock(return_value=False)
     launch = Mock()
@@ -459,7 +459,7 @@ def test_accepted_update_launches_detected_release_and_restarts_desktop(
         status=UpdateStatus.AVAILABLE,
         installed="1.9.0",
         latest="1.10.0",
-        message="FCC update available: 1.9.0 to 1.10.0.",
+        message="ModelGlot update available: 1.9.0 to 1.10.0.",
     )
     launch = Mock(return_value=tmp_path / "desktop-update.log")
 
@@ -469,19 +469,21 @@ def test_accepted_update_launches_detected_release_and_restarts_desktop(
     monkeypatch.setattr(desktop_tray, "check_for_updates", lambda: result)
     monkeypatch.setattr(desktop_tray, "confirm_update", accept_update)
     monkeypatch.setattr(desktop_tray, "launch_update", launch)
-    monkeypatch.setattr(desktop_tray, "config_dir_path", lambda: tmp_path)
+    monkeypatch.setattr(
+        desktop_tray, "config_dir_path", lambda: tmp_path / ".modelglot"
+    )
 
     instance._check_updates(instance._icon, instance._server_status_item)
     _wait_for_update(instance)
 
-    launch.assert_called_once_with("1.10.0", tmp_path / "logs")
+    launch.assert_called_once_with("1.10.0", tmp_path / ".modelglot" / "logs")
     cast(Mock, instance._controller.quit).assert_called_once_with()
     assert not instance._update_check_item.enabled
     assert instance._update_status_item.text == "◌ Installing 1.10.0…"
     assert icon.notifications == [
         (result.message, "ModelGlot"),
         (
-            "Installing FCC 1.10.0. FCC will close and reopen when it finishes.",
+            "Installing ModelGlot 1.10.0. ModelGlot will close and reopen when it finishes.",
             "ModelGlot",
         ),
     ]
@@ -498,7 +500,7 @@ def test_stop_during_update_confirmation_does_not_launch_installer(
         status=UpdateStatus.AVAILABLE,
         installed="1.9.0",
         latest="1.10.0",
-        message="FCC update available: 1.9.0 to 1.10.0.",
+        message="ModelGlot update available: 1.9.0 to 1.10.0.",
     )
     launch = Mock()
 
@@ -531,7 +533,7 @@ def test_stop_before_result_notification_suppresses_notification_and_confirmatio
         status=UpdateStatus.AVAILABLE,
         installed="1.9.0",
         latest="1.10.0",
-        message="FCC update available: 1.9.0 to 1.10.0.",
+        message="ModelGlot update available: 1.9.0 to 1.10.0.",
     )
     confirm = Mock()
     monkeypatch.setattr(desktop_tray, "confirm_update", confirm)
@@ -552,7 +554,7 @@ def test_update_launch_failure_keeps_desktop_running_and_offers_retry(
         status=UpdateStatus.AVAILABLE,
         installed="1.9.0",
         latest="1.10.0",
-        message="FCC update available: 1.9.0 to 1.10.0.",
+        message="ModelGlot update available: 1.9.0 to 1.10.0.",
     )
 
     def accept_update(_latest: str) -> bool:
@@ -563,7 +565,7 @@ def test_update_launch_failure_keeps_desktop_running_and_offers_retry(
     monkeypatch.setattr(
         desktop_tray,
         "launch_update",
-        Mock(side_effect=FileNotFoundError("fcc-update unavailable")),
+        Mock(side_effect=FileNotFoundError("modelglot-update unavailable")),
     )
 
     instance._check_updates(instance._icon, instance._server_status_item)
@@ -573,7 +575,7 @@ def test_update_launch_failure_keeps_desktop_running_and_offers_retry(
     assert instance._update_check_item.enabled is True
     assert instance._update_status_item.text == "● Update available: 1.9.0 → 1.10.0"
     assert icon.notifications[-1] == (
-        "Could not start the FCC update. Run fcc-update from a terminal.",
+        "Could not start the ModelGlot update. Run modelglot-update from a terminal.",
         "ModelGlot",
     )
     assert icon.notification_details[-1].level is desktop_tray.NotificationLevel.ERROR
@@ -587,8 +589,8 @@ def test_failed_update_check_uses_generic_user_feedback(
     result = UpdateCheckResult(
         status=UpdateStatus.FAILED,
         installed="1.9.0",
-        message="Could not check for FCC updates. Please retry.",
-        detail="Could not check for FCC updates: timeout. Please retry.",
+        message="Could not check for ModelGlot updates. Please retry.",
+        detail="Could not check for ModelGlot updates: timeout. Please retry.",
     )
     monkeypatch.setattr(desktop_tray, "check_for_updates", lambda: result)
 
@@ -597,7 +599,7 @@ def test_failed_update_check_uses_generic_user_feedback(
 
     assert instance._update_status_item.text == "○ Update check failed"
     assert icon.notifications == [
-        ("Could not check for FCC updates. Please retry.", "ModelGlot")
+        ("Could not check for ModelGlot updates. Please retry.", "ModelGlot")
     ]
 
 
@@ -609,13 +611,13 @@ def test_failed_update_check_can_be_retried(
     results = [
         UpdateCheckResult(
             status=UpdateStatus.FAILED,
-            message="Could not check for FCC updates. Please retry.",
+            message="Could not check for ModelGlot updates. Please retry.",
         ),
         UpdateCheckResult(
             status=UpdateStatus.UP_TO_DATE,
             installed="1.10.0",
             latest="1.10.0",
-            message="FCC 1.10.0 is already up to date.",
+            message="ModelGlot 1.10.0 is already up to date.",
         ),
     ]
     calls = 0
@@ -655,7 +657,7 @@ def test_unexpected_update_check_error_does_not_escape_worker(
     assert instance._update_status_item.text == "○ Update check failed"
     assert instance._update_check_item.enabled is True
     assert icon.notifications == [
-        ("Could not check for FCC updates. Please retry.", "ModelGlot")
+        ("Could not check for ModelGlot updates. Please retry.", "ModelGlot")
     ]
 
 
@@ -679,7 +681,7 @@ def test_update_worker_start_failure_is_reported(
     assert instance._update_status_item.text == "○ Update check failed"
     assert instance._update_check_item.enabled is True
     assert icon.notifications == [
-        ("Could not check for FCC updates. Please retry.", "ModelGlot")
+        ("Could not check for ModelGlot updates. Please retry.", "ModelGlot")
     ]
 
 
@@ -701,7 +703,7 @@ def test_concurrent_update_clicks_start_only_one_check(
             status=UpdateStatus.UP_TO_DATE,
             installed="1.10.0",
             latest="1.10.0",
-            message="FCC 1.10.0 is already up to date.",
+            message="ModelGlot 1.10.0 is already up to date.",
         )
 
     monkeypatch.setattr(desktop_tray, "check_for_updates", check)

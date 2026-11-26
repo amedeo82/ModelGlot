@@ -1,4 +1,4 @@
-"""Shareable local diagnostics, without starting or changing FCC."""
+"""Shareable local diagnostics, without starting or changing ModelGlot."""
 
 import importlib
 import platform

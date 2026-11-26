@@ -9,7 +9,7 @@ from unittest.mock import MagicMock
 import httpx
 import pytest
 
-from free_claude_code.config import env_migrations, paths
+from free_claude_code.config import paths
 from free_claude_code.config.env_migrations import atomic_write_managed_config
 from free_claude_code.config.loader import ManagedConfigStore
 from free_claude_code.config.settings import Settings
@@ -19,7 +19,7 @@ from smoke.lib import e2e as smoke_e2e
 from smoke.lib import http as smoke_http
 from smoke.lib import server as smoke_server
 from smoke.lib.child_process import (
-    cmd_fcc_server,
+    cmd_modelglot_server,
     cmd_python_c,
     run_captured_text,
 )
@@ -43,8 +43,7 @@ def test_isolated_smoke_client_uses_server_token_without_importing_legacy_config
         "ANTHROPIC_AUTH_TOKEN=legacy-token\nGROQ_API_KEY=legacy-provider-secret\n"
     )
     legacy_bytes = legacy.read_bytes()
-    monkeypatch.setattr(env_migrations, "verified_checkout_env_path", lambda: legacy)
-    monkeypatch.delenv("FCC_ENV_FILE", raising=False)
+    monkeypatch.delenv("MODELGLOT_ENV_FILE", raising=False)
 
     env = client_smoke._isolated_dsh_env(
         tmp_path=tmp_path,
@@ -52,7 +51,9 @@ def test_isolated_smoke_client_uses_server_token_without_importing_legacy_config
         auth_token=server_settings.proxy_auth_token,
         credential_env_keys=client_smoke._provider_credential_env_keys(),
     )
-    monkeypatch.setattr(paths, "config_dir_path", lambda: Path(env["HOME"]) / ".fcc")
+    monkeypatch.setattr(
+        paths, "config_dir_path", lambda: Path(env["HOME"]) / ".modelglot"
+    )
     process = {"ANTHROPIC_AUTH_TOKEN": "conflicting-process-token"}
     store = ManagedConfigStore()
     store.initialize(process)
@@ -99,8 +100,8 @@ def test_smoke_reads_native_trace_events_from_mixed_subprocess_output() -> None:
     assert {"type": "result"} in client_smoke._json_object_lines(output)
 
 
-def test_fcc_server_command_uses_cli_entrypoint() -> None:
-    assert cmd_fcc_server() == [
+def test_modelglot_server_command_uses_cli_entrypoint() -> None:
+    assert cmd_modelglot_server() == [
         child_process.python_exe(),
         "-c",
         "from smoke.lib.server_runtime import serve; serve()",
@@ -154,9 +155,9 @@ def test_start_server_disables_cli_admin_browser(
     env_obj = captured["env"]
     assert isinstance(env_obj, dict)
     env = {str(key): value for key, value in env_obj.items()}
-    assert env["FCC_OPEN_BROWSER"] == "0"
-    assert env["HOST"] == "127.0.0.1"
-    assert env["PORT"] == "4567"
+    assert env["MODELGLOT_OPEN_BROWSER"] == "0"
+    assert env["MODELGLOT_HOST"] == "127.0.0.1"
+    assert env["MODELGLOT_PORT"] == "4567"
 
 
 def test_collect_message_stream_explicitly_requests_sse(
@@ -243,7 +244,7 @@ def test_smoke_conversation_identity_survives_turns_and_tool_results(
     assert captured[0]["x-opencode-session"]
     assert len({h["x-opencode-session"] for h in captured[:3]}) == 1
     assert captured[3]["x-opencode-session"] != captured[0]["x-opencode-session"]
-    assert all(h["user-agent"].startswith("fcc-smoke/") for h in captured)
+    assert all(h["user-agent"].startswith("modelglot-smoke/") for h in captured)
 
 
 @pytest.mark.parametrize(
@@ -275,7 +276,7 @@ def test_standalone_smoke_requests_identify_themselves_without_changing_auth(
     helper(*args, headers={})
 
     assert captured[0]["x-opencode-session"] != captured[1]["x-opencode-session"]
-    assert captured[0]["user-agent"].startswith("fcc-smoke/")
+    assert captured[0]["user-agent"].startswith("modelglot-smoke/")
     assert captured[2] == httpx.Headers(explicit)
     assert "authorization" not in captured[3]
     assert explicit["X-OpenCode-Session"] == "caller"
@@ -322,7 +323,7 @@ def test_provider_responses_smoke_sends_conversation_identity(
             _smoke_config(tmp_path), model
         )
     assert captured[0]["x-opencode-session"] != captured[1]["x-opencode-session"]
-    assert all(h["user-agent"].startswith("fcc-smoke/") for h in captured)
+    assert all(h["user-agent"].startswith("modelglot-smoke/") for h in captured)
 
 
 def test_disconnect_smoke_reuses_identity_for_followup(
@@ -353,7 +354,7 @@ def test_disconnect_smoke_reuses_identity_for_followup(
 
     assert len(captured) == 2
     assert captured[0]["x-opencode-session"] == captured[1]["x-opencode-session"]
-    assert all(h["user-agent"].startswith("fcc-smoke/") for h in captured)
+    assert all(h["user-agent"].startswith("modelglot-smoke/") for h in captured)
 
 
 def test_run_captured_text_uses_utf8_replacement(
@@ -379,14 +380,14 @@ def test_run_captured_text_uses_utf8_replacement(
     result = run_captured_text(
         ("cmd", "arg"),
         cwd=tmp_path,
-        env={"FCC_TEST": "1"},
+        env={"MODELGLOT_TEST": "1"},
         timeout=1.0,
     )
 
     assert result.stdout == "ok"
     assert calls["command"] == ["cmd", "arg"]
     assert calls["cwd"] == tmp_path
-    assert calls["env"] == {"FCC_TEST": "1"}
+    assert calls["env"] == {"MODELGLOT_TEST": "1"}
     assert calls["capture_output"] is True
     assert calls["text"] is True
     assert calls["encoding"] == "utf-8"

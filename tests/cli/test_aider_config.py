@@ -1,4 +1,4 @@
-"""Contracts for Aider's process-local FCC model files."""
+"""Contracts for Aider's process-local ModelGlot model files."""
 
 import json
 
@@ -43,7 +43,7 @@ def test_aider_config_projects_messages_route_and_canonical_catalog() -> None:
     config = build_aider_config(
         _models(),
         messages_url="http://127.0.0.1:9191/v1/messages",
-        api_key_env="FCC_AIDER_PROXY_AUTH_A1B2C3",
+        api_key_env="MODELGLOT_AIDER_PROXY_AUTH_A1B2C3",
         launch_id="launch-a",
     )
 
@@ -79,8 +79,8 @@ def test_aider_config_projects_messages_route_and_canonical_catalog() -> None:
             assert entry["extra_params"] == {
                 "model": f"anthropic/{wire_name}",
                 "api_base": "http://127.0.0.1:9191/v1/messages",
-                "api_key": "os.environ/FCC_AIDER_PROXY_AUTH_A1B2C3",
-                "extra_headers": {"x-fcc-launch-id": "launch-a"},
+                "api_key": "os.environ/MODELGLOT_AIDER_PROXY_AUTH_A1B2C3",
+                "extra_headers": {"x-modelglot-launch-id": "launch-a"},
             }
     assert entries["nvidia_nim/vendor/model"]["accepts_settings"] == [
         "reasoning_effort"
@@ -109,7 +109,7 @@ def test_aider_config_rejects_empty_catalog() -> None:
         build_aider_config(
             (),
             messages_url="http://127.0.0.1:9191/v1/messages",
-            api_key_env="FCC_AIDER_PROXY_AUTH_A1B2C3",
+            api_key_env="MODELGLOT_AIDER_PROXY_AUTH_A1B2C3",
             launch_id="launch-a",
         )
 
@@ -124,7 +124,7 @@ def test_aider_catalog_ids_take_precedence_over_generated_transport_spellings() 
     config = build_aider_config(
         models,
         messages_url="http://localhost:8182/v1/messages",
-        api_key_env="FCC_AIDER_PROXY_AUTH_COLLISION",
+        api_key_env="MODELGLOT_AIDER_PROXY_AUTH_COLLISION",
         launch_id="launch-a",
     )
     entries = {entry["name"]: entry for entry in config.settings}
@@ -138,11 +138,11 @@ def test_aider_catalog_ids_take_precedence_over_generated_transport_spellings() 
     "api_key_env",
     [
         "",
-        "FCC_AIDER_PROXY_AUTH_",
+        "MODELGLOT_AIDER_PROXY_AUTH_",
         "ANTHROPIC_API_KEY",
-        "FCC_AIDER_PROXY_AUTH_lowercase",
-        "FCC_AIDER_PROXY_AUTH_BAD-NAME",
-        "FCC_AIDER_PROXY_AUTH_BAD/NAME",
+        "MODELGLOT_AIDER_PROXY_AUTH_lowercase",
+        "MODELGLOT_AIDER_PROXY_AUTH_BAD-NAME",
+        "MODELGLOT_AIDER_PROXY_AUTH_BAD/NAME",
     ],
 )
 def test_aider_config_rejects_invalid_api_key_environment_name(

@@ -1,4 +1,4 @@
-"""Installed Claude launcher: native command handling with an FCC connection."""
+"""Installed Claude launcher: native command handling with an ModelGlot connection."""
 
 from collections.abc import Sequence
 

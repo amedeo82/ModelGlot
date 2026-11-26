@@ -58,7 +58,7 @@ def fixture_provider():
                         "data: "
                         + json.dumps(
                             {
-                                "responseId": "fcc_test",
+                                "responseId": "modelglot_test",
                                 "modelVersion": kwargs["response_model"],
                                 "candidates": [
                                     {
@@ -78,7 +78,7 @@ def fixture_provider():
                     "data: "
                     + json.dumps(
                         {
-                            "responseId": "fcc_test",
+                            "responseId": "modelglot_test",
                             "modelVersion": kwargs["response_model"],
                             "candidates": [{"index": 0, "finishReason": "STOP"}],
                             "usageMetadata": {
@@ -139,18 +139,18 @@ def test_gemini_credentials_authenticate_the_proxy_not_the_upstream(
         Settings(
             MODEL="groq/backend",
             PROXY_AUTH_ENABLED=True,
-            proxy_auth_token="fcc-test-token",
+            proxy_auth_token="modelglot-test-token",
         ),
         providers={"groq": provider},
     )
     headers = (
-        {"x-goog-api-key": "fcc-test-token"}
+        {"x-goog-api-key": "modelglot-test-token"}
         if credential == "header"
-        else {"authorization": "Bearer fcc-test-token"}
+        else {"authorization": "Bearer modelglot-test-token"}
         if credential == "bearer"
         else {}
     )
-    query = "?key=fcc-test-token" if credential == "query" else ""
+    query = "?key=modelglot-test-token" if credential == "query" else ""
     with TestClient(app) as client:
         response = client.post(
             f"{prefix}/model:generateContent" + query, headers=headers, json=body()
@@ -165,9 +165,12 @@ def test_gemini_credentials_authenticate_the_proxy_not_the_upstream(
     "headers,query",
     [
         ({}, ""),
-        ({"x-goog-api-key": "wrong"}, "?key=fcc-test-token"),
-        ({"authorization": "Bearer wrong", "x-goog-api-key": "fcc-test-token"}, ""),
-        ({}, "?key=fcc-test-token&key=other"),
+        ({"x-goog-api-key": "wrong"}, "?key=modelglot-test-token"),
+        (
+            {"authorization": "Bearer wrong", "x-goog-api-key": "modelglot-test-token"},
+            "",
+        ),
+        ({}, "?key=modelglot-test-token&key=other"),
     ],
 )
 @pytest.mark.parametrize("prefix", PREFIXES)
@@ -179,7 +182,7 @@ def test_invalid_auth_is_a_google_error_before_inference(
         Settings(
             MODEL="groq/backend",
             PROXY_AUTH_ENABLED=True,
-            proxy_auth_token="fcc-test-token",
+            proxy_auth_token="modelglot-test-token",
         ),
         providers={"groq": provider},
     )

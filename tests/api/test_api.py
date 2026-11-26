@@ -27,7 +27,9 @@ from tests.wire_payload import array_payload, object_payload, response_object
 
 
 @pytest.mark.parametrize("stream", [False, True])
-@pytest.mark.parametrize("prefix", ["", "anthropic/", "claude-3-freecc-no-thinking/"])
+@pytest.mark.parametrize(
+    "prefix", ["", "anthropic/", "claude-3-modelglot-no-thinking/"]
+)
 @pytest.mark.parametrize(
     "ref,upstream",
     [
@@ -57,7 +59,7 @@ def test_retired_model_ingress_calls_replacement(
     args, kwargs = _stream_messages_calls[0]
     assert args[0].model == upstream
     assert kwargs["response_model"] == original
-    if prefix == "claude-3-freecc-no-thinking/":
+    if prefix == "claude-3-modelglot-no-thinking/":
         assert kwargs["reasoning"] == ReasoningPolicy.off()
 
 

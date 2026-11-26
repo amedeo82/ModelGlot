@@ -675,7 +675,7 @@ async def test_legacy_provider_a_b_a_preserves_exact_native_history(
             foreign_wire = json.dumps(foreign_bodies[-1])
             assert (
                 "opaque-original" not in foreign_wire
-                and "fcc:history" not in foreign_wire
+                and "modelglot:history" not in foreign_wire
             )
             assert "Find 17." in foreign_wire
         await _saved_reply(send(wire, history), wire)
@@ -1065,7 +1065,7 @@ async def test_chat_buffered_content_preserves_reasoning_through_next_request(
     async with _harness("chat", lambda bodies: (200, events)) as (_, bodies, provider):
         saved = await _saved_reply(send([{"role": "user", "content": "hello"}]), wire)
         assert "Plan." in json.dumps(saved)
-        assert "fcc:history" not in json.dumps(saved)
+        assert "modelglot:history" not in json.dumps(saved)
         history = deepcopy(saved)
         blocks = object_array(saved[0]["content"]) if wire == "messages" else saved
         calls = [
@@ -1248,7 +1248,7 @@ async def test_chat_plaintext_beside_encrypted_details_survives_switching(
             await _saved_reply(foreign(wire, history), wire)
             outgoing = json.dumps(bodies[-1])
             assert outgoing.count(text) == 1
-            assert "fcc:history" not in outgoing
+            assert "modelglot:history" not in outgoing
             assert outgoing.count("opaque-only") == int(not incomplete_saved_record)
         await _saved_reply(source(wire, history), wire)
         assert object_array(sent[-1]["messages"])[0]["reasoning_details"] == (
@@ -1280,7 +1280,7 @@ async def test_chat_summary_fragments_remain_readable_in_native_fields(
             source(wire, [{"role": "user", "content": "hello"}]), wire
         )
         assert json.dumps(saved).count("Short summary.") == 1
-        assert "fcc:history" not in json.dumps(saved)
+        assert "modelglot:history" not in json.dumps(saved)
         if wire == "responses":
             assert saved[0]["summary"] == [
                 {"type": "summary_text", "text": "Short summary."}

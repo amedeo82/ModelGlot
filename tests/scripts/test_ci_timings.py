@@ -346,7 +346,7 @@ def test_api_artifacts_are_paginated(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_commands_copy_record_and_merge_real_files_with_same_input_on_partial_rerun(
     run: timing.Run, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    root = tmp_path / "fcc-ci-timings"
+    root = tmp_path / "modelglot-ci-timings"
     baseline = root / "baseline"
     timing.write_bundle(baseline, run.manifest("input"), maps())
     matrices = run.matrices

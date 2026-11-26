@@ -216,13 +216,13 @@ async def test_redirected_directory_is_left_untouched(
     outside = tmp_path / "outside"
     outside.mkdir()
     database = outside / "chat.db"
-    database.write_bytes(b"not owned by FCC")
+    database.write_bytes(b"not owned by ModelGlot")
     try:
         (root / "chat").symlink_to(outside, target_is_directory=True)
     except OSError as exc:
         pytest.skip(f"Directory symlinks unavailable: {exc}")
     await _start_and_close()
-    assert database.read_bytes() == b"not owned by FCC"
+    assert database.read_bytes() == b"not owned by ModelGlot"
     assert list(outside.iterdir()) == [database]
     assert any(
         "cleanup deferred: redirected directory" in entry for entry in cleanup_logs

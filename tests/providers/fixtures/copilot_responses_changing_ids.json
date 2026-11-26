@@ -29,7 +29,7 @@
         "id": "id_9459fa53fc044d23942a2c1d47354f0c5c43fa20591b16df7ba9a8f0decaad9c",
         "call_id": "id_71c0d69bf173aa38abde809d9a6a144a18dd72c38e926886862830643ba0b9cb",
         "status": "in_progress",
-        "name": "fcc_echo",
+        "name": "modelglot_echo",
         "arguments": ""
       }
     },
@@ -59,7 +59,7 @@
       "sequence_number": 6,
       "output_index": 0,
       "item_id": "id_fde5db27f4191b641d6c05b0226c57a0b3de856feec7df19f0002128347f41d4",
-      "delta": "FCC"
+      "delta": "MODELGLOT"
     },
     {
       "type": "response.function_call_arguments.delta",
@@ -87,7 +87,7 @@
       "sequence_number": 10,
       "output_index": 0,
       "item_id": "id_ff4ebb3c1a1315660697e657971baf4813946b674d951e6c8b3281d09dbca338",
-      "arguments": "{\"value\":\"FCC_TOOL_OK\"}"
+      "arguments": "{\"value\":\"MODELGLOT_TOOL_OK\"}"
     },
     {
       "type": "response.output_item.done",
@@ -98,8 +98,8 @@
         "id": "id_8533a45fc22302692561032244e6ddac18e0f441f1606c1e4069ee622b342d8a",
         "call_id": "id_71c0d69bf173aa38abde809d9a6a144a18dd72c38e926886862830643ba0b9cb",
         "status": "completed",
-        "name": "fcc_echo",
-        "arguments": "{\"value\":\"FCC_TOOL_OK\"}"
+        "name": "modelglot_echo",
+        "arguments": "{\"value\":\"MODELGLOT_TOOL_OK\"}"
       }
     },
     {
@@ -114,8 +114,8 @@
             "id": "id_c3951eb1f6206b11fa383bc25af0663d45dae5b75840ba815640d956025e48f0",
             "call_id": "id_71c0d69bf173aa38abde809d9a6a144a18dd72c38e926886862830643ba0b9cb",
             "status": "completed",
-            "name": "fcc_echo",
-            "arguments": "{\"value\":\"FCC_TOOL_OK\"}"
+            "name": "modelglot_echo",
+            "arguments": "{\"value\":\"MODELGLOT_TOOL_OK\"}"
           }
         ],
         "usage": {

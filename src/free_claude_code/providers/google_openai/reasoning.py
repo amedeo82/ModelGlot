@@ -15,7 +15,7 @@ from free_claude_code.providers.openai_chat import (
 )
 
 _THINKING_CONFIG_CONFLICT = (
-    "Google extra_body.google.thinking_config cannot be combined with FCC "
+    "Google extra_body.google.thinking_config cannot be combined with ModelGlot "
     "reasoning controls. Use either thinking/output_config or the provider-native "
     "thinking_config."
 )

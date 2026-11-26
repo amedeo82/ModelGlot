@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, slots=True)
 class CatalogModel:
-    """One exact FCC model identity and its reported capabilities."""
+    """One exact ModelGlot model identity and its reported capabilities."""
 
     wire_slug: str
     provider_model_ref: str

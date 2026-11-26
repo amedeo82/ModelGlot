@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Protocol, cast, runtime_checkable
 
-APP_USER_MODEL_ID = "io.github.amedeo82.free-claude-code"
+APP_USER_MODEL_ID = "io.github.amedeo82.modelglot"
 
 
 class NotificationLevel(StrEnum):

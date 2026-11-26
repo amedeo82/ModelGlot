@@ -74,9 +74,9 @@ def _input(responses: bool, model: str) -> MessagesRequest | OpenAIResponsesRequ
         return OpenAIResponsesRequest.model_validate(
             {
                 "model": model,
-                "input": "Call fcc_echo with value FCC_TOOL_OK.",
+                "input": "Call modelglot_echo with value MODELGLOT_TOOL_OK.",
                 "tools": [
-                    {"type": "function", "name": "fcc_echo", "parameters": schema}
+                    {"type": "function", "name": "modelglot_echo", "parameters": schema}
                 ],
             }
         )
@@ -84,9 +84,12 @@ def _input(responses: bool, model: str) -> MessagesRequest | OpenAIResponsesRequ
         {
             "model": model,
             "messages": [
-                {"role": "user", "content": "Call fcc_echo with value FCC_TOOL_OK."}
+                {
+                    "role": "user",
+                    "content": "Call modelglot_echo with value MODELGLOT_TOOL_OK.",
+                }
             ],
-            "tools": [{"name": "fcc_echo", "input_schema": schema}],
+            "tools": [{"name": "modelglot_echo", "input_schema": schema}],
         }
     )
 
@@ -163,7 +166,7 @@ async def test_captured_copilot_tool_identity_survives_stream_and_result_continu
                         {
                             "type": "function_call_output",
                             "call_id": call_id,
-                            "output": "FCC_TOOL_OK",
+                            "output": "MODELGLOT_TOOL_OK",
                         },
                     ],
                 }
@@ -175,7 +178,12 @@ async def test_captured_copilot_tool_identity_survives_stream_and_result_continu
                 if event["type"] == "content_block_start"
             ]
             assert starts == [
-                {"type": "tool_use", "id": call_id, "name": "fcc_echo", "input": {}}
+                {
+                    "type": "tool_use",
+                    "id": call_id,
+                    "name": "modelglot_echo",
+                    "input": {},
+                }
             ]
             fragments = [
                 delta["partial_json"]
@@ -186,19 +194,19 @@ async def test_captured_copilot_tool_identity_survives_stream_and_result_continu
             ]
             assert all(isinstance(fragment, str) for fragment in fragments)
             arguments = load_json_value("".join(cast(list[str], fragments)))
-            assert arguments == {"value": "FCC_TOOL_OK"}
+            assert arguments == {"value": "MODELGLOT_TOOL_OK"}
             followup = MessagesRequest.model_validate(
                 {
                     "model": harness.runtime.name,
                     "messages": [
-                        {"role": "user", "content": "Call fcc_echo."},
+                        {"role": "user", "content": "Call modelglot_echo."},
                         {
                             "role": "assistant",
                             "content": [
                                 {
                                     "type": "tool_use",
                                     "id": call_id,
-                                    "name": "fcc_echo",
+                                    "name": "modelglot_echo",
                                     "input": arguments,
                                 }
                             ],
@@ -209,7 +217,7 @@ async def test_captured_copilot_tool_identity_survives_stream_and_result_continu
                                 {
                                     "type": "tool_result",
                                     "tool_use_id": call_id,
-                                    "content": "FCC_TOOL_OK",
+                                    "content": "MODELGLOT_TOOL_OK",
                                 }
                             ],
                         },
@@ -217,7 +225,7 @@ async def test_captured_copilot_tool_identity_survives_stream_and_result_continu
                 }
             )
         harness.responses_content = responses_sse(
-            _text_delta("FCC_TOOL_OK"), _completed_event()
+            _text_delta("MODELGLOT_TOOL_OK"), _completed_event()
         ).encode()
         await _run(harness, followup)
         body = decode_object(harness.seen[-1].content)
@@ -237,11 +245,11 @@ async def test_captured_copilot_tool_identity_survives_stream_and_result_continu
             == object_payload(results[0])["call_id"]
             == call_id
         )
-        assert object_payload(calls[0])["name"] == "fcc_echo"
+        assert object_payload(calls[0])["name"] == "modelglot_echo"
         assert load_json_value(
             string_payload(object_payload(calls[0])["arguments"])
-        ) == {"value": "FCC_TOOL_OK"}
-        assert object_payload(results[0])["output"] == "FCC_TOOL_OK"
+        ) == {"value": "MODELGLOT_TOOL_OK"}
+        assert object_payload(results[0])["output"] == "MODELGLOT_TOOL_OK"
         if responses:
             assert output is not None
             assert calls == output
@@ -280,7 +288,7 @@ async def test_copilot_done_only_tool_binds_identity_without_an_added_event(
             assert starts[0] == {
                 "type": "tool_use",
                 "id": _item(capture[1])["call_id"],
-                "name": "fcc_echo",
+                "name": "modelglot_echo",
                 "input": {},
             }
     finally:
@@ -356,7 +364,7 @@ async def test_copilot_interleaved_tools_use_output_positions_and_preserve_final
         {"type": "response.output_item.added", "output_index": 1, "item": second},
         {"type": "response.output_item.added", "output_index": 2, "item": reasoning},
     ]
-    for number, fragment in enumerate(('{"value":', '"FCC_TOOL_OK"}')):
+    for number, fragment in enumerate(('{"value":', '"MODELGLOT_TOOL_OK"}')):
         events.extend(
             {
                 "type": "response.function_call_arguments.delta",
@@ -375,7 +383,7 @@ async def test_copilot_interleaved_tools_use_output_positions_and_preserve_final
                     **item,
                     "id": f"opaque-done-{position}",
                     "status": "completed",
-                    "arguments": '{"value":"FCC_TOOL_OK"}',
+                    "arguments": '{"value":"MODELGLOT_TOOL_OK"}',
                 },
             }
         )
@@ -391,13 +399,13 @@ async def test_copilot_interleaved_tools_use_output_positions_and_preserve_final
             **first,
             "id": "opaque-final-0",
             "status": "completed",
-            "arguments": '{"value":"FCC_TOOL_OK"}',
+            "arguments": '{"value":"MODELGLOT_TOOL_OK"}',
         },
         {
             **second,
             "id": "opaque-final-1",
             "status": "completed",
-            "arguments": '{"value":"FCC_TOOL_OK"}',
+            "arguments": '{"value":"MODELGLOT_TOOL_OK"}',
         },
         final_reasoning,
     ]
@@ -426,12 +434,12 @@ async def test_copilot_interleaved_tools_use_output_positions_and_preserve_final
                     {
                         "type": "function_call_output",
                         "call_id": first["call_id"],
-                        "output": "FCC_TOOL_OK",
+                        "output": "MODELGLOT_TOOL_OK",
                     },
                     {
                         "type": "function_call_output",
                         "call_id": second["call_id"],
-                        "output": "FCC_TOOL_OK",
+                        "output": "MODELGLOT_TOOL_OK",
                     },
                 ],
             }

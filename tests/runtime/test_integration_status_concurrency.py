@@ -356,7 +356,7 @@ async def test_availability_is_rechecked_after_status_worker(
         if change == "shutdown":
             await asyncio.wait_for(runtime.close(), 1)
         else:
-            runtime._pending_fields = ["PORT"]
+            runtime._pending_fields = ["MODELGLOT_PORT"]
         release.set()
         with pytest.raises(ApplicationUnavailableError):
             await asyncio.wait_for(task, 5)

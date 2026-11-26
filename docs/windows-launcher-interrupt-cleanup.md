@@ -1,7 +1,7 @@
 # Windows Launcher Interrupt Cleanup
 
 Status: resolved
-Scope: `free-claude-code` at commit `efdfdbe1`
+Scope: `modelglot` at commit `efdfdbe1`
 Audience: maintainers and contributors
 
 This document records the Windows `Ctrl+C` cleanup bug affecting native client launchers, its root
@@ -21,12 +21,12 @@ KeyboardInterrupt
 ```
 
 The nested exception interrupted `taskkill` while the launcher was already handling the first
-`KeyboardInterrupt`. The local FCC proxy remained running, as intended by the launcher contract,
+`KeyboardInterrupt`. The local ModelGlot proxy remained running, as intended by the launcher contract,
 but the client cleanup was no longer guaranteed to finish.
 
 ## Reproduction
 
-1. Start a native client on Windows, for example `uv run fcc-claude`.
+1. Start a native client on Windows, for example `uv run modelglot-claude`.
 2. At the Claude Code prompt, press `Ctrl+C` and then press it again when Claude Code displays
    `Press Ctrl-C again to exit`.
 3. Observe the nested `KeyboardInterrupt` traceback on Windows.
@@ -58,7 +58,7 @@ The launcher now treats `Ctrl+C` as a normal interrupted exit:
   best-effort contract;
 - the client PID is still unregistered in all exit paths.
 
-The FCC proxy server is unaffected and continues running after the native client exits.
+The ModelGlot proxy server is unaffected and continues running after the native client exits.
 
 ## Regression Coverage
 

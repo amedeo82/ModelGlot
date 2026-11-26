@@ -75,7 +75,7 @@ class GoogleChatBehavior(OpenAIChatBehavior):
         self, body: dict[str, Any], *, reasoning: ReasoningPolicy
     ) -> dict[str, Any]:
         # Preserve the native caller field before generic history projection drops
-        # unsupported Chat details. FCC carriers and cached metadata are resolved
+        # unsupported Chat details. ModelGlot carriers and cached metadata are resolved
         # later, using the actual attempt's origin.
         if isinstance(messages := body.get("messages"), list):
             apply_native_message_signatures(messages)

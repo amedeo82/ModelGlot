@@ -11,7 +11,7 @@ $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
 $script:MuseStableChannelUrl = "https://api.meta.ai/muse-code/channels/muse-stable"
-$script:MuseOwner = "free-claude-code-muse-installer"
+$script:MuseOwner = "modelglot-muse-installer"
 $script:MuseOwnerSchemaVersion = 1
 $script:MuseMinimumVersion = [version] "0.2.1"
 
@@ -19,7 +19,7 @@ function Show-MuseInstallerUsage {
     @"
 Usage: install-muse.ps1 [options]
 
-Installs or updates FCC's managed native-Windows Muse Code executable.
+Installs or updates ModelGlot's managed native-Windows Muse Code executable.
 The managed command is placed in %LOCALAPPDATA%\Programs\Muse Code\bin.
 
 Options:
@@ -342,7 +342,7 @@ function Get-MuseInstallPaths {
         Root = $root
         Bin = $bin
         Executable = Join-Path $bin "muse.exe"
-        Record = Join-Path $root ".fcc-muse-install.json"
+        Record = Join-Path $root ".modelglot-muse-install.json"
     }
 }
 
@@ -784,7 +784,7 @@ function Remove-MuseTemporaryRoot {
     $leafName = [IO.Path]::GetFileName($resolvedPath)
     if (
         (-not $resolvedPath.StartsWith($requiredPrefix, [StringComparison]::OrdinalIgnoreCase)) -or
-        (-not $leafName.StartsWith("fcc-muse-", [StringComparison]::Ordinal))
+        (-not $leafName.StartsWith("modelglot-muse-", [StringComparison]::Ordinal))
     ) {
         throw "Refusing to remove an unexpected Muse temporary directory: $resolvedPath"
     }
@@ -809,7 +809,7 @@ function Invoke-MuseInstaller {
         (Test-Path -LiteralPath $paths.Root) -and
         (-not (Test-Path -LiteralPath $paths.Root -PathType Container))
     ) {
-        throw "The managed Muse Code install path exists but is not owned by FCC: '$($paths.Root)'. Move or remove it, then rerun the installer."
+        throw "The managed Muse Code install path exists but is not owned by ModelGlot: '$($paths.Root)'. Move or remove it, then rerun the installer."
     }
 
     $record = Read-MuseOwnershipRecord -RecordPath $paths.Record
@@ -818,7 +818,7 @@ function Invoke-MuseInstaller {
             (Test-Path -LiteralPath $paths.Root -PathType Container) -and
             @(Get-ChildItem -LiteralPath $paths.Root -Force).Count -gt 0
         ) {
-            throw "The managed Muse Code directory exists but is not owned by FCC: '$($paths.Root)'. Move or remove it, then rerun the installer."
+            throw "The managed Muse Code directory exists but is not owned by ModelGlot: '$($paths.Root)'. Move or remove it, then rerun the installer."
         }
 
         $externalCommand = Resolve-MuseExternalCommand
@@ -846,7 +846,7 @@ function Invoke-MuseInstaller {
         return
     }
 
-    $temporaryRoot = Join-Path ([IO.Path]::GetTempPath()) ("fcc-muse-" + [guid]::NewGuid().ToString("N"))
+    $temporaryRoot = Join-Path ([IO.Path]::GetTempPath()) ("modelglot-muse-" + [guid]::NewGuid().ToString("N"))
     $candidatePath = Join-Path $temporaryRoot "muse.exe"
     try {
         New-Item -ItemType Directory -Path $temporaryRoot | Out-Null

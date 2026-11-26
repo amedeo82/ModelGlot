@@ -93,10 +93,10 @@ def test_admin_retirement_preview_apply_and_runtime_agree(
 ) -> None:
     _set_home(monkeypatch, tmp_path)
     _clear_process_config(monkeypatch)
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     env_file.parent.mkdir(parents=True)
     env_file.write_text(
-        "FCC_CONFIG_SCHEMA=1\nMODEL=groq/default\nMODEL_OPUS=groq/managed\n"
+        "MODELGLOT_CONFIG_SCHEMA=1\nMODEL=groq/default\nMODEL_OPUS=groq/managed\n"
         "GITHUB_MODELS_TOKEN=preserve-secret\nGITHUB_MODELS_PROXY=http://user:secret@proxy.test\nPRIVATE=hidden\n",
         encoding="utf-8",
     )
@@ -144,10 +144,10 @@ def test_admin_super_migration_preview_apply_and_runtime_agree(
     _clear_process_config(monkeypatch)
     old = "nvidia_nim/nvidia/nemotron-3-super-120b-a12b"
     new = "nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b"
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     env_file.parent.mkdir(parents=True)
     env_file.write_text(
-        "FCC_CONFIG_SCHEMA=2\nMODEL=groq/default\nMODEL_OPUS=groq/managed\nPRIVATE=hidden\n",
+        "MODELGLOT_CONFIG_SCHEMA=2\nMODEL=groq/default\nMODEL_OPUS=groq/managed\nPRIVATE=hidden\n",
         encoding="utf-8",
     )
     monkeypatch.setenv("MODEL_OPUS", old)
@@ -206,12 +206,12 @@ def _clear_process_config(monkeypatch: pytest.MonkeyPatch) -> None:
         "ANTHROPIC_AUTH_TOKEN",
         "PROXY_AUTH_ENABLED",
         "TELEGRAM_PROXY_URL",
-        "FCC_ENV_FILE",
+        "MODELGLOT_ENV_FILE",
         "CLOUDFLARE_ACCOUNT_ID",
         "GITHUB_MODELS_TOKEN",
-        "HOST",
-        "PORT",
-        "FCC_OPEN_BROWSER",
+        "MODELGLOT_HOST",
+        "MODELGLOT_PORT",
+        "MODELGLOT_OPEN_BROWSER",
         "VOICE_NOTE_ENABLED",
         "WHISPER_DEVICE",
         "LOG_FILE",
@@ -268,7 +268,7 @@ def test_admin_endpoints_survive_deleted_managed_config(
     _set_home(monkeypatch, tmp_path)
     _clear_process_config(monkeypatch)
     client = _local_client(create_test_app())
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     assert env_file.is_file()
 
     env_file.unlink()
@@ -837,11 +837,11 @@ def test_admin_static_model_combobox_owns_dropdown_and_search_behavior() -> None
 
     assert 'api("/admin/api/models" + (refresh ? "/refresh" : "")' in script
     assert 'field.type === "model" || field.type === "optional_model"' in script
-    assert "new window.FccModelCombobox" in script
+    assert "new window.ModelGlotModelCombobox" in script
     assert 'input.setAttribute("role", "combobox")' in combobox_script
     assert 'this.listbox.setAttribute("role", "listbox")' in combobox_script
     assert 'this.toggle.className = "model-combobox-toggle"' in combobox_script
-    assert "class FccModelCombobox" in combobox_script
+    assert "class ModelGlotModelCombobox" in combobox_script
     assert 'input.addEventListener("click", () => this.open())' in combobox_script
     assert 'event.key === "ArrowDown" || event.key === "ArrowUp"' in combobox_script
     assert "this.setActive(this.visibleOptions.length - 1)" in combobox_script
@@ -850,11 +850,12 @@ def test_admin_static_model_combobox_owns_dropdown_and_search_behavior() -> None
     assert "static canonicalValue(input)" in combobox_script
     assert "input.dataset.canonicalValue" in combobox_script
     assert (
-        "values.indexOf(FccModelCombobox.canonicalValue(this.input))" in combobox_script
+        "values.indexOf(ModelGlotModelCombobox.canonicalValue(this.input))"
+        in combobox_script
     )
     assert "this.setCanonicalValue(value)" in combobox_script
-    assert "window.FccModelCombobox.canonicalValue(input)" in script
-    assert "window.FccModelCombobox.canonicalValue(combobox.input)" in script
+    assert "window.ModelGlotModelCombobox.canonicalValue(input)" in script
+    assert "window.ModelGlotModelCombobox.canonicalValue(combobox.input)" in script
     assert 'document.createElement("datalist")' not in combobox_script
     assert ".model-combobox-list" in styles
     assert ".model-combobox-option.active" in styles
@@ -908,7 +909,7 @@ def test_admin_config_masks_secrets_and_exposes_manifest(
     assert "TELEGRAM_PROXY_URL" in keys
     assert "CEREBRAS_API_KEY" in keys
     assert "OLLAMA_API_KEY" in keys
-    assert "FCC_OPEN_BROWSER" in keys
+    assert "MODELGLOT_OPEN_BROWSER" in keys
     assert "ZAI_BASE_URL" not in keys
     assert "CLAUDE_WORKSPACE" not in keys
     assert "CLAUDE_CLI_BIN" not in keys
@@ -931,22 +932,25 @@ def test_admin_config_masks_secrets_and_exposes_manifest(
     assert object_payload(telegram_proxy_field)["value"] is None
     assert object_payload(telegram_proxy_field)["configured"] is False
     assert object_payload(telegram_proxy_field)["nullable"] is True
-    assert body["paths"] == {"managed": str(tmp_path / ".fcc" / ".env")}
+    assert body["paths"] == {"managed": str(tmp_path / ".modelglot" / ".env")}
     catalog_smoke_keys = {
-        f"FCC_SMOKE_MODEL_{provider_id.upper()}" for provider_id in PROVIDER_CATALOG
+        f"MODELGLOT_SMOKE_MODEL_{provider_id.upper()}"
+        for provider_id in PROVIDER_CATALOG
     }
     actual_smoke_keys = {
         object_payload(field)["key"]
         for field in array_payload(body["fields"])
-        if string_payload(object_payload(field)["key"]).startswith("FCC_SMOKE_MODEL_")
+        if string_payload(object_payload(field)["key"]).startswith(
+            "MODELGLOT_SMOKE_MODEL_"
+        )
     }
     assert actual_smoke_keys == catalog_smoke_keys | {
-        "FCC_SMOKE_MODEL_MISTRAL_REASONING"
+        "MODELGLOT_SMOKE_MODEL_MISTRAL_REASONING"
     }
     open_browser_field = next(
         field
         for field in array_payload(body["fields"])
-        if object_payload(field)["key"] == "FCC_OPEN_BROWSER"
+        if object_payload(field)["key"] == "MODELGLOT_OPEN_BROWSER"
     )
     assert object_payload(open_browser_field)["type"] == "boolean"
     assert object_payload(open_browser_field)["value"] == "true"
@@ -1057,15 +1061,15 @@ def test_admin_config_masks_secrets_and_exposes_manifest(
         "HTTP_READ_TIMEOUT",
         "HTTP_WRITE_TIMEOUT",
         "HTTP_CONNECT_TIMEOUT",
-        "HOST",
-        "PORT",
-        "FCC_OPEN_BROWSER",
+        "MODELGLOT_HOST",
+        "MODELGLOT_PORT",
+        "MODELGLOT_OPEN_BROWSER",
     }
     for key, field in runtime_fields.items():
         payload = object_payload(field)
         assert payload["description"], f"{key} exposes no admin description"
         if payload["restart_required"]:
-            assert "restarts FCC" in string_payload(payload["description"])
+            assert "restarts ModelGlot" in string_payload(payload["description"])
     for section in (
         "models",
         "web_tools",
@@ -1396,7 +1400,7 @@ def test_admin_config_preserves_managed_env_source_contract(
 ) -> None:
     _set_home(monkeypatch, tmp_path)
     _clear_process_config(monkeypatch)
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     env_file.parent.mkdir(parents=True)
     env_file.write_text("MODEL=open_router/managed-model\n", encoding="utf-8")
     app = create_test_app()
@@ -1424,7 +1428,7 @@ def test_admin_apply_persists_open_browser_for_next_launch(
     response = post_config(
         _local_client(app),
         "/admin/api/config/apply",
-        json={"values": {"FCC_OPEN_BROWSER": False}},
+        json={"values": {"MODELGLOT_OPEN_BROWSER": False}},
     )
 
     assert response.status_code == 200
@@ -1437,8 +1441,8 @@ def test_admin_apply_persists_open_browser_for_next_launch(
         "admin_url": None,
         "fields": [],
     }
-    managed_env = tmp_path / ".fcc" / ".env"
-    assert "FCC_OPEN_BROWSER=false" in managed_env.read_text(encoding="utf-8")
+    managed_env = tmp_path / ".modelglot" / ".env"
+    assert "MODELGLOT_OPEN_BROWSER=false" in managed_env.read_text(encoding="utf-8")
 
 
 def test_admin_apply_hot_publishes_ordered_model_fallbacks(
@@ -1463,7 +1467,7 @@ def test_admin_apply_hot_publishes_ordered_model_fallbacks(
         ModelFallback(model="open_router/vendor/model-a"),
         ModelFallback(model="groq/vendor/model-b"),
     )
-    managed_env = tmp_path / ".fcc" / ".env"
+    managed_env = tmp_path / ".modelglot" / ".env"
     assert (
         decode_model_fallbacks(dotenv_values_from_file(managed_env)["MODEL_FALLBACKS"])
         == provider_manager_for_app(app).current_settings().model_fallbacks
@@ -1487,10 +1491,10 @@ def test_admin_apply_null_removes_model_fallbacks(
 ) -> None:
     _set_home(monkeypatch, tmp_path)
     _clear_process_config(monkeypatch)
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     env_file.parent.mkdir(parents=True)
     env_file.write_text(
-        "FCC_CONFIG_SCHEMA=1\nMODEL_FALLBACKS=open_router/vendor/model-a\n",
+        "MODELGLOT_CONFIG_SCHEMA=1\nMODEL_FALLBACKS=open_router/vendor/model-a\n",
         encoding="utf-8",
     )
     app = create_test_app()
@@ -1529,7 +1533,7 @@ def test_admin_ignores_retired_progress_setting_without_writing(
     assert "provider_progress_timeout" not in (
         provider_manager_for_app(app).current_settings().model_dump()
     )
-    managed_env = tmp_path / ".fcc" / ".env"
+    managed_env = tmp_path / ".modelglot" / ".env"
     assert "PROVIDER_PROGRESS_TIMEOUT=" not in managed_env.read_text(encoding="utf-8")
 
 
@@ -1552,7 +1556,7 @@ def test_admin_apply_masks_telegram_proxy_credentials(
     assert body["applied"] is True
     assert "TELEGRAM_PROXY_URL=********" in string_payload(body["env_preview"])
     assert proxy_url not in string_payload(body["env_preview"])
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     text = env_file.read_text(encoding="utf-8")
     assert f"TELEGRAM_PROXY_URL={proxy_url}" in text
 
@@ -1562,10 +1566,10 @@ def test_admin_apply_null_removes_optional_secret(
 ) -> None:
     _set_home(monkeypatch, tmp_path)
     _clear_process_config(monkeypatch)
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     env_file.parent.mkdir(parents=True)
     env_file.write_text(
-        "FCC_CONFIG_SCHEMA=1\nTELEGRAM_PROXY_URL=https://secret.invalid\n",
+        "MODELGLOT_CONFIG_SCHEMA=1\nTELEGRAM_PROXY_URL=https://secret.invalid\n",
         encoding="utf-8",
     )
     app = create_test_app()
@@ -1589,10 +1593,10 @@ def test_admin_apply_masked_or_blank_secret_is_unchanged(
 ) -> None:
     _set_home(monkeypatch, tmp_path)
     _clear_process_config(monkeypatch)
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     env_file.parent.mkdir(parents=True)
     env_file.write_text(
-        "FCC_CONFIG_SCHEMA=1\nOPENROUTER_API_KEY=original-secret\n",
+        "MODELGLOT_CONFIG_SCHEMA=1\nOPENROUTER_API_KEY=original-secret\n",
         encoding="utf-8",
     )
     app = create_test_app()
@@ -1755,7 +1759,7 @@ def test_admin_apply_rejects_invalid_provider_proxy_without_side_effects(
 ) -> None:
     _set_home(monkeypatch, tmp_path)
     _clear_process_config(monkeypatch)
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     env_file.parent.mkdir(parents=True)
     env_file.write_text("MODEL=open_router/test-model\n", encoding="utf-8")
     callbacks: list[str] = []
@@ -1791,7 +1795,7 @@ def test_admin_apply_validates_retained_proxy_and_allows_removal(
 ) -> None:
     _set_home(monkeypatch, tmp_path)
     _clear_process_config(monkeypatch)
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     env_file.parent.mkdir(parents=True)
     invalid_proxy = "invalid://proxy.example:8080"
     original = f"GROQ_PROXY={invalid_proxy}\n"
@@ -1829,7 +1833,7 @@ def test_admin_apply_preserves_valid_stored_proxy_secret(
 ) -> None:
     _set_home(monkeypatch, tmp_path)
     _clear_process_config(monkeypatch)
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     env_file.parent.mkdir(parents=True)
     env_file.write_text(
         "OPENAI_PROXY=http://user:password@127.0.0.1:8080\n",
@@ -1872,7 +1876,7 @@ def test_admin_apply_writes_complete_managed_env_and_masks_preview(
     body = response_object(response)
     assert body["applied"] is True
     assert "OPENROUTER_API_KEY=********" in string_payload(body["env_preview"])
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     text = env_file.read_text("utf-8")
     assert "MODEL=open_router/test-model" in text
     assert json.loads(dotenv_values_from_text(text)["OPENROUTER_API_KEY"]) == [
@@ -1880,8 +1884,8 @@ def test_admin_apply_writes_complete_managed_env_and_masks_preview(
     ]
     assert "ANTHROPIC_AUTH_TOKEN=" not in text
     assert "PROXY_AUTH_ENABLED=" not in text
-    assert "HOST=" not in text
-    assert "PORT=" not in text
+    assert "MODELGLOT_HOST=" not in text
+    assert "MODELGLOT_PORT=" not in text
     assert body["restart"] == {
         "required": False,
         "automatic": False,
@@ -1912,7 +1916,7 @@ def test_admin_apply_writes_fireworks_key_and_masks_preview(
     body = response_object(response)
     assert body["applied"] is True
     assert "FIREWORKS_API_KEY=********" in string_payload(body["env_preview"])
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     text = env_file.read_text(encoding="utf-8")
     assert "MODEL=fireworks/test-model" in text
     assert json.loads(dotenv_values_from_text(text)["FIREWORKS_API_KEY"]) == [
@@ -1942,7 +1946,7 @@ def test_admin_apply_writes_gemini_key_and_masks_preview(
     body = response_object(response)
     assert body["applied"] is True
     assert "GEMINI_API_KEY=********" in string_payload(body["env_preview"])
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     text = env_file.read_text(encoding="utf-8")
     assert "MODEL=gemini/models/gemini-3.1-flash-lite" in text
     assert json.loads(dotenv_values_from_text(text)["GEMINI_API_KEY"]) == ["gm-secret"]
@@ -1970,7 +1974,7 @@ def test_admin_apply_writes_groq_key_and_masks_preview(
     body = response_object(response)
     assert body["applied"] is True
     assert "GROQ_API_KEY=********" in string_payload(body["env_preview"])
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     text = env_file.read_text(encoding="utf-8")
     assert "MODEL=groq/llama-3.3-70b-versatile" in text
     assert json.loads(dotenv_values_from_text(text)["GROQ_API_KEY"]) == ["gq-secret"]
@@ -1998,7 +2002,7 @@ def test_admin_apply_writes_sambanova_key_and_masks_preview(
     body = response_object(response)
     assert body["applied"] is True
     assert "SAMBANOVA_API_KEY=********" in string_payload(body["env_preview"])
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     text = env_file.read_text(encoding="utf-8")
     assert "MODEL=sambanova/Meta-Llama-3.3-70B-Instruct" in text
     assert json.loads(dotenv_values_from_text(text)["SAMBANOVA_API_KEY"]) == [
@@ -2028,7 +2032,7 @@ def test_admin_apply_writes_cerebras_key_and_masks_preview(
     body = response_object(response)
     assert body["applied"] is True
     assert "CEREBRAS_API_KEY=********" in string_payload(body["env_preview"])
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     text = env_file.read_text(encoding="utf-8")
     assert "MODEL=cerebras/llama3.1-8b" in text
     assert json.loads(dotenv_values_from_text(text)["CEREBRAS_API_KEY"]) == [
@@ -2059,7 +2063,7 @@ def test_admin_apply_writes_bedrock_region_config_and_masks_key(
     body = response_object(response)
     assert body["applied"] is True
     assert "AWS_BEARER_TOKEN_BEDROCK=********" in string_payload(body["env_preview"])
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     text = env_file.read_text(encoding="utf-8")
     assert "MODEL=bedrock/openai.gpt-oss-120b" in text
     assert json.loads(dotenv_values_from_text(text)["AWS_BEARER_TOKEN_BEDROCK"]) == [
@@ -2092,7 +2096,7 @@ def test_admin_apply_writes_cloudflare_fields_and_masks_preview(
     assert body["applied"] is True
     assert "CLOUDFLARE_API_TOKEN=********" in string_payload(body["env_preview"])
     assert "CLOUDFLARE_ACCOUNT_ID=cf-account" in string_payload(body["env_preview"])
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     text = env_file.read_text(encoding="utf-8")
     assert "MODEL=cloudflare/@cf/moonshotai/kimi-k2.6" in text
     assert json.loads(dotenv_values_from_text(text)["CLOUDFLARE_API_TOKEN"]) == [
@@ -2124,7 +2128,7 @@ def test_admin_apply_writes_huggingface_key_and_masks_preview(
     assert body["applied"] is True
     assert body["pending_fields"] == ["HUGGINGFACE_API_KEY"]
     assert "HUGGINGFACE_API_KEY=********" in string_payload(body["env_preview"])
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     text = env_file.read_text(encoding="utf-8")
     assert "MODEL=huggingface/openai/gpt-oss-120b:fastest" in text
     assert json.loads(dotenv_values_from_text(text)["HUGGINGFACE_API_KEY"]) == [
@@ -2147,7 +2151,7 @@ def test_admin_key_change_requires_restart_for_active_voice_backend(
 ) -> None:
     _set_home(monkeypatch, tmp_path)
     _clear_process_config(monkeypatch)
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     env_file.parent.mkdir(parents=True)
     env_file.write_text(
         "\n".join(
@@ -2202,7 +2206,7 @@ def test_admin_constructor_captured_setting_requires_restart(
 ) -> None:
     _set_home(monkeypatch, tmp_path)
     _clear_process_config(monkeypatch)
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     env_file.parent.mkdir(parents=True)
     env_file.write_text(f"{key}={initial}\n", encoding="utf-8")
     app = create_test_app()
@@ -2247,7 +2251,7 @@ def test_admin_apply_writes_cohere_key_and_masks_preview(
     body = response_object(response)
     assert body["applied"] is True
     assert "COHERE_API_KEY=********" in string_payload(body["env_preview"])
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     text = env_file.read_text(encoding="utf-8")
     assert "MODEL=cohere/command-a-plus-05-2026" in text
     assert json.loads(dotenv_values_from_text(text)["COHERE_API_KEY"]) == [
@@ -2277,7 +2281,7 @@ def test_admin_apply_replaces_retired_model_and_ignores_retired_credential(
     body = response_object(response)
     assert body["applied"] is True
     assert "GITHUB_MODELS_TOKEN" not in string_payload(body["env_preview"])
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     text = env_file.read_text(encoding="utf-8")
     assert "MODEL=" not in text
     assert "GITHUB_MODELS_TOKEN" not in text
@@ -2288,14 +2292,14 @@ def test_admin_apply_preserves_hidden_diagnostics_and_smoke_values(
 ) -> None:
     _set_home(monkeypatch, tmp_path)
     _clear_process_config(monkeypatch)
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     env_file.parent.mkdir(parents=True)
     env_file.write_text(
         "\n".join(
             [
                 "MODEL=nvidia_nim/old-model",
                 "LOG_RAW_API_PAYLOADS=true",
-                "FCC_SMOKE_MODEL_ZAI=zai/smoke-model",
+                "MODELGLOT_SMOKE_MODEL_ZAI=zai/smoke-model",
                 "",
             ]
         ),
@@ -2315,7 +2319,7 @@ def test_admin_apply_preserves_hidden_diagnostics_and_smoke_values(
     text = env_file.read_text("utf-8")
     assert "MODEL=open_router/test-model" in text
     assert "LOG_RAW_API_PAYLOADS=true" in text
-    assert "FCC_SMOKE_MODEL_ZAI=zai/smoke-model" in text
+    assert "MODELGLOT_SMOKE_MODEL_ZAI=zai/smoke-model" in text
 
 
 def test_admin_apply_preserves_unrecognized_managed_zai_base_url(
@@ -2323,7 +2327,7 @@ def test_admin_apply_preserves_unrecognized_managed_zai_base_url(
 ) -> None:
     _set_home(monkeypatch, tmp_path)
     _clear_process_config(monkeypatch)
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     env_file.parent.mkdir(parents=True)
     env_file.write_text(
         "\n".join(
@@ -2357,7 +2361,7 @@ def test_admin_apply_preserves_unrecognized_managed_assignments(
 ) -> None:
     _set_home(monkeypatch, tmp_path)
     _clear_process_config(monkeypatch)
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     env_file.parent.mkdir(parents=True)
     env_file.write_text(
         "\n".join(
@@ -2403,7 +2407,7 @@ def test_admin_ignores_retired_request_settings_and_preserves_saved_values(
     saved = {"UNRELATED_CUSTOM_SETTING": "keep-me"}
     if already_saved:
         saved.update(retired)
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     env_file.parent.mkdir(parents=True)
     env_file.write_text(
         "\n".join(f"{key}={value}" for key, value in saved.items()) + "\n",
@@ -2455,24 +2459,24 @@ def test_admin_apply_restart_required_reports_automatic_restart(
     response = post_config(
         _local_client(app),
         "/admin/api/config/apply",
-        json={"values": {"PORT": "9090"}},
+        json={"values": {"MODELGLOT_PORT": "9090"}},
     )
 
     assert response.status_code == 200
     body = response_object(response)
     assert body["applied"] is True
-    assert body["pending_fields"] == ["PORT"]
+    assert body["pending_fields"] == ["MODELGLOT_PORT"]
     assert body["restart"] == {
         "required": True,
         "automatic": True,
         "admin_url": "http://127.0.0.1:9090/admin",
-        "fields": ["PORT"],
+        "fields": ["MODELGLOT_PORT"],
         "instance_id": instance_id,
     }
     assert callbacks == ["restart"]
 
 
-@pytest.mark.parametrize("origin", ["http://127.0.0.1:8082", "http://localhost:9090"])
+@pytest.mark.parametrize("origin", ["http://127.0.0.1:16969", "http://localhost:9090"])
 def test_admin_restart_status_can_be_read_from_another_local_address(
     origin: str,
 ) -> None:
@@ -2508,18 +2512,18 @@ def test_admin_apply_restart_required_reports_manual_fallback(
     response = post_config(
         _local_client(app),
         "/admin/api/config/apply",
-        json={"values": {"PORT": "9091"}},
+        json={"values": {"MODELGLOT_PORT": "9091"}},
     )
 
     assert response.status_code == 200
     body = response_object(response)
     assert body["applied"] is True
-    assert body["pending_fields"] == ["PORT"]
+    assert body["pending_fields"] == ["MODELGLOT_PORT"]
     assert body["restart"] == {
         "required": True,
         "automatic": False,
         "admin_url": None,
-        "fields": ["PORT"],
+        "fields": ["MODELGLOT_PORT"],
     }
 
 
@@ -2536,7 +2540,7 @@ def test_restart_signal_failure_reports_saved_config_and_manual_restart(
     client = _local_client(app)
     original_port = response_object(client.get("/admin/api/status"))["port"]
     response = post_config(
-        client, "/admin/api/config/apply", json={"values": {"PORT": "9090"}}
+        client, "/admin/api/config/apply", json={"values": {"MODELGLOT_PORT": "9090"}}
     )
 
     assert response.status_code == 200
@@ -2546,18 +2550,18 @@ def test_restart_signal_failure_reports_saved_config_and_manual_restart(
         "required": True,
         "automatic": False,
         "admin_url": None,
-        "fields": ["PORT"],
+        "fields": ["MODELGLOT_PORT"],
     }
-    assert "PORT=9090" in (tmp_path / ".fcc" / ".env").read_text()
+    assert "MODELGLOT_PORT=9090" in (tmp_path / ".modelglot" / ".env").read_text()
     status = response_object(client.get("/admin/api/status"))
     assert status["port"] == original_port
-    assert status["pending_fields"] == ["PORT"]
+    assert status["pending_fields"] == ["MODELGLOT_PORT"]
     assert "private restart failure detail" not in response.text + caplog.text
 
 
 @pytest.mark.parametrize(
     "followup",
-    [{"PORT": "9090"}, {"MODEL": "nvidia_nim/new"}, {"LOG_LEVEL": "WARNING"}],
+    [{"MODELGLOT_PORT": "9090"}, {"MODEL": "nvidia_nim/new"}, {"LOG_LEVEL": "WARNING"}],
 )
 @pytest.mark.parametrize("signal_recovers", [False, True])
 def test_pending_restart_survives_later_apply(
@@ -2586,14 +2590,20 @@ def test_pending_restart_survives_later_apply(
     assert object_payload(
         response_object(
             post_config(
-                client, "/admin/api/config/apply", json={"values": {"PORT": "9090"}}
+                client,
+                "/admin/api/config/apply",
+                json={"values": {"MODELGLOT_PORT": "9090"}},
             )
         )["restart"]
     )["required"]
     result = response_object(
         post_config(client, "/admin/api/config/apply", json={"values": followup})
     )
-    fields = ["PORT", "LOG_LEVEL"] if "LOG_LEVEL" in followup else ["PORT"]
+    fields = (
+        ["MODELGLOT_PORT", "LOG_LEVEL"]
+        if "LOG_LEVEL" in followup
+        else ["MODELGLOT_PORT"]
+    )
     assert result["applied"] is True
     assert object_payload(result["restart"])["required"] is True
     assert object_payload(result["restart"])["automatic"] is signal_recovers
@@ -2620,14 +2630,19 @@ def test_reverting_pending_restart_restores_hot_apply(
     callback = MagicMock(side_effect=RuntimeError("restart failed"))
     app = create_test_app(settings, restart_callback=callback)
     client = _local_client(app)
-    post_config(client, "/admin/api/config/apply", json={"values": {"PORT": "9090"}})
+    post_config(
+        client, "/admin/api/config/apply", json={"values": {"MODELGLOT_PORT": "9090"}}
+    )
     with patch.object(provider_manager_for_app(app), "_start_pass", MagicMock()):
         result = response_object(
             post_config(
                 client,
                 "/admin/api/config/apply",
                 json={
-                    "values": {"PORT": str(settings.port), "MODEL": "nvidia_nim/new"}
+                    "values": {
+                        "MODELGLOT_PORT": str(settings.port),
+                        "MODEL": "nvidia_nim/new",
+                    }
                 },
             )
         )
@@ -2664,7 +2679,7 @@ def test_admin_process_env_values_are_locked_and_not_written(
     )
 
     assert response.status_code == 200
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     assert "deepseek/managed-model" not in env_file.read_text("utf-8")
 
 
@@ -2692,7 +2707,7 @@ def test_admin_process_model_fallbacks_are_locked_and_not_written(
     )
 
     assert response.status_code == 200
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     assert "MODEL_FALLBACKS=" not in env_file.read_text("utf-8")
 
 
@@ -2727,7 +2742,7 @@ def test_admin_never_reads_arbitrary_current_directory_env(
     )
 
     assert response.status_code == 200
-    managed_text = (tmp_path / ".fcc" / ".env").read_text("utf-8")
+    managed_text = (tmp_path / ".modelglot" / ".env").read_text("utf-8")
     assert "MODEL=deepseek/deepseek-chat" not in managed_text
     assert "DEEPSEEK_API_KEY=deepseek-secret" not in managed_text
 
@@ -2737,7 +2752,7 @@ def test_admin_migration_removes_blank_required_managed_values(
 ) -> None:
     _set_home(monkeypatch, tmp_path)
     _clear_process_config(monkeypatch)
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     env_file.parent.mkdir(parents=True)
     env_file.write_text(
         "MESSAGING_PLATFORM=\nWHISPER_DEVICE=\n",
@@ -2753,7 +2768,7 @@ def test_admin_migration_removes_blank_required_managed_values(
 
     assert response.status_code == 200
     assert response.json()["applied"] is True
-    managed_text = (tmp_path / ".fcc" / ".env").read_text("utf-8")
+    managed_text = (tmp_path / ".modelglot" / ".env").read_text("utf-8")
     assert json.loads(dotenv_values_from_text(managed_text)["NVIDIA_NIM_API_KEY"]) == [
         "nim-secret"
     ]
@@ -2766,7 +2781,7 @@ def test_admin_migrates_empty_auth_token_to_explicit_disabled_state(
 ) -> None:
     _set_home(monkeypatch, tmp_path)
     _clear_process_config(monkeypatch)
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     env_file.parent.mkdir(parents=True)
     env_file.write_text(
         "ANTHROPIC_AUTH_TOKEN=\nPROVIDER_RATE_LIMIT=1\n",
@@ -2804,7 +2819,7 @@ def test_admin_apply_rejects_missing_required_value_without_writing(
 ) -> None:
     _set_home(monkeypatch, tmp_path)
     _clear_process_config(monkeypatch)
-    env_file = tmp_path / ".fcc" / ".env"
+    env_file = tmp_path / ".modelglot" / ".env"
     env_file.parent.mkdir(parents=True)
     original = "ANTHROPIC_AUTH_TOKEN=\nMESSAGING_PLATFORM=none\n"
     env_file.write_text(original, encoding="utf-8")
@@ -2838,7 +2853,7 @@ def test_admin_apply_preserves_false_and_numeric_zero(
         "/admin/api/config/apply",
         json={
             "values": {
-                "FCC_OPEN_BROWSER": False,
+                "MODELGLOT_OPEN_BROWSER": False,
                 "HTTP_WRITE_TIMEOUT": 0,
             }
         },
@@ -2846,8 +2861,8 @@ def test_admin_apply_preserves_false_and_numeric_zero(
 
     assert response.status_code == 200
     assert response.json()["applied"] is True
-    managed = (tmp_path / ".fcc" / ".env").read_text(encoding="utf-8")
-    assert "FCC_OPEN_BROWSER=false" in managed
+    managed = (tmp_path / ".modelglot" / ".env").read_text(encoding="utf-8")
+    assert "MODELGLOT_OPEN_BROWSER=false" in managed
     assert "HTTP_WRITE_TIMEOUT=0" in managed
 
 
@@ -3027,9 +3042,9 @@ def test_admin_provider_test_exposes_completed_attempt_failure() -> None:
 
 
 def test_admin_launch_url_uses_loopback_for_wildcard_host() -> None:
-    settings = Settings.model_construct(host="0.0.0.0", port=8082)
+    settings = Settings.model_construct(host="0.0.0.0", port=16969)
 
-    assert local_admin_url(settings) == "http://127.0.0.1:8082/admin"
+    assert local_admin_url(settings) == "http://127.0.0.1:16969/admin"
 
 
 def _token_optimization_payload(state: str = "available") -> JsonObject:
@@ -3241,7 +3256,7 @@ def test_admin_usage_export_matches_filtered_json_and_is_loopback_only():
     assert response.headers["content-type"].startswith("text/csv")
     assert (
         response.headers["content-disposition"]
-        == 'attachment; filename="fcc-usage.csv"'
+        == 'attachment; filename="modelglot-usage.csv"'
     )
     assert response.headers["cache-control"] == "no-store"
     assert "'=formula" in response.text

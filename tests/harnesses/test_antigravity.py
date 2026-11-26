@@ -19,7 +19,7 @@ from tests.wire_payload import decode_object, object_payload
 def native_files(tmp_path: Path):
     path, state = (
         tmp_path / "native/settings.json",
-        tmp_path / "fcc/antigravity-integration.json",
+        tmp_path / "modelglot/antigravity-integration.json",
     )
     path.parent.mkdir()
     path.write_text(
@@ -56,7 +56,7 @@ def test_session_catalog_preserves_native_model_contract() -> None:
             "customModels": {
                 "provider/model:variant": {
                     "modelName": "gemini-api://models/provider/model:variant",
-                    "label": "FCC: My model",
+                    "label": "ModelGlot: My model",
                     "toolFormatterType": "TOOL_FORMATTER_TYPE_NONE",
                     "modelFeatures": {
                         "supportsImages": False,

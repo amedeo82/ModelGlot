@@ -12,8 +12,8 @@ from free_claude_code.config import paths
 from free_claude_code.config.env_migrations import atomic_write_managed_config
 from free_claude_code.config.loader import ManagedConfigStore
 
-_CONFIG_DIR = "FCC_SMOKE_CONFIG_DIR"
-_SOURCE_DIR = "FCC_SMOKE_SOURCE_CONFIG_DIR"
+_CONFIG_DIR = "MODELGLOT_SMOKE_CONFIG_DIR"
+_SOURCE_DIR = "MODELGLOT_SMOKE_SOURCE_CONFIG_DIR"
 
 
 @contextmanager
@@ -28,7 +28,7 @@ def server_environment(
         return
 
     snapshot = ManagedConfigStore().read()
-    directory = TemporaryDirectory(prefix="fcc-smoke-")
+    directory = TemporaryDirectory(prefix="modelglot-smoke-")
     try:
         private = Path(directory.name)
         atomic_write_managed_config(snapshot.managed, path=private / ".env")
@@ -53,7 +53,7 @@ def server_environment(
 
 
 def serve() -> None:
-    """Set FCC paths before importing the real server entrypoint."""
+    """Set ModelGlot paths before importing the real server entrypoint."""
     directory = os.environ.pop(_CONFIG_DIR, None)
     with ExitStack() as stack:
         if directory is not None:

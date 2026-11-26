@@ -18,7 +18,7 @@ def test_native_state_and_unrelated_environment_are_preserved(
         "GROK_HOME": "native-grok-home",
         "HERMES_HOME": "native-hermes-home",
         "MUSE_HOME": "native-muse-home",
-        "FCC_UNRELATED": "keep",
+        "MODELGLOT_UNRELATED": "keep",
         "HTTP_PROXY": "http://machine-proxy.invalid:8080",
         "NO_PROXY": "internal.example",
     }

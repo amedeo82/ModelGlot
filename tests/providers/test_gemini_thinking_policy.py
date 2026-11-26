@@ -1,4 +1,4 @@
-"""Native Gemini uses shared FCC budgets and preserves native client controls."""
+"""Native Gemini uses shared ModelGlot budgets and preserves native client controls."""
 
 from copy import deepcopy
 
@@ -26,7 +26,7 @@ from tests.wire_payload import decode_object, object_payload
     "model", ["models/gemini-2.5-flash", "models/gemini-3.5-flash-lite", "arbitrary"]
 )
 @pytest.mark.parametrize("effort", list(ReasoningEffort))
-async def test_fcc_effort_uses_shared_budget_on_every_ingress(
+async def test_modelglot_effort_uses_shared_budget_on_every_ingress(
     wire: str, model: str, effort: ReasoningEffort
 ) -> None:
     bodies = []

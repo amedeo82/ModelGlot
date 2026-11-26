@@ -41,7 +41,7 @@ def _settings(
         model_haiku=model_haiku,
         model_fallbacks=model_fallbacks,
         proxy_auth_enabled=False,
-        proxy_auth_token="freecc",
+        proxy_auth_token="modelglot",
         deepseek_api_keys=normalize_api_keys("deepseek-key"),
         open_router_api_keys=normalize_api_keys("open-router-key"),
         wafer_api_keys=normalize_api_keys("wafer-key"),
@@ -116,12 +116,10 @@ def test_context_fallback_round_trip_preserves_reported_capabilities(view: str) 
     config = build_opencode_config(
         decoded.models,
         default_model_id=decoded.default_model_id,
-        proxy_root_url="http://localhost:8082",
+        proxy_root_url="http://localhost:16969",
     )
     models = object_payload(
-        object_payload(decode_object(json.dumps(config.file))["providers"])[
-            "free-claude-code"
-        ]
+        object_payload(decode_object(json.dumps(config.file))["providers"])["modelglot"]
     )["models"]
     assert object_payload(object_payload(models)["deepseek/deepseek-chat"])[
         "limit"
@@ -163,7 +161,9 @@ def test_sorted_catalog_retains_an_explicit_no_thinking_server_default(
         "open_router/Zulu",
         "wafer/z-fallback",
     ]
-    assert payload["default_model_id"] == "claude-3-freecc-no-thinking/open_router/Zulu"
+    assert (
+        payload["default_model_id"] == "claude-3-modelglot-no-thinking/open_router/Zulu"
+    )
     assert payload["first_id"] == "deepseek/a-fallback"
     assert payload["last_id"] == "wafer/z-fallback"
     assert settings.model_fallbacks == (
@@ -192,11 +192,11 @@ def test_models_list_includes_configured_refs_cached_provider_models_and_aliases
     assert ids[0] == "claude-fable-5-2"
     assert [model_id for model_id in ids if "/" in string_payload(model_id)] == [
         "anthropic/deepseek/deepseek-chat",
-        "claude-3-freecc-no-thinking/deepseek/deepseek-chat",
+        "claude-3-modelglot-no-thinking/deepseek/deepseek-chat",
         "anthropic/open_router/anthropic/claude-opus",
-        "claude-3-freecc-no-thinking/open_router/anthropic/claude-opus",
+        "claude-3-modelglot-no-thinking/open_router/anthropic/claude-opus",
         "anthropic/open_router/meta/llama-3.3",
-        "claude-3-freecc-no-thinking/open_router/meta/llama-3.3",
+        "claude-3-modelglot-no-thinking/open_router/meta/llama-3.3",
     ]
     assert ids.count("anthropic/deepseek/deepseek-chat") == 1
     assert ids.count("anthropic/open_router/anthropic/claude-opus") == 1
@@ -206,7 +206,7 @@ def test_models_list_includes_configured_refs_cached_provider_models_and_aliases
     }
     assert display_names["anthropic/open_router/meta/llama-3.3"] == "Llama 3.3"
     assert (
-        display_names["claude-3-freecc-no-thinking/open_router/meta/llama-3.3"]
+        display_names["claude-3-modelglot-no-thinking/open_router/meta/llama-3.3"]
         == "Llama 3.3 (no thinking)"
     )
     descriptions = {
@@ -216,7 +216,7 @@ def test_models_list_includes_configured_refs_cached_provider_models_and_aliases
     }
     assert descriptions["anthropic/open_router/meta/llama-3.3"] == "OpenRouter"
     assert (
-        descriptions["claude-3-freecc-no-thinking/open_router/meta/llama-3.3"]
+        descriptions["claude-3-modelglot-no-thinking/open_router/meta/llama-3.3"]
         == "OpenRouter (no thinking)"
     )
     assert "claude-sonnet-5-5" in ids
@@ -344,11 +344,11 @@ def test_claude_models_use_custom_provider_display_name_without_changing_ids() -
     assert object_payload(rows[f"anthropic/{model_ref}"])["display_name"] == (
         "Phoenix/deepseek-v4.1-flash"
     )
-    assert object_payload(rows[f"claude-3-freecc-no-thinking/{model_ref}"])[
+    assert object_payload(rows[f"claude-3-modelglot-no-thinking/{model_ref}"])[
         "display_name"
     ] == ("Phoenix/deepseek-v4.1-flash (no thinking)")
     plain_ref = f"{provider_id}/deepseek-plain"
-    assert object_payload(rows[f"claude-3-freecc-no-thinking/{plain_ref}"])[
+    assert object_payload(rows[f"claude-3-modelglot-no-thinking/{plain_ref}"])[
         "display_name"
     ] == ("Phoenix/deepseek-plain (no thinking)")
 
@@ -373,9 +373,9 @@ def test_models_list_uses_thinking_metadata_for_cached_models() -> None:
         for item in array_payload(response_object(response)["data"])
     ]
     assert "anthropic/open_router/reasoning-model" in ids
-    assert "claude-3-freecc-no-thinking/open_router/reasoning-model" in ids
+    assert "claude-3-modelglot-no-thinking/open_router/reasoning-model" in ids
     assert "anthropic/open_router/plain-model" not in ids
-    assert "claude-3-freecc-no-thinking/open_router/plain-model" in ids
+    assert "claude-3-modelglot-no-thinking/open_router/plain-model" in ids
 
 
 def test_models_list_uses_cached_metadata_for_configured_refs() -> None:
@@ -398,7 +398,7 @@ def test_models_list_uses_cached_metadata_for_configured_refs() -> None:
         for item in array_payload(response_object(response)["data"])
     ]
     assert "anthropic/open_router/plain-model" not in ids
-    assert ids[-1] == "claude-3-freecc-no-thinking/open_router/plain-model"
+    assert ids[-1] == "claude-3-modelglot-no-thinking/open_router/plain-model"
 
 
 def test_models_list_includes_cached_wafer_models() -> None:
@@ -418,9 +418,9 @@ def test_models_list_includes_cached_wafer_models() -> None:
         for item in array_payload(response_object(response)["data"])
     ]
     assert "anthropic/wafer/DeepSeek-V4-Pro" in ids
-    assert "claude-3-freecc-no-thinking/wafer/DeepSeek-V4-Pro" in ids
+    assert "claude-3-modelglot-no-thinking/wafer/DeepSeek-V4-Pro" in ids
     assert "anthropic/wafer/MiniMax-M2.7" in ids
-    assert "claude-3-freecc-no-thinking/wafer/MiniMax-M2.7" in ids
+    assert "claude-3-modelglot-no-thinking/wafer/MiniMax-M2.7" in ids
 
 
 def test_models_list_includes_fallback_refs_without_cached_discovery() -> None:
@@ -440,7 +440,7 @@ def test_models_list_includes_fallback_refs_without_cached_discovery() -> None:
         for item in array_payload(response_object(response)["data"])
     ]
     assert "anthropic/wafer/DeepSeek-V4-Pro" in ids
-    assert "claude-3-freecc-no-thinking/wafer/DeepSeek-V4-Pro" in ids
+    assert "claude-3-modelglot-no-thinking/wafer/DeepSeek-V4-Pro" in ids
 
 
 def test_models_list_works_with_empty_discovery_catalog() -> None:
@@ -456,9 +456,9 @@ def test_models_list_works_with_empty_discovery_catalog() -> None:
     assert ids[0] == "claude-fable-5-2"
     assert [model_id for model_id in ids if "/" in string_payload(model_id)] == [
         "anthropic/deepseek/deepseek-chat",
-        "claude-3-freecc-no-thinking/deepseek/deepseek-chat",
+        "claude-3-modelglot-no-thinking/deepseek/deepseek-chat",
         "anthropic/open_router/anthropic/claude-opus",
-        "claude-3-freecc-no-thinking/open_router/anthropic/claude-opus",
+        "claude-3-modelglot-no-thinking/open_router/anthropic/claude-opus",
     ]
     assert "claude-sonnet-5-5" in ids
 
@@ -479,7 +479,7 @@ def test_direct_model_views_exclude_claude_aliases_and_duplicate_variants() -> N
 
     assert [object_payload(row)["id"] for row in array_payload(messages["data"])] == [
         "deepseek/deepseek-chat",
-        "claude-3-freecc-no-thinking/open_router/plain-model",
+        "claude-3-modelglot-no-thinking/open_router/plain-model",
         "open_router/reasoning-model",
     ]
     assert "claude-sonnet-5-5" not in {
@@ -492,7 +492,7 @@ def test_direct_model_views_exclude_claude_aliases_and_duplicate_variants() -> N
     assert array_payload(responses["data"])[0] == {
         "object": "model",
         "created": 0,
-        "owned_by": "free-claude-code",
+        "owned_by": "modelglot",
         "created_at": "1970-01-01T00:00:00Z",
         "display_name": "DeepSeek Chat",
         "description": "DeepSeek",
@@ -675,7 +675,7 @@ def test_muse_model_catalog_marks_every_routable_model_visible() -> None:
         for row in array_payload(response_object(muse)["data"])
     ] == [
         "deepseek/deepseek-chat",
-        "claude-3-freecc-no-thinking/open_router/plain-model",
+        "claude-3-modelglot-no-thinking/open_router/plain-model",
         "open_router/reasoning-model",
     ]
 

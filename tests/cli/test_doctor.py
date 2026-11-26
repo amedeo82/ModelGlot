@@ -69,7 +69,7 @@ def test_live_discovery_report_projects_only_safe_current_errors(
     assert "private-canary" not in json.dumps(result)
     assert requests == [
         (
-            "http://127.0.0.1:8082/admin/api/status",
+            "http://127.0.0.1:16969/admin/api/status",
             {
                 "timeout": 2.0,
                 "trust_env": False,
@@ -176,19 +176,21 @@ def test_discovery_status_failure_does_not_expose_exception_or_contact_remote_ho
 
     monkeypatch.setattr(httpx, "get", forbidden)
     assert (
-        diagnostics.model_discovery_report(Settings(HOST="remote.test"))["status"]
+        diagnostics.model_discovery_report(Settings(MODELGLOT_HOST="remote.test"))[
+            "status"
+        ]
         == "unavailable"
     )
 
 
 @pytest.mark.parametrize(
-    "host", ["http://127.0.0.1", "[::1", "[::1]:8082", "local\nhost"]
+    "host", ["http://127.0.0.1", "[::1", "[::1]:16969", "local\nhost"]
 )
 def test_malformed_host_still_produces_a_doctor_report(
     monkeypatch: pytest.MonkeyPatch, host: str
 ) -> None:
     ManagedConfigStore().initialize({})
-    monkeypatch.setenv("HOST", host)
+    monkeypatch.setenv("MODELGLOT_HOST", host)
 
     # Exercise real URL validation without connecting to a user-owned server.
     def validate_url(url: str, **kwargs: object):
@@ -258,7 +260,9 @@ def test_doctor_reports_disabled_model_title_catalog(
         lambda: tmp_path / "models-dev-catalog.json",
     )
 
-    report = diagnostics.model_titles_report(Settings(FCC_MODEL_CATALOG_SOURCE="none"))
+    report = diagnostics.model_titles_report(
+        Settings(MODELGLOT_MODEL_CATALOG_SOURCE="none")
+    )
 
     assert report["source"] == "none"
     assert report["state"] == "disabled"
@@ -298,7 +302,9 @@ def test_collection_does_not_initialize_or_expose_validation_input(
 ) -> None:
     store = ManagedConfigStore()
     store.path.parent.mkdir(parents=True)
-    store.path.write_text("FCC_CONFIG_SCHEMA=invalid\nOPENAI_API_KEY=secret-value\n")
+    store.path.write_text(
+        "MODELGLOT_CONFIG_SCHEMA=invalid\nOPENAI_API_KEY=secret-value\n"
+    )
 
     def forbidden(*args: object, **kwargs: object):
         pytest.fail("doctor must not initialize configuration")
@@ -602,7 +608,7 @@ def test_disconnect_mode_does_not_collect_or_copy_diagnostics(
     doctor.main(["--disconnect-integrations"])
     assert calls == ["disconnect"]
     assert capsys.readouterr() == (
-        "Disconnected recognized FCC editor/app integrations.\n",
+        "Disconnected recognized ModelGlot editor/app integrations.\n",
         "",
     )
 

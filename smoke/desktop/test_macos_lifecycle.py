@@ -1,4 +1,4 @@
-"""The installed native app keeps FCC's server, menu, and subprocess contracts."""
+"""The installed native app keeps ModelGlot's server, menu, and subprocess contracts."""
 
 import plistlib
 import socket
@@ -37,7 +37,7 @@ def wait_status(port: int, *, previous: str | None = None):
             except httpx.HTTPError, ValueError:
                 pass
             time.sleep(0.1)
-    raise AssertionError("FCC did not serve a new running instance")
+    raise AssertionError("ModelGlot did not serve a new running instance")
 
 
 def command(output: Path, action: str):
@@ -52,7 +52,10 @@ def test_installed_native_app_lifecycle(installed_desktop: InstalledDesktop):
         reservation.bind(("127.0.0.1", 0))
         address: tuple[str, int] = reservation.getsockname()
         port = address[1]
-    env = installed["launch_env"] | {"PORT": str(port), "FCC_NATIVE_CASE": "lifecycle"}
+    env = installed["launch_env"] | {
+        "PORT": str(port),
+        "MODELGLOT_NATIVE_CASE": "lifecycle",
+    }
     output = installed["output"] / "lifecycle.json"
     with launched(installed["app"], output, env) as process:
         report = wait_report(
@@ -67,8 +70,8 @@ def test_installed_native_app_lifecycle(installed_desktop: InstalledDesktop):
         initial = wait_status(port)
         # Exercise the real process discovery in both shell scripts without uninstalling.
         for script, body in (
-            ("install.sh", "assert_no_fcc_processes_running"),
-            ("uninstall.sh", "fcc_process_ids fcc-desktop"),
+            ("install.sh", "assert_no_modelglot_processes_running"),
+            ("uninstall.sh", "modelglot_process_ids modelglot-desktop"),
         ):
             source = (
                 (ROOT / "scripts" / script)
@@ -101,10 +104,10 @@ def test_installed_native_app_lifecycle(installed_desktop: InstalledDesktop):
             duplicate.with_suffix(".stderr.log").open("w") as errors,
             subprocess.Popen(
                 [
-                    str(installed["app"] / "Contents/MacOS/fcc-desktop"),
+                    str(installed["app"] / "Contents/MacOS/modelglot-desktop"),
                     "--auto-started",
                 ],
-                env=env | {"FCC_MACOS_PROBE_OUTPUT": str(duplicate)},
+                env=env | {"MODELGLOT_MACOS_PROBE_OUTPUT": str(duplicate)},
                 stdout=subprocess.DEVNULL,
                 stderr=errors,
             ) as second,
@@ -151,7 +154,7 @@ def test_installed_native_app_lifecycle(installed_desktop: InstalledDesktop):
             str(installed["python"]),
             "-c",
             "from pathlib import Path; from free_claude_code.core.interprocess_lock import InterprocessFileLock; "
-            "locks=[InterprocessFileLock(Path.home()/'.fcc'/name) for name in ('desktop.lock','server.owner.lock')]; "
+            "locks=[InterprocessFileLock(Path.home()/'.modelglot'/name) for name in ('desktop.lock','server.owner.lock')]; "
             "assert all(lock.acquire() for lock in locks); [lock.release() for lock in locks]",
         ],
         env=installed["env"],
@@ -162,7 +165,7 @@ def test_installed_native_app_lifecycle(installed_desktop: InstalledDesktop):
     updated = installed["root"] / "updated venv"
     installed["create_venv"](updated)
     subprocess.run(
-        [str(updated / "bin/fcc-desktop"), "--install-macos-app"],
+        [str(updated / "bin/modelglot-desktop"), "--install-macos-app"],
         env=installed["env"],
         check=True,
         timeout=30,

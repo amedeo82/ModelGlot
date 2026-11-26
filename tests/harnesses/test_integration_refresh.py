@@ -21,9 +21,9 @@ OLD_CLAUDE = {
     ],
 }
 OLD_CODEX = """model = "my-model" # Preserve my choice
-model_provider = "fcc"
+model_provider = "modelglot"
 model_catalog_json = "/old/catalog.json"
-[model_providers.fcc]
+[model_providers.modelglot]
 base_url = "http://localhost:8000/v1"
 [model_providers.other]
 base_url = "https://example.com/v1"
@@ -127,8 +127,8 @@ def test_refresh_codex_merges_latest_settings_without_changing_model(
     assert saved["model"] == "my-model"
     assert "# Preserve my choice" in path.read_text()
     assert saved["model_catalog_json"] == str(catalog.resolve())
-    assert saved["model_providers"]["fcc"]["auth"] == {
-        "command": "fcc-codex",
+    assert saved["model_providers"]["modelglot"]["auth"] == {
+        "command": "modelglot-codex",
         "args": ["--print-proxy-auth-token"],
     }
     assert saved["model_providers"]["other"] == {"base_url": "https://example.com/v1"}
@@ -143,7 +143,7 @@ def test_refresh_codex_merges_latest_settings_without_changing_model(
     [
         None,
         "",
-        OLD_CODEX.replace('model_provider = "fcc"', 'model_provider = "other"'),
+        OLD_CODEX.replace('model_provider = "modelglot"', 'model_provider = "other"'),
         OLD_CODEX.replace("localhost:8000", "localhost:9999"),
     ],
 )

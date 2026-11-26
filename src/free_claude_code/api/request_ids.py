@@ -13,7 +13,7 @@ from .generation_paths import generation_api
 
 REQUEST_ID_HEADER = "request-id"
 OPENAI_REQUEST_ID_HEADER = "x-request-id"
-_REQUEST_ID_STATE_ATTRIBUTE = "fcc_request_id"
+_REQUEST_ID_STATE_ATTRIBUTE = "modelglot_request_id"
 _OPENAI_REQUEST_ID_PATHS = frozenset(
     {"/v1/responses", "/v1/chat/completions", "/v1/models", "/muse-code/models"}
 )
@@ -66,7 +66,7 @@ class RequestCorrelationMiddleware:
 
 
 def new_request_id() -> str:
-    """Return a new opaque FCC request identifier."""
+    """Return a new opaque ModelGlot request identifier."""
     return f"req_{uuid.uuid4().hex}"
 
 

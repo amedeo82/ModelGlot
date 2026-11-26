@@ -1,4 +1,4 @@
-"""Single production composition root for the FCC server."""
+"""Single production composition root for the ModelGlot server."""
 
 import os
 from functools import partial
@@ -13,10 +13,10 @@ from free_claude_code.config.loader import ManagedConfigStore
 from free_claude_code.config.logging_config import configure_logging
 from free_claude_code.config.paths import (
     code_lock_path,
-    fcc_database_path,
     legacy_code_database_path,
     model_catalog_cache_path,
     model_catalog_logo_dir_path,
+    modelglot_database_path,
     server_log_path,
 )
 from free_claude_code.config.settings import Settings
@@ -86,7 +86,9 @@ def build_asgi_app(
         model_catalog_logos=model_catalog_logos,
     )
     database = SQLiteDatabase(
-        fcc_database_path(), code_lock_path(), legacy_path=legacy_code_database_path()
+        modelglot_database_path(),
+        code_lock_path(),
+        legacy_path=legacy_code_database_path(),
     )
     code_service = CodeService(
         SQLiteCodeStore(database),

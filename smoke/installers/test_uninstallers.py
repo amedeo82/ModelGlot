@@ -6,24 +6,44 @@ from pathlib import Path
 
 import pytest
 
-FCC_COMMANDS = (
-    "fcc-desktop",
-    "fcc-server",
-    "fcc-claude",
-    "fcc-codex",
-    "fcc-pi",
-    "fcc-opencode",
-    "fcc-cline",
-    "fcc-hermes",
-    "fcc-dsh",
-    "fcc-grok",
-    "fcc-muse",
-    "fcc-aider",
-    "fcc-agy",
-    "fcc-doctor",
-    "fcc-update",
-    "fcc-init",
-    "free-claude-code",
+MODELGLOT_COMMANDS = (
+    "modelglot-desktop",
+    "modelglot-server",
+    "modelglot-claude",
+    "modelglot-codex",
+    "modelglot-pi",
+    "modelglot-opencode",
+    "modelglot-cline",
+    "modelglot-hermes",
+    "modelglot-dsh",
+    "modelglot-grok",
+    "modelglot-muse",
+    "modelglot-aider",
+    "modelglot-agy",
+    "modelglot-doctor",
+    "modelglot-update",
+    "modelglot-init",
+)
+
+
+UPSTREAM_COMMANDS = (
+    "other-desktop",
+    "other-server",
+    "other-claude",
+    "other-codex",
+    "other-pi",
+    "other-opencode",
+    "other-cline",
+    "other-hermes",
+    "other-dsh",
+    "other-grok",
+    "other-muse",
+    "other-aider",
+    "other-agy",
+    "other-doctor",
+    "other-update",
+    "other-init",
+    "other-cli",
 )
 
 
@@ -50,8 +70,8 @@ def _create_windows_shortcut(
 ) -> None:
     shortcut_path.parent.mkdir(parents=True, exist_ok=True)
     env = os.environ | {
-        "FCC_TEST_SHORTCUT": str(shortcut_path),
-        "FCC_TEST_TARGET": str(target_path),
+        "MODELGLOT_TEST_SHORTCUT": str(shortcut_path),
+        "MODELGLOT_TEST_TARGET": str(target_path),
         "PSMODULEPATH": module_path,
     }
     subprocess.run(
@@ -61,8 +81,8 @@ def _create_windows_shortcut(
             "-Command",
             (
                 "$shell = New-Object -ComObject WScript.Shell; "
-                "$shortcut = $shell.CreateShortcut($env:FCC_TEST_SHORTCUT); "
-                "$shortcut.TargetPath = $env:FCC_TEST_TARGET; "
+                "$shortcut = $shell.CreateShortcut($env:MODELGLOT_TEST_SHORTCUT); "
+                "$shortcut.TargetPath = $env:MODELGLOT_TEST_TARGET; "
                 "$shortcut.Save()"
             ),
         ],
@@ -78,7 +98,8 @@ class PosixUninstallHarness:
     home: Path
     bin_dir: Path
     tool_bin: Path
-    fcc_home: Path
+    modelglot_home: Path
+    upstream_home: Path
     log: Path
     env: dict[str, str]
 
@@ -93,7 +114,7 @@ class PosixUninstallHarness:
         if not include_uv and uv.exists():
             uv.unlink()
         if not include_doctor:
-            (self.tool_bin / "fcc-doctor").unlink(missing_ok=True)
+            (self.tool_bin / "modelglot-doctor").unlink(missing_ok=True)
         return subprocess.run(
             ["/bin/sh", str(_repo_root() / "scripts" / "uninstall.sh"), *args],
             check=False,
@@ -108,7 +129,7 @@ class PosixUninstallHarness:
         return self.log.read_text(encoding="utf-8").splitlines()
 
     def remove_entry_points(self) -> None:
-        for name in FCC_COMMANDS:
+        for name in MODELGLOT_COMMANDS:
             (self.tool_bin / name).unlink(missing_ok=True)
 
     def use_process_list_fallback(self, process_line: str) -> None:
@@ -117,7 +138,7 @@ class PosixUninstallHarness:
         _write_executable(
             fallback_bin / "ps",
             """#!/bin/sh
-printf '%s\n' "$FCC_PS_OUTPUT"
+printf '%s\n' "$MODELGLOT_PS_OUTPUT"
 """,
         )
         awk = shutil.which("awk", path=self.env["PATH"])
@@ -125,10 +146,10 @@ printf '%s\n' "$FCC_PS_OUTPUT"
             pytest.skip("awk is required for the POSIX process fallback scenario")
         _write_executable(
             fallback_bin / "awk",
-            '#!/bin/sh\nexec "$FCC_TEST_AWK" "$@"\n',
+            '#!/bin/sh\nexec "$MODELGLOT_TEST_AWK" "$@"\n',
         )
-        self.env["FCC_TEST_AWK"] = awk
-        self.env["FCC_PS_OUTPUT"] = process_line
+        self.env["MODELGLOT_TEST_AWK"] = awk
+        self.env["MODELGLOT_PS_OUTPUT"] = process_line
         self.env["PATH"] = str(fallback_bin)
 
 
@@ -140,15 +161,17 @@ def posix_uninstall_harness(tmp_path: Path) -> PosixUninstallHarness:
     home = tmp_path / "home"
     bin_dir = home / ".local" / "bin"
     tool_bin = tmp_path / "tool-bin"
-    fcc_home = home / ".fcc"
+    modelglot_home = home / ".modelglot"
+    upstream_home = home / ".otherapp"
     log = tmp_path / "calls.log"
-    for path in (bin_dir, tool_bin, fcc_home):
+    for path in (bin_dir, tool_bin, modelglot_home, upstream_home):
         path.mkdir(parents=True)
-    (fcc_home / "config.json").write_text("{}", encoding="utf-8")
-    for name in FCC_COMMANDS:
+    (modelglot_home / "config.json").write_text("{}", encoding="utf-8")
+    (upstream_home / "config.json").write_text('{"upstream": true}\n', encoding="utf-8")
+    for name in (*MODELGLOT_COMMANDS, *UPSTREAM_COMMANDS):
         _write_executable(tool_bin / name, "#!/bin/sh\nexit 0\n")
     _write_executable(
-        tool_bin / "fcc-doctor",
+        tool_bin / "modelglot-doctor",
         """#!/bin/sh
 echo "doctor:$*" >> "$CALL_LOG"
 [ "$*" = "--disconnect-integrations" ] || exit 45
@@ -156,11 +179,11 @@ if [ "$FAIL_STEP" = "cleanup" ]; then
     echo "simulated integration cleanup failure" >&2
     exit 46
 fi
-if [ "$FAIL_STEP" = "legacy-helper" ]; then
+if [ "$FAIL_STEP" = "unsupported-helper" ]; then
     echo "unrecognized arguments: --disconnect-integrations" >&2
     exit 2
 fi
-echo "Disconnected recognized FCC editor/app integrations."
+echo "Disconnected recognized ModelGlot editor/app integrations."
 """,
     )
 
@@ -191,9 +214,9 @@ echo "Disconnected recognized FCC editor/app integrations."
     _write_executable(
         bin_dir / "pgrep",
         """#!/bin/sh
-[ -n "${FCC_RUNNING_COMMAND:-}" ] || exit 1
+[ -n "${MODELGLOT_RUNNING_COMMAND:-}" ] || exit 1
 case "$*" in
-    *"$FCC_RUNNING_COMMAND"*) printf '4242\n'; exit 0 ;;
+    *"$MODELGLOT_RUNNING_COMMAND"*) printf '4242\n'; exit 0 ;;
     *) exit 1 ;;
 esac
 """,
@@ -216,12 +239,11 @@ if [ "${1:-}" = "tool" ] && [ "${2:-}" = "uninstall" ]; then
         exit 42
     fi
     if [ "$FAIL_STEP" = "missing" ] || [ "$FAIL_STEP" = "stale-entrypoint" ] ||
-        { [ "$FAIL_STEP" = "legacy-only" ] && [ "${3:-}" = "modelglot" ]; } ||
-        { [ "$FAIL_STEP" = "modelglot-only" ] && [ "${3:-}" = "free-claude-code" ]; }; then
+        [ "$FAIL_STEP" = "modelglot-absent" ]; then
         printf 'Tool `%s` is not installed\n' "${3:-}" >&2
         exit 2
     fi
-    for name in fcc-desktop fcc-server fcc-claude fcc-codex fcc-pi fcc-opencode fcc-cline fcc-hermes fcc-dsh fcc-grok fcc-muse fcc-aider fcc-agy fcc-doctor fcc-update fcc-init free-claude-code; do
+    for name in modelglot-desktop modelglot-server modelglot-claude modelglot-codex modelglot-pi modelglot-opencode modelglot-cline modelglot-hermes modelglot-dsh modelglot-grok modelglot-muse modelglot-aider modelglot-agy modelglot-doctor modelglot-update modelglot-init; do
         /bin/rm -f "$FAKE_TOOL_BIN/$name"
     done
     echo "Uninstalled ${3:-}"
@@ -234,7 +256,7 @@ exit 43
         bin_dir / "rm",
         """#!/bin/sh
 echo "rm:$*" >> "$CALL_LOG"
-if [ "$FAIL_STEP" = "purge" ] && [ "$*" = "-rf $HOME/.fcc" ]; then
+if [ "$FAIL_STEP" = "purge" ] && [ "$*" = "-rf $HOME/.modelglot" ]; then
     echo "simulated purge failure" >&2
     exit 44
 fi
@@ -248,16 +270,23 @@ printf '%s\n' "$FAKE_UNAME"
 """,
     )
 
-    app = home / "Applications" / "Free Claude Code.app"
+    app = home / "Applications" / "ModelGlot.app"
     contents = app / "Contents"
     contents.mkdir(parents=True)
-    (contents / ".free-claude-code-owner").write_text(
-        "io.github.alishahryar1.free-claude-code\n",
-        encoding="utf-8",
+    (contents / ".modelglot-owner").write_text(
+        "io.github.amedeo82.modelglot\n", encoding="utf-8"
     )
+    upstream_app = home / "Applications" / "Other App.app"
+    upstream_contents = upstream_app / "Contents"
+    upstream_contents.mkdir(parents=True)
+    (upstream_contents / ".otherapp-owner").write_text(
+        "io.github.example.otherapp\n", encoding="utf-8"
+    )
+    (upstream_contents / "upstream.txt").write_text("keep upstream\n", encoding="utf-8")
     desktop = home / "Desktop"
     desktop.mkdir()
-    (desktop / "Free Claude Code.app").symlink_to(app, target_is_directory=True)
+    (desktop / "ModelGlot.app").symlink_to(app, target_is_directory=True)
+    (desktop / "Other App.app").symlink_to(upstream_app, target_is_directory=True)
 
     env = os.environ.copy()
     env.update(
@@ -267,34 +296,50 @@ printf '%s\n' "$FAKE_UNAME"
             "CALL_LOG": str(log),
             "FAKE_TOOL_BIN": str(tool_bin),
             "FAKE_UNAME": "Darwin",
-            "FCC_RUNNING_COMMAND": "",
+            "MODELGLOT_RUNNING_COMMAND": "",
             "FAIL_STEP": "",
         }
     )
     env.pop("XDG_BIN_HOME", None)
-    return PosixUninstallHarness(home, bin_dir, tool_bin, fcc_home, log, env)
+    return PosixUninstallHarness(
+        home, bin_dir, tool_bin, modelglot_home, upstream_home, log, env
+    )
+
+
+def _assert_posix_upstream_preserved(harness: PosixUninstallHarness) -> None:
+    assert (harness.upstream_home / "config.json").read_text(
+        encoding="utf-8"
+    ) == '{"upstream": true}\n'
+    assert all((harness.tool_bin / name).is_file() for name in UPSTREAM_COMMANDS)
+    upstream_app = harness.home / "Applications" / "Other App.app"
+    assert (upstream_app / "Contents" / "upstream.txt").read_text(
+        encoding="utf-8"
+    ) == "keep upstream\n"
+    assert (upstream_app / "Contents" / ".otherapp-owner").read_text(
+        encoding="utf-8"
+    ) == "io.github.example.otherapp\n"
+    assert (harness.home / "Desktop" / "Other App.app").readlink() == upstream_app
+    assert not any("other-cli" in call for call in harness.calls())
 
 
 @pytest.mark.parametrize("marker_directory", ["Contents", "Contents/Resources"])
-def test_uninstall_sh_removes_and_verifies_only_fcc(
+def test_uninstall_sh_removes_only_modelglot_and_preserves_upstream(
     posix_uninstall_harness: PosixUninstallHarness,
     marker_directory: str,
 ) -> None:
-    app = posix_uninstall_harness.home / "Applications/Free Claude Code.app"
+    app = posix_uninstall_harness.home / "Applications/ModelGlot.app"
     if marker_directory != "Contents":
-        destination = app / marker_directory / ".free-claude-code-owner"
+        destination = app / marker_directory / ".modelglot-owner"
         destination.parent.mkdir()
-        (app / "Contents/.free-claude-code-owner").rename(destination)
+        (app / "Contents/.modelglot-owner").rename(destination)
     result = posix_uninstall_harness.run()
 
     assert result.returncode == 0, result.stderr
-    assert (
-        "ModelGlot and legacy Free Claude Code have been removed and verified."
-        in result.stdout
-    )
-    assert not posix_uninstall_harness.fcc_home.exists()
+    assert "ModelGlot has been removed and verified." in result.stdout
+    assert not posix_uninstall_harness.modelglot_home.exists()
     assert all(
-        not (posix_uninstall_harness.tool_bin / name).exists() for name in FCC_COMMANDS
+        not (posix_uninstall_harness.tool_bin / name).exists()
+        for name in MODELGLOT_COMMANDS
     )
     assert (posix_uninstall_harness.bin_dir / "uv").exists()
     assert (posix_uninstall_harness.bin_dir / "claude").exists()
@@ -331,31 +376,29 @@ def test_uninstall_sh_removes_and_verifies_only_fcc(
         "uv:tool dir --bin",
         "doctor:--disconnect-integrations",
         "uv:tool uninstall modelglot",
-        "uv:tool uninstall free-claude-code",
-        f"rm:-f {posix_uninstall_harness.home / 'Desktop' / 'Free Claude Code.app'}",
-        f"rm:-rf {posix_uninstall_harness.home / 'Applications' / 'Free Claude Code.app'}",
-        f"rm:-rf {posix_uninstall_harness.fcc_home}",
+        f"rm:-f {posix_uninstall_harness.home / 'Desktop' / 'ModelGlot.app'}",
+        f"rm:-rf {posix_uninstall_harness.home / 'Applications' / 'ModelGlot.app'}",
+        f"rm:-rf {posix_uninstall_harness.modelglot_home}",
     ]
+    _assert_posix_upstream_preserved(posix_uninstall_harness)
 
 
-@pytest.mark.parametrize("installed_package", ["modelglot", "free-claude-code"])
-def test_uninstall_sh_supports_new_and_legacy_packages_independently(
+def test_uninstall_sh_ignores_upstream_when_modelglot_is_absent(
     posix_uninstall_harness: PosixUninstallHarness,
-    installed_package: str,
 ) -> None:
-    package_state = (
-        "modelglot-only" if installed_package == "modelglot" else "legacy-only"
+    posix_uninstall_harness.remove_entry_points()
+    result = posix_uninstall_harness.run(
+        "--keep-integrations", fail_step="modelglot-absent"
     )
-    result = posix_uninstall_harness.run("--keep-integrations", fail_step=package_state)
 
     assert result.returncode == 0, result.stderr
-    assert not posix_uninstall_harness.fcc_home.exists()
-    assert posix_uninstall_harness.calls()[:3] == [
+    assert not posix_uninstall_harness.modelglot_home.exists()
+    assert posix_uninstall_harness.calls()[:2] == [
         "uv:tool dir --bin",
         "uv:tool uninstall modelglot",
-        "uv:tool uninstall free-claude-code",
     ]
     assert "already absent" in result.stdout
+    _assert_posix_upstream_preserved(posix_uninstall_harness)
 
 
 def test_uninstall_sh_is_idempotent_when_tool_is_already_absent(
@@ -366,19 +409,19 @@ def test_uninstall_sh_is_idempotent_when_tool_is_already_absent(
     result = posix_uninstall_harness.run("--keep-integrations", fail_step="missing")
 
     assert result.returncode == 0, result.stderr
-    assert not posix_uninstall_harness.fcc_home.exists()
+    assert not posix_uninstall_harness.modelglot_home.exists()
     assert "already absent" in result.stdout
     assert not any(
         call.startswith("doctor:") for call in posix_uninstall_harness.calls()
     )
 
 
-@pytest.mark.parametrize("failure", ["cleanup", "legacy-helper", "missing-helper"])
+@pytest.mark.parametrize("failure", ["cleanup", "unsupported-helper", "missing-helper"])
 def test_uninstall_sh_preserves_tool_and_config_when_cleanup_is_unconfirmed(
     posix_uninstall_harness: PosixUninstallHarness,
     failure: str,
 ) -> None:
-    before = (posix_uninstall_harness.fcc_home / "config.json").read_bytes()
+    before = (posix_uninstall_harness.modelglot_home / "config.json").read_bytes()
 
     result = posix_uninstall_harness.run(
         fail_step=failure, include_doctor=failure != "missing-helper"
@@ -386,19 +429,18 @@ def test_uninstall_sh_preserves_tool_and_config_when_cleanup_is_unconfirmed(
 
     assert result.returncode != 0
     assert "--keep-integrations" in result.stderr
-    assert (posix_uninstall_harness.fcc_home / "config.json").read_bytes() == before
+    assert (
+        posix_uninstall_harness.modelglot_home / "config.json"
+    ).read_bytes() == before
     assert all(
         (posix_uninstall_harness.tool_bin / name).exists()
-        for name in FCC_COMMANDS
-        if name != "fcc-doctor" or failure != "missing-helper"
+        for name in MODELGLOT_COMMANDS
+        if name != "modelglot-doctor" or failure != "missing-helper"
     )
     assert posix_uninstall_harness.calls() == ["uv:tool dir --bin"] + (
         [] if failure == "missing-helper" else ["doctor:--disconnect-integrations"]
     )
-    assert (
-        "ModelGlot and legacy Free Claude Code have been removed and verified."
-        not in result.stdout
-    )
+    assert "ModelGlot has been removed and verified." not in result.stdout
 
 
 def test_uninstall_sh_can_explicitly_keep_integrations_without_cleanup_helper(
@@ -407,14 +449,14 @@ def test_uninstall_sh_can_explicitly_keep_integrations_without_cleanup_helper(
     result = posix_uninstall_harness.run("--keep-integrations", include_doctor=False)
 
     assert result.returncode == 0, result.stderr
-    assert not posix_uninstall_harness.fcc_home.exists()
+    assert not posix_uninstall_harness.modelglot_home.exists()
     assert all(
-        not (posix_uninstall_harness.tool_bin / name).exists() for name in FCC_COMMANDS
+        not (posix_uninstall_harness.tool_bin / name).exists()
+        for name in MODELGLOT_COMMANDS
     )
-    assert posix_uninstall_harness.calls()[:3] == [
+    assert posix_uninstall_harness.calls()[:2] == [
         "uv:tool dir --bin",
         "uv:tool uninstall modelglot",
-        "uv:tool uninstall free-claude-code",
     ]
     assert not any(
         call.startswith("doctor:") for call in posix_uninstall_harness.calls()
@@ -429,7 +471,7 @@ def test_uninstall_sh_does_not_purge_when_tool_and_cleanup_helper_are_absent(
     result = posix_uninstall_harness.run(fail_step="missing")
 
     assert result.returncode != 0
-    assert posix_uninstall_harness.fcc_home.exists()
+    assert posix_uninstall_harness.modelglot_home.exists()
     assert "--keep-integrations" in result.stderr
     assert posix_uninstall_harness.calls() == ["uv:tool dir --bin"]
 
@@ -437,7 +479,7 @@ def test_uninstall_sh_does_not_purge_when_tool_and_cleanup_helper_are_absent(
 def test_uninstall_sh_preserves_unrelated_macos_desktop_link(
     posix_uninstall_harness: PosixUninstallHarness,
 ) -> None:
-    desktop_link = posix_uninstall_harness.home / "Desktop" / "Free Claude Code.app"
+    desktop_link = posix_uninstall_harness.home / "Desktop" / "ModelGlot.app"
     desktop_link.unlink()
     unrelated = posix_uninstall_harness.home / "Unrelated.app"
     unrelated.mkdir()
@@ -446,24 +488,24 @@ def test_uninstall_sh_preserves_unrelated_macos_desktop_link(
     result = posix_uninstall_harness.run()
 
     assert result.returncode == 0, result.stderr
-    assert "non-FCC link" in result.stdout
+    assert "non-ModelGlot link" in result.stdout
     assert desktop_link.readlink() == unrelated
 
 
 def test_uninstall_sh_preserves_unowned_macos_app_bundle(
     posix_uninstall_harness: PosixUninstallHarness,
 ) -> None:
-    app = posix_uninstall_harness.home / "Applications" / "Free Claude Code.app"
-    owner_file = app / "Contents" / ".free-claude-code-owner"
+    app = posix_uninstall_harness.home / "Applications" / "ModelGlot.app"
+    owner_file = app / "Contents" / ".modelglot-owner"
     owner_file.unlink()
     sentinel = app / "foreign.txt"
     sentinel.write_text("keep", encoding="utf-8")
-    desktop_link = posix_uninstall_harness.home / "Desktop" / "Free Claude Code.app"
+    desktop_link = posix_uninstall_harness.home / "Desktop" / "ModelGlot.app"
 
     result = posix_uninstall_harness.run()
 
     assert result.returncode == 0, result.stderr
-    assert "not managed by Free Claude Code" in result.stdout
+    assert "not managed by ModelGlot" in result.stdout
     assert sentinel.read_text(encoding="utf-8") == "keep"
     assert desktop_link.is_symlink()
 
@@ -472,8 +514,8 @@ def test_uninstall_sh_does_not_touch_macos_paths_on_linux(
     posix_uninstall_harness: PosixUninstallHarness,
 ) -> None:
     posix_uninstall_harness.env["FAKE_UNAME"] = "Linux"
-    app = posix_uninstall_harness.home / "Applications" / "Free Claude Code.app"
-    desktop_link = posix_uninstall_harness.home / "Desktop" / "Free Claude Code.app"
+    app = posix_uninstall_harness.home / "Applications" / "ModelGlot.app"
+    desktop_link = posix_uninstall_harness.home / "Desktop" / "ModelGlot.app"
 
     result = posix_uninstall_harness.run()
 
@@ -490,11 +532,8 @@ def test_uninstall_sh_preserves_config_when_tool_removal_is_unconfirmed(
     result = posix_uninstall_harness.run(fail_step=failure)
 
     assert result.returncode != 0
-    assert posix_uninstall_harness.fcc_home.exists()
-    assert (
-        "ModelGlot and legacy Free Claude Code have been removed and verified."
-        not in result.stdout
-    )
+    assert posix_uninstall_harness.modelglot_home.exists()
+    assert "ModelGlot has been removed and verified." not in result.stdout
     assert not any(call.startswith("rm:") for call in posix_uninstall_harness.calls())
 
 
@@ -504,7 +543,7 @@ def test_uninstall_sh_requires_uv_before_deleting_config(
     result = posix_uninstall_harness.run(include_uv=False)
 
     assert result.returncode != 0
-    assert posix_uninstall_harness.fcc_home.exists()
+    assert posix_uninstall_harness.modelglot_home.exists()
     assert "uv is required" in result.stderr
     assert posix_uninstall_harness.calls() == []
 
@@ -515,14 +554,12 @@ def test_uninstall_sh_reports_purge_failure_after_verified_tool_removal(
     result = posix_uninstall_harness.run(fail_step="purge")
 
     assert result.returncode != 0
-    assert posix_uninstall_harness.fcc_home.exists()
+    assert posix_uninstall_harness.modelglot_home.exists()
     assert all(
-        not (posix_uninstall_harness.tool_bin / name).exists() for name in FCC_COMMANDS
+        not (posix_uninstall_harness.tool_bin / name).exists()
+        for name in MODELGLOT_COMMANDS
     )
-    assert (
-        "ModelGlot and legacy Free Claude Code have been removed and verified."
-        not in result.stdout
-    )
+    assert "ModelGlot has been removed and verified." not in result.stdout
 
 
 @pytest.mark.parametrize("include_doctor", [True, False])
@@ -533,14 +570,14 @@ def test_uninstall_sh_dry_run_is_non_mutating(
     result = posix_uninstall_harness.run("--dry-run", include_doctor=include_doctor)
 
     assert result.returncode == 0, result.stderr
-    assert posix_uninstall_harness.fcc_home.exists()
+    assert posix_uninstall_harness.modelglot_home.exists()
     assert all(
         (posix_uninstall_harness.tool_bin / name).exists()
-        for name in FCC_COMMANDS
-        if name != "fcc-doctor" or include_doctor
+        for name in MODELGLOT_COMMANDS
+        if name != "modelglot-doctor" or include_doctor
     )
     assert posix_uninstall_harness.calls() == []
-    assert "fcc-doctor --disconnect-integrations" in result.stdout
+    assert "modelglot-doctor --disconnect-integrations" in result.stdout
     assert "Dry run complete. No changes were made." in result.stdout
 
 
@@ -550,24 +587,25 @@ def test_uninstall_sh_rejects_invalid_options_before_mutation(
     result = posix_uninstall_harness.run("--unknown")
 
     assert result.returncode != 0
-    assert posix_uninstall_harness.fcc_home.exists()
+    assert posix_uninstall_harness.modelglot_home.exists()
     assert posix_uninstall_harness.calls() == []
 
 
-@pytest.mark.parametrize("command_name", FCC_COMMANDS)
-def test_uninstall_sh_rejects_running_fcc_before_mutation(
+@pytest.mark.parametrize("command_name", MODELGLOT_COMMANDS)
+def test_uninstall_sh_rejects_running_modelglot_before_mutation(
     posix_uninstall_harness: PosixUninstallHarness,
     command_name: str,
 ) -> None:
-    posix_uninstall_harness.env["FCC_RUNNING_COMMAND"] = command_name
+    posix_uninstall_harness.env["MODELGLOT_RUNNING_COMMAND"] = command_name
 
     result = posix_uninstall_harness.run()
 
     assert result.returncode != 0
     assert command_name in result.stderr
-    assert posix_uninstall_harness.fcc_home.exists()
+    assert posix_uninstall_harness.modelglot_home.exists()
     assert all(
-        (posix_uninstall_harness.tool_bin / name).exists() for name in FCC_COMMANDS
+        (posix_uninstall_harness.tool_bin / name).exists()
+        for name in MODELGLOT_COMMANDS
     )
     assert posix_uninstall_harness.calls() == []
 
@@ -575,8 +613,8 @@ def test_uninstall_sh_rejects_running_fcc_before_mutation(
 @pytest.mark.parametrize(
     ("command_name", "process_args"),
     (
-        ("free-claude-code", "/home/user/.local/bin/free-claude-code"),
-        ("fcc-server", "/usr/bin/python3 /home/user/.local/bin/fcc-server"),
+        ("modelglot-desktop", "/home/user/.local/bin/modelglot-desktop"),
+        ("modelglot-server", "/usr/bin/python3 /home/user/.local/bin/modelglot-server"),
     ),
 )
 def test_uninstall_sh_process_fallback_reads_full_command_line(
@@ -589,9 +627,20 @@ def test_uninstall_sh_process_fallback_reads_full_command_line(
     result = posix_uninstall_harness.run()
 
     assert result.returncode != 0
-    assert posix_uninstall_harness.fcc_home.exists()
+    assert posix_uninstall_harness.modelglot_home.exists()
     assert posix_uninstall_harness.calls() == []
     assert command_name in result.stderr
+
+
+def test_uninstall_sh_ignores_running_upstream_processes(
+    posix_uninstall_harness: PosixUninstallHarness,
+) -> None:
+    posix_uninstall_harness.env["MODELGLOT_RUNNING_COMMAND"] = "other-server"
+
+    result = posix_uninstall_harness.run()
+
+    assert result.returncode == 0, result.stderr
+    _assert_posix_upstream_preserved(posix_uninstall_harness)
 
 
 @dataclass
@@ -599,7 +648,8 @@ class PowerShellUninstallHarness:
     home: Path
     bin_dir: Path
     tool_bin: Path
-    fcc_home: Path
+    modelglot_home: Path
+    upstream_home: Path
     log: Path
     env: dict[str, str]
     powershell: str
@@ -618,7 +668,7 @@ class PowerShellUninstallHarness:
         if not include_uv and uv.exists():
             uv.unlink()
         if not include_doctor:
-            (self.tool_bin / "fcc-doctor.cmd").unlink(missing_ok=True)
+            (self.tool_bin / "modelglot-doctor.cmd").unlink(missing_ok=True)
         return subprocess.run(
             [
                 self.powershell,
@@ -645,7 +695,7 @@ class PowerShellUninstallHarness:
         return self.log.read_text(encoding="utf-8").splitlines()
 
     def remove_entry_points(self) -> None:
-        for name in FCC_COMMANDS:
+        for name in MODELGLOT_COMMANDS:
             (self.tool_bin / f"{name}.cmd").unlink(missing_ok=True)
 
 
@@ -668,18 +718,27 @@ def powershell_uninstall_harness(
     home = tmp_path / "home"
     bin_dir = home / ".local" / "bin"
     tool_bin = tmp_path / "tool-bin"
-    fcc_home = home / ".fcc"
+    modelglot_home = home / ".modelglot"
+    upstream_home = home / ".otherapp"
     app_data = tmp_path / "app-data"
     local_app_data = tmp_path / "local-app-data"
     log = tmp_path / "calls.log"
-    for path in (bin_dir, tool_bin, fcc_home, app_data, local_app_data):
+    for path in (
+        bin_dir,
+        tool_bin,
+        modelglot_home,
+        upstream_home,
+        app_data,
+        local_app_data,
+    ):
         path.mkdir(parents=True)
-    (fcc_home / "config.json").write_text("{}", encoding="utf-8")
-    for name in FCC_COMMANDS:
+    (modelglot_home / "config.json").write_text("{}", encoding="utf-8")
+    (upstream_home / "config.json").write_text('{"upstream": true}\n', encoding="utf-8")
+    for name in (*MODELGLOT_COMMANDS, *UPSTREAM_COMMANDS):
         (tool_bin / f"{name}.cmd").write_text(
             "@echo off\nexit /b 0\n", encoding="utf-8"
         )
-    (tool_bin / "fcc-doctor.cmd").write_text(
+    (tool_bin / "modelglot-doctor.cmd").write_text(
         r"""@echo off
 echo doctor:%*>>"%CALL_LOG%"
 if not "%*"=="--disconnect-integrations" exit /b 55
@@ -687,11 +746,11 @@ if "%FAIL_STEP%"=="cleanup" (
     echo simulated integration cleanup failure 1>&2
     exit /b 56
 )
-if "%FAIL_STEP%"=="legacy-helper" (
+if "%FAIL_STEP%"=="unsupported-helper" (
     echo unrecognized arguments: --disconnect-integrations 1>&2
     exit /b 2
 )
-echo Disconnected recognized FCC editor/app integrations.
+echo Disconnected recognized ModelGlot editor/app integrations.
 exit /b 0
 """,
         encoding="utf-8",
@@ -724,7 +783,7 @@ exit /b 0
     aider_state = home / ".aider.conf.yml"
     aider_state.write_text("model: native\n", encoding="utf-8")
 
-    uv_commands = " ".join(FCC_COMMANDS)
+    uv_commands = " ".join(MODELGLOT_COMMANDS)
     (bin_dir / "uv.cmd").write_text(
         rf"""@echo off
 echo uv:%*>>"%CALL_LOG%"
@@ -745,8 +804,7 @@ if "%FAIL_STEP%"=="uninstall" (
 )
 if "%FAIL_STEP%"=="missing" goto missing
 if "%FAIL_STEP%"=="stale-entrypoint" goto missing
-if "%FAIL_STEP%"=="legacy-only" if "%3"=="modelglot" goto missing
-if "%FAIL_STEP%"=="modelglot-only" if "%3"=="free-claude-code" goto missing
+if "%FAIL_STEP%"=="modelglot-absent" goto missing
 for %%C in ({uv_commands}) do del /q "%FAKE_TOOL_BIN%\%%C.cmd" 2>nul
 echo Uninstalled %3
 exit /b 0
@@ -768,8 +826,9 @@ function Test-Path {
         [string] $PathType
     )
     $notificationIds = @(
-        "Registry::HKEY_CURRENT_USER\Software\Classes\AppUserModelId\io.github.amedeo82.free-claude-code",
-        "Registry::HKEY_CURRENT_USER\Software\Classes\AppUserModelId\io.github.alishahryar1.free-claude-code"
+        "Registry::HKEY_CURRENT_USER\Software\Classes\AppUserModelId\io.github.amedeo82.modelglot",
+        "Registry::HKEY_CURRENT_USER\Software\Classes\AppUserModelId\io.github.example.otherapp",
+        "Registry::HKEY_CURRENT_USER\Software\Classes\AppUserModelId\io.github.example.otherapp-alt"
     )
     if ($LiteralPath -in $notificationIds) { return $true }
     Microsoft.PowerShell.Management\Test-Path @PSBoundParameters
@@ -785,7 +844,7 @@ function Remove-Item {
     if ($LiteralPath.StartsWith("Registry::HKEY_CURRENT_USER\Software\Classes\AppUserModelId\")) { return }
     if (
         $env:FAIL_STEP -eq "purge" -and
-        $LiteralPath -eq (Join-Path $env:USERPROFILE ".fcc")
+        $LiteralPath -eq (Join-Path $env:USERPROFILE ".modelglot")
     ) {
         throw "simulated purge failure"
     }
@@ -795,16 +854,16 @@ function Get-Process {
     [CmdletBinding()]
     param([string[]] $Name)
 
-    if ([string]::IsNullOrWhiteSpace($env:FCC_RUNNING_COMMAND)) {
+    if ([string]::IsNullOrWhiteSpace($env:MODELGLOT_RUNNING_COMMAND)) {
         return
     }
     foreach ($requestedName in $Name) {
-        if ($requestedName -eq $env:FCC_RUNNING_COMMAND) {
+        if ($requestedName -eq $env:MODELGLOT_RUNNING_COMMAND) {
             [pscustomobject] @{ Id = 4242; ProcessName = $requestedName }
         }
     }
 }
-$installer = [scriptblock]::Create([IO.File]::ReadAllText($env:FCC_UNINSTALLER))
+$installer = [scriptblock]::Create([IO.File]::ReadAllText($env:MODELGLOT_UNINSTALLER))
 $uninstallOptions = @{}
 if ($env:UNINSTALL_DRY_RUN -eq "1") {
     $uninstallOptions.DryRun = $true
@@ -817,20 +876,31 @@ if ($env:UNINSTALL_KEEP_INTEGRATIONS -eq "1") {
         encoding="utf-8",
     )
 
-    desktop_shortcut = home / "Desktop" / "Free Claude Code.lnk"
+    desktop_shortcut = home / "Desktop" / "ModelGlot.lnk"
     start_shortcut = (
-        app_data
-        / "Microsoft"
-        / "Windows"
-        / "Start Menu"
-        / "Programs"
-        / "Free Claude Code.lnk"
+        app_data / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "ModelGlot.lnk"
     )
     for shortcut in (desktop_shortcut, start_shortcut):
         _create_windows_shortcut(
             powershell,
             shortcut,
-            tool_bin / "fcc-desktop.cmd",
+            tool_bin / "modelglot-desktop.cmd",
+            powershell_module_paths[powershell],
+        )
+    upstream_shortcuts = (
+        home / "Desktop" / "Other App.lnk",
+        app_data
+        / "Microsoft"
+        / "Windows"
+        / "Start Menu"
+        / "Programs"
+        / "Other App.lnk",
+    )
+    for shortcut in upstream_shortcuts:
+        _create_windows_shortcut(
+            powershell,
+            shortcut,
+            tool_bin / "other-desktop.cmd",
             powershell_module_paths[powershell],
         )
 
@@ -849,32 +919,60 @@ if ($env:UNINSTALL_KEEP_INTEGRATIONS -eq "1") {
             "LOCALAPPDATA": str(local_app_data),
             "CALL_LOG": str(log),
             "FAKE_TOOL_BIN": str(tool_bin),
-            "FCC_UNINSTALLER": str(_repo_root() / "scripts" / "uninstall.ps1"),
-            "FCC_RUNNING_COMMAND": "",
+            "MODELGLOT_UNINSTALLER": str(_repo_root() / "scripts" / "uninstall.ps1"),
+            "MODELGLOT_RUNNING_COMMAND": "",
             "FAIL_STEP": "",
             "UNINSTALL_DRY_RUN": "0",
             "UNINSTALL_KEEP_INTEGRATIONS": "0",
         }
     )
     return PowerShellUninstallHarness(
-        home, bin_dir, tool_bin, fcc_home, log, env, powershell, wrapper
+        home,
+        bin_dir,
+        tool_bin,
+        modelglot_home,
+        upstream_home,
+        log,
+        env,
+        powershell,
+        wrapper,
     )
 
 
-def test_uninstall_ps1_removes_and_verifies_only_fcc(
+def _assert_powershell_upstream_preserved(
+    harness: PowerShellUninstallHarness,
+) -> None:
+    assert (harness.upstream_home / "config.json").read_text(
+        encoding="utf-8"
+    ) == '{"upstream": true}\n'
+    assert all(
+        (harness.tool_bin / f"{name}.cmd").is_file() for name in UPSTREAM_COMMANDS
+    )
+    app_data = Path(harness.env["APPDATA"])
+    upstream_shortcuts = (
+        harness.home / "Desktop" / "Other App.lnk",
+        app_data
+        / "Microsoft"
+        / "Windows"
+        / "Start Menu"
+        / "Programs"
+        / "Other App.lnk",
+    )
+    assert all(shortcut.is_file() for shortcut in upstream_shortcuts)
+    assert not any("other-cli" in call for call in harness.calls())
+
+
+def test_uninstall_ps1_removes_only_modelglot_and_preserves_upstream(
     powershell_uninstall_harness: PowerShellUninstallHarness,
 ) -> None:
     result = powershell_uninstall_harness.run()
 
     assert result.returncode == 0, result.stderr
-    assert (
-        "ModelGlot and legacy Free Claude Code have been removed and verified."
-        in result.stdout
-    )
-    assert not powershell_uninstall_harness.fcc_home.exists()
+    assert "ModelGlot has been removed and verified." in result.stdout
+    assert not powershell_uninstall_harness.modelglot_home.exists()
     assert all(
         not (powershell_uninstall_harness.tool_bin / f"{name}.cmd").exists()
-        for name in FCC_COMMANDS
+        for name in MODELGLOT_COMMANDS
     )
     assert (powershell_uninstall_harness.bin_dir / "uv.cmd").exists()
     assert (powershell_uninstall_harness.bin_dir / "claude.cmd").exists()
@@ -909,13 +1007,12 @@ def test_uninstall_ps1_removes_and_verifies_only_fcc(
         "uv:tool dir --bin",
         "doctor:--disconnect-integrations",
         "uv:tool uninstall modelglot",
-        "uv:tool uninstall free-claude-code",
-        f"remove:{Path(powershell_uninstall_harness.env['USERPROFILE']) / 'Desktop' / 'Free Claude Code.lnk'}",
-        f"remove:{Path(powershell_uninstall_harness.env['APPDATA']) / 'Microsoft' / 'Windows' / 'Start Menu' / 'Programs' / 'Free Claude Code.lnk'}",
-        r"remove:Registry::HKEY_CURRENT_USER\Software\Classes\AppUserModelId\io.github.amedeo82.free-claude-code",
-        r"remove:Registry::HKEY_CURRENT_USER\Software\Classes\AppUserModelId\io.github.alishahryar1.free-claude-code",
-        f"remove:{powershell_uninstall_harness.fcc_home}",
+        f"remove:{Path(powershell_uninstall_harness.env['USERPROFILE']) / 'Desktop' / 'ModelGlot.lnk'}",
+        f"remove:{Path(powershell_uninstall_harness.env['APPDATA']) / 'Microsoft' / 'Windows' / 'Start Menu' / 'Programs' / 'ModelGlot.lnk'}",
+        r"remove:Registry::HKEY_CURRENT_USER\Software\Classes\AppUserModelId\io.github.amedeo82.modelglot",
+        f"remove:{powershell_uninstall_harness.modelglot_home}",
     ]
+    _assert_powershell_upstream_preserved(powershell_uninstall_harness)
 
 
 def test_uninstall_ps1_preserves_unowned_desktop_shortcut(
@@ -924,7 +1021,7 @@ def test_uninstall_ps1_preserves_unowned_desktop_shortcut(
     desktop_shortcut = (
         Path(powershell_uninstall_harness.env["USERPROFILE"])
         / "Desktop"
-        / "Free Claude Code.lnk"
+        / "ModelGlot.lnk"
     )
     unrelated_target = powershell_uninstall_harness.home / "unrelated.cmd"
     unrelated_target.write_text("@echo off\n", encoding="utf-8")
@@ -939,30 +1036,26 @@ def test_uninstall_ps1_preserves_unowned_desktop_shortcut(
     result = powershell_uninstall_harness.run()
 
     assert result.returncode == 0, result.stderr
-    assert "not managed by Free Claude Code" in result.stdout
+    assert "not managed by ModelGlot" in result.stdout
     assert desktop_shortcut.read_bytes() == original_shortcut
 
 
-@pytest.mark.parametrize("installed_package", ["modelglot", "free-claude-code"])
-def test_uninstall_ps1_supports_new_and_legacy_packages_independently(
+def test_uninstall_ps1_ignores_upstream_when_modelglot_is_absent(
     powershell_uninstall_harness: PowerShellUninstallHarness,
-    installed_package: str,
 ) -> None:
-    package_state = (
-        "modelglot-only" if installed_package == "modelglot" else "legacy-only"
-    )
+    powershell_uninstall_harness.remove_entry_points()
     result = powershell_uninstall_harness.run(
-        fail_step=package_state, keep_integrations=True
+        fail_step="modelglot-absent", keep_integrations=True
     )
 
     assert result.returncode == 0, result.stderr
-    assert not powershell_uninstall_harness.fcc_home.exists()
-    assert powershell_uninstall_harness.calls()[:3] == [
+    assert not powershell_uninstall_harness.modelglot_home.exists()
+    assert powershell_uninstall_harness.calls()[:2] == [
         "uv:tool dir --bin",
         "uv:tool uninstall modelglot",
-        "uv:tool uninstall free-claude-code",
     ]
     assert "already absent" in result.stdout
+    _assert_powershell_upstream_preserved(powershell_uninstall_harness)
 
 
 def test_uninstall_ps1_is_idempotent_when_tool_is_already_absent(
@@ -975,19 +1068,19 @@ def test_uninstall_ps1_is_idempotent_when_tool_is_already_absent(
     )
 
     assert result.returncode == 0, result.stderr
-    assert not powershell_uninstall_harness.fcc_home.exists()
+    assert not powershell_uninstall_harness.modelglot_home.exists()
     assert "already absent" in result.stdout
     assert not any(
         call.startswith("doctor:") for call in powershell_uninstall_harness.calls()
     )
 
 
-@pytest.mark.parametrize("failure", ["cleanup", "legacy-helper", "missing-helper"])
+@pytest.mark.parametrize("failure", ["cleanup", "unsupported-helper", "missing-helper"])
 def test_uninstall_ps1_preserves_tool_and_config_when_cleanup_is_unconfirmed(
     powershell_uninstall_harness: PowerShellUninstallHarness,
     failure: str,
 ) -> None:
-    before = (powershell_uninstall_harness.fcc_home / "config.json").read_bytes()
+    before = (powershell_uninstall_harness.modelglot_home / "config.json").read_bytes()
 
     result = powershell_uninstall_harness.run(
         fail_step=failure, include_doctor=failure != "missing-helper"
@@ -996,20 +1089,17 @@ def test_uninstall_ps1_preserves_tool_and_config_when_cleanup_is_unconfirmed(
     assert result.returncode != 0
     assert "-KeepIntegrations" in result.stderr
     assert (
-        powershell_uninstall_harness.fcc_home / "config.json"
+        powershell_uninstall_harness.modelglot_home / "config.json"
     ).read_bytes() == before
     assert all(
         (powershell_uninstall_harness.tool_bin / f"{name}.cmd").exists()
-        for name in FCC_COMMANDS
-        if name != "fcc-doctor" or failure != "missing-helper"
+        for name in MODELGLOT_COMMANDS
+        if name != "modelglot-doctor" or failure != "missing-helper"
     )
     assert powershell_uninstall_harness.calls() == ["uv:tool dir --bin"] + (
         [] if failure == "missing-helper" else ["doctor:--disconnect-integrations"]
     )
-    assert (
-        "ModelGlot and legacy Free Claude Code have been removed and verified."
-        not in result.stdout
-    )
+    assert "ModelGlot has been removed and verified." not in result.stdout
 
 
 def test_uninstall_ps1_can_explicitly_keep_integrations_without_cleanup_helper(
@@ -1020,15 +1110,14 @@ def test_uninstall_ps1_can_explicitly_keep_integrations_without_cleanup_helper(
     )
 
     assert result.returncode == 0, result.stderr
-    assert not powershell_uninstall_harness.fcc_home.exists()
+    assert not powershell_uninstall_harness.modelglot_home.exists()
     assert all(
         not (powershell_uninstall_harness.tool_bin / f"{name}.cmd").exists()
-        for name in FCC_COMMANDS
+        for name in MODELGLOT_COMMANDS
     )
-    assert powershell_uninstall_harness.calls()[:3] == [
+    assert powershell_uninstall_harness.calls()[:2] == [
         "uv:tool dir --bin",
         "uv:tool uninstall modelglot",
-        "uv:tool uninstall free-claude-code",
     ]
     assert not any(
         call.startswith("doctor:") for call in powershell_uninstall_harness.calls()
@@ -1043,7 +1132,7 @@ def test_uninstall_ps1_does_not_purge_when_tool_and_cleanup_helper_are_absent(
     result = powershell_uninstall_harness.run(fail_step="missing")
 
     assert result.returncode != 0
-    assert powershell_uninstall_harness.fcc_home.exists()
+    assert powershell_uninstall_harness.modelglot_home.exists()
     assert "-KeepIntegrations" in result.stderr
     assert powershell_uninstall_harness.calls() == ["uv:tool dir --bin"]
 
@@ -1056,11 +1145,8 @@ def test_uninstall_ps1_preserves_config_when_tool_removal_is_unconfirmed(
     result = powershell_uninstall_harness.run(fail_step=failure)
 
     assert result.returncode != 0
-    assert powershell_uninstall_harness.fcc_home.exists()
-    assert (
-        "ModelGlot and legacy Free Claude Code have been removed and verified."
-        not in result.stdout
-    )
+    assert powershell_uninstall_harness.modelglot_home.exists()
+    assert "ModelGlot has been removed and verified." not in result.stdout
     assert not any(
         call.startswith("remove:") for call in powershell_uninstall_harness.calls()
     )
@@ -1072,7 +1158,7 @@ def test_uninstall_ps1_requires_uv_before_deleting_config(
     result = powershell_uninstall_harness.run(include_uv=False)
 
     assert result.returncode != 0
-    assert powershell_uninstall_harness.fcc_home.exists()
+    assert powershell_uninstall_harness.modelglot_home.exists()
     assert "uv is required" in result.stderr
     assert powershell_uninstall_harness.calls() == []
 
@@ -1083,15 +1169,12 @@ def test_uninstall_ps1_reports_purge_failure_after_verified_tool_removal(
     result = powershell_uninstall_harness.run(fail_step="purge")
 
     assert result.returncode != 0
-    assert powershell_uninstall_harness.fcc_home.exists()
+    assert powershell_uninstall_harness.modelglot_home.exists()
     assert all(
         not (powershell_uninstall_harness.tool_bin / f"{name}.cmd").exists()
-        for name in FCC_COMMANDS
+        for name in MODELGLOT_COMMANDS
     )
-    assert (
-        "ModelGlot and legacy Free Claude Code have been removed and verified."
-        not in result.stdout
-    )
+    assert "ModelGlot has been removed and verified." not in result.stdout
 
 
 @pytest.mark.parametrize("include_doctor", [True, False])
@@ -1104,34 +1187,45 @@ def test_uninstall_ps1_dry_run_is_non_mutating(
     )
 
     assert result.returncode == 0, result.stderr
-    assert powershell_uninstall_harness.fcc_home.exists()
+    assert powershell_uninstall_harness.modelglot_home.exists()
     assert all(
         (powershell_uninstall_harness.tool_bin / f"{name}.cmd").exists()
-        for name in FCC_COMMANDS
-        if name != "fcc-doctor" or include_doctor
+        for name in MODELGLOT_COMMANDS
+        if name != "modelglot-doctor" or include_doctor
     )
     assert powershell_uninstall_harness.calls() == []
-    assert "fcc-doctor --disconnect-integrations" in result.stdout
+    assert "modelglot-doctor --disconnect-integrations" in result.stdout
     assert "Dry run complete. No changes were made." in result.stdout
 
 
-@pytest.mark.parametrize("command_name", FCC_COMMANDS)
-def test_uninstall_ps1_rejects_running_fcc_before_mutation(
+@pytest.mark.parametrize("command_name", MODELGLOT_COMMANDS)
+def test_uninstall_ps1_rejects_running_modelglot_before_mutation(
     powershell_uninstall_harness: PowerShellUninstallHarness,
     command_name: str,
 ) -> None:
-    powershell_uninstall_harness.env["FCC_RUNNING_COMMAND"] = command_name
+    powershell_uninstall_harness.env["MODELGLOT_RUNNING_COMMAND"] = command_name
 
     result = powershell_uninstall_harness.run()
 
     assert result.returncode != 0
     assert command_name in result.stderr
-    assert powershell_uninstall_harness.fcc_home.exists()
+    assert powershell_uninstall_harness.modelglot_home.exists()
     assert all(
         (powershell_uninstall_harness.tool_bin / f"{name}.cmd").exists()
-        for name in FCC_COMMANDS
+        for name in MODELGLOT_COMMANDS
     )
     assert powershell_uninstall_harness.calls() == []
+
+
+def test_uninstall_ps1_ignores_running_upstream_processes(
+    powershell_uninstall_harness: PowerShellUninstallHarness,
+) -> None:
+    powershell_uninstall_harness.env["MODELGLOT_RUNNING_COMMAND"] = "other-server"
+
+    result = powershell_uninstall_harness.run()
+
+    assert result.returncode == 0, result.stderr
+    _assert_powershell_upstream_preserved(powershell_uninstall_harness)
 
 
 def test_uninstallers_guard_running_commands_and_preserve_shared_owners() -> None:
@@ -1143,7 +1237,7 @@ def test_uninstallers_guard_running_commands_and_preserve_shared_owners() -> Non
     assert "pgrep" in shell
     assert "Get-Process" in powershell
     for text in (shell, powershell):
-        for command in FCC_COMMANDS:
+        for command in MODELGLOT_COMMANDS:
             assert command in text
         assert "npm uninstall" not in text
         assert "uv self uninstall" not in text
@@ -1151,3 +1245,12 @@ def test_uninstallers_guard_running_commands_and_preserve_shared_owners() -> Non
         assert "is not installed" in text
         assert "no tool" not in text
         assert "nothing to uninstall" not in text
+        for upstream in (
+            "other-cli",
+            "other-",
+            ".otherapp",
+            "io.github.example.otherapp",
+            "io.github.example.otherapp-alt",
+        ):
+            assert upstream not in text
+        assert "io.github.amedeo82.modelglot" in text

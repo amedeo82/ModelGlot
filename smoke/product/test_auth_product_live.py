@@ -14,10 +14,10 @@ def test_api_bearer_auth_contract_e2e(
 ) -> None:
     token = "product-smoke-token"
     home = tmp_path / "home"
-    env_file = home / ".fcc" / ".env"
+    env_file = home / ".modelglot" / ".env"
     env_file.parent.mkdir(parents=True)
     env_file.write_text(
-        "FCC_CONFIG_SCHEMA=1\n"
+        "MODELGLOT_CONFIG_SCHEMA=1\n"
         "PROXY_AUTH_ENABLED=true\n"
         f'ANTHROPIC_AUTH_TOKEN="{token}"\n',
         encoding="utf-8",
@@ -30,7 +30,7 @@ def test_api_bearer_auth_contract_e2e(
             "USERPROFILE": str(home),
             "MESSAGING_PLATFORM": "none",
         },
-        env_unset={"ANTHROPIC_AUTH_TOKEN", "PROXY_AUTH_ENABLED", "FCC_ENV_FILE"},
+        env_unset={"ANTHROPIC_AUTH_TOKEN", "PROXY_AUTH_ENABLED", "MODELGLOT_ENV_FILE"},
     ).run() as server:
         unauth = httpx.get(
             f"{server.base_url}/v1/models", timeout=smoke_config.timeout_s

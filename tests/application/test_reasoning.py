@@ -185,7 +185,7 @@ def test_reasoning_budget_requires_explicit_on_control() -> None:
         (ReasoningEffort.MAX, 8_192),
     ),
 )
-def test_reasoning_effort_has_one_fcc_numeric_budget(
+def test_reasoning_effort_has_one_modelglot_numeric_budget(
     effort: ReasoningEffort, expected: int
 ) -> None:
     assert ReasoningPolicy.on(effort=effort).numeric_budget_tokens == expected

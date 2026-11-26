@@ -26,7 +26,7 @@ const state = {
 };
 
 const MASKED_SECRET = "********";
-const NULL_VALUE = "__FCC_NULL__";
+const NULL_VALUE = "__MODELGLOT_NULL__";
 const MESSAGING_SECTIONS_BY_PLATFORM = {
   none: [],
   telegram: ["telegram", "workspace", "voice"],
@@ -329,7 +329,7 @@ function setActiveView(viewId, { scroll = false } = {}) {
   }
   if (activeView.id === "code") window.CodeSessions.activate(window.location.pathname);
   else window.CodeSessions.deactivate();
-  void window.fccTokenOptimization?.setActive(activeView.id === "token_optimization", api);
+  void window.modelglotTokenOptimization?.setActive(activeView.id === "token_optimization", api);
   if (activeView.id === "integrations") {
     refreshClaudeIntegration();
     refreshClaudeOnboarding();
@@ -538,7 +538,7 @@ async function openCustomProviderDialog(providerId = null) {
     ["base_url", "Base URL", "string", [], "Include the API path, for example https://gateway.example/v1."],
     ["api_keys", "API keys", "api_key_list", [], "Key 1 is used. Leave the list empty for endpoints that do not require a key."],
     ["api_format", "API format", "select", [["openai_chat", "Chat Completions"], ["openai_responses", "Responses"], ["anthropic_messages", "Anthropic Messages"]], "Select the API exposed by your endpoint."],
-    ["reasoning_format", "Reasoning format", "select", formats.map((value) => [value, CUSTOM_LABELS[value]]), "How FCC sends reasoning controls. Provider default leaves computation to the upstream."],
+    ["reasoning_format", "Reasoning format", "select", formats.map((value) => [value, CUSTOM_LABELS[value]]), "How ModelGlot sends reasoning controls. Provider default leaves computation to the upstream."],
     ["reasoning_history_format", "Reasoning history format", "select", [["reasoning_content", "reasoning_content"], ["reasoning", "reasoning"]], "How previous reasoning is sent to a Chat Completions endpoint."],
     ["model_ids", "Model IDs", "textarea", [], "Optional, one upstream model ID per line. Leave empty to discover models automatically."],
   ];
@@ -751,7 +751,7 @@ async function cancelConnectedAccountLogin(providerId) {
 
 async function disconnectConnectedAccount(providerId) {
   const provider = connectedAccountDescriptor(providerId);
-  if (!window.confirm(`Disconnect this ${connectedAccountName(provider)} account from FCC?`)) return;
+  if (!window.confirm(`Disconnect this ${connectedAccountName(provider)} account from ModelGlot?`)) return;
   clearConnectedAccountPoll(providerId);
   try {
     const status = await api(`/admin/api/providers/${providerId}/auth`, { method: "DELETE" });
@@ -988,7 +988,7 @@ function renderField(field) {
   if (field.type === "api_key_list") {
     label.id = `field-${field.key}-label`;
     label.removeAttribute("for");
-    const editor = new window.FccApiKeyEditor(field, updateDirtyState);
+    const editor = new window.ModelGlotApiKeyEditor(field, updateDirtyState);
     wrapper.append(label, editor.element);
     if (field.description) {
       const description = document.createElement("div");
@@ -999,7 +999,7 @@ function renderField(field) {
     return wrapper;
   }
 
-  const input = window.FccFormControls.configure(inputForField(field));
+  const input = window.ModelGlotFormControls.configure(inputForField(field));
   input.id = `field-${field.key}`;
   input.dataset.key = field.key;
   input.dataset.original = comparableValue(field.value);
@@ -1016,7 +1016,7 @@ function renderField(field) {
   });
   if (field.type === "optional_model") {
     input.addEventListener("blur", () => {
-      const value = window.FccModelCombobox.canonicalValue(input).trim();
+      const value = window.ModelGlotModelCombobox.canonicalValue(input).trim();
       if (!value || value.toLowerCase() === "none") {
         input.modelCombobox?.setCanonicalValue("None");
         updateDirtyState();
@@ -1129,7 +1129,7 @@ function modelDisplayValue(value) {
 }
 
 function createModelCombobox(input, field) {
-  return new window.FccModelCombobox(input, {
+  return new window.ModelGlotModelCombobox(input, {
     listboxId: `model-options-${field.key}`,
     label: field.label,
     displayValue: modelDisplayValue,
@@ -1171,7 +1171,7 @@ class ModelListEditor {
     this.addKey = this.keySelect("", 1, "Fallback API key");
     this.addProviderId = "";
     const updateAddModel = () => {
-      const model = window.FccModelCombobox.canonicalValue(this.addInput);
+      const model = window.ModelGlotModelCombobox.canonicalValue(this.addInput);
       const providerId = this.providerId(model);
       this.updateKeySelect(this.addKey, model, providerId === this.addProviderId ? Number(this.addKey.value) : 1);
       this.addProviderId = providerId;
@@ -1216,7 +1216,7 @@ class ModelListEditor {
   }
 
   add() {
-    const value = window.FccModelCombobox.canonicalValue(this.addInput).trim();
+    const value = window.ModelGlotModelCombobox.canonicalValue(this.addInput).trim();
     if (!value) {
       showMessage("Enter a full provider/model fallback.", "error");
       return;
@@ -1307,7 +1307,7 @@ class ModelListEditor {
       remove.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
       const updateModel = () => {
         const previousProvider = this.providerId(entry.model);
-        entry.model = window.FccModelCombobox.canonicalValue(combobox.input).trim();
+        entry.model = window.ModelGlotModelCombobox.canonicalValue(combobox.input).trim();
         if (this.providerId(entry.model) !== previousProvider) entry.api_key_number = 1;
         this.updateKeySelect(key, entry.model, entry.api_key_number ?? 1);
         key.setAttribute("aria-label", `API key for ${entry.model}`);
@@ -1325,7 +1325,7 @@ class ModelListEditor {
   }
 
   modelCombobox(value, suffix, label) {
-    const input = window.FccFormControls.configure(document.createElement("input"));
+    const input = window.ModelGlotFormControls.configure(document.createElement("input"));
     input.id = `field-${this.field.key}-${suffix}`;
     input.type = "text";
     input.autocomplete = "off";
@@ -1360,7 +1360,7 @@ class ModelListEditor {
   }
 
   effortSelect(value, label) {
-    const select = window.FccFormControls.configure(document.createElement("select"));
+    const select = window.ModelGlotFormControls.configure(document.createElement("select"));
     this.field.options.forEach((item) => select.appendChild(option(item.value, item.label)));
     select.value = value;
     select.disabled = this.field.locked;
@@ -1382,7 +1382,7 @@ class ModelListEditor {
   }
 
   keySelect(model, value, label) {
-    const select = window.FccFormControls.configure(document.createElement("select"));
+    const select = window.ModelGlotFormControls.configure(document.createElement("select"));
     select.setAttribute("aria-label", label);
     this.updateKeySelect(select, model, value);
     return select;
@@ -1406,7 +1406,7 @@ class ModelListEditor {
   }
 
   refreshKeyOptions() {
-    this.updateKeySelect(this.addKey, window.FccModelCombobox.canonicalValue(this.addInput), Number(this.addKey.value));
+    this.updateKeySelect(this.addKey, window.ModelGlotModelCombobox.canonicalValue(this.addInput), Number(this.addKey.value));
     this.rowKeys.forEach(({ entry, select }) => this.updateKeySelect(select, entry.model, entry.api_key_number ?? 1));
   }
 
@@ -1435,7 +1435,7 @@ function readFieldValue(input) {
   if (input.type === "checkbox") return input.checked ? "true" : "false";
   if (input.dataset.remove === "true") return null;
   const isModel = ["model", "optional_model"].includes(input.dataset.fieldType);
-  const value = isModel ? window.FccModelCombobox.canonicalValue(input) : input.value;
+  const value = isModel ? window.ModelGlotModelCombobox.canonicalValue(input) : input.value;
   if (input.dataset.fieldType === "optional_model" && value.trim().toLowerCase() === "none") {
     return null;
   }
@@ -1570,7 +1570,7 @@ async function reconnectAfterRestart() {
     await waitForRestart(restart, target);
     if (target.origin !== window.location.origin) {
       // Carry only the safe warning text across an address change, never edits.
-      target.hash = new URLSearchParams({ "fcc-applied": JSON.stringify(warnings), ...(providerId ? { "fcc-provider": providerId, "fcc-checks": JSON.stringify(checks) } : {}) }).toString();
+      target.hash = new URLSearchParams({ "modelglot-applied": JSON.stringify(warnings), ...(providerId ? { "modelglot-provider": providerId, "modelglot-checks": JSON.stringify(checks) } : {}) }).toString();
       window.location.replace(target.href);
       return;
     }
@@ -1591,13 +1591,13 @@ async function reconnectAfterRestart() {
 async function showRestartNotice() {
   const url = new URL(window.location.href);
   const fragment = new URLSearchParams(url.hash.slice(1));
-  const notice = fragment.get("fcc-applied");
+  const notice = fragment.get("modelglot-applied");
   if (notice === null) return;
-  fragment.delete("fcc-applied");
-  const providerId = fragment.get("fcc-provider");
-  const checks = fragment.get("fcc-checks");
-  fragment.delete("fcc-provider");
-  fragment.delete("fcc-checks");
+  fragment.delete("modelglot-applied");
+  const providerId = fragment.get("modelglot-provider");
+  const checks = fragment.get("modelglot-checks");
+  fragment.delete("modelglot-provider");
+  fragment.delete("modelglot-checks");
   url.hash = fragment.toString();
   window.history.replaceState(window.history.state, "", url);
   try {
@@ -1689,7 +1689,7 @@ async function apply(providerId = null, customAction = null) {
     await load({ providersOnly: !!providerId });
     if (savedProviderId) await restoreSavedProvider(savedProviderId, warningChecks);
     const message = pending.length
-      ? `Applied. Restart fcc-server to use: ${pending.join(", ")}`
+      ? `Applied. Restart modelglot-server to use: ${pending.join(", ")}`
       : "Applied";
     showMessage([message, ...warnings].join("\n"), warnings.length ? "warn" : "ok");
     if (savedProviderId) {
@@ -1910,7 +1910,7 @@ window.addEventListener("popstate", () => {
 
 try {
   for (const key of Object.keys(sessionStorage)) {
-    if (key.startsWith("fcc.chat.draft.")) sessionStorage.removeItem(key);
+    if (key.startsWith("modelglot.chat.draft.")) sessionStorage.removeItem(key);
   }
 } catch {
   console.warn("Chat draft cleanup deferred until the next page load: storage unavailable");
@@ -2080,8 +2080,8 @@ function renderClaudeIntegration() {
   byId("openClaudeIntegration").className = connected && !busy ? "danger-button" : "primary-button";
   byId("confirmClaudeIntegration").className = connected ? "danger-button" : "primary-button";
   byId("claudeIntegrationDescription").textContent = connected
-    ? "Remove FCC's VS Code settings."
-    : "Will set FCC's URL and token, enable model discovery, skip VS Code login, and complete Claude onboarding.";
+    ? "Remove ModelGlot's VS Code settings."
+    : "Will set ModelGlot's URL and token, enable model discovery, skip VS Code login, and complete Claude onboarding.";
   const files = byId("claudeIntegrationFiles");
   files.replaceChildren();
   if (paths) {
@@ -2179,8 +2179,8 @@ function renderVSCodeChatIntegration() {
   byId("openVSCodeChatIntegration").className = connected && !busy ? "danger-button" : "primary-button";
   byId("confirmVSCodeChatIntegration").className = connected ? "danger-button" : "primary-button";
   byId("vscodeChatIntegrationDescription").textContent = connected
-    ? "Remove FCC's model group from VS Code Chat."
-    : "Add FCC models to VS Code Chat. Your selected models stay unchanged.";
+    ? "Remove ModelGlot's model group from VS Code Chat."
+    : "Add ModelGlot models to VS Code Chat. Your selected models stay unchanged.";
   const files = byId("vscodeChatIntegrationFiles");
   files.replaceChildren();
   if (paths) {
@@ -2242,7 +2242,7 @@ byId("confirmVSCodeChatIntegration").addEventListener("click", async () => {
     vscodeChatIntegrationDialog.close();
     integrationMessage("vscodeChatIntegrationMessage", disconnect
       ? "Settings removed. Reload VS Code to disconnect."
-      : "Models saved. Select an FCC model in VS Code Chat. Reload VS Code if needed.");
+      : "Models saved. Select an ModelGlot model in VS Code Chat. Reload VS Code if needed.");
   } catch (error) {
     integrationMessage("vscodeChatIntegrationDialogMessage", error.message, true);
     integrationMessage("vscodeChatIntegrationMessage", error.message, true);
@@ -2285,8 +2285,8 @@ function renderCodexIntegration() {
   byId("openCodexIntegration").className = connected && !busy ? "danger-button" : "primary-button";
   byId("confirmCodexIntegration").className = connected ? "danger-button" : "primary-button";
   byId("codexIntegrationDescription").textContent = connected
-    ? "Remove FCC's local Codex configuration from Codex CLI, the VS Code extension, and ChatGPT Desktop. Other settings stay unchanged."
-    : "Configure the local Codex workspace in Codex CLI, the VS Code extension, and ChatGPT Desktop to use FCC. Your selected model stays unchanged. Chat and cloud features stay on OpenAI services.";
+    ? "Remove ModelGlot's local Codex configuration from Codex CLI, the VS Code extension, and ChatGPT Desktop. Other settings stay unchanged."
+    : "Configure the local Codex workspace in Codex CLI, the VS Code extension, and ChatGPT Desktop to use ModelGlot. Your selected model stays unchanged. Chat and cloud features stay on OpenAI services.";
   const files = byId("codexIntegrationFiles");
   files.replaceChildren();
   if (paths) {
@@ -2356,7 +2356,7 @@ byId("confirmCodexIntegration").addEventListener("click", async () => {
     const warnings = result.warnings?.length ? ` ${result.warnings.join(" ")}` : "";
     codexIntegration.notice = disconnect
       ? `Settings removed. Restart Codex or ChatGPT Desktop to disconnect.${warnings}`
-      : `Settings saved. Restart Codex or ChatGPT Desktop and select an FCC model.${warnings}`;
+      : `Settings saved. Restart Codex or ChatGPT Desktop and select an ModelGlot model.${warnings}`;
     integrationMessage("codexIntegrationMessage", codexIntegration.notice);
   } catch (error) {
     integrationMessage("codexIntegrationDialogMessage", error.message, true);
@@ -2391,8 +2391,8 @@ function renderJetBrainsIntegration() {
   byId("openJetBrainsIntegration").className = connected && !busy ? "danger-button" : "primary-button";
   byId("confirmJetBrainsIntegration").className = connected ? "danger-button" : "primary-button";
   byId("jetBrainsIntegrationDescription").textContent = connected
-    ? "Remove the Claude Code (FCC) agent, including its custom settings. Finish any configuration edits first."
-    : "Add Claude Code (FCC) using JetBrains' installed Claude Agent. Start that agent once before connecting, and finish any configuration edits.";
+    ? "Remove the Claude Code (ModelGlot) agent, including its custom settings. Finish any configuration edits first."
+    : "Add Claude Code (ModelGlot) using JetBrains' installed Claude Agent. Start that agent once before connecting, and finish any configuration edits.";
   const files = byId("jetBrainsIntegrationFiles");
   files.replaceChildren();
   if (paths) {
@@ -2453,7 +2453,7 @@ byId("confirmJetBrainsIntegration").addEventListener("click", async () => {
     jetBrainsIntegrationDialog.close();
     integrationMessage("jetBrainsIntegrationMessage", disconnect
       ? "Agent removed. Reopen JetBrains to disconnect."
-      : "Settings saved. Reopen JetBrains, select Claude Code (FCC), and start a new chat.");
+      : "Settings saved. Reopen JetBrains, select Claude Code (ModelGlot), and start a new chat.");
   } catch (error) {
     integrationMessage("jetBrainsIntegrationDialogMessage", error.message, true);
     integrationMessage("jetBrainsIntegrationMessage", error.message, true);
@@ -2488,10 +2488,10 @@ function renderClaudeDesktopIntegration() {
   byId("openClaudeDesktopIntegration").className = disconnect && !busy ? "danger-button" : "primary-button";
   byId("confirmClaudeDesktopIntegration").className = disconnect ? "danger-button" : "primary-button";
   byId("claudeDesktopIntegrationDescription").textContent = disconnectPending
-    ? "Finish removing FCC's configuration. Fully quit Claude Desktop before retrying, then reopen it."
+    ? "Finish removing ModelGlot's configuration. Fully quit Claude Desktop before retrying, then reopen it."
     : connected
-    ? "Remove FCC's configuration and return to normal Claude sign-in. Fully quit Claude Desktop first, then reopen it."
-    : "Set FCC as Claude Desktop's gateway. Fully quit Claude Desktop before connecting, then reopen it.";
+    ? "Remove ModelGlot's configuration and return to normal Claude sign-in. Fully quit Claude Desktop first, then reopen it."
+    : "Set ModelGlot as Claude Desktop's gateway. Fully quit Claude Desktop before connecting, then reopen it.";
   const files = byId("claudeDesktopIntegrationFiles");
   files.replaceChildren();
   if (paths) {
@@ -2610,8 +2610,8 @@ function renderDshDesktopIntegration() {
   byId("openDshDesktopIntegration").className = connected && !busy ? "danger-button" : "primary-button";
   byId("confirmDshDesktopIntegration").className = connected ? "danger-button" : "primary-button";
   byId("dshDesktopIntegrationDescription").textContent = connected
-    ? "Remove FCC's Desktop connection. Existing FCC sessions need another model selected to continue."
-    : "Install and open DSH Desktop once, then connect FCC as the default for new sessions.";
+    ? "Remove ModelGlot's Desktop connection. Existing ModelGlot sessions need another model selected to continue."
+    : "Install and open DSH Desktop once, then connect ModelGlot as the default for new sessions.";
   const files = byId("dshDesktopIntegrationFiles");
   files.replaceChildren();
   if (paths) {
@@ -2671,7 +2671,7 @@ byId("confirmDshDesktopIntegration").addEventListener("click", async () => {
     applyDshDesktopStatus(result);
     dshDesktopIntegrationDialog.close();
     integrationMessage("dshDesktopIntegrationMessage", result.connected
-      ? "Connected. New DSH sessions use FCC. Reopen DSH if it does not reload the changes."
+      ? "Connected. New DSH sessions use ModelGlot. Reopen DSH if it does not reload the changes."
       : "DSH Desktop is disconnected. Select another model in existing DSH sessions.");
   } catch (error) {
     if (!current()) return;

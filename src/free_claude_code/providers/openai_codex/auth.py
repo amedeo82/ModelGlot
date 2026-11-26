@@ -1,4 +1,4 @@
-"""FCC-owned ChatGPT credential lifecycle."""
+"""ModelGlot-owned ChatGPT credential lifecycle."""
 
 import asyncio
 import base64
@@ -309,7 +309,7 @@ class OpenAIAuthManager:
             return self.status()
 
     async def disconnect(self) -> ConnectedAccountStatus:
-        """Best-effort revoke, then always remove FCC-owned credentials."""
+        """Best-effort revoke, then always remove ModelGlot-owned credentials."""
 
         async with self._operation_lock:
             async with self._state_lock:
@@ -342,7 +342,7 @@ class OpenAIAuthManager:
             credentials = self._credentials
             if credentials is None:
                 raise OpenAIReconnectRequired(
-                    "Connect an OpenAI ChatGPT account in the FCC Admin UI."
+                    "Connect an OpenAI ChatGPT account in the ModelGlot Admin UI."
                 )
             if force_refresh:
                 credentials = await self._refresh_locked(credentials)
@@ -463,7 +463,7 @@ class OpenAIAuthManager:
         acquired = await asyncio.to_thread(file_lock.acquire, wait=True, timeout=30.0)
         if not acquired:
             raise OpenAIReconnectRequired(
-                "Timed out waiting for another FCC process to refresh OpenAI."
+                "Timed out waiting for another ModelGlot process to refresh OpenAI."
             )
         try:
             reloaded = await asyncio.to_thread(self._read_credentials)

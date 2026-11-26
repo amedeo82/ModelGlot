@@ -1,4 +1,4 @@
-"""Explicit mapping between FCC providers and models.dev providers."""
+"""Explicit mapping between ModelGlot providers and models.dev providers."""
 
 from types import MappingProxyType
 

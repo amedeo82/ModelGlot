@@ -87,12 +87,13 @@ class MessagingService:
         if self._database is not None:
             self._messaging_state = "starting"
             self._messaging_import_task = asyncio.create_task(
-                self._initialize_messaging_storage(), name="fcc-messaging-import"
+                self._initialize_messaging_storage(), name="modelglot-messaging-import"
             )
             self._startup_tasks.append(self._messaging_import_task)
         self._startup_tasks.append(
             asyncio.create_task(
-                self._start_messaging_if_configured(), name="fcc-messaging-startup"
+                self._start_messaging_if_configured(),
+                name="modelglot-messaging-startup",
             )
         )
 
@@ -151,9 +152,7 @@ class MessagingService:
                 self._messaging_state = "disabled"
         except ImportError as exc:
             self._messaging_state = "failed"
-            self._messaging_error = (
-                "Messaging could not start. Check its configuration and restart FCC."
-            )
+            self._messaging_error = "Messaging could not start. Check its configuration and restart ModelGlot."
             cleaned = await self.close_delivery()
             if self.settings.log_api_error_tracebacks:
                 logger.warning("Messaging module import error: {}", exc)
@@ -166,9 +165,7 @@ class MessagingService:
                 raise RuntimeError("Messaging startup cleanup incomplete") from exc
         except Exception as exc:
             self._messaging_state = "failed"
-            self._messaging_error = (
-                "Messaging could not start. Check its configuration and restart FCC."
-            )
+            self._messaging_error = "Messaging could not start. Check its configuration and restart ModelGlot."
             cleaned = await self.close_delivery()
             if self.settings.log_api_error_tracebacks:
                 logger.error("Failed to start messaging platform: {}", exc)

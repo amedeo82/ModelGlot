@@ -129,7 +129,7 @@ def tray_report(icon: Icon) -> JsonObject:
 
 
 def main() -> None:
-    output = Path(os.environ["FCC_MACOS_PROBE_OUTPUT"])
+    output = Path(os.environ["MODELGLOT_MACOS_PROBE_OUTPUT"])
     report = process_report()
     write_report(output, report)
 
@@ -137,9 +137,9 @@ def main() -> None:
         item.stop()
 
     icon = Icon(
-        "fcc-launcher-probe",
+        "modelglot-launcher-probe",
         Image.new("RGB", (32, 32), "red"),
-        "FCC launcher probe",
+        "ModelGlot launcher probe",
         Menu(MenuItem("Quit", quit_probe)),
     )
     # Give both launch paths the same AppKit layout observation interval.

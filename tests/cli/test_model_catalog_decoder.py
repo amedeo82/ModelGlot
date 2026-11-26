@@ -43,7 +43,7 @@ def test_client_models_keep_no_thinking_direct_route() -> None:
         {
             "data": [
                 {
-                    "id": "claude-3-freecc-no-thinking/nvidia_nim/provider-model",
+                    "id": "claude-3-modelglot-no-thinking/nvidia_nim/provider-model",
                     "provider_model_ref": "nvidia_nim/provider-model",
                     "display_name": "Display 0",
                     "supportsReasoning": False,
@@ -54,7 +54,7 @@ def test_client_models_keep_no_thinking_direct_route() -> None:
 
     assert models == (
         CatalogModel(
-            wire_slug="claude-3-freecc-no-thinking/nvidia_nim/provider-model",
+            wire_slug="claude-3-modelglot-no-thinking/nvidia_nim/provider-model",
             provider_model_ref="nvidia_nim/provider-model",
             display_name="Display 0",
             supports_reasoning=False,
@@ -67,7 +67,7 @@ def test_client_models_keep_no_thinking_only_route() -> None:
         {
             "data": [
                 {
-                    "id": "claude-3-freecc-no-thinking/open_router/plain-model",
+                    "id": "claude-3-modelglot-no-thinking/open_router/plain-model",
                     "provider_model_ref": "open_router/plain-model",
                     "display_name": "Display 0",
                     "supportsReasoning": False,
@@ -76,7 +76,7 @@ def test_client_models_keep_no_thinking_only_route() -> None:
         }
     ) == (
         CatalogModel(
-            wire_slug="claude-3-freecc-no-thinking/open_router/plain-model",
+            wire_slug="claude-3-modelglot-no-thinking/open_router/plain-model",
             provider_model_ref="open_router/plain-model",
             display_name="Display 0",
             supports_reasoning=False,
@@ -99,7 +99,7 @@ def test_client_models_parse_capabilities_without_deriving_reasoning_from_slug()
                     "maxCompletionTokens": 8192,
                 },
                 {
-                    "id": "claude-3-freecc-no-thinking/provider/unknown",
+                    "id": "claude-3-modelglot-no-thinking/provider/unknown",
                     "provider_model_ref": "provider/unknown",
                     "supportsReasoning": "not-a-bool",
                     "inputModalities": ["text", "image"],

@@ -179,7 +179,7 @@ def _alias_events():
                     "type": "function",
                     "function": {
                         "name": "Grep",
-                        "arguments": '{"pattern":"needle","_fcc_arg_',
+                        "arguments": '{"pattern":"needle","_modelglot_arg_',
                     },
                 },
                 None,
@@ -489,11 +489,11 @@ def test_responses_request_uses_nim_chat_policy(
     assert body["top_p"] == 1.0
     assert body["parallel_tool_calls"] is False
     assert body[NIM_TOOL_ARGUMENT_ALIASES_KEY] == {
-        original_name: {"_fcc_arg_type": "type"}
+        original_name: {"_modelglot_arg_type": "type"}
     }
     parameters = function["parameters"]
     assert isinstance(parameters, dict)
-    assert parameters["properties"] == {"_fcc_arg_type": {"type": "string"}}
+    assert parameters["properties"] == {"_modelglot_arg_type": {"type": "string"}}
     assert "extra_body" not in body
     assert body["reasoning_effort"] == "high"
 
@@ -606,7 +606,7 @@ def test_startup_and_build_request_issue_206_post_tool_text(
                         type="tool_use",
                         id=tool_id,
                         name="echo_smoke",
-                        input={"value": "FCC_206"},
+                        input={"value": "MODELGLOT_206"},
                     ),
                     block(
                         type="text",
@@ -617,7 +617,9 @@ def test_startup_and_build_request_issue_206_post_tool_text(
             message(
                 "user",
                 [
-                    block(type="tool_result", tool_use_id=tool_id, content="FCC_206"),
+                    block(
+                        type="tool_result", tool_use_id=tool_id, content="MODELGLOT_206"
+                    ),
                     block(type="text", text="What was echoed?"),
                 ],
             ),
@@ -1180,7 +1182,9 @@ async def test_stream_messages_restores_aliased_tool_arguments(
     )
     mock_chunk = _tool_call_chunk(
         name="Grep",
-        arguments=json.dumps({"pattern": "needle", "-A": 2, "_fcc_arg_type": "py"}),
+        arguments=json.dumps(
+            {"pattern": "needle", "-A": 2, "_modelglot_arg_type": "py"}
+        ),
     )
 
     async def mock_stream():
@@ -1206,13 +1210,13 @@ async def test_stream_messages_restores_aliased_tool_arguments(
     properties = object_payload(object_payload(function["parameters"])["properties"])
     assert "-A" in properties
     assert "type" not in properties
-    assert "_fcc_arg_A" not in properties
-    assert "_fcc_arg_type" in properties
+    assert "_modelglot_arg_A" not in properties
+    assert "_modelglot_arg_type" in properties
 
     deltas = _input_json_deltas(events)
     assert len(deltas) == 1
     assert load_json_value(deltas[0]) == {"pattern": "needle", "-A": 2, "type": "py"}
-    assert "_fcc_arg_type" not in deltas[0]
+    assert "_modelglot_arg_type" not in deltas[0]
 
 
 @pytest.mark.asyncio
@@ -1243,7 +1247,7 @@ async def test_stream_messages_buffers_chunked_aliased_tool_arguments(
     )
     second_chunk = _tool_call_chunk(
         name=None,
-        arguments='"_fcc_arg_type": "py"}',
+        arguments='"_modelglot_arg_type": "py"}',
         tool_id="call_chunked",
     )
 
@@ -1296,7 +1300,7 @@ async def test_stream_messages_restores_nested_aliased_tool_arguments(
     mock_chunk = _tool_call_chunk(
         name="NotionLike",
         arguments=json.dumps(
-            {"parent": {"_fcc_arg_type": "page_id", "id": "page_123"}}
+            {"parent": {"_modelglot_arg_type": "page_id", "id": "page_123"}}
         ),
     )
 
@@ -1388,7 +1392,7 @@ async def test_stream_messages_retries_without_reasoning_content(
                         type="tool_use",
                         id="toolu_reasoning",
                         name="echo_smoke",
-                        input={"value": "FCC_TOOL"},
+                        input={"value": "MODELGLOT_TOOL"},
                     ),
                 ],
             ),

@@ -126,12 +126,14 @@ OPENROUTER_FREE_CLI_DEFAULT_MODELS: tuple[str, ...] = (
 TARGET_REQUIRED_ENV: dict[str, tuple[str, ...]] = {
     "api": (),
     "auth": (),
-    "cli": ("FCC_SMOKE_CLAUDE_BIN", "configured provider for Claude CLI prompt"),
+    "cli": ("MODELGLOT_SMOKE_CLAUDE_BIN", "configured provider for Claude CLI prompt"),
     "clients": (),
     "config": (),
     "extensibility": (),
     "messaging": (),
-    "providers": ("configured provider credentials/endpoints or FCC_SMOKE_MODEL_*",),
+    "providers": (
+        "configured provider credentials/endpoints or MODELGLOT_SMOKE_MODEL_*",
+    ),
     "rate_limit": ("configured provider model",),
     "tools": ("configured tool-capable provider model",),
     "lmstudio": ("LM_STUDIO_BASE_URL with a running LM Studio server",),
@@ -139,25 +141,25 @@ TARGET_REQUIRED_ENV: dict[str, tuple[str, ...]] = {
     "ollama": ("OLLAMA_BASE_URL with a running Ollama server",),
     "nvidia_nim_cli": (
         "NVIDIA_NIM_API_KEY",
-        "FCC_SMOKE_CLAUDE_BIN or claude on PATH",
+        "MODELGLOT_SMOKE_CLAUDE_BIN or claude on PATH",
     ),
     "nvidia_nim_vision": (
         "NVIDIA_NIM_API_KEY",
-        "FCC_SMOKE_MODEL_NVIDIA_NIM_VISION",
+        "MODELGLOT_SMOKE_MODEL_NVIDIA_NIM_VISION",
     ),
     "openrouter_free_cli": (
         "OPENROUTER_API_KEY",
-        "FCC_SMOKE_CLAUDE_BIN or claude on PATH",
+        "MODELGLOT_SMOKE_CLAUDE_BIN or claude on PATH",
     ),
     "telegram": (
         "TELEGRAM_BOT_TOKEN",
-        "ALLOWED_TELEGRAM_USER_ID or FCC_SMOKE_TELEGRAM_CHAT_ID",
+        "ALLOWED_TELEGRAM_USER_ID or MODELGLOT_SMOKE_TELEGRAM_CHAT_ID",
     ),
     "discord": (
         "DISCORD_BOT_TOKEN",
-        "ALLOWED_DISCORD_CHANNELS or FCC_SMOKE_DISCORD_CHANNEL_ID",
+        "ALLOWED_DISCORD_CHANNELS or MODELGLOT_SMOKE_DISCORD_CHANNEL_ID",
     ),
-    "voice": ("VOICE_NOTE_ENABLED=true", "FCC_SMOKE_RUN_VOICE=1"),
+    "voice": ("VOICE_NOTE_ENABLED=true", "MODELGLOT_SMOKE_RUN_VOICE=1"),
 }
 
 
@@ -194,13 +196,15 @@ class SmokeConfig:
         return cls(
             root=root,
             results_dir=root / ".smoke-results",
-            live=os.getenv("FCC_LIVE_SMOKE") == "1",
-            interactive=os.getenv("FCC_SMOKE_INTERACTIVE") == "1",
-            targets=_parse_targets(os.getenv("FCC_SMOKE_TARGETS")),
-            provider_matrix=_parse_csv(os.getenv("FCC_SMOKE_PROVIDER_MATRIX")),
-            timeout_s=float(os.getenv("FCC_SMOKE_TIMEOUT_S", "45")),
-            prompt=os.getenv("FCC_SMOKE_PROMPT", "Reply with exactly: FCC_SMOKE_PONG"),
-            claude_bin=os.getenv("FCC_SMOKE_CLAUDE_BIN", "claude"),
+            live=os.getenv("MODELGLOT_LIVE_SMOKE") == "1",
+            interactive=os.getenv("MODELGLOT_SMOKE_INTERACTIVE") == "1",
+            targets=_parse_targets(os.getenv("MODELGLOT_SMOKE_TARGETS")),
+            provider_matrix=_parse_csv(os.getenv("MODELGLOT_SMOKE_PROVIDER_MATRIX")),
+            timeout_s=float(os.getenv("MODELGLOT_SMOKE_TIMEOUT_S", "45")),
+            prompt=os.getenv(
+                "MODELGLOT_SMOKE_PROMPT", "Reply with exactly: MODELGLOT_SMOKE_PONG"
+            ),
+            claude_bin=os.getenv("MODELGLOT_SMOKE_CLAUDE_BIN", "claude"),
             worker_id=os.getenv("PYTEST_XDIST_WORKER", "main"),
             settings=settings,
         )
@@ -258,7 +262,7 @@ class SmokeConfig:
 
     def nvidia_nim_vision_model(self) -> ProviderModel | None:
         """Return only an explicitly selected NVIDIA NIM vision model."""
-        override_env = "FCC_SMOKE_MODEL_NVIDIA_NIM_VISION"
+        override_env = "MODELGLOT_SMOKE_MODEL_NVIDIA_NIM_VISION"
         override = os.getenv(override_env)
         if override is None:
             return None
@@ -281,7 +285,7 @@ class SmokeConfig:
             return None
         if not self.has_provider_configuration("mistral"):
             return None
-        override_env = "FCC_SMOKE_MODEL_MISTRAL_REASONING"
+        override_env = "MODELGLOT_SMOKE_MODEL_MISTRAL_REASONING"
         if override := os.getenv(override_env):
             full_model = _normalize_provider_model("mistral", override)
             source = override_env
@@ -296,7 +300,7 @@ class SmokeConfig:
             return None
         if not self.has_provider_configuration("mistral"):
             return None
-        override_env = "FCC_SMOKE_MODEL_MISTRAL_CACHE"
+        override_env = "MODELGLOT_SMOKE_MODEL_MISTRAL_CACHE"
         if override := os.getenv(override_env):
             full_model = _normalize_provider_model("mistral", override)
             source = override_env
@@ -315,14 +319,14 @@ class SmokeConfig:
             return True
         if self.provider_matrix and provider in self.provider_matrix:
             return True
-        return bool(os.getenv(f"FCC_SMOKE_MODEL_{provider.upper()}"))
+        return bool(os.getenv(f"MODELGLOT_SMOKE_MODEL_{provider.upper()}"))
 
     def has_provider_configuration(self, provider: str) -> bool:
         descriptor = PROVIDER_CATALOG.get(provider)
         if descriptor is None:
             return False
         if descriptor.auth_kind is ProviderAuthKind.CONNECTED_ACCOUNT:
-            return bool(os.getenv(f"FCC_SMOKE_MODEL_{provider.upper()}"))
+            return bool(os.getenv(f"MODELGLOT_SMOKE_MODEL_{provider.upper()}"))
         return has_provider_configuration(descriptor, self.settings)
 
 
@@ -348,7 +352,7 @@ def _parse_targets(raw: str | None) -> frozenset[str]:
 
 
 def _provider_smoke_model(provider: str) -> tuple[str, str]:
-    override_env = f"FCC_SMOKE_MODEL_{provider.upper()}"
+    override_env = f"MODELGLOT_SMOKE_MODEL_{provider.upper()}"
     if override := os.getenv(override_env):
         return _normalize_provider_model(provider, override), override_env
 
@@ -362,7 +366,7 @@ def _provider_smoke_model(provider: str) -> tuple[str, str]:
 def _normalize_provider_model(provider: str, raw_model: str) -> str:
     model = raw_model.strip()
     if not model:
-        msg = f"FCC_SMOKE_MODEL_{provider.upper()} must not be empty"
+        msg = f"MODELGLOT_SMOKE_MODEL_{provider.upper()} must not be empty"
         raise ValueError(msg)
     if "/" in model and parse_provider_type(model) == provider:
         return model
@@ -378,19 +382,19 @@ def nvidia_nim_cli_model_refs(
     de-duplicated order and provenance in reports.
     """
     source = env if env is not None else os.environ
-    explicit_models = _parse_csv_ordered(source.get("FCC_SMOKE_NIM_MODELS"))
-    extra_models = _parse_csv_ordered(source.get("FCC_SMOKE_NIM_EXTRA_MODELS"))
+    explicit_models = _parse_csv_ordered(source.get("MODELGLOT_SMOKE_NIM_MODELS"))
+    extra_models = _parse_csv_ordered(source.get("MODELGLOT_SMOKE_NIM_EXTRA_MODELS"))
 
-    if "FCC_SMOKE_NIM_MODELS" in source and not explicit_models:
-        raise ValueError("FCC_SMOKE_NIM_MODELS must list at least one model")
+    if "MODELGLOT_SMOKE_NIM_MODELS" in source and not explicit_models:
+        raise ValueError("MODELGLOT_SMOKE_NIM_MODELS must list at least one model")
 
     models: list[tuple[str, str]] = []
     base_models = explicit_models or NVIDIA_NIM_CLI_DEFAULT_MODELS
     base_source = (
-        "FCC_SMOKE_NIM_MODELS" if explicit_models else "nvidia_nim_cli_default"
+        "MODELGLOT_SMOKE_NIM_MODELS" if explicit_models else "nvidia_nim_cli_default"
     )
     models.extend((model, base_source) for model in base_models)
-    models.extend((model, "FCC_SMOKE_NIM_EXTRA_MODELS") for model in extra_models)
+    models.extend((model, "MODELGLOT_SMOKE_NIM_EXTRA_MODELS") for model in extra_models)
 
     normalized: dict[str, str] = {}
     for raw_model, model_source in models:
@@ -404,26 +408,29 @@ def openrouter_free_cli_model_refs(
 ) -> dict[str, str]:
     """Return normalized OpenRouter free CLI matrix model refs in deterministic order."""
     source = env if env is not None else os.environ
-    explicit_models = _parse_csv_ordered(source.get("FCC_SMOKE_OPENROUTER_FREE_MODELS"))
+    explicit_models = _parse_csv_ordered(
+        source.get("MODELGLOT_SMOKE_OPENROUTER_FREE_MODELS")
+    )
     extra_models = _parse_csv_ordered(
-        source.get("FCC_SMOKE_OPENROUTER_FREE_EXTRA_MODELS")
+        source.get("MODELGLOT_SMOKE_OPENROUTER_FREE_EXTRA_MODELS")
     )
 
-    if "FCC_SMOKE_OPENROUTER_FREE_MODELS" in source and not explicit_models:
+    if "MODELGLOT_SMOKE_OPENROUTER_FREE_MODELS" in source and not explicit_models:
         raise ValueError(
-            "FCC_SMOKE_OPENROUTER_FREE_MODELS must list at least one model"
+            "MODELGLOT_SMOKE_OPENROUTER_FREE_MODELS must list at least one model"
         )
 
     models: list[tuple[str, str]] = []
     base_models = explicit_models or OPENROUTER_FREE_CLI_DEFAULT_MODELS
     base_source = (
-        "FCC_SMOKE_OPENROUTER_FREE_MODELS"
+        "MODELGLOT_SMOKE_OPENROUTER_FREE_MODELS"
         if explicit_models
         else "openrouter_free_cli_default"
     )
     models.extend((model, base_source) for model in base_models)
     models.extend(
-        (model, "FCC_SMOKE_OPENROUTER_FREE_EXTRA_MODELS") for model in extra_models
+        (model, "MODELGLOT_SMOKE_OPENROUTER_FREE_EXTRA_MODELS")
+        for model in extra_models
     )
 
     normalized: dict[str, str] = {}

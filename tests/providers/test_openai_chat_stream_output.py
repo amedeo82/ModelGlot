@@ -67,7 +67,7 @@ def test_anthropic_chat_output_preserves_existing_wire_lifecycle() -> None:
     frames.extend(output.close_content_blocks())
     frames.extend(
         output.emit_complete_tool(
-            0, CompletedToolCall("call_1", "lookup", '{"q":"fcc"}')
+            0, CompletedToolCall("call_1", "lookup", '{"q":"modelglot"}')
         )
     )
     frames.extend(output.close_all_blocks())
@@ -98,7 +98,7 @@ def test_anthropic_chat_output_preserves_existing_wire_lifecycle() -> None:
     assert output.accumulated_reasoning == "think"
     assert output.accumulated_text == "answer"
     assert any(
-        _object_dict(data.get("delta", {})).get("partial_json") == '{"q":"fcc"}'
+        _object_dict(data.get("delta", {})).get("partial_json") == '{"q":"modelglot"}'
         for _, data in events
     )
 
@@ -137,7 +137,7 @@ def test_responses_chat_output_emits_one_native_lifecycle_with_exact_usage() -> 
     frames.extend(output.close_content_blocks())
     frames.extend(
         output.emit_complete_tool(
-            0, CompletedToolCall("call_1", "mcp__lookup", '{"q":"fcc"}')
+            0, CompletedToolCall("call_1", "mcp__lookup", '{"q":"modelglot"}')
         )
     )
     frames.extend(output.close_all_blocks())
@@ -191,7 +191,7 @@ def test_responses_chat_output_emits_one_native_lifecycle_with_exact_usage() -> 
         "call_id": "call_1",
         "name": "lookup",
         "namespace": "mcp",
-        "arguments": '{"q":"fcc"}',
+        "arguments": '{"q":"modelglot"}',
     }
 
 

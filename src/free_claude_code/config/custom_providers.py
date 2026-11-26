@@ -17,7 +17,7 @@ from free_claude_code.core.json_types import JsonObject
 
 from .api_keys import ApiKeyList, api_key_values, first_api_key
 
-CUSTOM_PROVIDERS_ENV = "FCC_CUSTOM_PROVIDERS"
+CUSTOM_PROVIDERS_ENV = "MODELGLOT_CUSTOM_PROVIDERS"
 REASONING_FORMATS = {
     "openai_chat": (
         "provider_default",

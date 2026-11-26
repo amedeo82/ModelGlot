@@ -42,9 +42,9 @@ def test_powershell_module_cache_does_not_leak_into_working_directory(
             "-NonInteractive",
             "-Command",
             """$ErrorActionPreference = 'Stop'
-Get-Command fcc_nonexistent_cache_probe_command -ErrorAction SilentlyContinue
+Get-Command modelglot_nonexistent_cache_probe_command -ErrorAction SilentlyContinue
 $deadline = [DateTime]::UtcNow.AddSeconds(20)
-while (-not (Test-Path -LiteralPath $env:FCC_TEST_WATCHED_CACHE) -and [DateTime]::UtcNow -lt $deadline) {
+while (-not (Test-Path -LiteralPath $env:MODELGLOT_TEST_WATCHED_CACHE) -and [DateTime]::UtcNow -lt $deadline) {
     Start-Sleep -Milliseconds 100
 }
 """,
@@ -55,7 +55,7 @@ while (-not (Test-Path -LiteralPath $env:FCC_TEST_WATCHED_CACHE) -and [DateTime]
             "USERPROFILE": str(profile),
             "LOCALAPPDATA": str(local_app_data),
             "PSMODULEPATH": powershell_module_paths[shell],
-            "FCC_TEST_WATCHED_CACHE": str(watched_cache),
+            "MODELGLOT_TEST_WATCHED_CACHE": str(watched_cache),
         },
         capture_output=True,
         text=True,

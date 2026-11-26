@@ -86,7 +86,7 @@ def test_external_timing_path_preserves_config_and_collection_scope(
             encoding="utf-8",
         )
     runner_temp = tmp_path / "runner temp"
-    timing_path = runner_temp / "fcc-ci-timings/working/durations.json"
+    timing_path = runner_temp / "modelglot-ci-timings/working/durations.json"
     timing_path.parent.mkdir(parents=True)
     timing_path.write_text("{}", encoding="utf-8")
     job = workflow()["jobs"][f"{suite}-shards"]
@@ -186,7 +186,7 @@ def test_timing_shards_share_the_frozen_input_and_upload_only_after_success(
     )
     assert "--store-durations --clean-durations" in command["run"]
     assert (
-        '--durations-path "${{ runner.temp }}/fcc-ci-timings/working/durations.json"'
+        '--durations-path "${{ runner.temp }}/modelglot-ci-timings/working/durations.json"'
         in command["run"]
     )
     record = next(step for step in steps if step.get("name") == "Record shard timings")

@@ -348,7 +348,9 @@ def test_vertex_preserves_caller_thinking_config_only_for_provider_default() -> 
     }
 
 
-def test_vertex_rejects_caller_thinking_config_with_fcc_reasoning_control() -> None:
+def test_vertex_rejects_caller_thinking_config_with_modelglot_reasoning_control() -> (
+    None
+):
     provider = _provider()
     request = make_messages_request(
         "google/gemini",

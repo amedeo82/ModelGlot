@@ -30,7 +30,7 @@ def _exercise_server_logging(
     baseline = deepcopy(uvicorn.config.LOGGING_CONFIG)
     # An earlier server may already have installed Uvicorn's console handlers.
     logging.config.dictConfig(baseline)
-    settings = Settings(host="127.0.0.1", port=8082, log_level=level)
+    settings = Settings(host="127.0.0.1", port=16969, log_level=level)
     instances = []
 
     def build_app(settings: Settings, restart_callback: object):

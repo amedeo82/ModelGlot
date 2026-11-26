@@ -84,11 +84,11 @@ def mapping(value: object) -> CommentedMap:
         "tag:yaml.org,2002:map",
     ):
         raise DshConfigError(
-            "DSH settings need a plain YAML mapping at the FCC integration fields."
+            "DSH settings need a plain YAML mapping at the ModelGlot integration fields."
         )
     if value.anchor.value:
         raise DshConfigError(
-            "DSH settings use an anchor at an FCC integration field. Separate that field before configuring FCC."
+            "DSH settings use an anchor at an ModelGlot integration field. Separate that field before configuring ModelGlot."
         )
     return value
 

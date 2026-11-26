@@ -186,7 +186,7 @@ def test_timed_out_start_preserves_running_desktop(
 ) -> None:
     monkeypatch.setattr(common, "open_local_request", MagicMock(side_effect=_refused()))
     child = FakeServer()
-    monkeypatch.setattr(common, "server_command", lambda: ["fcc-test"])
+    monkeypatch.setattr(common, "server_command", lambda: ["modelglot-test"])
 
     def replace_Popen(*_a: object, **_k: object):
         return child
@@ -204,7 +204,7 @@ def test_unhealthy_started_server_remains_available_for_inspection(
 ) -> None:
     _responses(monkeypatch, _refused(), _refused(), _status(503))
     child = FakeServer()
-    monkeypatch.setattr(common, "server_command", lambda: ["fcc-test"])
+    monkeypatch.setattr(common, "server_command", lambda: ["modelglot-test"])
 
     def replace_Popen(*_a: object, **_k: object):
         return child
@@ -220,7 +220,7 @@ def test_unhealthy_started_server_remains_available_for_inspection(
 def test_ready_server_outlives_harness(monkeypatch: pytest.MonkeyPatch) -> None:
     _responses(monkeypatch, _refused(), _refused(), _healthy())
     child = FakeServer()
-    monkeypatch.setattr(common, "server_command", lambda: ["fcc-test"])
+    monkeypatch.setattr(common, "server_command", lambda: ["modelglot-test"])
 
     def replace_Popen(*_a: object, **_k: object):
         return child
@@ -248,7 +248,7 @@ def test_short_lived_duplicate_desktop_yields_to_manual_owner(
     ownership = iter((False, True))
     monkeypatch.setattr(common, "_desktop_owner_running", lambda: next(ownership))
     child = FakeServer(exit_code=0)
-    monkeypatch.setattr(common, "server_command", lambda: ["fcc-test"])
+    monkeypatch.setattr(common, "server_command", lambda: ["modelglot-test"])
 
     def replace_Popen(*_a: object, **_k: object):
         return child
@@ -325,7 +325,7 @@ def test_harness_waits_through_owner_connection_close(
     assert spawned == []
 
 
-def test_unowned_connection_reset_does_not_start_fcc(
+def test_unowned_connection_reset_does_not_start_modelglot(
     monkeypatch: pytest.MonkeyPatch, spawned: list[tuple[list[str], dict[str, str]]]
 ) -> None:
     _responses(monkeypatch, ConnectionResetError("foreign listener reset"))
@@ -488,7 +488,7 @@ def test_exhausted_recheck_budget_does_not_spawn(
 def test_detached_streams_and_browser_preference_are_independent(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(common, "server_command", lambda: ["fcc-test"])
+    monkeypatch.setattr(common, "server_command", lambda: ["modelglot-test"])
     observed = {}
 
     def popen(_command, **kwargs: object):
@@ -496,11 +496,11 @@ def test_detached_streams_and_browser_preference_are_independent(
         return FakeServer()
 
     monkeypatch.setattr(common.subprocess, "Popen", popen)
-    common._spawn_server({"FCC_OPEN_BROWSER": "0"})
+    common._spawn_server({"MODELGLOT_OPEN_BROWSER": "0"})
 
     env = observed["env"]
     assert isinstance(env, dict)
-    assert env["FCC_OPEN_BROWSER"] == "0"
+    assert env["MODELGLOT_OPEN_BROWSER"] == "0"
     assert observed["stdin"] is subprocess.DEVNULL
     assert observed["stdout"] not in (None, subprocess.DEVNULL)
     assert observed["stderr"] is subprocess.STDOUT
@@ -516,7 +516,7 @@ def test_early_startup_error_is_retained_and_reported(
         lambda: [
             sys.executable,
             "-c",
-            "import sys; print('FCC startup: invalid test setting', "
+            "import sys; print('ModelGlot startup: invalid test setting', "
             "file=sys.stderr); raise SystemExit(7)",
         ],
     )
@@ -525,10 +525,10 @@ def test_early_startup_error_is_retained_and_reported(
 
     assert message is not None
     assert "exited with code 7" in message
-    assert "FCC startup: invalid test setting" in message
+    assert "ModelGlot startup: invalid test setting" in message
     log_path = common.paths.server_log_path().with_name("startup.log")
     assert str(log_path) in message
-    assert "FCC startup: invalid test setting" in log_path.read_text()
+    assert "ModelGlot startup: invalid test setting" in log_path.read_text()
 
 
 @pytest.mark.parametrize("failure", ["directory", "file"])
@@ -585,12 +585,12 @@ def test_startup_log_failure_does_not_block_or_reuse_stale_output(
         popen.side_effect = OSError("test executable failed")
     monkeypatch.setattr(common.subprocess, "Popen", popen)
 
-    message = common.ensure_proxy_available(URL, env={"FCC_OPEN_BROWSER": "0"})
+    message = common.ensure_proxy_available(URL, env={"MODELGLOT_OPEN_BROWSER": "0"})
 
     popen.assert_called_once()
     assert popen.call_args.kwargs["stdout"] is subprocess.DEVNULL
     assert popen.call_args.kwargs["stderr"] is subprocess.STDOUT
-    assert popen.call_args.kwargs["env"]["FCC_OPEN_BROWSER"] == "0"
+    assert popen.call_args.kwargs["env"]["MODELGLOT_OPEN_BROWSER"] == "0"
     warning = capsys.readouterr().err
     assert str(log_path) in warning
     assert "startup log access denied" in warning
@@ -754,7 +754,11 @@ def test_startup_budget_starts_after_the_lock_is_acquired(
 
 @pytest.mark.parametrize(
     "platform,command_name",
-    [("win32", "fcc-desktop.exe"), ("darwin", "fcc-desktop"), ("linux", "fcc-server")],
+    [
+        ("win32", "modelglot-desktop.exe"),
+        ("darwin", "modelglot-desktop"),
+        ("linux", "modelglot-server"),
+    ],
 )
 def test_server_command_selects_platform_owner(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, platform: str, command_name: str
@@ -781,7 +785,7 @@ def test_missing_installed_owner_does_not_fallback_to_python(
         "sys",
         SimpleNamespace(executable=str(executable), platform=sys.platform),
     )
-    with pytest.raises(OSError, match="fcc-"):
+    with pytest.raises(OSError, match="modelglot-"):
         common.server_command()
 
 

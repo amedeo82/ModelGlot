@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 import pytest_asyncio
 
-from free_claude_code.config import env_migrations, paths
+from free_claude_code.config import paths
 from free_claude_code.config.loader import clear_settings_cache
 from free_claude_code.core.stream_delivery import (
     StreamDeliveryState,
@@ -69,14 +69,14 @@ def _response_delivery_context(request: pytest.FixtureRequest):
 def _isolate_managed_config(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     """Keep every test away from real home, checkout, and running-server config."""
 
-    config_dir = tmp_path / ".fcc"
+    config_dir = tmp_path / ".modelglot"
     monkeypatch.setattr(
         antigravity,
         "config_path",
         lambda: tmp_path / ".gemini/antigravity-cli/settings.json",
     )
     monkeypatch.setenv("DSH_HOME", str(tmp_path / ".dsh"))
-    monkeypatch.delenv("FCC_DSH_DESKTOP_API_KEY", raising=False)
+    monkeypatch.delenv("MODELGLOT_DSH_DESKTOP_API_KEY", raising=False)
     monkeypatch.setattr(
         vscode_chat_integration,
         "config_path",
@@ -105,8 +105,6 @@ def _isolate_managed_config(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
         lambda: tmp_path / "LegacyClaude-3p",
     )
     monkeypatch.setattr(paths, "config_dir_path", lambda: config_dir)
-    monkeypatch.setattr(env_migrations, "legacy_env_paths", lambda: ())
-    monkeypatch.setattr(env_migrations, "verified_checkout_env_path", lambda: None)
     monkeypatch.setattr(
         claude_integration, "settings_path", lambda: tmp_path / "vscode/settings.json"
     )
@@ -312,7 +310,11 @@ async def messaging_store_factory(
         storage_path: str | Path | None = None,
         managed_message_cap: int | None = None,
     ):
-        path = Path(storage_path) if storage_path is not None else tmp_path / "fcc.db"
+        path = (
+            Path(storage_path)
+            if storage_path is not None
+            else tmp_path / "modelglot.db"
+        )
         database_path = path.with_suffix(".db")
         database = databases.get(database_path)
         first = database is None

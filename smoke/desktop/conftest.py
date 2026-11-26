@@ -37,7 +37,7 @@ def installed_desktop(
 ) -> Iterator[InstalledDesktop]:
     if sys.platform != "darwin":
         pytest.skip("requires a macOS GUI session")
-    root = tmp_path_factory.mktemp("FCC's 日本語 desktop")
+    root = tmp_path_factory.mktemp("ModelGlot's 日本語 desktop")
     home = root / "home"
     home.mkdir()
     env = os.environ | {"HOME": str(home)}
@@ -114,31 +114,31 @@ def installed_desktop(
             ).strip()
         )
         for source, target in (
-            ("identity_probe.py", "fcc_identity_probe.py"),
-            ("lifecycle_probe.py", "fcc_native_probe.py"),
+            ("identity_probe.py", "modelglot_identity_probe.py"),
+            ("lifecycle_probe.py", "modelglot_native_probe.py"),
         ):
             shutil.copyfile(Path(__file__).with_name(source), packages / target)
-        (packages / "zzz_fcc_native_probe.pth").write_text(
-            "import fcc_native_probe; fcc_native_probe.install()\n"
+        (packages / "zzz_modelglot_native_probe.pth").write_text(
+            "import modelglot_native_probe; modelglot_native_probe.install()\n"
         )
 
     venv = root / "installed venv"
     python = venv / "bin/python"
     create_venv(venv)
     subprocess.run(
-        [str(venv / "bin/fcc-desktop"), "--install-macos-app"],
+        [str(venv / "bin/modelglot-desktop"), "--install-macos-app"],
         env=env,
         check=True,
         timeout=30,
     )
-    app = home / "Applications/Free Claude Code.app"
+    app = home / "Applications/ModelGlot.app"
     with (app / "Contents/Resources/runtime.plist").open("rb") as stream:
         runtime: dict[str, object] = plistlib.load(stream)
     # Launch Services receives explicit private settings; no launchd-wide changes.
     launch_env = {
         "HOME": str(home),
         "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
-        "FCC_OPEN_BROWSER": "false",
+        "MODELGLOT_OPEN_BROWSER": "false",
         "HOST": "127.0.0.1",
         "XDG_CONFIG_HOME": str(home / ".config"),
         "XDG_CACHE_HOME": str(home / ".cache"),

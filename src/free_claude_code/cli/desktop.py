@@ -1,4 +1,4 @@
-"""Platform-neutral lifecycle for the FCC desktop shell."""
+"""Platform-neutral lifecycle for the ModelGlot desktop shell."""
 
 import threading
 from collections.abc import Callable
@@ -54,7 +54,7 @@ class ServerOwner(Protocol):
 
 
 class DesktopController:
-    """Coordinate one tray loop with one in-process FCC server owner."""
+    """Coordinate one tray loop with one in-process ModelGlot server owner."""
 
     def __init__(
         self,
@@ -75,7 +75,7 @@ class DesktopController:
         return self._supervisor.status
 
     def run(self) -> None:
-        """Run the tray on this thread and the FCC server on its owned worker."""
+        """Run the tray on this thread and the ModelGlot server on its owned worker."""
 
         try:
             self._tray.run(self._start_server)
@@ -114,7 +114,7 @@ class DesktopController:
                 return
             self._server_thread = threading.Thread(
                 target=self._run_server,
-                name="fcc-desktop-server",
+                name="modelglot-desktop-server",
             )
             self._server_thread.start()
 

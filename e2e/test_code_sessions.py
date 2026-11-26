@@ -689,7 +689,7 @@ def test_settings_apply_preserves_open_creation_and_picker(
     page.route("**/admin/api/config/apply", capture_apply)
     page.goto(f"{admin_base_url}/admin")
     expect(page.locator("#messageArea")).to_have_text("")
-    page.locator("#field-PORT").fill("8081")
+    page.locator("#field-MODELGLOT_PORT").fill("8081")
     page.get_by_role("button", name="Apply", exact=True).click()
     expect(page.locator("#messageArea")).to_have_text("Applying…")
     page.wait_for_function("window.applyRequestIntercepted === true")

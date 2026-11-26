@@ -2,13 +2,13 @@
 
 Status: analysis baseline; reversible implementation proposed
 Date: 2026-11-12; revalidated on 2026-11-17
-Scope: `free-claude-code` on branch `custom/main`, commit `12914bd`
-Current profile implementation: [`claude-desktop-fcc-profile.md`](claude-desktop-fcc-profile.md)
+Scope: `modelglot` on branch `custom/main`, commit `12914bd`
+Current profile implementation: [`claude-desktop-modelglot-profile.md`](claude-desktop-modelglot-profile.md)
 Audience: maintainers and contributors
 
 This document records the current Claude Desktop integration, the behavior of Anthropic's
 standard and third-party deployment modes, and the feasible paths for preserving Claude.ai
-login functionality while routing inference through Free Claude Code (FCC).
+login functionality while routing inference through ModelGlot.
 
 The implementation steps derived from this analysis are recorded in
 [`claude-desktop-gateway-login-implementation-plan.md`](claude-desktop-gateway-login-implementation-plan.md).
@@ -20,15 +20,15 @@ implementation of this analysis must satisfy.
 
 ## 1. Executive Summary
 
-FCC currently configures Claude Desktop as a third-party deployment (3P) with the local FCC
-gateway as its inference provider. It creates a dedicated FCC configuration profile, selects
+ModelGlot currently configures Claude Desktop as a third-party deployment (3P) with the local ModelGlot
+gateway as its inference provider. It creates a dedicated ModelGlot configuration profile, selects
 that profile, writes `deploymentMode: "3p"`, and removes the internal `hybridPointer` value
 from `configLibrary/_meta.json`.
 
-FCC does not delete Claude Desktop credentials, revoke Anthropic OAuth tokens, remove
+ModelGlot does not delete Claude Desktop credentials, revoke Anthropic OAuth tokens, remove
 `~/.claude`, or explicitly disable skills, plugins, or connectors. Nevertheless, the resulting
 Desktop application is locked into the 3P deployment mode and can no longer offer the normal
-Claude.ai sign-in path while the FCC profile is applied.
+Claude.ai sign-in path while the ModelGlot profile is applied.
 
 Anthropic's current documentation establishes three important facts:
 
@@ -44,8 +44,8 @@ Anthropic's current documentation establishes three important facts:
 Therefore:
 
 - A Claude.ai login and a 3P gateway cannot simultaneously govern the same Desktop session.
-- FCC can stop being destructive and preserve the ability to return to standard Claude Desktop.
-- FCC should configure the gateway without forcing the deployment-mode chooser away from
+- ModelGlot can stop being destructive and preserve the ability to return to standard Claude Desktop.
+- ModelGlot should configure the gateway without forcing the deployment-mode chooser away from
   Claude.ai and without removing the native login/bootstrap pointer.
 - The recommended implementation is a reversible, user-selectable configuration with faithful
   restoration of the previously applied Desktop profile.
@@ -107,7 +107,7 @@ Those limitations are explicit prerequisites in the implementation plan.
 
 ---
 
-## 3. Current FCC Architecture
+## 3. Current ModelGlot Architecture
 
 ### 3.1 Configuration roots
 
@@ -127,18 +127,18 @@ Relevant files are:
 ```text
 <Claude-3p>/
 ├── configLibrary/
-│   ├── <FCC_ID>.json
+│   ├── <MODELGLOT_ID>.json
 │   ├── <DEFAULT_ID>.json
 │   └── _meta.json
 └── claude_desktop_config.json
 ```
 
-`FCC_ID` and `DEFAULT_ID` are deterministic UUIDs derived from the integration identity
+`MODELGLOT_ID` and `DEFAULT_ID` are deterministic UUIDs derived from the integration identity
 (`claude_desktop_integration.py:18-23`). The paths are exposed by the integration for
 diagnostics and UI display (`claude_desktop_integration.py:143-190`).
 
 The disconnect intent record is stored separately at
-`~/.fcc/claude-desktop-disconnect.json`
+`~/.modelglot/claude-desktop-disconnect.json`
 (`src/free_claude_code/config/paths.py:113-114`).
 
 ### 3.2 Connect behavior
@@ -149,13 +149,13 @@ The disconnect intent record is stored separately at
 1. Load and validate the Desktop configuration library.
 2. Reject an incomplete or conflicting pending disconnect.
 3. Check for a pending Windows migration from the legacy Roaming directory.
-4. Create or update the dedicated FCC profile.
-5. Register `{ "id": FCC_ID, "name": "FCC" }` in `_meta.json`.
-6. Set `appliedId` to `FCC_ID`.
+4. Create or update the dedicated ModelGlot profile.
+5. Register `{ "id": MODELGLOT_ID, "name": "ModelGlot" }` in `_meta.json`.
+6. Set `appliedId` to `MODELGLOT_ID`.
 7. Remove `hybridPointer` from `_meta.json`.
 8. Set `deploymentMode` to `"3p"` in `claude_desktop_config.json`.
 
-The FCC profile contains the gateway connection:
+The ModelGlot profile contains the gateway connection:
 
 ```json
 {
@@ -171,7 +171,7 @@ The FCC profile contains the gateway connection:
 The values are produced by `_values()` (`claude_desktop_integration.py:241-264`). The update
 is merge-based (`_update_profile()`, `claude_desktop_integration.py:285-295`), so unrelated
 profile fields, existing model definitions, custom headers, and user-owned egress settings are
-preserved. FCC also ensures `coworkEgressAllowedHosts` contains `"*"` when the user has not
+preserved. ModelGlot also ensures `coworkEgressAllowedHosts` contains `"*"` when the user has not
 defined an egress policy.
 
 The gateway base URL is constrained to HTTPS or loopback HTTP
@@ -179,21 +179,21 @@ The gateway base URL is constrained to HTTPS or loopback HTTP
 
 ### 3.3 Active-state model
 
-The integration considers the FCC profile active only when all of the following are true
+The integration considers the ModelGlot profile active only when all of the following are true
 (`_Library.active`, `claude_desktop_integration.py:171-181`):
 
-- `appliedId == FCC_ID`;
+- `appliedId == MODELGLOT_ID`;
 - `deploymentMode == "3p"`;
 - `hybridPointer` is absent.
 
-The absence of `hybridPointer` is therefore an explicit part of FCC's internal connected-state
+The absence of `hybridPointer` is therefore an explicit part of ModelGlot's internal connected-state
 contract, not merely leftover cleanup.
 
 ### 3.4 Refresh behavior
 
 `refresh_connected()` runs during server startup
 (`src/free_claude_code/runtime/integration_service.py:104-109`) and refreshes the proxy URL
-and rotating token only when the FCC profile is already active
+and rotating token only when the ModelGlot profile is already active
 (`claude_desktop_integration.py:362-370`).
 
 Refresh does not:
@@ -209,7 +209,7 @@ writing (`claude_desktop_integration.py:120-124`).
 
 ### 3.5 Disconnect behavior
 
-When the FCC profile is selected, `_disconnect()`
+When the ModelGlot profile is selected, `_disconnect()`
 (`claude_desktop_integration.py:319-359`):
 
 1. writes a pending-disconnect record;
@@ -217,16 +217,16 @@ When the FCC profile is selected, `_disconnect()`
 3. selects the Default profile;
 4. removes `hybridPointer`;
 5. sets `deploymentMode` to `"1p"`;
-6. deletes the FCC profile;
-7. removes the FCC entry from the library;
+6. deletes the ModelGlot profile;
+7. removes the ModelGlot entry from the library;
 8. removes the pending-disconnect record.
 
-If another profile is selected, FCC does not change the selection and preserves that profile's
+If another profile is selected, ModelGlot does not change the selection and preserves that profile's
 configuration and `hybridPointer`.
 
-### 3.6 What FCC does not do
+### 3.6 What ModelGlot does not do
 
-FCC does not:
+ModelGlot does not:
 
 - revoke Anthropic OAuth tokens;
 - delete or alter the Claude Desktop credential store;
@@ -287,8 +287,8 @@ inference configuration, not from `ANTHROPIC_BASE_URL` or `~/.claude/settings.js
 
 Source: <https://code.claude.com/docs/en/llm-gateway-connect#desktop-app>
 
-FCC's use of `configLibrary` is therefore the correct Desktop integration mechanism. Adding
-environment variables alone would not route Desktop inference through FCC.
+ModelGlot's use of `configLibrary` is therefore the correct Desktop integration mechanism. Adding
+environment variables alone would not route Desktop inference through ModelGlot.
 
 ### 4.4 Skills, plugins, and connectors in 3P
 
@@ -341,11 +341,11 @@ Source: <https://claude.com/docs/third-party/claude-desktop/data-storage#data-sh
 
 `hybridPointer` does not appear in the reviewed public configuration reference or extension
 documentation. It is an internal value in the `configLibrary/_meta.json` structure used by
-the current FCC implementation.
+the current ModelGlot implementation.
 
 Consequently:
 
-- FCC must not synthesize an undocumented pointer value;
+- ModelGlot must not synthesize an undocumented pointer value;
 - the safest change is to preserve the existing value byte-for-byte;
 - if the pointer is absent, the implementation must remain valid;
 - compatibility must be verified against live Desktop releases and diagnostic logs.
@@ -384,10 +384,10 @@ uploaded plugins, saved skills, scheduled tasks, and local MCP server commands, 
 plugins and skills arrive disabled and connector sign-ins, desktop extensions, other
 marketplaces, plugin settings, and local MCP environment values are excluded.
 
-FCC can enable the supported import wizard by writing `claudeAiImport.enabled` into the
-FCC-owned Desktop profile. It should do so only as an explicit user or administrator
+ModelGlot can enable the supported import wizard by writing `claudeAiImport.enabled` into the
+modelglot-owned Desktop profile. It should do so only as an explicit user or administrator
 choice, preserve the user's other `claudeAiImport` fields, and leave the OAuth and export
-download inside Claude Desktop. FCC must not read the Claude.ai credential store, reuse
+download inside Claude Desktop. ModelGlot must not read the Claude.ai credential store, reuse
 browser cookies, poll private account endpoints, or transfer connector OAuth tokens.
 
 For continuously refreshed plugins, the supported path is an administrator-controlled
@@ -413,16 +413,16 @@ The standard identity and the 3P provider identity are alternative session conte
 Claude.ai login does not become the identity of a 3P gateway session, and Anthropic-hosted
 connectors remain unavailable in 3P.
 
-No FCC-only configuration can make these two deployment identities simultaneous in the same
+No modelglot-only configuration can make these two deployment identities simultaneous in the same
 Desktop session without relying on unsupported private behavior.
 
 ### 5.2 Goal B — Gateway with the complete local 3P feature set
 
 **Supported.**
 
-Claude Desktop on 3P supports connectors, skills, plugins, Chat, Cowork, and Code. FCC may
+Claude Desktop on 3P supports connectors, skills, plugins, Chat, Cowork, and Code. ModelGlot may
 therefore use the gateway without disabling those capabilities. Users may need to install or
-provision local equivalents of account-backed extensions. FCC may also expose the
+provision local equivalents of account-backed extensions. ModelGlot may also expose the
 supported one-time Claude.ai import wizard, but that operation copies history rather than
 synchronizing the account inventory.
 
@@ -430,11 +430,11 @@ synchronizing the account inventory.
 
 **Supported and recommended.**
 
-FCC can:
+ModelGlot can:
 
 - leave the deployment chooser available by using `deploymentMode: "any"`;
 - preserve `hybridPointer`;
-- select the FCC gateway profile when the user chooses the provider configuration;
+- select the ModelGlot gateway profile when the user chooses the provider configuration;
 - restore the previously applied profile and native login state when the user disconnects.
 
 This does not make standard and 3P identities simultaneous. It makes the transition safe,
@@ -446,19 +446,19 @@ reversible, and non-destructive.
 
 ### 6.1 Make the integration reversible
 
-The FCC-owned profile should be treated as an additional saved Desktop configuration, not as
+The modelglot-owned profile should be treated as an additional saved Desktop configuration, not as
 a replacement for the native login state.
 
 Recommended invariants:
 
 1. Connect never removes `hybridPointer`.
 2. Connect uses `deploymentMode: "any"` unless the user explicitly opts into gateway-only mode.
-3. Connect records enough state to identify the profile that was selected before FCC applied
+3. Connect records enough state to identify the profile that was selected before ModelGlot applied
    its own profile.
 4. Disconnect restores the previous profile, `hybridPointer`, and deployment mode.
 5. If the previous state cannot be restored safely, leave the Desktop configuration valid and
    report that standard sign-in remains available.
-6. Refresh only updates the FCC-owned gateway fields and never changes login-related state.
+6. Refresh only updates the modelglot-owned gateway fields and never changes login-related state.
 
 ### 6.2 Preserve backward compatibility
 
@@ -486,7 +486,7 @@ The implementation should not attempt to:
 
 The redesign must keep:
 
-- the dedicated FCC profile ID;
+- the dedicated ModelGlot profile ID;
 - merge-based profile updates;
 - preservation of unrelated profile fields;
 - loopback-or-HTTPS gateway validation;
@@ -502,16 +502,16 @@ The redesign must keep:
 
 After implementation:
 
-1. The user connects FCC from the Admin UI.
-2. FCC saves a gateway profile but leaves the standard Claude Desktop login available.
+1. The user connects ModelGlot from the Admin UI.
+2. ModelGlot saves a gateway profile but leaves the standard Claude Desktop login available.
 3. On the next Claude Desktop launch, the user can choose:
-   - the configured FCC gateway, or
+   - the configured ModelGlot gateway, or
    - normal Claude.ai sign-in.
-4. Choosing the gateway routes inference through FCC and exposes the 3P-local connector,
+4. Choosing the gateway routes inference through ModelGlot and exposes the 3P-local connector,
    skill, and plugin environment.
-5. Choosing Claude.ai restores the normal account-backed experience without FCC having
+5. Choosing Claude.ai restores the normal account-backed experience without ModelGlot having
    removed or rewritten native credentials.
-6. Disconnecting FCC restores the profile that was previously selected and leaves the Desktop
+6. Disconnecting ModelGlot restores the profile that was previously selected and leaves the Desktop
    application in a valid chooser-enabled state.
 
 ---
@@ -525,7 +525,7 @@ After implementation:
 | Users expect Claude.ai account content to sync into 3P | Missing skills, plugins, or connectors | State that the supported import is one-shot and history-only; offer managed marketplaces and connectors for local equivalents |
 | Import is enabled implicitly or with a broad organization scope | Unwanted account export or access to the wrong organization | Require explicit opt-in, preserve an administrator-provided allowlist, and keep OAuth inside Desktop |
 | Disconnect cannot identify the previous profile | Loss of the user's active Desktop configuration | Persist a disconnect journal before mutation and restore the recorded profile atomically |
-| A user changes `_meta.json` while FCC is running | Stale restore state | Revalidate ownership and current metadata before every restore; never overwrite a newer user-owned selection |
+| A user changes `_meta.json` while ModelGlot is running | Stale restore state | Revalidate ownership and current metadata before every restore; never overwrite a newer user-owned selection |
 | Existing tests encode the old `3p` contract | Behavioral regression or false failures | Update tests deliberately and add compatibility tests for both `any` and explicit `3p` |
 | Admin-managed Desktop installations reject local changes | Connect fails | Preserve the existing managed-policy guard and surface a clear error |
 
@@ -535,12 +535,12 @@ After implementation:
 
 The analysis is implemented successfully when:
 
-- FCC no longer deletes or removes `hybridPointer` during a normal connection;
+- ModelGlot no longer deletes or removes `hybridPointer` during a normal connection;
 - the default Desktop integration leaves the Claude.ai sign-in choice available;
-- the FCC gateway remains selectable and routes inference to the configured provider;
+- the ModelGlot gateway remains selectable and routes inference to the configured provider;
 - disconnect restores the previously selected Desktop profile;
-- a Claude.ai sign-in remains possible after an FCC connection;
-- skills, plugins, and connectors are not explicitly disabled by FCC;
+- a Claude.ai sign-in remains possible after an ModelGlot connection;
+- skills, plugins, and connectors are not explicitly disabled by ModelGlot;
 - documentation clearly states that Anthropic-hosted account connectors remain exclusive to
   standard Claude Desktop;
 - unit, API, runtime, cleanup, and end-to-end tests cover the new reversible lifecycle;

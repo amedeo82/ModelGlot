@@ -62,7 +62,7 @@ def test_terminal_snapshot_reuses_sealed_carrier() -> None:
 def test_carrier_looking_answer_text_is_not_interpreted() -> None:
     payload = {
         "type": "content_block_delta",
-        "delta": {"type": "text_delta", "text": "fcc:history:v1:not-a-carrier"},
+        "delta": {"type": "text_delta", "text": "modelglot:history:v1:not-a-carrier"},
     }
 
     def unexpected():

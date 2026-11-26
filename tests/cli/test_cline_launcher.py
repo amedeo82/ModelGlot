@@ -1,4 +1,4 @@
-"""Contract tests for the installed `fcc-cline` launcher."""
+"""Contract tests for the installed `modelglot-cline` launcher."""
 
 import json
 from collections.abc import Mapping
@@ -32,7 +32,7 @@ def test_cline_config_uses_responses_and_only_known_metadata() -> None:
                 max_output_tokens=8192,
             ),
             CatalogModel(
-                wire_slug="claude-3-freecc-no-thinking/open_router/plain-model",
+                wire_slug="claude-3-modelglot-no-thinking/open_router/plain-model",
                 provider_model_ref="open_router/plain-model",
                 display_name="No-thinking model",
                 supports_reasoning=False,
@@ -62,7 +62,7 @@ def test_cline_config_uses_responses_and_only_known_metadata() -> None:
                 "settings": {
                     "provider": "openai-native",
                     "apiKey": "proxy-token",
-                    "headers": {"x-fcc-launch-id": "launch-a"},
+                    "headers": {"x-modelglot-launch-id": "launch-a"},
                     "model": "nvidia_nim/vendor/model",
                     "protocol": "openai-responses",
                     "baseUrl": "http://127.0.0.1:9191/v1",
@@ -102,7 +102,7 @@ def test_cline_config_uses_responses_and_only_known_metadata() -> None:
                         "maxTokens": 8192,
                         "apiFormat": "openai-responses",
                     },
-                    "claude-3-freecc-no-thinking/open_router/plain-model": {
+                    "claude-3-modelglot-no-thinking/open_router/plain-model": {
                         "name": "No-thinking model",
                         "capabilities": ["streaming", "tools"],
                         "supportsReasoning": False,
@@ -157,7 +157,7 @@ def test_cline_native_configuration_is_available_to_child(
         assert object_payload(settings)["baseUrl"] == "http://127.0.0.1:8182/v1"
         assert object_payload(settings)["apiKey"] == "launcher-test-token"
         launch_ids.append(
-            object_payload(object_payload(settings)["headers"])["x-fcc-launch-id"]
+            object_payload(object_payload(settings)["headers"])["x-modelglot-launch-id"]
         )
         assert launch_ids[-1]
         assert object_payload(settings)["model"] in object_payload(
@@ -204,7 +204,7 @@ def test_cline_hub_discovery_path_overrides_stale_inherited_value(
     launch("cline", [])
     hub_path = Path(launch_capture.environments[0]["CLINE_HUB_DISCOVERY_PATH"])
     # The stale user-level discovery file must be replaced by the isolated
-    # ephemeral path, never inherited by the fcc-cline child. The hub/
+    # ephemeral path, never inherited by the modelglot-cline child. The hub/
     # directory is pre-created at launch (checked via on_start, since the
     # ephemeral tree is cleaned up when the launcher exits); only the file
     # itself must not be pre-created.

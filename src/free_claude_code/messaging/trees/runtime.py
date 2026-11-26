@@ -499,7 +499,7 @@ class MessageTree:
             return self._graph.snapshot()
 
     async def message_ids_for_chat(self, platform: str, chat_id: str) -> set[str]:
-        """Copy every prompt and FCC status belonging to one platform chat."""
+        """Copy every prompt and ModelGlot status belonging to one platform chat."""
         async with self._lock:
             if self.identity.scope.platform != platform or (
                 self.identity.scope.chat_id != chat_id

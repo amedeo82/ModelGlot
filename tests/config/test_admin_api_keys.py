@@ -172,7 +172,8 @@ async def test_locked_lists_allow_check_submission_but_reject_mutation(
     monkeypatch.setenv("OPENAI_API_KEY", '["one","two"]')
     edit = await key_edit(service, "OPENAI_API_KEY", [{"retain": 0}, {"retain": 1}])
     prepared = await service.prepare(
-        {"OPENAI_API_KEY": edit, "PORT": "8123"}, service._store.read().settings
+        {"OPENAI_API_KEY": edit, "MODELGLOT_PORT": "8123"},
+        service._store.read().settings,
     )
     assert prepared.valid
     assert "OPENAI_API_KEY" not in prepared.target_values
@@ -192,8 +193,8 @@ async def test_commit_rejects_other_prepared_write_and_preserves_newer_settings(
     service: ConfigurationService,
 ) -> None:
     active = service._store.read().settings
-    first = await service.prepare({"PORT": "8123"}, active)
-    second = await service.prepare({"HOST": "localhost"}, active)
+    first = await service.prepare({"MODELGLOT_PORT": "8123"}, active)
+    second = await service.prepare({"MODELGLOT_HOST": "localhost"}, active)
     await service.commit(first)
     with pytest.raises(ValueError, match="changed"):
         await service.commit(second)

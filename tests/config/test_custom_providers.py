@@ -30,7 +30,7 @@ def test_private_storage_round_trip_and_routing() -> None:
     original = definition(model_ids=[" org/model ", "org/model"])
     encoded = encode_custom_providers((original,))
     settings = Settings.model_validate(
-        {"FCC_CUSTOM_PROVIDERS": encoded, "MODEL": f"{ID}/org/model"}
+        {"MODELGLOT_CUSTOM_PROVIDERS": encoded, "MODEL": f"{ID}/org/model"}
     )
     assert settings.custom_providers == (original,)
     assert original.model_ids == ("org/model",)
@@ -55,7 +55,9 @@ def test_invalid_api_bases_are_rejected(url: str) -> None:
         definition(base_url=url)
 
 
-@pytest.mark.parametrize("prefix", ["", "anthropic/", "claude-3-freecc-no-thinking/"])
+@pytest.mark.parametrize(
+    "prefix", ["", "anthropic/", "claude-3-modelglot-no-thinking/"]
+)
 def test_unknown_custom_reference_never_falls_back(prefix: str) -> None:
     with pytest.raises(UnknownProviderError):
         ModelRouter(Settings()).resolve(f"{prefix}{ID}/missing")

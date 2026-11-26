@@ -6,7 +6,7 @@ from pathlib import Path
 
 from free_claude_code.config.api_keys import ApiKeyList, api_key_values, first_api_key
 from free_claude_code.config.env_files import (
-    FCC_CONFIG_SCHEMA_ENV,
+    MODELGLOT_CONFIG_SCHEMA_ENV,
 )
 from free_claude_code.config.env_migrations import (
     CONFIG_SCHEMA_VERSION,
@@ -100,7 +100,11 @@ def target_values_with_updates(
     values = dict(snapshot.managed)
     known = recognized_env_keys()
     for key in tuple(values):
-        if key in known and key != FCC_CONFIG_SCHEMA_ENV and not values[key].strip():
+        if (
+            key in known
+            and key != MODELGLOT_CONFIG_SCHEMA_ENV
+            and not values[key].strip()
+        ):
             values.pop(key)
 
     for key, submitted in updates.items():
@@ -118,7 +122,7 @@ def target_values_with_updates(
         else:
             values[key] = value
 
-    values[FCC_CONFIG_SCHEMA_ENV] = CONFIG_SCHEMA_VERSION
+    values[MODELGLOT_CONFIG_SCHEMA_ENV] = CONFIG_SCHEMA_VERSION
     return normalize_retired_model_settings(values, preserve_empty_overrides=False)
 
 

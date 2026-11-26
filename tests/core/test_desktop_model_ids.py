@@ -32,7 +32,7 @@ def test_desktop_ids_roundtrip_without_vendor_fragments(
 @pytest.mark.parametrize(
     "suffix", ["", "ff", "not-hex", "123", "6E", "6162", "2f78", "782f", "61 2f62"]
 )
-@pytest.mark.parametrize("prefix", ["claude-fcc/", "claude-3-fcc/"])
+@pytest.mark.parametrize("prefix", ["claude-modelglot/", "claude-3-modelglot/"])
 def test_malformed_reserved_ids_do_not_fall_through(prefix: str, suffix: str) -> None:
     with pytest.raises(ValueError):
         decode_gateway_model_id(prefix + suffix)

@@ -46,22 +46,22 @@ dependencies = [
 ]
 
 [project.scripts]
-fcc-server = "free_claude_code.cli.entrypoints:serve"
-fcc-doctor = "free_claude_code.cli.entrypoints:doctor"
-fcc-claude = "free_claude_code.cli.launchers.claude:launch"
-fcc-codex = "free_claude_code.cli.launchers.codex:launch"
-fcc-pi = "free_claude_code.cli.launchers.pi:launch"
-fcc-opencode = "free_claude_code.cli.launchers.opencode:launch"
-fcc-cline = "free_claude_code.cli.launchers.cline:launch"
-fcc-hermes = "free_claude_code.cli.launchers.hermes:launch"
-fcc-dsh = "free_claude_code.cli.launchers.dsh:launch"
-fcc-grok = "free_claude_code.cli.launchers.grok:launch"
-fcc-muse = "free_claude_code.cli.launchers.muse:launch"
-fcc-agy = "free_claude_code.cli.launchers.agy:launch"
-fcc-aider = "free_claude_code.cli.launchers.aider:launch"
+modelglot-server = "free_claude_code.cli.entrypoints:serve"
+modelglot-doctor = "free_claude_code.cli.entrypoints:doctor"
+modelglot-claude = "free_claude_code.cli.launchers.claude:launch"
+modelglot-codex = "free_claude_code.cli.launchers.codex:launch"
+modelglot-pi = "free_claude_code.cli.launchers.pi:launch"
+modelglot-opencode = "free_claude_code.cli.launchers.opencode:launch"
+modelglot-cline = "free_claude_code.cli.launchers.cline:launch"
+modelglot-hermes = "free_claude_code.cli.launchers.hermes:launch"
+modelglot-dsh = "free_claude_code.cli.launchers.dsh:launch"
+modelglot-grok = "free_claude_code.cli.launchers.grok:launch"
+modelglot-muse = "free_claude_code.cli.launchers.muse:launch"
+modelglot-agy = "free_claude_code.cli.launchers.agy:launch"
+modelglot-aider = "free_claude_code.cli.launchers.aider:launch"
 
 [project.gui-scripts]
-fcc-desktop = "free_claude_code.cli.desktop_entrypoint:launch"
+modelglot-desktop = "free_claude_code.cli.desktop_entrypoint:launch"
 
 [project.urls]
 Homepage = "https://github.com/amedeo82/ModelGlot"
@@ -81,14 +81,14 @@ voice_local = [
 source = "vcs"
 
 [tool.hatch.build]
-artifacts = ["src/free_claude_code/assets/macos/fcc-desktop-*"]
+artifacts = ["src/free_claude_code/assets/macos/modelglot-desktop-*"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/free_claude_code"]
 
 [tool.hatch.build.targets.wheel.shared-scripts]
-"scripts/update/fcc-update" = "fcc-update"
-"scripts/update/fcc-update.cmd" = "fcc-update.cmd"
+"scripts/update/modelglot-update" = "modelglot-update"
+"scripts/update/modelglot-update.cmd" = "modelglot-update.cmd"
 
 [tool.uv]
 required-version = ">=0.13.7"
@@ -173,7 +173,7 @@ markers = [
     "clients: client compatibility checks",
     "voice: voice transcription checks",
     "contract: deterministic feature contract checks",
-    "smoke_target(name): route a smoke test behind FCC_SMOKE_TARGETS",
+    "smoke_target(name): route a smoke test behind MODELGLOT_SMOKE_TARGETS",
     "xdist_group(name): group smoke provider items under pytest-xdist --dist=loadgroup",
 ]
 

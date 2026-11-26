@@ -119,8 +119,8 @@ def installer(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, runtime: object):
     resources = tmp_path / "package"
     templates = resources / "assets/macos"
     templates.mkdir(parents=True)
-    (templates / "fcc-desktop-x86_64").write_bytes(b"intel template")
-    (templates / "fcc-desktop-arm64").write_bytes(b"arm template")
+    (templates / "modelglot-desktop-x86_64").write_bytes(b"intel template")
+    (templates / "modelglot-desktop-arm64").write_bytes(b"arm template")
 
     def replace_files(package: object):
         return resources
@@ -133,8 +133,10 @@ def installer(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, runtime: object):
     def sign(command: list[str], **kwargs: object):
         bundle = Path(command[-1])
         assert (bundle / "Contents/Resources/runtime.plist").is_file()
-        assert (bundle / "Contents/Resources/.free-claude-code-owner").is_file()
-        assert (bundle / "Contents/MacOS/fcc-desktop").read_bytes() == b"intel template"
+        assert (bundle / "Contents/Resources/.modelglot-owner").is_file()
+        assert (
+            bundle / "Contents/MacOS/modelglot-desktop"
+        ).read_bytes() == b"intel template"
         calls.append(command)
 
     monkeypatch.setattr(macos_app.subprocess, "run", sign)
@@ -149,46 +151,44 @@ def test_complete_bundle_is_signed_before_publication(
     require_symlink_support(tmp_path)
     home, _resources, calls = installer
     app = macos_app.install()
-    assert app == home / "Applications/Free Claude Code.app"
+    assert app == home / "Applications/ModelGlot.app"
     contents = app / "Contents"
     with (contents / "Info.plist").open("rb") as stream:
         info: JsonObject = plistlib.load(stream)
     assert info["CFBundleIdentifier"] == macos_app.BUNDLE_ID
-    assert info["CFBundleExecutable"] == "fcc-desktop"
+    assert info["CFBundleExecutable"] == "modelglot-desktop"
     assert info["LSUIElement"] and info["LSMultipleInstancesProhibited"]
     with (contents / "Resources/runtime.plist").open("rb") as stream:
         assert plistlib.load(stream)["PythonExecutable"] == str(runtime[0])
-    assert (home / "Desktop/Free Claude Code.app").resolve() == app.resolve()
+    assert (home / "Desktop/ModelGlot.app").resolve() == app.resolve()
     assert [call[:-1] for call in calls] == [
         ["/usr/bin/codesign", "--force", "--sign", "-"],
         ["/usr/bin/codesign", "--verify", "--strict"],
     ]
     if os.name != "nt":
-        assert (contents / "MacOS/fcc-desktop").stat().st_mode & 0o111 == 0o111
+        assert (contents / "MacOS/modelglot-desktop").stat().st_mode & 0o111 == 0o111
 
 
 def owned_app(home: Path) -> Path:
-    app = home / "Applications/Free Claude Code.app"
+    app = home / "Applications/ModelGlot.app"
     (app / "Contents").mkdir(parents=True)
-    (app / "Contents/.free-claude-code-owner").write_text(macos_app.BUNDLE_ID)
+    (app / "Contents/.modelglot-owner").write_text(macos_app.BUNDLE_ID)
     (app / "old").write_text("preserve on failure")
     return app
 
 
-def test_legacy_owned_bundle_remains_managed_during_identity_migration(
-    tmp_path: Path,
-) -> None:
-    app = tmp_path / "Applications/Free Claude Code.app"
+def test_upstream_bundle_identity_is_not_managed(tmp_path: Path) -> None:
+    app = tmp_path / "Applications/ModelGlot.app"
     contents = app / "Contents"
     contents.mkdir(parents=True)
-    (contents / ".free-claude-code-owner").write_text(
-        macos_app.LEGACY_BUNDLE_IDS[0], encoding="utf-8"
+    (contents / ".modelglot-owner").write_text(
+        "io.github.upstream.example", encoding="utf-8"
     )
 
-    assert macos_app.is_owned(app)
+    assert not macos_app.is_owned(app)
 
 
-def test_upgrade_replaces_legacy_owned_bundle_and_updates_runtime(
+def test_upgrade_replaces_owned_bundle_and_updates_runtime(
     installer: tuple[Path, Path, list[list[str]]],
     runtime: tuple[Path, Path, dict[str, int | str | None]],
     monkeypatch: pytest.MonkeyPatch,
@@ -227,13 +227,13 @@ def test_failure_preserves_existing_app(
         rename = Path.rename
 
         def fail(path: Path, destination: Path):
-            if path.name == "Free Claude Code.app" and path != app:
+            if path.name == "ModelGlot.app" and path != app:
                 raise OSError("publication failed")
             return rename(path, destination)
 
         monkeypatch.setattr(Path, "rename", fail)
     else:
-        (resources / "assets/macos/fcc-desktop-x86_64").unlink()
+        (resources / "assets/macos/modelglot-desktop-x86_64").unlink()
     with pytest.raises((OSError, subprocess.CalledProcessError)):
         macos_app.install()
     assert (app / "old").read_text() == "preserve on failure"
@@ -244,7 +244,7 @@ def test_unowned_app_is_preserved(
     installer: tuple[Path, Path, list[list[str]]],
 ) -> None:
     home, _resources, calls = installer
-    app = home / "Applications/Free Claude Code.app"
+    app = home / "Applications/ModelGlot.app"
     app.mkdir(parents=True)
     with pytest.raises(ValueError, match="not managed"):
         macos_app.install()
@@ -266,7 +266,7 @@ def test_failed_restore_keeps_backup_for_recovery(
     monkeypatch.setattr(Path, "rename", fail)
     with pytest.raises(OSError):
         macos_app.install()
-    backups = list(app.parent.glob(".fcc-app-*/previous.app/old"))
+    backups = list(app.parent.glob(".modelglot-app-*/previous.app/old"))
     assert len(backups) == 1
     assert backups[0].read_text() == "preserve on failure"
 
@@ -290,7 +290,7 @@ def test_unrelated_desktop_item_is_preserved(
     home, _resources, _calls = installer
     desktop = home / "Desktop"
     desktop.mkdir()
-    item = desktop / "Free Claude Code.app"
+    item = desktop / "ModelGlot.app"
     item.write_text("unrelated")
     macos_app.install()
     assert item.read_text() == "unrelated"

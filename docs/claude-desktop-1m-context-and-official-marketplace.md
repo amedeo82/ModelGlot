@@ -2,14 +2,14 @@
 
 Status: ricerca e implementazione completate
 Data: 2026-11-17
-Ambito: profilo gateway FCC per Claude Desktop in modalità third-party (3P)
+Ambito: profilo gateway ModelGlot per Claude Desktop in modalità third-party (3P)
 
-Panoramica del profilo FCC e delle altre migliorie implementate:
-[`claude-desktop-fcc-profile.md`](claude-desktop-fcc-profile.md).
+Panoramica del profilo ModelGlot e delle altre migliorie implementate:
+[`claude-desktop-modelglot-profile.md`](claude-desktop-modelglot-profile.md).
 
 ## Sintesi
 
-Il profilo gateway FCC creato da Free Claude Code ora abilita:
+Il profilo gateway ModelGlot creato da ModelGlot ora abilita:
 
 - `modelPrefer1mContext: true`, così Claude Desktop preferisce la variante da un milione
   di token per i modelli che la supportano;
@@ -17,9 +17,9 @@ Il profilo gateway FCC creato da Free Claude Code ora abilita:
   `anthropics/claude-plugins-official` e `anthropics/knowledge-work-plugins` registrati come
   disponibili.
 
-La configurazione è scritta nel profilo FCC in
+La configurazione è scritta nel profilo ModelGlot in
 `src/free_claude_code/harnesses/claude_desktop_integration.py`. Il refresh del profilo
-ripristina i due default FCC, ma conserva eventuali marketplace aggiuntivi configurati
+ripristina i due default ModelGlot, ma conserva eventuali marketplace aggiuntivi configurati
 dall'utente.
 
 ## Ricerca
@@ -42,19 +42,19 @@ riconosce come dotati di una finestra da 1M. Nella configurazione esplicita
 gateway, il client accetta anche `supports_1m: true` oppure `max_input_tokens` almeno
 1.000.000.
 
-Per rendere il segnale utile nel gateway FCC, la vista Desktop di `GET /v1/models` espone
+Per rendere il segnale utile nel gateway ModelGlot, la vista Desktop di `GET /v1/models` espone
 ora `supports_1m: true` per i modelli il cui catalogo provider dichiara una finestra di
 almeno 1.000.000 token. La vista CLI resta invariata e continua a esporre le sole
 metadati documentati per la discovery Claude Code.
 
 La preferenza non aumenta la capacità del provider. Il modello a valle deve accettare la
 richiesta e il percorso di traduzione deve inoltrare l'header beta `context-1m-2025-08-07`
-quando richiesto dal client. FCC conserva gli header `anthropic-beta` ricevuti nel percorso
+quando richiesto dal client. ModelGlot conserva gli header `anthropic-beta` ricevuti nel percorso
 Anthropic Messages, ma il provider finale deve supportare la beta e la sua finestra reale.
 
 Il contesto 1M nel Claude Code CLI è un problema distinto: si seleziona un alias come
 `sonnet[1m]` o `opus[1m]`, oppure si corregge la finestra di un ID custom con le impostazioni
-previste dalla documentazione model-config. La modifica FCC riguarda il profilo Desktop 3P.
+previste dalla documentazione model-config. La modifica ModelGlot riguarda il profilo Desktop 3P.
 
 Fonti:
 
@@ -66,7 +66,7 @@ Fonti:
 
 ### Marketplace ufficiali di plugin e skill
 
-FCC registra due marketplace ufficiali Anthropic:
+ModelGlot registra due marketplace ufficiali Anthropic:
 
 | Repository | Nome manifest | Contenuto |
 | --- | --- | --- |
@@ -76,7 +76,7 @@ FCC registra due marketplace ufficiali Anthropic:
 Entrambi i repository sono pubblici, usano `.claude-plugin/marketplace.json` e possono
 essere consultati con accesso anonimo. Claude Code CLI registra automaticamente il primo
 marketplace alla prima sessione terminale interattiva, salvo una policy managed. Claude
-Desktop 3P usa invece la chiave di configurazione `allowedPluginMarketplaces`. FCC registra
+Desktop 3P usa invece la chiave di configurazione `allowedPluginMarketplaces`. ModelGlot registra
 quindi:
 
 ```json
@@ -112,7 +112,7 @@ Il marketplace generale contiene plugin Anthropic che possono includere skill, a
 `skill-creator`. Il marketplace `knowledge-work-plugins` raccoglie plugin dedicati ai
 flussi di lavoro di Cowork come Productività, Vendite, Finanza, Dati, Marketing, Supporto
 clienti e Gestione prodotto. Il repository `anthropics/skills` è un marketplace Anthropic
-separato, specializzato in esempi e skill; non viene registrato automaticamente da FCC. La
+separato, specializzato in esempi e skill; non viene registrato automaticamente da ModelGlot. La
 directory Claude Marketplace su `claude.ai` è a sua volta diversa dai marketplace Git di
 Claude Code e non viene sincronizzata continuamente nell'identità 3P.
 
@@ -188,16 +188,16 @@ I campi disponibili hanno semantica distinta:
 | `bannerBehavior` | Controlla il prompt `off`, `detect` o `show`. |
 
 L'import con sign-in concede a Claude Desktop il permesso di richiedere una copia one-shot
-dei dati dell'utente. FCC non deve ricevere, copiare o memorizzare il token OAuth
+dei dati dell'utente. ModelGlot non deve ricevere, copiare o memorizzare il token OAuth
 Claude.ai: autenticazione, download dell'export e import devono restare nel processo
 Desktop. Un export scaricato può contenere dati sensibili e non è cifrato.
 
 Per le organizzazioni Team ed Enterprise, il workspace owner deve abilitare
 **Allow members to export their own data**. Il flag non può essere attivato in
 organizzazioni HIPAA-ready. `allowedOrganizationUuids` consente di limitare il wizard a
-organizzazioni approvate, ma FCC non deve indovinare o deduplicare tale UUID.
+organizzazioni approvate, ma ModelGlot non deve indovinare o deduplicare tale UUID.
 
-### Piano di implementazione FCC raccomandato
+### Piano di implementazione ModelGlot raccomandato
 
 L'attivazione dovrebbe essere un'azione esplicita e reversibile, non una conseguenza
 silenziosa di Connect:
@@ -207,9 +207,9 @@ silenziosa di Connect:
    per l'import Claude.ai. Non accorpare l'opzione a `modelPrefer1mContext` o ai
    marketplace, perché attiva un flusso OAuth e trasferisce dati dell'utente.
 2. Quando l'opzione è attiva, scrivere soltanto
-   `claudeAiImport.enabled: true` nel profilo FCC e preservare gli altri campi
+   `claudeAiImport.enabled: true` nel profilo ModelGlot e preservare gli altri campi
    `claudeAiImport` scelti dall'utente. Il refresh non deve riattivare un import
-   disabilitato manualmente, a meno che FCC non mantenga esplicitamente la policy.
+   disabilitato manualmente, a meno che ModelGlot non mantenga esplicitamente la policy.
 3. Esporre lo stato nell'Admin API e nella card **Integrations**, indicando che
    l'import è one-shot e non una sincronizzazione continua.
 4. Accettare `allowedOrganizationUuids` solo come allowlist esplicita fornita
@@ -260,7 +260,7 @@ Fonti:
 
 ## Comportamento implementato
 
-- Connect e Reconnect creano o aggiornano il profilo FCC con
+- Connect e Reconnect creano o aggiornano il profilo ModelGlot con
   `modelPrefer1mContext: true`.
 - Connect e Reconnect garantiscono la presenza dei marketplace
   `anthropics/claude-plugins-official` e `anthropics/knowledge-work-plugins`.
@@ -270,7 +270,7 @@ Fonti:
 - La discovery Desktop marca con `supports_1m: true` soltanto i modelli con una finestra
   provider nota e almeno 1.000.000 token.
 - La discovery CLI non cambia.
-- L'import Claude.ai e `automatic3pImport` non sono ancora configurati dal profilo FCC.
+- L'import Claude.ai e `automatic3pImport` non sono ancora configurati dal profilo ModelGlot.
   Il piano per un'attivazione esplicita e one-shot è documentato sopra; non esiste una
   sincronizzazione continua dell'account.
 

@@ -1,4 +1,4 @@
-"""Check the exact FCC distributions that will be published."""
+"""Check the exact ModelGlot distributions that will be published."""
 
 import argparse
 import configparser
@@ -11,7 +11,7 @@ from email.parser import BytesParser
 from pathlib import Path
 
 MACOS_TEMPLATES = {
-    f"src/free_claude_code/assets/macos/fcc-desktop-{architecture}"
+    f"src/free_claude_code/assets/macos/modelglot-desktop-{architecture}"
     for architecture in ("arm64", "x86_64")
 }
 
@@ -58,7 +58,7 @@ def validate(directory: Path, version: str) -> None:
     ).stdout
     sources = set(filter(None, tracked.split("\0")))
     if "src/free_claude_code/__init__.py" not in sources:
-        raise ValueError("Missing tracked FCC package sources")
+        raise ValueError("Missing tracked ModelGlot package sources")
     sources |= MACOS_TEMPLATES
     with zipfile.ZipFile(wheel_path) as archive:
         wheel = {
@@ -73,7 +73,7 @@ def validate(directory: Path, version: str) -> None:
             if stream is not None:
                 source[file.name] = stream.read()
     wheel_info = f"{stem}.dist-info"
-    updater_names = {"fcc-update", "fcc-update.cmd"}
+    updater_names = {"modelglot-update", "modelglot-update.cmd"}
     require_files(
         set(wheel),
         {file.removeprefix("src/") for file in sources}

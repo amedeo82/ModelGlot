@@ -1,4 +1,4 @@
-"""Behavior contracts for FCC's standalone native-Windows Muse lifecycle."""
+"""Behavior contracts for ModelGlot's standalone native-Windows Muse lifecycle."""
 
 import hashlib
 import json
@@ -226,12 +226,12 @@ def test_muse_installer_rejects_missing_architecture_artifact(powershell: str) -
 
 @pytest.mark.parametrize("powershell", POWERSHELLS)
 def test_muse_installer_validates_owner_record(tmp_path: Path, powershell: str) -> None:
-    record_path = tmp_path / ".fcc-muse-install.json"
+    record_path = tmp_path / ".modelglot-muse-install.json"
     record_path.write_text(
         json.dumps(
             {
                 "schema_version": 1,
-                "owner": "free-claude-code-muse-installer",
+                "owner": "modelglot-muse-installer",
                 "release_version": "0.2.1-R1215.1",
                 "artifact_key": "x86_windows",
                 "sha256": "a" * 64,
@@ -246,7 +246,7 @@ def test_muse_installer_validates_owner_record(tmp_path: Path, powershell: str) 
     )
 
     assert result.returncode == 0, result.stderr
-    assert json.loads(result.stdout)["owner"] == "free-claude-code-muse-installer"
+    assert json.loads(result.stdout)["owner"] == "modelglot-muse-installer"
 
 
 @pytest.mark.parametrize("powershell", POWERSHELLS)
@@ -258,7 +258,7 @@ def test_muse_installer_validates_owner_record(tmp_path: Path, powershell: str) 
         json.dumps(
             {
                 "schema_version": 2,
-                "owner": "free-claude-code-muse-installer",
+                "owner": "modelglot-muse-installer",
             }
         ),
     ],
@@ -266,7 +266,7 @@ def test_muse_installer_validates_owner_record(tmp_path: Path, powershell: str) 
 def test_muse_installer_rejects_malformed_or_foreign_owner_record(
     tmp_path: Path, powershell: str, record: str
 ) -> None:
-    record_path = tmp_path / ".fcc-muse-install.json"
+    record_path = tmp_path / ".modelglot-muse-install.json"
     record_path.write_text(record, encoding="utf-8")
 
     result = _run_installer_functions(
@@ -341,7 +341,7 @@ def test_muse_installer_checks_exact_artifact_size_and_sha256(
 
 def _managed_paths(local_app_data: Path) -> tuple[Path, Path, Path]:
     root = local_app_data / "Programs" / "Muse Code"
-    return root, root / "bin" / "muse.exe", root / ".fcc-muse-install.json"
+    return root, root / "bin" / "muse.exe", root / ".modelglot-muse-install.json"
 
 
 def _owner_record(
@@ -351,7 +351,7 @@ def _owner_record(
 ) -> dict[str, object]:
     return {
         "schema_version": 1,
-        "owner": "free-claude-code-muse-installer",
+        "owner": "modelglot-muse-installer",
         "release_version": release_version,
         "artifact_key": "x86_windows",
         "sha256": hashlib.sha256(payload).hexdigest(),
@@ -500,7 +500,7 @@ def test_muse_installer_rejects_file_at_managed_root_before_fetch(
     root, executable, record_path = _managed_paths(local_app_data)
 
     assert result.returncode != 0
-    assert "not owned by FCC" in result.stderr
+    assert "not owned by ModelGlot" in result.stderr
     assert root.read_bytes() == b"unowned file"
     assert not executable.exists()
     assert not record_path.exists()
@@ -815,15 +815,17 @@ def _create_managed_install(
     residue_id = "0123456789abcdef0123456789abcdef"
     (executable.parent / f".muse-{residue_id}.staging.exe").write_bytes(b"staging")
     (executable.parent / f".muse-{residue_id}.backup.exe").write_bytes(b"backup")
-    (root / f".fcc-muse-install.json.{residue_id}.tmp").write_bytes(b"temporary")
-    (root / f".fcc-muse-install.json.{residue_id}.backup").write_bytes(b"backup")
+    (root / f".modelglot-muse-install.json.{residue_id}.tmp").write_bytes(b"temporary")
+    (root / f".modelglot-muse-install.json.{residue_id}.backup").write_bytes(b"backup")
     if unknown_file:
         near_match_id = "fedcba9876543210fedcba9876543210"
         (root / "keep.txt").write_text("not installer owned", encoding="utf-8")
         (executable.parent / ".muse-user-notes.staging.exe").write_bytes(b"keep")
         (executable.parent / f".MUSE-{near_match_id}.backup.exe").write_bytes(b"keep")
-        (root / ".fcc-muse-install.json.user.tmp").write_bytes(b"keep")
-        (root / f".FCC-MUSE-INSTALL.JSON.{near_match_id}.backup").write_bytes(b"keep")
+        (root / ".modelglot-muse-install.json.user.tmp").write_bytes(b"keep")
+        (root / f".MODELGLOT-MUSE-INSTALL.JSON.{near_match_id}.backup").write_bytes(
+            b"keep"
+        )
     return root, executable, record_path
 
 
@@ -879,9 +881,9 @@ def test_muse_uninstaller_preserves_unknown_files_and_nonempty_root(
     assert (
         root / "bin" / ".MUSE-fedcba9876543210fedcba9876543210.backup.exe"
     ).read_bytes() == b"keep"
-    assert (root / ".fcc-muse-install.json.user.tmp").read_bytes() == b"keep"
+    assert (root / ".modelglot-muse-install.json.user.tmp").read_bytes() == b"keep"
     assert (
-        root / ".FCC-MUSE-INSTALL.JSON.fedcba9876543210fedcba9876543210.backup"
+        root / ".MODELGLOT-MUSE-INSTALL.JSON.fedcba9876543210fedcba9876543210.backup"
     ).read_bytes() == b"keep"
     assert "unknown files" in result.stdout.lower()
 
@@ -914,7 +916,7 @@ def test_muse_uninstaller_is_idempotent_when_managed_install_is_absent(
     result, local_app_data = _run_uninstaller_lifecycle(tmp_path, powershell)
 
     assert result.returncode == 0, result.stderr
-    assert "No FCC-managed Muse Code installation" in result.stdout
+    assert "No ModelGlot-managed Muse Code installation" in result.stdout
     assert not local_app_data.exists()
 
 

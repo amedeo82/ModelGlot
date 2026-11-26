@@ -47,9 +47,9 @@ from .endpoint import CodexEndpointContext
 from .login import OPENAI_CODEX_ORIGINATOR
 
 try:
-    FCC_VERSION = version("modelglot")
+    MODELGLOT_VERSION = version("modelglot")
 except PackageNotFoundError:
-    FCC_VERSION = "dev"
+    MODELGLOT_VERSION = "dev"
 
 
 class OpenAICodexProvider(BaseProvider):
@@ -68,9 +68,9 @@ class OpenAICodexProvider(BaseProvider):
         self._auth = auth
         self._admission = admission
         self._client_headers = {
-            "User-Agent": f"{OPENAI_CODEX_ORIGINATOR}/{FCC_VERSION}",
+            "User-Agent": f"{OPENAI_CODEX_ORIGINATOR}/{MODELGLOT_VERSION}",
             "originator": OPENAI_CODEX_ORIGINATOR,
-            "version": FCC_VERSION,
+            "version": MODELGLOT_VERSION,
         }
         self._pool = (
             transport
@@ -281,10 +281,10 @@ class OpenAICodexProvider(BaseProvider):
 
 
 def _model_list_client_version() -> str:
-    """Format FCC's release and VCS development versions for the catalog API."""
-    if FCC_VERSION == "dev":
+    """Format ModelGlot's release and VCS development versions for the catalog API."""
+    if MODELGLOT_VERSION == "dev":
         return "0.0.0-dev"
-    parsed = Version(FCC_VERSION)
+    parsed = Version(MODELGLOT_VERSION)
     formatted = f"{parsed.major}.{parsed.minor}.{parsed.micro}"
     if parsed.dev is not None:
         formatted += f"-dev.{parsed.dev}"

@@ -162,7 +162,9 @@ class CodeService:
     async def close(self) -> None:
         self.begin_shutdown()
         if self._close_task is None:
-            self._close_task = asyncio.create_task(self._close(), name="fcc-code-close")
+            self._close_task = asyncio.create_task(
+                self._close(), name="modelglot-code-close"
+            )
         await asyncio.shield(self._close_task)
 
     async def _close(self) -> None:
@@ -198,7 +200,7 @@ class CodeService:
                         await self._finish_locked(
                             owner,
                             "interrupted",
-                            "FCC stopped before this turn finished.",
+                            "ModelGlot stopped before this turn finished.",
                         )
                     except Exception as exc:
                         self._mark_storage_failed(owner, "finish_run", exc)
@@ -297,7 +299,7 @@ class CodeService:
                 raise ValueError
         except OSError, ValueError, RuntimeError:
             raise CodeValidationError(
-                "Choose an existing folder on the FCC computer."
+                "Choose an existing folder on the ModelGlot computer."
             ) from None
         session = await self._store.create(
             CodeSession(
@@ -435,7 +437,7 @@ class CodeService:
                 return previous
             if expected_epoch != self.epoch:
                 raise CodeConflictError(
-                    "FCC restarted. Your draft has been kept; send it when you are ready."
+                    "ModelGlot restarted. Your draft has been kept; send it when you are ready."
                 )
             self._editable(owner, revision)
             owner.state.check_can_send()
@@ -450,7 +452,7 @@ class CodeService:
                 return previous
             if expected_epoch != self.epoch:
                 raise CodeConflictError(
-                    "FCC restarted. Your draft has been kept; send it when you are ready."
+                    "ModelGlot restarted. Your draft has been kept; send it when you are ready."
                 )
             self._editable(owner, revision)
             owner.state.check_can_send()
@@ -968,7 +970,7 @@ class CodeService:
     ) -> None:
         if owner.storage_failed:
             raise CodeUnavailableError(
-                "Code storage failed. Restart FCC to restore saved history."
+                "Code storage failed. Restart ModelGlot to restore saved history."
             )
         try:
             await self._store.save_progress(
@@ -1074,7 +1076,7 @@ class CodeService:
         self._publish(
             owner,
             "session.notice",
-            message="Code storage failed. This session was stopped; restart FCC to restore saved history.",
+            message="Code storage failed. This session was stopped; restart ModelGlot to restore saved history.",
         )
 
     async def _delete_native(
@@ -1137,7 +1139,7 @@ class CodeService:
             raise CodeNotFoundError("Code session was deleted.")
         if owner.storage_failed:
             raise CodeUnavailableError(
-                "Code storage failed. Restart FCC to restore saved history."
+                "Code storage failed. Restart ModelGlot to restore saved history."
             )
 
     def _editable(self, owner: _SessionRuntime, revision: int) -> None:

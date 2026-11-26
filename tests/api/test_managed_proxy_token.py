@@ -52,5 +52,5 @@ def test_independent_codex_token_authenticates_with_server(
             "/v1/models", headers={"Authorization": f"Bearer {result.stdout.strip()}"}
         )
         assert response.status_code == 200
-    assert result.stdout == (managed_token or "freecc") + "\n"
-    assert settings.proxy_auth_token == (managed_token or "freecc")
+    assert result.stdout == (managed_token or "modelglot") + "\n"
+    assert settings.proxy_auth_token == (managed_token or "modelglot")

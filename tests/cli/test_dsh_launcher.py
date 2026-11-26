@@ -1,4 +1,4 @@
-"""DSH keeps its native profile grammar and receives one FCC patch."""
+"""DSH keeps its native profile grammar and receives one ModelGlot patch."""
 
 import json
 from collections.abc import Mapping
@@ -86,7 +86,7 @@ def test_dsh_attaches_patch_without_overriding_native_profile(
         assert "nvidia_nim/catalog-model:variant" in serialized
         assert not (path.parent / "settings.yaml").exists()
         assert load_json_value((path.parent / ".credentials.yaml").read_text()) == {}
-        assert env["FCC_DSH_API_KEY"] == "launcher-test-token"
+        assert env["MODELGLOT_DSH_API_KEY"] == "launcher-test-token"
         assert env["DSH_TELEMETRY_DISABLED"] == "1"
         assert "launcher-test-token" not in serialized
 
@@ -128,16 +128,16 @@ def test_app_arguments_cannot_select_the_launch_profile(
         ["--patch", "user.patch.yml", "--help"],
     ],
 )
-def test_control_commands_do_not_require_fcc(
+def test_control_commands_do_not_require_modelglot(
     args: list[str], launch_capture: LaunchCapture
 ) -> None:
-    launch_capture.health_error = URLError("FCC is stopped")
+    launch_capture.health_error = URLError("ModelGlot is stopped")
     with patch.object(runner, "get_settings") as settings:
         launch("dsh", args)
     settings.assert_not_called()
     assert not launch_capture.requests
     assert launch_capture.commands == [["dsh", *args]]
-    assert "FCC_DSH_API_KEY" not in launch_capture.environments[0]
+    assert "MODELGLOT_DSH_API_KEY" not in launch_capture.environments[0]
 
 
 @pytest.mark.parametrize(
@@ -152,7 +152,7 @@ def test_control_commands_do_not_require_fcc(
         ["--patch", "--dump-default-config"],
     ],
 )
-def test_profile_operations_receive_fcc_configuration(
+def test_profile_operations_receive_modelglot_configuration(
     args: list[str], launch_capture: LaunchCapture
 ) -> None:
     launch("dsh", args)
