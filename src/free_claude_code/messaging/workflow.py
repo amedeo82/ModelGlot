@@ -234,7 +234,7 @@ class MessagingWorkflow:
                 notice.chat_id,
                 self.format_status(
                     "🚀",
-                    "Claude Code Proxy is online!",
+                    "ModelGlot is online!",
                     f"({notice.transport_label})",
                 ),
                 parse_mode=self._parse_mode(),

@@ -58,6 +58,7 @@ def test_repository_has_no_legacy_identity_in_paths_or_text() -> None:
         legacy_prefix,
         "Free " + "Claude Code",
         "free-" + "claude-code",
+        "Claude Code " + "Proxy",
     )
     offenders: list[tuple[str, str]] = []
     for relative, path in _repository_files():
@@ -85,6 +86,7 @@ def test_runtime_and_packaging_have_no_legacy_identity() -> None:
         legacy_prefix,
         "Free " + "Claude Code",
         "free-" + "claude-code",
+        "Claude Code " + "Proxy",
     )
     offenders = [
         (name, marker)

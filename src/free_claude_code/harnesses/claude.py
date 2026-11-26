@@ -37,7 +37,7 @@ def build_claude_proxy_env(
     auth_token: str,
     base_env: Mapping[str, str],
 ) -> dict[str, str]:
-    """Return the canonical environment for Claude Code proxy sessions."""
+    """Return the canonical environment for Claude Code gateway sessions."""
 
     # Claude's aggregate traffic flag also suppresses gateway model discovery.
     return client_environment(

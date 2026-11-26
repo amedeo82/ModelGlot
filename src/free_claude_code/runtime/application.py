@@ -204,7 +204,7 @@ class ApplicationRuntime:
                     event="server.starting",
                     instance_id=self.instance_id,
                     modelglot_version=package_version(),
-                ).info("Starting Claude Code Proxy...")
+                ).info("Starting ModelGlot...")
                 await _await_owned_task(
                     asyncio.create_task(self._configuration.initialize())
                 )
