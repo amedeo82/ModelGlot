@@ -45,21 +45,6 @@ public static class ModelGlotShortcutAppUserModelId
         ref Guid classId, IntPtr outer, uint context, ref Guid interfaceId, out IntPtr instance);
 
     [ComImport]
-    [Guid("000214F9-0000-0000-C000-000000000046")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    private interface IShellLinkW
-    {
-        [PreserveSig]
-        int QueryInterface(ref Guid interfaceId, out IntPtr instance);
-
-        [PreserveSig]
-        uint AddRef();
-
-        [PreserveSig]
-        uint Release();
-    }
-
-    [ComImport]
     [Guid("0000010B-0000-0000-C000-000000000046")]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     private interface IPersistFile
@@ -128,10 +113,9 @@ public static class ModelGlotShortcutAppUserModelId
             Check(
                 CoCreateInstance(ref classId, IntPtr.Zero, CLSCTX_INPROC_SERVER, ref interfaceId, out shellLinkPointer),
                 "Could not create the Windows shell link");
-            IShellLinkW shellLink = (IShellLinkW)Marshal.GetObjectForIUnknown(shellLinkPointer);
-            IPersistFile persistFile = QueryInterface<IPersistFile>(shellLink, IidPersistFile);
+            IPersistFile persistFile = QueryInterface<IPersistFile>(shellLinkPointer, IidPersistFile);
             Check(persistFile.Load(shortcutPath, 0x42), "Could not load the shortcut '" + shortcutPath + "'");
-            IPropertyStore propertyStore = QueryInterface<IPropertyStore>(shellLink, IidPropertyStore);
+            IPropertyStore propertyStore = QueryInterface<IPropertyStore>(shellLinkPointer, IidPropertyStore);
             PropertyKey key = new PropertyKey
             {
                 FormatId = PkeyAppUserModelIdFormat,
@@ -161,11 +145,11 @@ public static class ModelGlotShortcutAppUserModelId
         }
     }
 
-    private static T QueryInterface<T>(IShellLinkW shellLink, Guid interfaceId)
+    private static T QueryInterface<T>(IntPtr shellLinkPointer, Guid interfaceId)
     {
         IntPtr instance = IntPtr.Zero;
         Guid iid = interfaceId;
-        Check(shellLink.QueryInterface(ref iid, out instance), "Could not query the shell link interface");
+        Check(Marshal.QueryInterface(shellLinkPointer, ref iid, out instance), "Could not query the shell link interface");
         try
         {
             return (T)Marshal.GetObjectForIUnknown(instance);
