@@ -22,8 +22,7 @@ free, paid, subscription and local — without changing how you work.</p>
 </div>
 
 <p align="center">
-  <em>Independent open-source project, based on
-  <a href="https://github.com/Alishahryar1/free-claude-code">Free Claude Code</a>.
+  <em>Independent open-source project based on an upstream open-source codebase.
   Not affiliated with or endorsed by Anthropic, OpenAI or Google.
   Claude and Claude Code are trademarks of Anthropic.</em>
 </p>
@@ -54,13 +53,13 @@ In practice this means:
 
 ## What ModelGlot Adds To Upstream
 
-ModelGlot keeps the core of Free Claude Code — the harnesses, the provider catalog,
-the four API protocols and the routing engine — and adds its own identity, its own
+ModelGlot keeps the upstream core — the harnesses, the provider catalog, the four
+API protocols and the routing engine — and adds its own identity, its own
 observability and a set of product improvements.
 
 | Area | ModelGlot |
 | --- | --- |
-| **Own identity and state** | `modelglot-*` commands, `~/.modelglot` state, port `16969`, branded desktop app, tray, notifications and icons. Nothing collides with a Free Claude Code installation. |
+| **Own identity and state** | `modelglot-*` commands, `~/.modelglot` state, port `16969`, branded desktop app, tray, notifications and icons. Nothing collides with an upstream installation. |
 | **Readable model catalog** | Descriptive titles, provider logos, capability badges, context limits, release state, provenance and freshness in the picker — while every canonical model ID and route stays unchanged. |
 | **Token optimization and usage dashboard** | A read-only Admin page that shows RTK and Headroom reports, provider-observed usage per model/provider/day, and Code session context occupancy — each with its own basis, never merged into one number. |
 | **Guided desktop experience** | Check for updates from the tray, install a stable release and reopen automatically, with branded native notifications and update logs. |
@@ -69,9 +68,9 @@ observability and a set of product improvements.
 | **Cleaner interruptions** | `Ctrl+C` closes the native client and its launcher with exit code 130 and no Python traceback; the local proxy keeps running. |
 | **Safer new data paths** | Admin routes stay loopback-only with `Cache-Control: no-store`; the usage schema stores no prompts, completions, tool arguments or credentials; CSV export neutralizes formula injection. |
 
-> **Switching from Free Claude Code?** ModelGlot deliberately does **not** import
-> `~/.fcc` state, `fcc-*` commands or legacy environment variables. Configure your
-> providers again and point your clients at `http://127.0.0.1:16969`.
+> **Switching from the upstream project?** ModelGlot deliberately does **not**
+> import legacy state, commands or environment variables. Configure your providers
+> again and point your clients at `http://127.0.0.1:16969`.
 
 Code sessions and local web tools (`web_search` / `web_fetch`) already existed
 upstream: ModelGlot keeps them and documents them properly
@@ -838,7 +837,6 @@ modelglot-doctor
 - [Report bugs or request features](https://github.com/amedeo82/ModelGlot/issues)
 - [Releases](https://github.com/amedeo82/ModelGlot/releases)
 - [Contributing guide](CONTRIBUTING.md)
-- [Upstream project this is based on](https://github.com/Alishahryar1/free-claude-code)
 
 ## Maintainers
 
