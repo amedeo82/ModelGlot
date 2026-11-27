@@ -3,14 +3,14 @@
 import httpx
 import pytest
 
-from free_claude_code.config.api_keys import normalize_api_keys
-from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
-from free_claude_code.config.settings import Settings
-from free_claude_code.providers.admission_registry import ProviderAdmissionRegistry
-from free_claude_code.providers.anthropic import AnthropicProvider
-from free_claude_code.providers.runtime import ProviderRuntime
-from free_claude_code.providers.runtime.config import build_provider_config
-from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
+from modelglot.config.api_keys import normalize_api_keys
+from modelglot.config.provider_catalog import PROVIDER_CATALOG
+from modelglot.config.settings import Settings
+from modelglot.providers.admission_registry import ProviderAdmissionRegistry
+from modelglot.providers.anthropic import AnthropicProvider
+from modelglot.providers.runtime import ProviderRuntime
+from modelglot.providers.runtime.config import build_provider_config
+from modelglot.runtime.provider_manager import ProviderRuntimeManager
 from tests.providers.support import immediate_admission
 from tests.providers.test_anthropic_discovery import metadata
 

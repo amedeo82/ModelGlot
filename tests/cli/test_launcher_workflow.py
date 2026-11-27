@@ -8,10 +8,10 @@ from urllib.error import URLError
 
 import pytest
 
-from free_claude_code.application.model_catalog import CatalogModel
-from free_claude_code.cli.launchers.aider_config import build_aider_config
-from free_claude_code.config.paths import codex_model_catalog_path
-from free_claude_code.core.json_types import load_json_value
+from modelglot.application.model_catalog import CatalogModel
+from modelglot.cli.launchers.aider_config import build_aider_config
+from modelglot.config.paths import codex_model_catalog_path
+from modelglot.core.json_types import load_json_value
 from tests.cli.conftest import LaunchCapture
 from tests.wire_payload import (
     array_payload,
@@ -36,7 +36,7 @@ HARNESSES = (
 
 
 def launcher(name: str) -> Callable[[list[str]], None]:
-    module = importlib.import_module(f"free_claude_code.cli.launchers.{name}")
+    module = importlib.import_module(f"modelglot.cli.launchers.{name}")
     entrypoint: object = getattr(module, "launch", None)
     assert callable(entrypoint)
     return entrypoint

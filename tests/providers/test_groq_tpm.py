@@ -7,15 +7,15 @@ import httpx2
 import openai
 import pytest
 
-from free_claude_code.config.provider_catalog import GROQ_DEFAULT_BASE
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.reasoning import ReasoningEffort, ReasoningPolicy
-from free_claude_code.providers.failure_reporting import finalize_provider_failure
-from free_claude_code.providers.groq import GroqProvider
-from free_claude_code.providers.groq.client import GroqChatBehavior
-from free_claude_code.providers.groq.tpm import correct_tpm_completion_budget
+from modelglot.config.provider_catalog import GROQ_DEFAULT_BASE
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.reasoning import ReasoningEffort, ReasoningPolicy
+from modelglot.providers.failure_reporting import finalize_provider_failure
+from modelglot.providers.groq import GroqProvider
+from modelglot.providers.groq.client import GroqChatBehavior
+from modelglot.providers.groq.tpm import correct_tpm_completion_budget
 from tests.providers.request_factory import make_messages_request
 from tests.providers.support import (
     SDKStreamDouble,

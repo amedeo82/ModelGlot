@@ -5,13 +5,13 @@ from copy import deepcopy
 
 import pytest
 
-from free_claude_code.api.response_streams import (
+from modelglot.api.response_streams import (
     openai_responses_sse_streaming_response,
 )
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.openai_responses import ResponsesToolPolicy
-from free_claude_code.core.stream_output import StreamOutput
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.json_types import JsonObject
+from modelglot.core.openai_responses import ResponsesToolPolicy
+from modelglot.core.stream_output import StreamOutput
 from tests.api.test_delivered_stream_recovery import public_text, text_events
 from tests.api.test_midstream_model_fallback import delivered_candidates
 from tests.api.test_response_streams import _json_error

@@ -9,7 +9,7 @@ from playwright.sync_api import Error, Page, Request, expect
 from e2e.form_support import assert_autofill_opt_out
 from e2e.layout import visible_bounds
 from e2e.provider_support import api_key_input, open_provider
-from free_claude_code.core.version import package_version
+from modelglot.core.version import package_version
 
 
 class _Measurements(TypedDict):

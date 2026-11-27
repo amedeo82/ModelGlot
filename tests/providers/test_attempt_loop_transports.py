@@ -17,19 +17,19 @@ from tests.wire_payload import object_payload
 if TYPE_CHECKING:
     from loguru import Message
 
-from free_claude_code.config.provider_catalog import GEMINI_DEFAULT_BASE
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.core.stream_delivery import (
+from modelglot.config.provider_catalog import GEMINI_DEFAULT_BASE
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.json_types import JsonObject
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.core.stream_delivery import (
     StreamDeliveryState,
     bind_stream_delivery,
 )
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.core.trace import TRACE_PAYLOAD_BINDING
-from free_claude_code.providers.gemini import GeminiProvider
-from free_claude_code.providers.gemini.transport import GeminiTransport
-from free_claude_code.providers.history_negotiation import HistoryModeCache
+from modelglot.core.stream_output import StreamOutput
+from modelglot.core.trace import TRACE_PAYLOAD_BINDING
+from modelglot.providers.gemini import GeminiProvider
+from modelglot.providers.gemini.transport import GeminiTransport
+from modelglot.providers.history_negotiation import HistoryModeCache
 from tests.api.test_delivered_stream_recovery import text_events
 from tests.api.test_hidden_stream_retries import delivered
 from tests.providers.support import immediate_admission, make_provider_config

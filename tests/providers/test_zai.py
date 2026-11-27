@@ -4,14 +4,14 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from free_claude_code.application.errors import InvalidRequestError
-from free_claude_code.config.constants import ANTHROPIC_DEFAULT_MAX_OUTPUT_TOKENS
-from free_claude_code.config.provider_catalog import (
+from modelglot.application.errors import InvalidRequestError
+from modelglot.config.constants import ANTHROPIC_DEFAULT_MAX_OUTPUT_TOKENS
+from modelglot.config.provider_catalog import (
     ZAI_API_DEFAULT_BASE,
     ZAI_CODING_DEFAULT_BASE,
 )
-from free_claude_code.core.anthropic.models import Message, MessagesRequest
-from free_claude_code.providers.openai_chat import OpenAIChatProvider
+from modelglot.core.anthropic.models import Message, MessagesRequest
+from modelglot.providers.openai_chat import OpenAIChatProvider
 from tests.fixture_parameters import fixture_parameter
 from tests.providers.support import (
     immediate_admission,

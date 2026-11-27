@@ -5,15 +5,15 @@ from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
 
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.messaging.command_context import StopOutcome
-from free_claude_code.messaging.models import IncomingMessage, MessageScope
-from free_claude_code.messaging.node_event_pipeline import process_parsed_cli_event
-from free_claude_code.messaging.rendering.telegram_markdown import (
+from modelglot.core.json_types import JsonObject
+from modelglot.messaging.command_context import StopOutcome
+from modelglot.messaging.models import IncomingMessage, MessageScope
+from modelglot.messaging.node_event_pipeline import process_parsed_cli_event
+from modelglot.messaging.rendering.telegram_markdown import (
     escape_md_v2,
     render_markdown_to_mdv2,
 )
-from free_claude_code.messaging.trees import (
+from modelglot.messaging.trees import (
     CancellationReason,
     CancellationResult,
     CancellationUiOwner,
@@ -27,8 +27,8 @@ from free_claude_code.messaging.trees import (
     TreeIdentity,
     TreeSnapshot,
 )
-from free_claude_code.messaging.trees.transitions import CancellationEffect
-from free_claude_code.messaging.workflow import MessagingWorkflow
+from modelglot.messaging.trees.transitions import CancellationEffect
+from modelglot.messaging.workflow import MessagingWorkflow
 
 _SCOPE = MessageScope(platform="telegram", chat_id="c")
 
@@ -542,7 +542,7 @@ async def test_process_parsed_event_failed_complete_does_not_mark_success() -> N
 async def test_terminal_status_waits_for_its_durable_outcome(
     event: JsonObject, save_fails: bool
 ) -> None:
-    from free_claude_code.messaging.trees import MessagingStorageError
+    from modelglot.messaging.trees import MessagingStorageError
 
     entered, release = asyncio.Event(), asyncio.Event()
     ui = AsyncMock()

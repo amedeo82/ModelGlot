@@ -2,8 +2,8 @@
 
 import pytest
 
-from free_claude_code.core.continuation_stream import ContinuationStream
-from free_claude_code.core.delivered_response import DeliveredResponse
+from modelglot.core.continuation_stream import ContinuationStream
+from modelglot.core.delivered_response import DeliveredResponse
 from tests.wire_payload import object_array, object_payload
 
 
@@ -199,9 +199,7 @@ def test_handoff_fallback_preserves_already_closed_item_status(
     )
     continuation = ContinuationStream(response)
     continuation.begin(handoff=True)
-    monkeypatch.setattr(
-        "free_claude_code.core.delivered_response.RECOVERY_RETENTION_BYTES", 1
-    )
+    monkeypatch.setattr("modelglot.core.delivered_response.RECOVERY_RETENTION_BYTES", 1)
     for event in continuation.boundary():
         response.observe(event)
     result = continuation.finalize(

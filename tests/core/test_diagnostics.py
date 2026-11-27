@@ -5,7 +5,7 @@ import json
 import pytest
 from httpx import ConnectError, HTTPStatusError, Request, Response
 
-from free_claude_code.core.diagnostics import (
+from modelglot.core.diagnostics import (
     ERROR_DETAIL_DISPLAY_CAP_BYTES,
     UpstreamErrorDetail,
     attach_upstream_error_body,
@@ -16,7 +16,7 @@ from free_claude_code.core.diagnostics import (
     redact_sensitive_error_text,
     safe_exception_message,
 )
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.failures import ExecutionFailure, FailureKind
 
 
 def test_redaction_preserves_context_and_covers_recognizable_credentials() -> None:

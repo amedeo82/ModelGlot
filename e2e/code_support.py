@@ -5,14 +5,14 @@ from collections.abc import Awaitable
 from pathlib import Path
 from unittest.mock import patch
 
-from free_claude_code.application.code_sessions import CodeService
-from free_claude_code.application.code_sessions.models import (
+from modelglot.application.code_sessions import CodeService
+from modelglot.application.code_sessions.models import (
     CodeItem,
     CodeRun,
     CodeSession,
 )
-from free_claude_code.runtime.code_sessions_sqlite import SQLiteCodeStore
-from free_claude_code.runtime.sqlite_database import SQLiteDatabase
+from modelglot.runtime.code_sessions_sqlite import SQLiteCodeStore
+from modelglot.runtime.sqlite_database import SQLiteDatabase
 from tests.code_sessions_support import FakeHarness
 
 

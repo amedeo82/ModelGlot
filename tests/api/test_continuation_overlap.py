@@ -6,11 +6,11 @@ from itertools import pairwise
 
 import pytest
 
-from free_claude_code.application.response_collection import WireProtocol
-from free_claude_code.core.anthropic.stream_contracts import SSEEvent, parse_sse_text
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.stream_delivery import current_stream_delivery
-from free_claude_code.core.stream_output import completed_output
+from modelglot.application.response_collection import WireProtocol
+from modelglot.core.anthropic.stream_contracts import SSEEvent, parse_sse_text
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.stream_delivery import current_stream_delivery
+from modelglot.core.stream_output import completed_output
 from tests.api.test_delivered_stream_recovery import public_text, text_events
 from tests.api.test_hidden_stream_retries import delivered
 from tests.api.test_tool_call_buffer import _frames, _response
@@ -326,7 +326,7 @@ async def test_overflow_preserves_public_prefix_and_closes_the_source(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "free_claude_code.core.continuation_overlap.RECOVERY_RETENTION_BYTES", 1000
+        "modelglot.core.continuation_overlap.RECOVERY_RETENTION_BYTES", 1000
     )
     closed = []
     attempts = []

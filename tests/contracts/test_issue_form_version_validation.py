@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from free_claude_code.core.json_types import JsonObject, JsonValue, load_json_value
+from modelglot.core.json_types import JsonObject, JsonValue, load_json_value
 from tests.wire_payload import object_array, object_payload, string_payload
 
 BUG_FORM = Path(".github/ISSUE_TEMPLATE/bug-report.yml")
@@ -154,7 +154,7 @@ def _parse_report(body: str) -> JsonObject:
 def test_plain_doctor_report_can_be_collapsed_without_changing_its_data(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    from free_claude_code.cli import doctor
+    from modelglot.cli import doctor
 
     copied: list[str] = []
     report = {"version": "1.2.3", "model_routing": {"model": "provider/```</details>"}}

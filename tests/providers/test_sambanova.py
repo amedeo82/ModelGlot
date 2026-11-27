@@ -5,10 +5,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from free_claude_code.config.provider_catalog import SAMBANOVA_DEFAULT_BASE
-from free_claude_code.core.reasoning import ReasoningEffort, ReasoningPolicy
-from free_claude_code.providers.base import ProviderConfig
-from free_claude_code.providers.openai_chat import OpenAIChatProvider
+from modelglot.config.provider_catalog import SAMBANOVA_DEFAULT_BASE
+from modelglot.core.reasoning import ReasoningEffort, ReasoningPolicy
+from modelglot.providers.base import ProviderConfig
+from modelglot.providers.openai_chat import OpenAIChatProvider
 from tests.providers.request_factory import make_messages_request
 from tests.providers.support import (
     SDKStreamDouble,
@@ -46,9 +46,7 @@ def test_default_base_url_constant() -> None:
 def test_init_uses_default_base_url_and_api_key(
     sambanova_config: ProviderConfig,
 ) -> None:
-    with patch(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI"
-    ) as mock_openai:
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI") as mock_openai:
         provider = profiled_provider(
             "sambanova", sambanova_config, admission=immediate_admission()
         )
@@ -61,7 +59,7 @@ def test_init_uses_default_base_url_and_api_key(
 def test_init_strips_trailing_slash(sambanova_config: ProviderConfig) -> None:
     config = replace(sambanova_config, base_url=f"{SAMBANOVA_DEFAULT_BASE}/")
 
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = profiled_provider(
             "sambanova", config, admission=immediate_admission()
         )

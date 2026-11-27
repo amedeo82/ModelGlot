@@ -8,14 +8,14 @@ import httpx2
 import pytest
 from openai import AsyncOpenAI
 
-from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.json_types import JsonObject, JsonValue, load_json_value
-from free_claude_code.core.model_capabilities import ModelInputModality
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.providers.model_listing import ModelListResponseError
-from free_claude_code.providers.runtime import build_provider_config
+from modelglot.config.provider_catalog import PROVIDER_CATALOG
+from modelglot.config.settings import Settings
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.json_types import JsonObject, JsonValue, load_json_value
+from modelglot.core.model_capabilities import ModelInputModality
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.providers.model_listing import ModelListResponseError
+from modelglot.providers.runtime import build_provider_config
 from tests.providers.support import immediate_admission
 from tests.wire_payload import decode_object, object_array, object_payload
 
@@ -51,7 +51,7 @@ def page(
 async def provider_for(
     handler: Callable[[httpx2.Request], httpx2.Response], base_url: str = BASE_URL
 ):
-    from free_claude_code.providers.alibaba_cloud import AlibabaCloudProvider
+    from modelglot.providers.alibaba_cloud import AlibabaCloudProvider
 
     settings = Settings(
         ALIBABA_CLOUD_API_KEY="test-key", ALIBABA_CLOUD_BASE_URL=base_url

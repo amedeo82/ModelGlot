@@ -7,12 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.application.model_catalog import CatalogModel
-from free_claude_code.cli.launchers.cline_config import (
+from modelglot.application.model_catalog import CatalogModel
+from modelglot.cli.launchers.cline_config import (
     CLINE_PROVIDER_ID,
     build_cline_config,
 )
-from free_claude_code.core.model_capabilities import ModelInputModality
+from modelglot.core.model_capabilities import ModelInputModality
 from tests.cli.conftest import LaunchCapture
 from tests.wire_payload import decode_object, object_payload
 

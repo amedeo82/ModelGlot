@@ -20,7 +20,7 @@ def build() -> None:
     version = requirement.removeprefix("==")
     if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
         raise ValueError("Expected an exact Python requirement")
-    destination = ROOT / "src/free_claude_code/assets/macos"
+    destination = ROOT / "src/modelglot/assets/macos"
     destination.mkdir(parents=True, exist_ok=True)
     for architecture, minimum in TARGETS.items():
         output = destination / f"modelglot-desktop-{architecture}"

@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from free_claude_code.core.anthropic.streaming import AnthropicSSEDecoder
+from modelglot.core.anthropic.streaming import AnthropicSSEDecoder
 
 
 def test_decoder_handles_every_split_and_crlf_boundaries() -> None:
@@ -44,7 +44,7 @@ def test_event_filter_skips_json_and_preserves_unnamed_events_at_every_split(
     for split in range(len(wire) + 1):
         decoder = AnthropicSSEDecoder(event_names=frozenset({"error"}))
         with patch(
-            "free_claude_code.core.anthropic.stream_contracts.json.loads",
+            "modelglot.core.anthropic.stream_contracts.json.loads",
             wraps=json.loads,
         ) as loads:
             events = (

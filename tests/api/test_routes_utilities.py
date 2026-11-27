@@ -5,10 +5,10 @@ import pytest
 from fastapi.applications import FastAPI
 from fastapi.testclient import TestClient
 
-from free_claude_code.api.dependencies import app_services
-from free_claude_code.application.ports import StopResult
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.json_types import JsonObject
+from modelglot.api.dependencies import app_services
+from modelglot.application.ports import StopResult
+from modelglot.config.settings import Settings
+from modelglot.core.json_types import JsonObject
 from tests.api.support import create_test_app
 from tests.wire_payload import object_payload, response_object, string_payload
 
@@ -59,7 +59,7 @@ def test_count_tokens_endpoint(client: TestClient) -> None:
         "messages": [{"role": "user", "content": "hello"}],
     }
 
-    with patch("free_claude_code.api.routes.get_token_count", return_value=5):
+    with patch("modelglot.api.routes.get_token_count", return_value=5):
         response = client.post("/v1/messages/count_tokens", json=payload)
 
     assert response.status_code == 200
@@ -86,8 +86,8 @@ def test_count_tokens_retired_model_uses_replacement(
         Settings(MODEL="groq/default", MODEL_OPUS="deepseek/opus")
     )
     with (
-        patch("free_claude_code.api.routes.get_token_count", return_value=5),
-        patch("free_claude_code.api.handlers.token_count.trace_event") as trace,
+        patch("modelglot.api.routes.get_token_count", return_value=5),
+        patch("modelglot.api.handlers.token_count.trace_event") as trace,
     ):
         response = TestClient(test_app).post(
             "/v1/messages/count_tokens",
@@ -115,7 +115,7 @@ def test_count_tokens_error_returns_500(client: TestClient) -> None:
     }
 
     with patch(
-        "free_claude_code.api.routes.get_token_count",
+        "modelglot.api.routes.get_token_count",
         side_effect=RuntimeError("token error"),
     ):
         response = client.post("/v1/messages/count_tokens", json=payload)

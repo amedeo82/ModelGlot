@@ -8,22 +8,22 @@ from unittest.mock import AsyncMock, MagicMock
 import httpx
 import pytest
 
-from free_claude_code.api.app import create_app
-from free_claude_code.api.ports import ApiServices
-from free_claude_code.application.errors import ApplicationUnavailableError
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.application.readiness import InitializationWait
-from free_claude_code.config.api_keys import normalize_api_keys
-from free_claude_code.config.loader import ManagedConfigStore
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.async_tasks import run_sync_owned
-from free_claude_code.providers.admission_registry import ProviderAdmissionRegistry
-from free_claude_code.providers.base import BaseProvider
-from free_claude_code.providers.runtime.runtime import ProviderRuntime
-from free_claude_code.runtime.application import ApplicationRuntime
-from free_claude_code.runtime.codex_catalog import CodexModelCatalogPublisher
-from free_claude_code.runtime.configuration import ConfigurationService
-from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
+from modelglot.api.app import create_app
+from modelglot.api.ports import ApiServices
+from modelglot.application.errors import ApplicationUnavailableError
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.application.readiness import InitializationWait
+from modelglot.config.api_keys import normalize_api_keys
+from modelglot.config.loader import ManagedConfigStore
+from modelglot.config.settings import Settings
+from modelglot.core.async_tasks import run_sync_owned
+from modelglot.providers.admission_registry import ProviderAdmissionRegistry
+from modelglot.providers.base import BaseProvider
+from modelglot.providers.runtime.runtime import ProviderRuntime
+from modelglot.runtime.application import ApplicationRuntime
+from modelglot.runtime.codex_catalog import CodexModelCatalogPublisher
+from modelglot.runtime.configuration import ConfigurationService
+from modelglot.runtime.provider_manager import ProviderRuntimeManager
 from tests.runtime.catalog_support import finish_discovery
 from tests.web_tools_support import StubWebToolsClient
 
@@ -257,7 +257,7 @@ async def test_recovery_wait_uses_remaining_budget_without_orphaning_waiter(
     )
     wait = InitializationWait(1 if cancel else 0.01)
     monkeypatch.setattr(
-        "free_claude_code.runtime.provider_manager.InitializationWait", lambda: wait
+        "modelglot.runtime.provider_manager.InitializationWait", lambda: wait
     )
     lease = await manager.acquire()
     waiting = None
@@ -528,7 +528,7 @@ async def test_catalog_waiter_exit_preserves_shared_discovery(
     )
     wait = InitializationWait(1 if cancel else 0.01)
     monkeypatch.setattr(
-        "free_claude_code.runtime.provider_manager.InitializationWait", lambda: wait
+        "modelglot.runtime.provider_manager.InitializationWait", lambda: wait
     )
     waiting = asyncio.create_task(manager.wait_for_model_catalog("nvidia_nim/one"))
     try:
@@ -541,7 +541,7 @@ async def test_catalog_waiter_exit_preserves_shared_discovery(
             with pytest.raises(ApplicationUnavailableError, match="still starting"):
                 await waiting
         monkeypatch.setattr(
-            "free_claude_code.runtime.provider_manager.InitializationWait",
+            "modelglot.runtime.provider_manager.InitializationWait",
             InitializationWait,
         )
         release.set()

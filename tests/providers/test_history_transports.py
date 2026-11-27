@@ -20,17 +20,17 @@ import pytest
 from openai import AsyncOpenAI
 from typing_extensions import TypedDict
 
-from free_claude_code.application.execution import ProviderExecutor
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.application.response_collection import (
+from modelglot.application.execution import ProviderExecutor
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.application.response_collection import (
     WireProtocol,
     collected_frames,
 )
-from free_claude_code.core.anthropic import aggregate_anthropic_sse_to_message
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.history_replay import (
+from modelglot.core.anthropic import aggregate_anthropic_sse_to_message
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.history_replay import (
     HistoryProtocol,
     ReplayRecord,
     decode_replay,
@@ -38,19 +38,19 @@ from free_claude_code.core.history_replay import (
     readable_reasoning,
     resolve_messages_replay,
 )
-from free_claude_code.core.json_types import JsonObject, JsonValue, load_json_value
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.core.stream_recovery import ContinuationSeed
-from free_claude_code.providers.anthropic_messages.transport import (
+from modelglot.core.json_types import JsonObject, JsonValue, load_json_value
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.core.stream_output import StreamOutput
+from modelglot.core.stream_recovery import ContinuationSeed
+from modelglot.providers.anthropic_messages.transport import (
     AnthropicMessagesTransport,
 )
-from free_claude_code.providers.endpoint_types import EndpointContext
-from free_claude_code.providers.history_replay import replay_origin
-from free_claude_code.providers.open_router import OpenRouterProvider
-from free_claude_code.providers.openai_chat.provider import OpenAIChatProvider
-from free_claude_code.providers.openai_responses.transport import (
+from modelglot.providers.endpoint_types import EndpointContext
+from modelglot.providers.history_replay import replay_origin
+from modelglot.providers.open_router import OpenRouterProvider
+from modelglot.providers.openai_chat.provider import OpenAIChatProvider
+from modelglot.providers.openai_responses.transport import (
     OpenAIResponsesTransport,
 )
 from tests.application.test_execution import (
@@ -331,7 +331,7 @@ async def _harness(
             provider = responses_transport(client, max_attempts=max_attempts)
         else:
             with patch(
-                "free_claude_code.providers.openai_chat.client.AsyncOpenAI",
+                "modelglot.providers.openai_chat.client.AsyncOpenAI",
                 return_value=client,
             ):
                 provider = (
@@ -894,7 +894,7 @@ async def test_successful_fallback_preserves_raw_state_and_gets_unmodified_input
         )
 
     with patch(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI",
+        "modelglot.providers.openai_chat.client.AsyncOpenAI",
         return_value=_client(reply),
     ):
         provider = OpenRouterProvider(

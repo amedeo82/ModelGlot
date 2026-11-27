@@ -5,17 +5,17 @@ from typing import Any
 
 import pytest
 
-from free_claude_code.application.response_collection import WireProtocol
-from free_claude_code.core.history_replay import HistoryMode, ReplayOrigin
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.stream_recovery import ContinuationSeed
-from free_claude_code.providers.continuation import ContinuationRequest
-from free_claude_code.providers.history_negotiation import (
+from modelglot.application.response_collection import WireProtocol
+from modelglot.core.history_replay import HistoryMode, ReplayOrigin
+from modelglot.core.json_types import JsonObject
+from modelglot.core.stream_recovery import ContinuationSeed
+from modelglot.providers.continuation import ContinuationRequest
+from modelglot.providers.history_negotiation import (
     HistoryModeCache,
     HistoryNegotiation,
 )
-from free_claude_code.providers.openai_chat import OpenAIChatProvider
-from free_claude_code.providers.openai_responses.transport import (
+from modelglot.providers.openai_chat import OpenAIChatProvider
+from modelglot.providers.openai_responses.transport import (
     OpenAIResponsesTransport,
 )
 from tests.providers.support import stream_provider_request
@@ -139,10 +139,10 @@ def test_response_continuation_preserves_delivered_part_text() -> None:
 async def test_fallback_prefix_follows_effective_sdk_history_override(
     protocol: str,
 ) -> None:
-    from free_claude_code.core.anthropic.models import MessagesRequest
-    from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-    from free_claude_code.core.reasoning import ReasoningPolicy
-    from free_claude_code.providers.deepseek import DeepSeekProvider
+    from modelglot.core.anthropic.models import MessagesRequest
+    from modelglot.core.openai_responses import OpenAIResponsesRequest
+    from modelglot.core.reasoning import ReasoningPolicy
+    from modelglot.providers.deepseek import DeepSeekProvider
     from tests.api.test_delivered_stream_recovery import text_events
     from tests.providers.support import immediate_admission, make_provider_config
     from tests.providers.test_history_transports import _harness, _saved_reply

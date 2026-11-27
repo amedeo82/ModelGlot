@@ -10,23 +10,23 @@ import pytest
 from fastapi.responses import JSONResponse
 from openai import AsyncOpenAI
 
-from free_claude_code.api.response_streams import (
+from modelglot.api.response_streams import (
     ManagedStreamingResponse,
     bind_response_lifetime,
     gemini_sse_streaming_response,
 )
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.gemini.models import GeminiRequest
-from free_claude_code.core.gemini.replay import decode_bundle
-from free_claude_code.core.gemini.response import GeminiOutput, gemini_parts
-from free_claude_code.core.history_replay import readable_reasoning
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.core.stream_output import completed_output
-from free_claude_code.providers.anthropic_messages.transport import (
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.gemini.models import GeminiRequest
+from modelglot.core.gemini.replay import decode_bundle
+from modelglot.core.gemini.response import GeminiOutput, gemini_parts
+from modelglot.core.history_replay import readable_reasoning
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.core.stream_output import completed_output
+from modelglot.providers.anthropic_messages.transport import (
     AnthropicMessagesTransport,
 )
-from free_claude_code.providers.deepseek.client import _PROFILE, DeepSeekChatBehavior
+from modelglot.providers.deepseek.client import _PROFILE, DeepSeekChatBehavior
 from tests.api.test_delivered_stream_recovery import text_events
 from tests.api.test_recovery_reasoning import followed_by_text, reasoning_events
 from tests.api.test_response_streams import _serve

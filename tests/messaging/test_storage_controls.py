@@ -8,12 +8,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 import pytest_asyncio
 
-from free_claude_code.messaging.models import IncomingMessage
-from free_claude_code.messaging.platforms.ports import MessagingStartupNotice
-from free_claude_code.messaging.trees import MessagingStorageError, TreeQueueManager
-from free_claude_code.messaging.trees.transitions import FailureResult, NodeClaim
-from free_claude_code.messaging.workflow import MessagingWorkflow
-from free_claude_code.runtime.messaging_sqlite import SQLiteMessagingStore
+from modelglot.messaging.models import IncomingMessage
+from modelglot.messaging.platforms.ports import MessagingStartupNotice
+from modelglot.messaging.trees import MessagingStorageError, TreeQueueManager
+from modelglot.messaging.trees.transitions import FailureResult, NodeClaim
+from modelglot.messaging.workflow import MessagingWorkflow
+from modelglot.runtime.messaging_sqlite import SQLiteMessagingStore
 from tests.fixture_types import MessagingStoreFactory
 
 pytestmark = pytest.mark.asyncio
@@ -153,7 +153,7 @@ async def interrupted_workflow(
     monkeypatch: pytest.MonkeyPatch,
 ):
     monkeypatch.setattr(
-        "free_claude_code.messaging.trees.manager.CANCEL_TASK_DRAIN_TIMEOUT_S", 0.01
+        "modelglot.messaging.trees.manager.CANCEL_TASK_DRAIN_TIMEOUT_S", 0.01
     )
     storage = await messaging_store_factory()
     workflow = MessagingWorkflow(mock_platform, mock_cli_manager, storage)

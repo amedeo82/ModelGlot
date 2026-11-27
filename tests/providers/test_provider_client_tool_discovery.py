@@ -6,15 +6,15 @@ import httpx2
 import pytest
 from openai import AsyncOpenAI
 
-from free_claude_code.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.json_types import JsonObject, load_json_value
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.providers.admission_policy import ProviderAdmissionLimits
-from free_claude_code.providers.admission_registry import ProviderAdmissionRegistry
-from free_claude_code.providers.openai_chat import OpenAIChatProvider
-from free_claude_code.providers.runtime.runtime import create_provider
+from modelglot.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
+from modelglot.config.settings import Settings
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.json_types import JsonObject, load_json_value
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.providers.admission_policy import ProviderAdmissionLimits
+from modelglot.providers.admission_registry import ProviderAdmissionRegistry
+from modelglot.providers.openai_chat import OpenAIChatProvider
+from modelglot.providers.runtime.runtime import create_provider
 from tests.core.openai_responses.test_client_tool_discovery import AGENTS, SEARCH
 from tests.providers.test_opencode import (
     _catalog_payload,
@@ -285,7 +285,7 @@ async def test_provider_discovery_call_and_result_round_trip(
             max_retries=0,
         )
         with patch(
-            "free_claude_code.providers.openai_chat.client.AsyncOpenAI",
+            "modelglot.providers.openai_chat.client.AsyncOpenAI",
             return_value=client,
         ):
             provider = cast(

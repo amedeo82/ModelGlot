@@ -4,8 +4,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from free_claude_code.core.anthropic import extract_text_from_content
-from free_claude_code.core.json_types import JsonValue
+from modelglot.core.anthropic import extract_text_from_content
+from modelglot.core.json_types import JsonValue
 
 
 class TestExtractTextFromContent:

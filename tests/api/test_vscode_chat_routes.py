@@ -3,10 +3,10 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.json_types import load_json_value
-from free_claude_code.harnesses import vscode_chat_integration as vscode
-from free_claude_code.runtime.application import ApplicationRuntime
+from modelglot.config.settings import Settings
+from modelglot.core.json_types import load_json_value
+from modelglot.harnesses import vscode_chat_integration as vscode
+from modelglot.runtime.application import ApplicationRuntime
 from tests.api.support import create_test_app, runtime_for_app
 from tests.wire_payload import (
     array_payload,
@@ -33,7 +33,7 @@ def integration():
 def test_connect_disconnect_and_doctor_status(
     integration: tuple[TestClient, Path, ApplicationRuntime],
 ) -> None:
-    from free_claude_code.runtime.diagnostics import integration_report
+    from modelglot.runtime.diagnostics import integration_report
 
     client, path, runtime = integration
     result = client.get(ROOT)

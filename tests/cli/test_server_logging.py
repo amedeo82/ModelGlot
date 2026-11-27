@@ -15,12 +15,12 @@ import pytest
 import uvicorn
 from loguru import logger
 
-from free_claude_code.cli.commands import ServerSupervisor
-from free_claude_code.cli.uvicorn_server import RuntimeServer
-from free_claude_code.config.logging_config import configure_logging
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.json_types import load_json_value
-from free_claude_code.runtime.application import ApplicationRuntime
+from modelglot.cli.commands import ServerSupervisor
+from modelglot.cli.uvicorn_server import RuntimeServer
+from modelglot.config.logging_config import configure_logging
+from modelglot.config.settings import Settings
+from modelglot.core.json_types import load_json_value
+from modelglot.runtime.application import ApplicationRuntime
 from tests.wire_payload import object_payload, string_payload
 
 
@@ -68,7 +68,7 @@ def _exercise_server_logging(
         logging.getLogger("test.dependency").warning("dependency warning")
 
     with (
-        patch("free_claude_code.runtime.bootstrap.build_asgi_app", build_app),
+        patch("modelglot.runtime.bootstrap.build_asgi_app", build_app),
         patch.object(RuntimeServer, "run", run),
         patch.multiple(sys, stdout=None, stderr=None)
         if without_streams

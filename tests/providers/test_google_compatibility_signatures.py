@@ -4,15 +4,15 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.providers.google_openai import (
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.json_types import JsonObject
+from modelglot.providers.google_openai import (
     GOOGLE_SKIP_THOUGHT_SIGNATURE_VALIDATOR,
     GoogleOpenAIProvider,
 )
-from free_claude_code.providers.google_openai.provider import GoogleChatBehavior
-from free_claude_code.providers.history_replay import replay_origin
-from free_claude_code.providers.vertex.client import _PROFILE
+from modelglot.providers.google_openai.provider import GoogleChatBehavior
+from modelglot.providers.history_replay import replay_origin
+from modelglot.providers.vertex.client import _PROFILE
 from tests.providers.request_factory import make_messages_request
 from tests.providers.support import (
     SDKStreamDouble,

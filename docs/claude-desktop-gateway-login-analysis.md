@@ -60,14 +60,14 @@ The analysis combined repository inspection with current vendor documentation.
 
 The following areas were inspected read-only:
 
-- `src/free_claude_code/harnesses/claude_desktop_integration.py`;
-- `src/free_claude_code/runtime/integration_service.py`;
-- `src/free_claude_code/config/paths.py`;
-- `src/free_claude_code/harnesses/claude.py`;
-- `src/free_claude_code/harnesses/claude_integration.py`;
-- `src/free_claude_code/cli/managed/diagnostics.py`;
-- `src/free_claude_code/api/admin_routes.py`;
-- `src/free_claude_code/api/admin_static/`;
+- `src/modelglot/harnesses/claude_desktop_integration.py`;
+- `src/modelglot/runtime/integration_service.py`;
+- `src/modelglot/config/paths.py`;
+- `src/modelglot/harnesses/claude.py`;
+- `src/modelglot/harnesses/claude_integration.py`;
+- `src/modelglot/cli/managed/diagnostics.py`;
+- `src/modelglot/api/admin_routes.py`;
+- `src/modelglot/api/admin_static/`;
 - Desktop integration unit, API, runtime, cleanup, and end-to-end tests;
 - README instructions for the Claude Desktop integration.
 
@@ -120,7 +120,7 @@ The Desktop integration uses a separate 3P configuration root:
 | Linux | `${XDG_CONFIG_HOME:-~/.config}/Claude-3p` |
 
 The root is defined in
-`src/free_claude_code/harnesses/claude_desktop_integration.py:38-48`.
+`src/modelglot/harnesses/claude_desktop_integration.py:38-48`.
 
 Relevant files are:
 
@@ -139,7 +139,7 @@ diagnostics and UI display (`claude_desktop_integration.py:143-190`).
 
 The disconnect intent record is stored separately at
 `~/.modelglot/claude-desktop-disconnect.json`
-(`src/free_claude_code/config/paths.py:113-114`).
+(`src/modelglot/config/paths.py:113-114`).
 
 ### 3.2 Connect behavior
 
@@ -192,7 +192,7 @@ contract, not merely leftover cleanup.
 ### 3.4 Refresh behavior
 
 `refresh_connected()` runs during server startup
-(`src/free_claude_code/runtime/integration_service.py:104-109`) and refreshes the proxy URL
+(`src/modelglot/runtime/integration_service.py:104-109`) and refreshes the proxy URL
 and rotating token only when the ModelGlot profile is already active
 (`claude_desktop_integration.py:362-370`).
 

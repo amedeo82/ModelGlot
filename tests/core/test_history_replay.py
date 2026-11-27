@@ -6,8 +6,8 @@ from typing import Any, Literal, cast
 
 import pytest
 
-from free_claude_code.application.response_collection import WireProtocol
-from free_claude_code.core.history_replay import (
+from modelglot.application.response_collection import WireProtocol
+from modelglot.core.history_replay import (
     AssociatedReplayRecord,
     HistoryMode,
     HistoryProtocol,
@@ -19,7 +19,7 @@ from free_claude_code.core.history_replay import (
     prepare_history,
     resolve_messages_replay,
 )
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.json_types import JsonObject
 from tests.wire_payload import decode_object, object_array
 
 

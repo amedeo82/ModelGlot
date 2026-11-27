@@ -9,19 +9,19 @@ from openai.types.responses.response_output_item_added_event import (
     ResponseOutputItemAddedEvent,
 )
 
-from free_claude_code.api.response_streams import (
+from modelglot.api.response_streams import (
     ManagedStreamingResponse,
     chat_sse_streaming_response,
 )
-from free_claude_code.application.response_collection import (
+from modelglot.application.response_collection import (
     WireProtocol,
     collect_response,
 )
-from free_claude_code.core.anthropic.passthrough import NativeMessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.chat_completions.request import ChatRequest
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.stream_output import StreamOutput
+from modelglot.core.anthropic.passthrough import NativeMessagesRequest
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.chat_completions.request import ChatRequest
+from modelglot.core.json_types import JsonObject
+from modelglot.core.stream_output import StreamOutput
 from tests.api.test_tool_call_buffer import _response
 from tests.providers.test_anthropic_messages_transport import Wire, _sse
 from tests.providers.test_anthropic_provider import native_body, provider
@@ -314,7 +314,7 @@ async def test_native_json_messages_validate_the_same_complete_call_identity(
 
     p = provider(callback)
     try:
-        from free_claude_code.core.failures import ExecutionFailure
+        from modelglot.core.failures import ExecutionFailure
 
         with pytest.raises(ExecutionFailure):
             await collect_response(
@@ -378,7 +378,7 @@ async def test_generated_alias_with_arguments_waits_for_remaining_name_and_sourc
 async def test_contradictory_snapshot_never_replaces_a_completed_native_call(
     kind: str, public: bool
 ) -> None:
-    from free_claude_code.core.failures import ExecutionFailure
+    from modelglot.core.failures import ExecutionFailure
 
     events = tool_events("responses", "{}")
     final = deepcopy(events[-1])

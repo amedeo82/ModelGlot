@@ -3,7 +3,7 @@ from typing import NotRequired, Required, TypedDict, cast
 import pytest
 from playwright.sync_api import Error, Page, Request, Route, expect
 
-from free_claude_code.core.json_types import JsonValue
+from modelglot.core.json_types import JsonValue
 from tests.assertions import require_present
 
 TOKEN_OPTIMIZATION_ENDPOINT = "**/admin/api/token-optimization"

@@ -6,17 +6,17 @@ import httpx2
 import openai
 import pytest
 
-from free_claude_code.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.providers.admission import (
+from modelglot.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.providers.admission import (
     ProviderAdmissionController,
     ProviderOperationKind,
 )
-from free_claude_code.providers.base import ProviderConfig
-from free_claude_code.providers.canonical_failures import overloaded_provider_failure
-from free_claude_code.providers.failure_classification import classify
-from free_claude_code.providers.nvidia_nim import NvidiaNimProvider
-from free_claude_code.providers.open_router import OpenRouterProvider
+from modelglot.providers.base import ProviderConfig
+from modelglot.providers.canonical_failures import overloaded_provider_failure
+from modelglot.providers.failure_classification import classify
+from modelglot.providers.nvidia_nim import NvidiaNimProvider
+from modelglot.providers.open_router import OpenRouterProvider
 from tests.providers.request_factory import make_messages_request
 from tests.providers.support import (
     SDKStreamDouble,
@@ -167,7 +167,7 @@ async def test_degraded_function_exhaustion_is_detailed_redacted_overload() -> N
             new_callable=AsyncMock,
             side_effect=error,
         ) as create,
-        patch("free_claude_code.providers.attempt_loop.loop.trace_event") as trace,
+        patch("modelglot.providers.attempt_loop.loop.trace_event") as trace,
         pytest.raises(ExecutionFailure) as exc_info,
     ):
         [

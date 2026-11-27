@@ -5,27 +5,27 @@ from hashlib import sha256
 
 import pytest
 
-from free_claude_code.application.response_collection import WireProtocol
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.gemini.errors import GeminiConversionError
-from free_claude_code.core.gemini.replay import (
+from modelglot.application.response_collection import WireProtocol
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.gemini.errors import GeminiConversionError
+from modelglot.core.gemini.replay import (
     CallReplay,
     ReplayBundle,
     decode_bundle,
     encode_bundle,
 )
-from free_claude_code.core.gemini.response import (
+from modelglot.core.gemini.response import (
     GeminiOutput,
     GeminiResponseAccumulator,
 )
-from free_claude_code.core.history_replay import (
+from modelglot.core.history_replay import (
     ReplayOrigin,
     ReplayRecord,
     prepare_history,
     readable_reasoning,
 )
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.json_types import JsonObject
 from tests.core.test_gemini_requests import build, request
 from tests.wire_payload import (
     array_payload,
@@ -169,9 +169,7 @@ def test_protected_ranges_cannot_exceed_verified_visible_text() -> None:
 def test_protected_pending_metadata_is_bounded_at_capture(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(
-        "free_claude_code.core.gemini.response.RECOVERY_RETENTION_BYTES", 100
-    )
+    monkeypatch.setattr("modelglot.core.gemini.response.RECOVERY_RETENTION_BYTES", 100)
     output = GeminiOutput("response", "model", include_thoughts=False)
     with pytest.raises(ExecutionFailure, match="retention limit"):
         output.capture(
@@ -189,9 +187,7 @@ def test_protected_pending_metadata_is_bounded_at_capture(
 def test_required_call_metadata_is_bounded_before_finish(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(
-        "free_claude_code.core.gemini.response.RECOVERY_RETENTION_BYTES", 100
-    )
+    monkeypatch.setattr("modelglot.core.gemini.response.RECOVERY_RETENTION_BYTES", 100)
     output = GeminiOutput("response", "model", include_thoughts=False)
     with pytest.raises(ExecutionFailure, match="retention limit"):
         output.capture_call(

@@ -11,9 +11,9 @@ import httpx2
 import pytest
 from openai import AsyncOpenAI
 
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.providers.mistral import MistralProvider
+from modelglot.config.settings import Settings
+from modelglot.core.json_types import JsonObject
+from modelglot.providers.mistral import MistralProvider
 from tests.api.support import create_test_app, provider_manager_for_app
 from tests.providers.support import immediate_admission, make_provider_config
 from tests.providers.test_opencode import _chat_event_stream
@@ -55,9 +55,7 @@ async def mistral_wire(
             http_client=httpx2.AsyncClient(transport=httpx2.MockTransport(generation)),
         )
 
-    with patch(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI", side_effect=sdk
-    ):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI", side_effect=sdk):
         provider = MistralProvider(
             make_provider_config(
                 api_key="test-mistral-key", base_url="https://api.mistral.ai/v1"

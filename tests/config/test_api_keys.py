@@ -5,20 +5,20 @@ import json
 import pytest
 from pydantic import SecretStr, ValidationError
 
-from free_claude_code.config.env_files import dotenv_values_from_file
-from free_claude_code.config.env_migrations import quote_env_value
-from free_claude_code.config.loader import (
+from modelglot.config.env_files import dotenv_values_from_file
+from modelglot.config.env_migrations import quote_env_value
+from modelglot.config.loader import (
     ConfigSource,
     ManagedConfigStore,
     compose_settings_snapshot,
 )
-from free_claude_code.config.provider_catalog import (
+from modelglot.config.provider_catalog import (
     PROVIDER_CATALOG,
     ProviderDescriptor,
 )
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.providers.runtime.config import (
+from modelglot.config.settings import Settings
+from modelglot.core.json_types import JsonObject
+from modelglot.providers.runtime.config import (
     build_custom_provider_config,
     build_provider_config,
 )

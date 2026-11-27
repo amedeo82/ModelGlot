@@ -6,11 +6,11 @@ import httpx2
 import pytest
 from openai import AsyncOpenAI
 
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.config.provider_catalog import QWENCLOUD_CODING_DEFAULT_BASE
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.reasoning import ReasoningEffort, ReasoningPolicy
-from free_claude_code.providers.openai_chat import OpenAIChatProvider
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.config.provider_catalog import QWENCLOUD_CODING_DEFAULT_BASE
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.reasoning import ReasoningEffort, ReasoningPolicy
+from modelglot.providers.openai_chat import OpenAIChatProvider
 from tests.providers.support import (
     REASONING_OFF,
     REASONING_ON,

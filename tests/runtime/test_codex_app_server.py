@@ -12,23 +12,23 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from typing_extensions import TypedDict
 
-from free_claude_code.application.code_sessions import CodeService
-from free_claude_code.application.code_sessions.models import (
+from modelglot.application.code_sessions import CodeService
+from modelglot.application.code_sessions.models import (
     CodeConflictError,
     CodeMode,
     CodeSession,
     CodeUnavailableError,
     HarnessEvent,
 )
-from free_claude_code.application.code_sessions.ports import EventSink
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.application.ports import ModelCatalogSnapshot, RequestRuntimePort
-from free_claude_code.config.paths import launcher_temp_dir_path
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.gateway_model_ids import no_thinking_gateway_model_id
-from free_claude_code.core.json_types import JsonObject, load_json_value
-from free_claude_code.runtime.code_sessions_sqlite import SQLiteCodeStore
-from free_claude_code.runtime.codex_app_server import (
+from modelglot.application.code_sessions.ports import EventSink
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.application.ports import ModelCatalogSnapshot, RequestRuntimePort
+from modelglot.config.paths import launcher_temp_dir_path
+from modelglot.config.settings import Settings
+from modelglot.core.gateway_model_ids import no_thinking_gateway_model_id
+from modelglot.core.json_types import JsonObject, load_json_value
+from modelglot.runtime.code_sessions_sqlite import SQLiteCodeStore
+from modelglot.runtime.codex_app_server import (
     CodexAppServer,
     CodexHarnessFactory,
 )

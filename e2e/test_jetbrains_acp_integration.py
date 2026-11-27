@@ -5,7 +5,7 @@ from collections.abc import Sequence
 import pytest
 from playwright.sync_api import Page, expect
 
-from free_claude_code.harnesses import jetbrains_acp_integration as jb
+from modelglot.harnesses import jetbrains_acp_integration as jb
 from tests.harnesses.test_jetbrains_acp_integration import install
 
 

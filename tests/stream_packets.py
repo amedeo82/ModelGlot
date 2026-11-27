@@ -2,8 +2,8 @@
 
 from collections.abc import AsyncIterator
 
-from free_claude_code.core.async_iterators import try_close_async_iterator
-from free_claude_code.core.stream_output import StreamOutput
+from modelglot.core.async_iterators import try_close_async_iterator
+from modelglot.core.stream_output import StreamOutput
 
 
 class PacketFixtureStream(AsyncIterator[StreamOutput]):

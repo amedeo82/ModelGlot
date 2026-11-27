@@ -5,11 +5,11 @@ import json
 import pytest
 from pydantic import SecretStr
 
-from free_claude_code.config.admin.custom_providers import CustomProviderMutation
-from free_claude_code.config.loader import ManagedConfigStore
-from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.runtime.configuration import ConfigurationService
+from modelglot.config.admin.custom_providers import CustomProviderMutation
+from modelglot.config.loader import ManagedConfigStore
+from modelglot.config.provider_catalog import PROVIDER_CATALOG
+from modelglot.core.json_types import JsonObject
+from modelglot.runtime.configuration import ConfigurationService
 from tests.assertions import require_present
 from tests.wire_payload import (
     array_payload,

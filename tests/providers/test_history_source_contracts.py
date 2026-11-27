@@ -6,9 +6,9 @@ from typing import Any, cast
 import httpx
 import pytest
 
-from free_claude_code.core.anthropic.conversion import AnthropicToOpenAIConverter
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.history_replay import (
+from modelglot.core.anthropic.conversion import AnthropicToOpenAIConverter
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.history_replay import (
     HistoryMode,
     HistoryProtocol,
     ReplayOrigin,
@@ -16,13 +16,13 @@ from free_claude_code.core.history_replay import (
     encode_replay,
     prepare_history,
 )
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.providers.history_negotiation import (
+from modelglot.core.json_types import JsonObject
+from modelglot.providers.history_negotiation import (
     HistoryModeCache,
     HistoryNegotiation,
     resolve_history_overrides,
 )
-from free_claude_code.providers.history_replay import (
+from modelglot.providers.history_replay import (
     history_retry_body,
     normalize_messages_history,
 )
@@ -153,7 +153,7 @@ def test_unsigned_rejection_never_converts_thinking_into_prose() -> None:
 
 
 def test_equal_full_and_summary_text_remain_distinct_representations() -> None:
-    from free_claude_code.core.history_replay import readable_reasoning
+    from modelglot.core.history_replay import readable_reasoning
 
     assert readable_reasoning(
         {
@@ -195,8 +195,8 @@ def test_aggregate_scalar_alias_keeps_each_native_part_once(separator: str) -> N
 async def test_sdk_history_override_keeps_scalar_detail_alias_once(
     scalar: str, carrier: bool
 ) -> None:
-    from free_claude_code.core.reasoning import ReasoningPolicy
-    from free_claude_code.providers.deepseek import DeepSeekProvider
+    from modelglot.core.reasoning import ReasoningPolicy
+    from modelglot.providers.deepseek import DeepSeekProvider
     from tests.api.test_delivered_stream_recovery import text_events
     from tests.providers.support import immediate_admission, make_provider_config
     from tests.providers.test_history_transports import _harness, _saved_reply

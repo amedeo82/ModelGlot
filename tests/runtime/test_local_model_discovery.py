@@ -8,21 +8,21 @@ from unittest.mock import AsyncMock, MagicMock
 import httpx
 import pytest
 
-from free_claude_code.application.model_catalog import read_model_catalog
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.config.loader import compose_settings_snapshot
-from free_claude_code.config.model_refs import ModelFallback
-from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
-from free_claude_code.config.settings import Settings
-from free_claude_code.providers.admission import (
+from modelglot.application.model_catalog import read_model_catalog
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.config.loader import compose_settings_snapshot
+from modelglot.config.model_refs import ModelFallback
+from modelglot.config.provider_catalog import PROVIDER_CATALOG
+from modelglot.config.settings import Settings
+from modelglot.providers.admission import (
     ProviderAdmissionController,
     ProviderOperationKind,
 )
-from free_claude_code.providers.base import BaseProvider
-from free_claude_code.providers.model_listing import ModelListResponseError
-from free_claude_code.providers.runtime import ProviderRuntime
-from free_claude_code.runtime import provider_manager
-from free_claude_code.runtime.provider_manager import (
+from modelglot.providers.base import BaseProvider
+from modelglot.providers.model_listing import ModelListResponseError
+from modelglot.providers.runtime import ProviderRuntime
+from modelglot.runtime import provider_manager
+from modelglot.runtime.provider_manager import (
     ModelCatalogPublisher,
     ProviderRuntimeManager,
 )

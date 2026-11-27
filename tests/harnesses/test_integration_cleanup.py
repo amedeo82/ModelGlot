@@ -6,15 +6,15 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.core.json_types import load_json_value
-from free_claude_code.harnesses import (
+from modelglot.core.json_types import load_json_value
+from modelglot.harnesses import (
     claude_desktop_integration,
     claude_integration,
     codex_integration,
     vscode_chat_integration,
 )
-from free_claude_code.harnesses.dsh_config import DSH_PROVIDER_ID
-from free_claude_code.harnesses.integration_cleanup import (
+from modelglot.harnesses.dsh_config import DSH_PROVIDER_ID
+from modelglot.harnesses.integration_cleanup import (
     IntegrationCleanupError,
     IntegrationPaths,
     disconnect_integrations,

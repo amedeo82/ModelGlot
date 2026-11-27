@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.json_types import JsonObject
 from smoke.desktop.conftest import InstalledDesktop
 from smoke.desktop.support import capture, launched, wait_exit, wait_report
 from tests.wire_payload import array_payload, int_payload, string_payload

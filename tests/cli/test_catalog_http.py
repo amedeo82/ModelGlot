@@ -4,7 +4,7 @@ from urllib.request import Request as UrlRequest
 
 import pytest
 
-from free_claude_code.cli.launchers.catalog_http import fetch_proxy_model_catalog
+from modelglot.cli.launchers.catalog_http import fetch_proxy_model_catalog
 from tests.cli.conftest import LaunchCapture
 from tests.cli.test_launcher_workflow import launch
 
@@ -31,7 +31,7 @@ def test_fetch_proxy_models_uses_canonical_bearer_request() -> None:
         }
     ).encode()
     with patch(
-        "free_claude_code.cli.launchers.catalog_http.open_local_request",
+        "modelglot.cli.launchers.catalog_http.open_local_request",
         return_value=_ModelsResponse(body),
     ) as open_local_request:
         response = fetch_proxy_model_catalog("http://127.0.0.1:9191/", "proxy-token")
@@ -54,7 +54,7 @@ def test_fetch_proxy_models_can_request_messages_view() -> None:
         }
     ).encode()
     with patch(
-        "free_claude_code.cli.launchers.catalog_http.open_local_request",
+        "modelglot.cli.launchers.catalog_http.open_local_request",
         return_value=_ModelsResponse(body),
     ) as open_local_request:
         response = fetch_proxy_model_catalog(
@@ -76,7 +76,7 @@ def test_fetch_proxy_models_can_request_messages_view() -> None:
 def test_fetch_proxy_models_rejects_non_object_json() -> None:
     with (
         patch(
-            "free_claude_code.cli.launchers.catalog_http.open_local_request",
+            "modelglot.cli.launchers.catalog_http.open_local_request",
             return_value=_ModelsResponse(b"[]"),
         ),
         pytest.raises(ValueError, match="JSON object"),

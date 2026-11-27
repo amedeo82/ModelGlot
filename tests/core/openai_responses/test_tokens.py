@@ -3,8 +3,8 @@ from collections.abc import Mapping, Sequence
 
 import pytest
 
-import free_claude_code.core.openai_responses.tokens as responses_tokens
-from free_claude_code.core.openai_responses import (
+import modelglot.core.openai_responses.tokens as responses_tokens
+from modelglot.core.openai_responses import (
     OpenAIResponsesRequest,
     estimate_responses_input_tokens,
 )

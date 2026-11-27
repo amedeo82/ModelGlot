@@ -4,7 +4,7 @@ from typing import BinaryIO
 
 import pytest
 
-from free_claude_code.core import interprocess_lock
+from modelglot.core import interprocess_lock
 
 
 @pytest.mark.parametrize("stage", ["acquire", "wait"])

@@ -5,7 +5,7 @@ import sys
 import time
 from pathlib import Path
 
-from free_claude_code.core.json_types import JsonValue, json_object, load_json_value
+from modelglot.core.json_types import JsonValue, json_object, load_json_value
 
 
 def emit(value: JsonValue):

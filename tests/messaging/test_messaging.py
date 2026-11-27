@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from free_claude_code.messaging.trees.transitions import NodeClaim
+from modelglot.messaging.trees.transitions import NodeClaim
 
 # --- Existing Tests ---
 
@@ -15,7 +15,7 @@ class TestMessagingModels:
 
     def test_incoming_message_creation(self) -> None:
         """Test IncomingMessage dataclass."""
-        from free_claude_code.messaging.models import IncomingMessage
+        from modelglot.messaging.models import IncomingMessage
 
         msg = IncomingMessage(
             text="Hello",
@@ -31,7 +31,7 @@ class TestMessagingModels:
 
     def test_incoming_message_with_reply(self) -> None:
         """Test IncomingMessage as a reply."""
-        from free_claude_code.messaging.models import IncomingMessage
+        from modelglot.messaging.models import IncomingMessage
 
         msg = IncomingMessage(
             text="Reply text",
@@ -50,7 +50,7 @@ class TestMessagingPorts:
 
     def test_components_bundle_runtime_and_outbound(self) -> None:
         """Verify the factory handoff shape is explicit."""
-        from free_claude_code.messaging.platforms.ports import (
+        from modelglot.messaging.platforms.ports import (
             MessagingPlatformComponents,
         )
 
@@ -79,7 +79,7 @@ class TestTreeQueueManager:
     """Test TreeQueueManager."""
 
     def test_tree_queue_manager_init(self) -> None:
-        from free_claude_code.messaging.trees import TreeQueueManager
+        from modelglot.messaging.trees import TreeQueueManager
 
         async def process(_claim):
             return None
@@ -89,8 +89,8 @@ class TestTreeQueueManager:
 
     @pytest.mark.asyncio
     async def test_admit_creates_tree_and_claim(self) -> None:
-        from free_claude_code.messaging.models import IncomingMessage
-        from free_claude_code.messaging.trees import TreeQueueManager
+        from modelglot.messaging.models import IncomingMessage
+        from modelglot.messaging.trees import TreeQueueManager
 
         processed = asyncio.Event()
 
@@ -115,8 +115,8 @@ class TestTreeQueueManager:
 
     @pytest.mark.asyncio
     async def test_cancel_unknown_node_is_empty(self) -> None:
-        from free_claude_code.messaging.models import MessageScope
-        from free_claude_code.messaging.trees import TreeQueueManager
+        from modelglot.messaging.models import MessageScope
+        from modelglot.messaging.trees import TreeQueueManager
 
         async def process(_claim):
             return None

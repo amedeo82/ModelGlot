@@ -10,18 +10,18 @@ import httpx
 import pytest
 from starlette.responses import StreamingResponse
 
-from free_claude_code.api.response_streams import (
+from modelglot.api.response_streams import (
     anthropic_sse_streaming_response,
     openai_responses_sse_streaming_response,
 )
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.stream_delivery import (
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.json_types import JsonObject
+from modelglot.core.stream_delivery import (
     StreamDeliveryState,
     bind_stream_delivery,
 )
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.providers.recovery_errors import RetryableProviderProtocolError
+from modelglot.core.stream_output import StreamOutput
+from modelglot.providers.recovery_errors import RetryableProviderProtocolError
 from tests.api.test_response_streams import _json_error, _serve
 from tests.providers.test_anthropic_messages_transport import (
     Endpoint,

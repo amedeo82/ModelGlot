@@ -9,9 +9,9 @@ import httpx
 import httpx2
 import pytest
 
-from free_claude_code.config.model_refs import ModelFallback
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.providers import admission, failure_reporting
+from modelglot.config.model_refs import ModelFallback
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.providers import admission, failure_reporting
 from tests.api.test_delivered_stream_recovery import public_text, text_events
 from tests.api.test_four_protocol_matrix import ingress_request, matrix_app
 from tests.wire_payload import (

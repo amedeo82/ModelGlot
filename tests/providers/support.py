@@ -14,20 +14,20 @@ from openai.types.chat import ChatCompletionChunk
 from openai.types.chat.completion_create_params import CompletionCreateParamsStreaming
 from pydantic import BaseModel
 
-from free_claude_code.application.reasoning import client_reasoning_policy
-from free_claude_code.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.async_iterators import AsyncCloseable
-from free_claude_code.core.chat_completions.request import ChatRequest
-from free_claude_code.core.gemini import GeminiRequest
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.reasoning import DEFAULT_REASONING_POLICY, ReasoningPolicy
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.core.stream_recovery import ContinuationSeed
-from free_claude_code.providers.admission import ProviderAdmissionController
-from free_claude_code.providers.base import BaseProvider, ProviderConfig
-from free_claude_code.providers.openai_chat import (
+from modelglot.application.reasoning import client_reasoning_policy
+from modelglot.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.async_iterators import AsyncCloseable
+from modelglot.core.chat_completions.request import ChatRequest
+from modelglot.core.gemini import GeminiRequest
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.reasoning import DEFAULT_REASONING_POLICY, ReasoningPolicy
+from modelglot.core.stream_output import StreamOutput
+from modelglot.core.stream_recovery import ContinuationSeed
+from modelglot.providers.admission import ProviderAdmissionController
+from modelglot.providers.base import BaseProvider, ProviderConfig
+from modelglot.providers.openai_chat import (
     OpenAIChatProvider,
     create_openai_chat_provider,
 )
@@ -322,7 +322,7 @@ def without_empty_reasoning(value: JsonValue) -> JsonValue:
 
 
 def continuation_seed(text: str = "", thinking: str = ""):
-    from free_claude_code.core.stream_recovery import ContinuationSeed
+    from modelglot.core.stream_recovery import ContinuationSeed
 
     items: list[JsonObject] = []
     if thinking:

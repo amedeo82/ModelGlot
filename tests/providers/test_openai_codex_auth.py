@@ -11,17 +11,17 @@ import httpx
 import pytest
 from aiohttp.web import AppRunner
 
-from free_claude_code.application.connected_accounts import (
+from modelglot.application.connected_accounts import (
     ConnectedAccountLoginMode,
 )
-from free_claude_code.core.json_types import load_json_value
-from free_claude_code.providers.openai_codex import auth as openai_auth
-from free_claude_code.providers.openai_codex import login as openai_login
-from free_claude_code.providers.openai_codex.auth import (
+from modelglot.core.json_types import load_json_value
+from modelglot.providers.openai_codex import auth as openai_auth
+from modelglot.providers.openai_codex import login as openai_login
+from modelglot.providers.openai_codex.auth import (
     OpenAIAuthManager,
     OpenAIReconnectRequired,
 )
-from free_claude_code.providers.openai_codex.login import BrowserAuthorization
+from modelglot.providers.openai_codex.login import BrowserAuthorization
 from tests.wire_payload import decode_object, object_payload
 
 

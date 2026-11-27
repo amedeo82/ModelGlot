@@ -5,7 +5,7 @@ from typing import Any, cast
 
 import pytest
 
-from free_claude_code.core.history_replay import (
+from modelglot.core.history_replay import (
     HistoryMode,
     HistoryProtocol,
     ReplayOrigin,
@@ -13,7 +13,7 @@ from free_claude_code.core.history_replay import (
     encode_replay,
     prepare_history,
 )
-from free_claude_code.core.json_types import JsonObject, JsonValue
+from modelglot.core.json_types import JsonObject, JsonValue
 from tests.wire_payload import object_array
 
 
@@ -159,7 +159,7 @@ def test_user_and_tool_result_messages_never_get_placeholders() -> None:
 def test_three_scope_definitions_preserve_source(
     mode: str, expected: JsonValue
 ) -> None:
-    from free_claude_code.core.history_replay import HistoryMode
+    from modelglot.core.history_replay import HistoryMode
 
     body = history()
     original = deepcopy(body)
@@ -176,7 +176,7 @@ def test_three_scope_definitions_preserve_source(
 def test_messages_tool_result_envelopes_only_start_user_turn_when_mixed(
     mixed: bool,
 ) -> None:
-    from free_claude_code.core.history_replay import HistoryMode
+    from modelglot.core.history_replay import HistoryMode
 
     content = [
         {
@@ -211,7 +211,7 @@ def test_messages_tool_result_envelopes_only_start_user_turn_when_mixed(
 
 
 def test_current_without_user_includes_existing_assistant() -> None:
-    from free_claude_code.core.history_replay import HistoryMode
+    from modelglot.core.history_replay import HistoryMode
 
     body = {"messages": [{"role": "assistant", "content": "Answer"}]}
     assert prepare_history(
@@ -221,7 +221,7 @@ def test_current_without_user_includes_existing_assistant() -> None:
 
 @pytest.mark.parametrize("mode", ["all", "current", "none"])
 def test_native_records_stay_exact_in_all_modes(mode: str) -> None:
-    from free_claude_code.core.history_replay import HistoryMode
+    from modelglot.core.history_replay import HistoryMode
 
     native = {
         "type": "thinking",
@@ -250,7 +250,7 @@ def test_native_records_stay_exact_in_all_modes(mode: str) -> None:
 
 
 def test_unsigned_response_summary_is_messages_thinking_without_prose() -> None:
-    from free_claude_code.core.history_replay import responses_reasoning_blocks
+    from modelglot.core.history_replay import responses_reasoning_blocks
 
     assert responses_reasoning_blocks(
         {
@@ -261,8 +261,8 @@ def test_unsigned_response_summary_is_messages_thinking_without_prose() -> None:
 
 
 def test_native_messages_readable_foreign_carrier_reaches_shared_projection() -> None:
-    from free_claude_code.core.anthropic.passthrough import restore_native_history
-    from free_claude_code.core.history_replay import (
+    from modelglot.core.anthropic.passthrough import restore_native_history
+    from modelglot.core.history_replay import (
         HistoryMode,
         ReplayRecord,
         encode_replay,

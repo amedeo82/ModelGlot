@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from httpx import Request
 
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.json_types import JsonObject
 from tests.api.test_four_protocol_matrix import (
     ingress_request,
     matrix_app,

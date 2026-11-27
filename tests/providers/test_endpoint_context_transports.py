@@ -11,22 +11,22 @@ import httpx2
 import pytest
 from openai import AsyncOpenAI
 
-from free_claude_code.core.anthropic import ReasoningReplayMode
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.reasoning import DEFAULT_REASONING_POLICY, ReasoningPolicy
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.providers.endpoint_types import HttpEndpoint
-from free_claude_code.providers.openai_chat import (
+from modelglot.core.anthropic import ReasoningReplayMode
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.json_types import JsonObject
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.reasoning import DEFAULT_REASONING_POLICY, ReasoningPolicy
+from modelglot.core.stream_output import StreamOutput
+from modelglot.providers.endpoint_types import HttpEndpoint
+from modelglot.providers.openai_chat import (
     NO_REASONING,
     NamedEffortReasoning,
     OpenAIChatProfile,
     OpenAIChatProvider,
     OpenAIChatRequestPolicy,
 )
-from free_claude_code.providers.openai_responses import OpenAIResponsesTransport
+from modelglot.providers.openai_responses import OpenAIResponsesTransport
 from tests.providers.support import immediate_admission, make_provider_config
 from tests.wire_payload import decode_object
 

@@ -2,14 +2,14 @@
 
 import pytest
 
-from free_claude_code.application.response_collection import WireProtocol
-from free_claude_code.core.delivered_response import DeliveredResponse
-from free_claude_code.core.history_replay import (
+from modelglot.application.response_collection import WireProtocol
+from modelglot.core.delivered_response import DeliveredResponse
+from modelglot.core.history_replay import (
     ReplayOrigin,
     ReplayRecord,
     encode_replay,
 )
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.json_types import JsonObject
 
 
 def carrier(protocol: WireProtocol, native: JsonObject):

@@ -1,6 +1,6 @@
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.core.model_capabilities import ModelInputModality
-from free_claude_code.providers.runtime.model_cache import ProviderModelCache
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.core.model_capabilities import ModelInputModality
+from modelglot.providers.runtime.model_cache import ProviderModelCache
 
 
 def test_model_cache_returns_and_prefixes_complete_model_metadata() -> None:

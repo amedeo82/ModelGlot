@@ -6,19 +6,19 @@ from hashlib import sha256
 
 import pytest
 
-from free_claude_code.application.response_collection import WireProtocol
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.gemini.replay import (
+from modelglot.application.response_collection import WireProtocol
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.gemini.replay import (
     CallReplay,
     ReplayBundle,
     decode_bundle,
     encode_bundle,
 )
-from free_claude_code.core.gemini.response import (
+from modelglot.core.gemini.response import (
     GeminiOutput,
     GeminiResponseAccumulator,
 )
-from free_claude_code.core.history_replay import (
+from modelglot.core.history_replay import (
     HistoryMode,
     HistoryReplayError,
     ReplayOrigin,
@@ -28,7 +28,7 @@ from free_claude_code.core.history_replay import (
     prepare_history,
     readable_reasoning,
 )
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.json_types import JsonObject
 from tests.core.test_gemini_requests import build, request
 from tests.wire_payload import (
     array_payload,
@@ -164,7 +164,7 @@ def test_native_chat_replay_rejects_invalid_recognized_fields(
 def test_bundle_rejects_invalid_echo_digest(digest: int | str | None) -> None:
     import base64
 
-    from free_claude_code.core.gemini import GeminiConversionError
+    from modelglot.core.gemini import GeminiConversionError
 
     value = base64.b64decode(encode_bundle(ReplayBundle("response")))
     prefix, payload = value.split(b":v1:", 1)
@@ -245,7 +245,7 @@ def test_echo_digest_requires_replay_coverage_of_all_thought_text(native: bool) 
 def test_foreign_native_gemini_signature_fails_explicitly(
     protocol: str, placement: str
 ) -> None:
-    from free_claude_code.core.gemini import GeminiConversionError
+    from modelglot.core.gemini import GeminiConversionError
 
     part: JsonObject = {"thoughtSignature": "AP8="}
     if placement == "text":

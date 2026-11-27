@@ -9,23 +9,23 @@ from unittest.mock import patch
 import httpx2
 import pytest
 
-from free_claude_code.api.response_streams import (
+from modelglot.api.response_streams import (
     ManagedStreamingResponse,
     gemini_sse_streaming_response,
 )
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.gemini import GeminiRequest
-from free_claude_code.core.gemini.replay import ReplayBundle, encode_bundle
-from free_claude_code.core.history_replay import (
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.gemini import GeminiRequest
+from modelglot.core.gemini.replay import ReplayBundle, encode_bundle
+from modelglot.core.history_replay import (
     ReplayOrigin,
     ReplayRecord,
     encode_replay,
 )
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.providers.history_replay import replay_origin
-from free_claude_code.providers.recovery_policy import RecoveryTiming
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.providers.history_replay import replay_origin
+from modelglot.providers.recovery_policy import RecoveryTiming
 from tests.api.test_response_streams import _json_error
 from tests.providers.test_gemini_transport import chat_response, gemini_request
 from tests.providers.test_google_cache_provenance import history_request
@@ -272,7 +272,7 @@ async def test_internal_continuation_is_rechecked_before_another_inference() -> 
 async def test_direct_and_tool_result_images_are_counted_once(
     wire: str, tool_result: bool, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from free_claude_code.providers.lmstudio import tokens
+    from modelglot.providers.lmstudio import tokens
 
     data = "A" * 900000
     sizes: list[int] = []

@@ -1,16 +1,16 @@
 from dataclasses import replace
 
-from free_claude_code.application.model_catalog import (
+from modelglot.application.model_catalog import (
     CatalogModel,
     catalog_wire_slug_for_ref,
     read_model_catalog,
 )
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.application.ports import ModelCatalogSnapshot
-from free_claude_code.config.custom_providers import CustomProviderDefinition
-from free_claude_code.config.model_catalog_metadata import ModelCatalogMetadata
-from free_claude_code.config.model_refs import ModelFallback
-from free_claude_code.config.settings import Settings
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.application.ports import ModelCatalogSnapshot
+from modelglot.config.custom_providers import CustomProviderDefinition
+from modelglot.config.model_catalog_metadata import ModelCatalogMetadata
+from modelglot.config.model_refs import ModelFallback
+from modelglot.config.settings import Settings
 
 
 def test_custom_display_names_sort_as_labels_without_changing_model_identity() -> None:

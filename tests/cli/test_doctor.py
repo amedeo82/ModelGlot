@@ -8,14 +8,14 @@ from pathlib import Path
 import httpx
 import pytest
 
-from free_claude_code.cli import doctor
-from free_claude_code.config import paths
-from free_claude_code.config.loader import ManagedConfigStore
-from free_claude_code.config.server_urls import local_proxy_root_url
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.providers.openai_codex import auth as openai_auth
-from free_claude_code.runtime import diagnostics
+from modelglot.cli import doctor
+from modelglot.config import paths
+from modelglot.config.loader import ManagedConfigStore
+from modelglot.config.server_urls import local_proxy_root_url
+from modelglot.config.settings import Settings
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.providers.openai_codex import auth as openai_auth
+from modelglot.runtime import diagnostics
 from tests.wire_payload import decode_object, object_payload
 
 
@@ -544,7 +544,7 @@ def test_probe_returns_only_version(
 def test_clipboard_adapter_maps_backend_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from free_claude_code.cli import clipboard
+    from modelglot.cli import clipboard
 
     def unavailable(text: object):
         raise clipboard.pyperclip.PyperclipException("no desktop")
@@ -557,7 +557,7 @@ def test_clipboard_adapter_maps_backend_failure(
 def test_doctor_version_does_not_collect_or_copy(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    from free_claude_code.cli import entrypoints
+    from modelglot.cli import entrypoints
 
     def forbidden():
         pytest.fail("version must not collect or copy a report")
@@ -591,7 +591,7 @@ def test_fallback_model_efforts_are_json_serializable_in_doctor_report() -> None
 def test_disconnect_mode_does_not_collect_or_copy_diagnostics(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    from free_claude_code.harnesses import integration_cleanup
+    from modelglot.harnesses import integration_cleanup
 
     calls = []
     monkeypatch.setattr(
@@ -616,7 +616,7 @@ def test_disconnect_mode_does_not_collect_or_copy_diagnostics(
 def test_disconnect_mode_reports_failure_and_nonzero_exit(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    from free_claude_code.harnesses import integration_cleanup
+    from modelglot.harnesses import integration_cleanup
 
     def fail():
         raise integration_cleanup.IntegrationCleanupError("Could not disconnect Codex.")

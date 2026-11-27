@@ -6,15 +6,15 @@ import httpx2
 import openai
 import pytest
 
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.openai_chat import ChatToolResultImages
-from free_claude_code.providers.openai_chat.media_support import (
+from modelglot.core.json_types import JsonObject
+from modelglot.core.openai_chat import ChatToolResultImages
+from modelglot.providers.openai_chat.media_support import (
     TextOnlyModels,
     is_media_rejection,
     omitted_media_note,
     without_media,
 )
-from free_claude_code.providers.request_correction import Rejection
+from modelglot.providers.request_correction import Rejection
 from tests.wire_payload import array_payload, object_array
 
 VLLM = (

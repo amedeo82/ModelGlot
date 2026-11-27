@@ -1,8 +1,8 @@
 import pytest
 
-from free_claude_code.core.anthropic.tool_calls import MessagesToolCallBuffer
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.json_types import JsonObject, JsonValue
+from modelglot.core.anthropic.tool_calls import MessagesToolCallBuffer
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.json_types import JsonObject, JsonValue
 
 
 def event(kind: str, **data: JsonValue) -> tuple[str, JsonObject]:
@@ -102,8 +102,8 @@ def test_confirmed_messages_tools_cannot_share_an_execution_id() -> None:
 
 
 def test_native_messages_index_bookkeeping_has_a_fixed_record_bound() -> None:
-    from free_claude_code.core.anthropic.native_stream import MessagesBlockIndexMap
-    from free_claude_code.core.tool_call_buffer import (
+    from modelglot.core.anthropic.native_stream import MessagesBlockIndexMap
+    from modelglot.core.tool_call_buffer import (
         MAX_PENDING_RECORDS,
         ToolBufferLimitError,
     )

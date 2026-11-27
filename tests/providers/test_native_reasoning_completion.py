@@ -9,34 +9,34 @@ from typing import override
 import httpx2
 import pytest
 
-from free_claude_code.application.response_collection import WireProtocol
-from free_claude_code.core.anthropic import ReasoningReplayMode
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.history_replay import ReplayOrigin, decode_replay
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.openai_responses.chat_request import (
+from modelglot.application.response_collection import WireProtocol
+from modelglot.core.anthropic import ReasoningReplayMode
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.history_replay import ReplayOrigin, decode_replay
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.openai_responses.chat_request import (
     build_responses_chat_request,
 )
-from free_claude_code.core.openai_responses.models import OpenAIResponsesRequest
-from free_claude_code.core.openai_responses.provider_input import (
+from modelglot.core.openai_responses.models import OpenAIResponsesRequest
+from modelglot.core.openai_responses.provider_input import (
     build_responses_provider_request,
 )
-from free_claude_code.core.openai_responses.provider_stream import (
+from modelglot.core.openai_responses.provider_stream import (
     ResponsesProviderStream,
 )
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.providers.google_openai import GoogleOpenAIProvider
-from free_claude_code.providers.openai_chat.provider import OpenAIChatProvider
-from free_claude_code.providers.openai_chat.reasoning_details import (
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.core.stream_output import StreamOutput
+from modelglot.providers.google_openai import GoogleOpenAIProvider
+from modelglot.providers.openai_chat.provider import OpenAIChatProvider
+from modelglot.providers.openai_chat.reasoning_details import (
     StructuredReasoningStream,
 )
-from free_claude_code.providers.openai_chat.stream_output import (
+from modelglot.providers.openai_chat.stream_output import (
     AnthropicChatStreamOutput,
 )
-from free_claude_code.providers.vertex.client import _PROFILE as GOOGLE_PROFILE
+from modelglot.providers.vertex.client import _PROFILE as GOOGLE_PROFILE
 from tests.api.test_hidden_stream_retries import delivered
 from tests.providers.support import immediate_admission, make_provider_config
 from tests.providers.test_history_transports import (

@@ -5,8 +5,8 @@ import json
 import httpx
 import pytest
 
-from free_claude_code.application.errors import InvalidRequestError
-from free_claude_code.core.reasoning import ReasoningEffort, ReasoningPolicy
+from modelglot.application.errors import InvalidRequestError
+from modelglot.core.reasoning import ReasoningEffort, ReasoningPolicy
 from tests.providers.support import without_empty_reasoning
 from tests.providers.test_anthropic_native_transport import collect
 from tests.providers.test_anthropic_provider import native_body, provider

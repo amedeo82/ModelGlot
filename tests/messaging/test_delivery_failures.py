@@ -2,7 +2,7 @@
 
 import pytest
 
-from free_claude_code.messaging.delivery_failures import (
+from modelglot.messaging.delivery_failures import (
     MAX_ATTEMPTS,
     CallState,
     DeliveryFailure,
@@ -16,7 +16,7 @@ from free_claude_code.messaging.delivery_failures import (
     decide,
     queue_pause,
 )
-from free_claude_code.messaging.delivery_failures.decision import Decision
+from modelglot.messaging.delivery_failures.decision import Decision
 
 K = FailureKind
 

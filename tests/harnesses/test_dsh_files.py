@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.harnesses import dsh_files
+from modelglot.harnesses import dsh_files
 
 
 def test_lock_uses_native_pid_bytes_and_is_released(tmp_path: Path) -> None:

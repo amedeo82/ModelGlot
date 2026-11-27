@@ -102,7 +102,7 @@ def fixture_wheel(
             archive.writestr(
                 f"{dist}.data/scripts/{name}", source.replace(RAW_URL, url)
             )
-        archive.writestr("free_claude_code/__init__.py", "")
+        archive.writestr("modelglot/__init__.py", "")
         archive.writestr(
             f"{dist}.dist-info/RECORD",
             "".join(f"{name},,\n" for name in archive.namelist())

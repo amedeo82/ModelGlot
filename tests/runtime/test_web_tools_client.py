@@ -8,8 +8,8 @@ import httpx
 import pytest
 from aiohttp.abc import AbstractResolver
 
-from free_claude_code.core.web_tools import WebSearchResult
-from free_claude_code.runtime.web_tools import client as web_client
+from modelglot.core.web_tools import WebSearchResult
+from modelglot.runtime.web_tools import client as web_client
 
 
 def _httpx_clients(
@@ -110,7 +110,7 @@ async def test_fetch_cancellation_closes_response_session_and_connector(
     from contextlib import asynccontextmanager
     from types import SimpleNamespace
 
-    from free_claude_code.application.web_tools.ports import WebFetchEgressPolicy
+    from modelglot.application.web_tools.ports import WebFetchEgressPolicy
 
     entered = asyncio.Event()
     response_closed: list[bool] = []
@@ -226,7 +226,7 @@ async def test_fetch_charset_and_content_type_handling(
     from contextlib import asynccontextmanager
     from types import SimpleNamespace
 
-    from free_claude_code.application.web_tools.ports import WebFetchEgressPolicy
+    from modelglot.application.web_tools.ports import WebFetchEgressPolicy
 
     async def chunks(_size):
         yield body

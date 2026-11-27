@@ -7,19 +7,19 @@ from typing import Any
 import httpx2
 import pytest
 
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import (
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.config.provider_catalog import PROVIDER_CATALOG
+from modelglot.config.settings import Settings
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.anthropic.stream_contracts import (
     parse_sse_text,
     text_content,
 )
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.providers.openai_api.provider import OpenAIAPIProvider
-from free_claude_code.providers.runtime.config import build_provider_config
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.stream_output import StreamOutput
+from modelglot.providers.openai_api.provider import OpenAIAPIProvider
+from modelglot.providers.runtime.config import build_provider_config
 from tests.providers.support import immediate_admission, make_provider_config
 from tests.wire_payload import decode_object, object_payload
 

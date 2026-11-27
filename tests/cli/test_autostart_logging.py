@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.core.interprocess_lock import InterprocessFileLock
+from modelglot.core.interprocess_lock import InterprocessFileLock
 
 
 @pytest.mark.parametrize("automatic", [False, True])
@@ -25,12 +25,12 @@ def test_server_entrypoint_routes_logs_across_restarts(
         from types import SimpleNamespace
         from unittest.mock import patch
         from loguru import logger
-        from free_claude_code.config import paths
+        from modelglot.config import paths
         paths.config_dir_path = lambda: Path(sys.argv[3])
-        from free_claude_code.cli import commands, entrypoints, uvicorn_server
-        from free_claude_code.config.logging_config import configure_logging
-        from free_claude_code.config.settings import Settings
-        from free_claude_code.runtime import bootstrap
+        from modelglot.cli import commands, entrypoints, uvicorn_server
+        from modelglot.config.logging_config import configure_logging
+        from modelglot.config.settings import Settings
+        from modelglot.runtime import bootstrap
 
         settings = Settings.model_construct(
             host="127.0.0.1", port=0, open_admin_browser=False,

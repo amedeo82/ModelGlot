@@ -1,16 +1,16 @@
 import pytest
 
-from free_claude_code.application.reasoning import (
+from modelglot.application.reasoning import (
     client_reasoning_policy,
     client_responses_reasoning_policy,
     resolve_reasoning_policy,
     resolve_responses_reasoning_policy,
 )
-from free_claude_code.config.reasoning import ReasoningPreference
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.reasoning import (
+from modelglot.config.reasoning import ReasoningPreference
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.reasoning import (
     ReasoningControl,
     ReasoningEffort,
     ReasoningPolicy,

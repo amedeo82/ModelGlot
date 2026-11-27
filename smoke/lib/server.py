@@ -11,7 +11,7 @@ from pathlib import Path
 
 import httpx
 
-from free_claude_code.cli.process_registry import kill_pid_tree_best_effort
+from modelglot.cli.process_registry import kill_pid_tree_best_effort
 
 from .child_process import cmd_modelglot_server
 from .config import SmokeConfig, redacted

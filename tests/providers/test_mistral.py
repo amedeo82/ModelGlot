@@ -7,14 +7,14 @@ import openai
 import pytest
 from httpx2 import Request, Response
 
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.config.provider_catalog import MISTRAL_DEFAULT_BASE
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.history_replay import ReplayOrigin
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.model_capabilities import ModelInputModality
-from free_claude_code.providers.base import ProviderConfig
-from free_claude_code.providers.mistral import MistralProvider
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.config.provider_catalog import MISTRAL_DEFAULT_BASE
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.history_replay import ReplayOrigin
+from modelglot.core.json_types import JsonObject
+from modelglot.core.model_capabilities import ModelInputModality
+from modelglot.providers.base import ProviderConfig
+from modelglot.providers.mistral import MistralProvider
 from tests.providers.request_factory import make_messages_request
 from tests.providers.support import (
     REASONING_OFF,
@@ -46,9 +46,7 @@ def mistral_provider(mistral_config: ProviderConfig):
 
 def test_init(mistral_config: ProviderConfig) -> None:
     """Test provider initialization."""
-    with patch(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI"
-    ) as mock_openai:
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI") as mock_openai:
         provider = MistralProvider(mistral_config, admission=immediate_admission())
         assert provider._api_key == "test_mistral_key"
         assert provider._base_url == MISTRAL_DEFAULT_BASE

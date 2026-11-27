@@ -4,13 +4,13 @@ from dataclasses import FrozenInstanceError, fields, is_dataclass, replace
 
 import pytest
 
-from free_claude_code.core.failures import (
+from modelglot.core.failures import (
     ExecutionFailure,
     FailureKind,
     find_execution_failure,
 )
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.stream_recovery import (
+from modelglot.core.json_types import JsonObject
+from modelglot.core.stream_recovery import (
     SourceRecoverySnapshot,
     StreamFailureContext,
 )

@@ -6,11 +6,11 @@ from copy import deepcopy
 import pytest
 from starlette.types import Message
 
-from free_claude_code.application.response_collection import WireProtocol
-from free_claude_code.core.anthropic import aggregate_anthropic_sse_to_message
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.history_replay import readable_reasoning
-from free_claude_code.core.json_types import JsonObject, JsonValue
+from modelglot.application.response_collection import WireProtocol
+from modelglot.core.anthropic import aggregate_anthropic_sse_to_message
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.history_replay import readable_reasoning
+from modelglot.core.json_types import JsonObject, JsonValue
 from tests.api.test_delivered_stream_recovery import (
     assert_completed,
     public_text,

@@ -5,11 +5,11 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from free_claude_code.config.settings import Settings
-from free_claude_code.runtime.application import ApplicationRuntime
-from free_claude_code.runtime.configuration import ConfigurationService
-from free_claude_code.runtime.lifecycle import best_effort
-from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
+from modelglot.config.settings import Settings
+from modelglot.runtime.application import ApplicationRuntime
+from modelglot.runtime.configuration import ConfigurationService
+from modelglot.runtime.lifecycle import best_effort
+from modelglot.runtime.provider_manager import ProviderRuntimeManager
 
 
 @pytest.mark.asyncio
@@ -32,7 +32,7 @@ async def test_messaging_start_failure_default_logs_exclude_traceback(
 
     with (
         patch(
-            "free_claude_code.runtime.messaging_service.messaging_platform_factory.create_messaging_components",
+            "modelglot.runtime.messaging_service.messaging_platform_factory.create_messaging_components",
             side_effect=RuntimeError("SECRET_RUNTIME_DETAIL"),
         ),
         caplog.at_level(logging.ERROR),

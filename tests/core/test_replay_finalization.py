@@ -4,18 +4,18 @@ from weakref import ref
 
 import pytest
 
-from free_claude_code.api.stream_delivery import PublicResponseStream
-from free_claude_code.core.delivered_response import DeliveredResponse
-from free_claude_code.core.history_replay import (
+from modelglot.api.stream_delivery import PublicResponseStream
+from modelglot.core.delivered_response import DeliveredResponse
+from modelglot.core.history_replay import (
     HistoryReplayError,
     decode_replay,
     encode_gemini_replay,
     encode_replay,
 )
-from free_claude_code.core.json_types import DecimalJsonObject
-from free_claude_code.core.replay_finalization import finalize_replay
-from free_claude_code.core.stream_delivery import StreamDeliveryState
-from free_claude_code.core.stream_output import StreamOutput
+from modelglot.core.json_types import DecimalJsonObject
+from modelglot.core.replay_finalization import finalize_replay
+from modelglot.core.stream_delivery import StreamDeliveryState
+from modelglot.core.stream_output import StreamOutput
 from tests.core.test_gemini_continuation_records import recovered
 from tests.stream_packets import packets
 from tests.wire_payload import object_array, object_payload, string_payload

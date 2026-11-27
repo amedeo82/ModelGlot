@@ -11,16 +11,16 @@ from unittest.mock import patch
 import httpx2
 import pytest
 
-from free_claude_code.config.provider_catalog import GROQ_DEFAULT_BASE
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.reasoning import ReasoningEffort, ReasoningPolicy
-from free_claude_code.core.stream_delivery import (
+from modelglot.config.provider_catalog import GROQ_DEFAULT_BASE
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.json_types import JsonObject
+from modelglot.core.reasoning import ReasoningEffort, ReasoningPolicy
+from modelglot.core.stream_delivery import (
     StreamDeliveryState,
     bind_stream_delivery,
 )
-from free_claude_code.providers.groq import GroqProvider
+from modelglot.providers.groq import GroqProvider
 from tests.providers.support import immediate_admission, make_provider_config
 from tests.providers.test_openai_responses_transport import _client
 from tests.wire_payload import decode_object, int_payload
@@ -94,7 +94,7 @@ def _groq(reply: Reply, bodies: list[JsonObject]) -> GroqProvider:
         return reply(bodies)
 
     with patch(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI",
+        "modelglot.providers.openai_chat.client.AsyncOpenAI",
         return_value=_client(handle),
     ):
         return GroqProvider(

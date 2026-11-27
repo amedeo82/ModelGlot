@@ -2,7 +2,7 @@
 
 import pytest
 
-from free_claude_code.core.tool_call_buffer import (
+from modelglot.core.tool_call_buffer import (
     OrderedToolCallBuffer,
     RetentionBudget,
     ToolBufferLimitError,

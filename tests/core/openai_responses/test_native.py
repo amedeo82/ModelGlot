@@ -3,14 +3,14 @@ from copy import deepcopy
 
 import pytest
 
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.openai_responses.native import (
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.openai_responses.native import (
     NativeResponsesRelay,
     build_native_responses_request,
 )
-from free_claude_code.core.reasoning import ReasoningEffort, ReasoningPolicy
+from modelglot.core.reasoning import ReasoningEffort, ReasoningPolicy
 from tests.wire_payload import object_payload
 
 

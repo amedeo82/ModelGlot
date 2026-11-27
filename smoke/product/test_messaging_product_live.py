@@ -6,9 +6,9 @@ from typing import Any, Protocol, override
 import pytest
 import pytest_asyncio
 
-from free_claude_code.messaging.models import MessageScope
-from free_claude_code.messaging.platforms.ports import MessagingStartupNotice
-from free_claude_code.messaging.trees import MessageState, TreeIdentity
+from modelglot.messaging.models import MessageScope
+from modelglot.messaging.platforms.ports import MessagingStartupNotice
+from modelglot.messaging.trees import MessageState, TreeIdentity
 from smoke.lib.e2e import FakeCLISession, FakePlatformDriver, default_cli_events
 
 pytestmark = [pytest.mark.live, pytest.mark.smoke_target("messaging")]

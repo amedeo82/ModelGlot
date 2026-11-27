@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.harnesses import codex_integration
-from free_claude_code.harnesses.codex_integration import config_path
+from modelglot.core.json_types import JsonObject
+from modelglot.harnesses import codex_integration
+from modelglot.harnesses.codex_integration import config_path
 from tests.wire_payload import object_payload
 
 URL = "http://127.0.0.1:16969"

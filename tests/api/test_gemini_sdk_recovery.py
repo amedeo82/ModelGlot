@@ -9,7 +9,7 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.json_types import JsonObject
 from tests.api.support import provider_manager_for_app
 from tests.api.test_four_protocol_matrix import matrix_app
 from tests.api.test_gemini_continuation_replay import native

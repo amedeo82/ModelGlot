@@ -7,7 +7,7 @@ import pytest
 from playwright.sync_api import Page, Route, expect
 
 from e2e.provider_support import close_provider, open_provider
-from free_claude_code.providers.runtime import ProviderRuntime
+from modelglot.providers.runtime import ProviderRuntime
 
 
 @pytest.fixture

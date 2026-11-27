@@ -10,24 +10,24 @@ import pytest
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionChunk
 
-from free_claude_code.application.errors import InvalidRequestError
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.config.provider_catalog import ZENMUX_DEFAULT_BASE
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import (
+from modelglot.application.errors import InvalidRequestError
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.config.provider_catalog import ZENMUX_DEFAULT_BASE
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.anthropic.stream_contracts import (
     parse_sse_text,
     text_content,
     thinking_content,
 )
-from free_claude_code.core.history_replay import decode_replay
-from free_claude_code.core.model_capabilities import ModelInputModality
-from free_claude_code.core.reasoning import (
+from modelglot.core.history_replay import decode_replay
+from modelglot.core.model_capabilities import ModelInputModality
+from modelglot.core.reasoning import (
     ReasoningCapability,
     ReasoningEffort,
     ReasoningPolicy,
 )
-from free_claude_code.providers.model_listing import ModelListResponseError
-from free_claude_code.providers.openai_chat import OpenAIChatProvider
+from modelglot.providers.model_listing import ModelListResponseError
+from modelglot.providers.openai_chat import OpenAIChatProvider
 from tests.providers.support import (
     SDKStreamDouble,
     immediate_admission,
@@ -466,7 +466,7 @@ async def test_model_catalog_uses_documented_endpoint_and_auth() -> None:
         return AsyncOpenAI(*args, **kwargs)
 
     with patch(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI",
+        "modelglot.providers.openai_chat.client.AsyncOpenAI",
         side_effect=build_client,
     ):
         provider = profiled_provider(

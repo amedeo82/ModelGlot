@@ -10,14 +10,14 @@ import pytest
 from fastapi.testclient import TestClient
 from starlette.types import Message
 
-from free_claude_code.config.model_refs import ModelFallback
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.stream_delivery import (
+from modelglot.config.model_refs import ModelFallback
+from modelglot.config.settings import Settings
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.stream_delivery import (
     StreamDeliveryState,
     bind_stream_delivery,
 )
-from free_claude_code.providers.admission import (
+from modelglot.providers.admission import (
     ProviderAdmissionController,
     ProviderOperationKind,
 )
@@ -297,7 +297,7 @@ def test_count_generate_and_continue_native_tool_history_with_recovery() -> None
     body = {**count_body(), "max_tokens": 512, "stream": True}
     with TestClient(app) as client:
         with patch(
-            "free_claude_code.runtime.provider_manager.ProviderGenerationLease.resolve_provider",
+            "modelglot.runtime.provider_manager.ProviderGenerationLease.resolve_provider",
             side_effect=AssertionError("local count"),
         ):
             initial_count = client.post("/v1/messages/count_tokens", json=body)
@@ -325,7 +325,7 @@ def test_count_generate_and_continue_native_tool_history_with_recovery() -> None
             ],
         }
         with patch(
-            "free_claude_code.runtime.provider_manager.ProviderGenerationLease.resolve_provider",
+            "modelglot.runtime.provider_manager.ProviderGenerationLease.resolve_provider",
             side_effect=AssertionError("local count"),
         ):
             next_count = client.post("/v1/messages/count_tokens", json=continuation)

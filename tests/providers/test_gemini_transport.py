@@ -9,28 +9,28 @@ import httpx2
 import pytest
 from openai import AsyncOpenAI
 
-from free_claude_code.application.response_collection import collected_frames
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.gemini import GeminiRequest
-from free_claude_code.core.gemini.replay import decode_bundle
-from free_claude_code.core.gemini.response import GeminiResponseAccumulator
-from free_claude_code.core.history_replay import readable_reasoning
-from free_claude_code.core.json_types import JsonObject, load_json_value
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.providers.anthropic_messages.transport import (
+from modelglot.application.response_collection import collected_frames
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.gemini import GeminiRequest
+from modelglot.core.gemini.replay import decode_bundle
+from modelglot.core.gemini.response import GeminiResponseAccumulator
+from modelglot.core.history_replay import readable_reasoning
+from modelglot.core.json_types import JsonObject, load_json_value
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.core.stream_output import StreamOutput
+from modelglot.providers.anthropic_messages.transport import (
     AnthropicMessagesTransport,
 )
-from free_claude_code.providers.google_openai.provider import GoogleChatBehavior
-from free_claude_code.providers.openai_chat import (
+from modelglot.providers.google_openai.provider import GoogleChatBehavior
+from modelglot.providers.openai_chat import (
     OpenAIChatProvider,
     OpenAIChatTransport,
 )
-from free_claude_code.providers.openai_responses.transport import (
+from modelglot.providers.openai_responses.transport import (
     OpenAIResponsesTransport,
 )
-from free_claude_code.providers.vertex.client import _PROFILE as GOOGLE_PROFILE
+from modelglot.providers.vertex.client import _PROFILE as GOOGLE_PROFILE
 from tests.providers.support import immediate_admission
 from tests.providers.test_anthropic_messages_transport import (
     Endpoint,

@@ -21,8 +21,8 @@ Le migliorie principali rispetto alla prima integrazione sono:
 - refresh idempotente e disconnessione riprendibile dopo un'interruzione.
 
 Il profilo viene creato e applicato da
-`src/free_claude_code/harnesses/claude_desktop_integration.py`. La sua vista dedicata del
-catalogo è implementata in `src/free_claude_code/api/model_catalog.py` e selezionata tramite
+`src/modelglot/harnesses/claude_desktop_integration.py`. La sua vista dedicata del
+catalogo è implementata in `src/modelglot/api/model_catalog.py` e selezionata tramite
 l'header `X-ModelGlot-Model-View: claude-desktop`.
 
 ## Configurazione del profilo
@@ -213,7 +213,7 @@ uv run pytest -q tests/harnesses/test_claude_desktop_integration.py tests/api/te
 Controlli statici:
 
 ```powershell
-uv run ruff format --check src/free_claude_code/harnesses/claude_desktop_integration.py src/free_claude_code/api/model_catalog.py tests/harnesses/test_claude_desktop_integration.py tests/api/test_model_listing.py
-uv run ruff check src/free_claude_code/harnesses/claude_desktop_integration.py src/free_claude_code/api/model_catalog.py tests/harnesses/test_claude_desktop_integration.py tests/api/test_model_listing.py
-uv run ty check src/free_claude_code/harnesses/claude_desktop_integration.py src/free_claude_code/api/model_catalog.py
+uv run ruff format --check src/modelglot/harnesses/claude_desktop_integration.py src/modelglot/api/model_catalog.py tests/harnesses/test_claude_desktop_integration.py tests/api/test_model_listing.py
+uv run ruff check src/modelglot/harnesses/claude_desktop_integration.py src/modelglot/api/model_catalog.py tests/harnesses/test_claude_desktop_integration.py tests/api/test_model_listing.py
+uv run ty check src/modelglot/harnesses/claude_desktop_integration.py src/modelglot/api/model_catalog.py
 ```

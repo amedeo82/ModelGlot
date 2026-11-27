@@ -13,16 +13,16 @@ import pytest
 from fastapi.testclient import TestClient
 from openai import AsyncOpenAI
 
-from free_claude_code.config.model_refs import ModelFallback
-from free_claude_code.config.provider_catalog import GEMINI_DEFAULT_BASE
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.anthropic import aggregate_anthropic_sse_to_message
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.chat_completions.response import ChatResponseAccumulator
-from free_claude_code.core.gemini.response import GeminiResponseAccumulator
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.providers.gemini import GeminiProvider
-from free_claude_code.providers.open_router import OpenRouterProvider
+from modelglot.config.model_refs import ModelFallback
+from modelglot.config.provider_catalog import GEMINI_DEFAULT_BASE
+from modelglot.config.settings import Settings
+from modelglot.core.anthropic import aggregate_anthropic_sse_to_message
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.chat_completions.response import ChatResponseAccumulator
+from modelglot.core.gemini.response import GeminiResponseAccumulator
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.providers.gemini import GeminiProvider
+from modelglot.providers.open_router import OpenRouterProvider
 from tests.api.support import create_test_app, provider_manager_for_app
 from tests.api.test_delivered_stream_recovery import text_events
 from tests.providers.support import (
@@ -182,7 +182,7 @@ def matrix_app(
             http_client=httpx2.AsyncClient(transport=httpx2.MockTransport(sdk_handler)),
         )
         with patch(
-            "free_claude_code.providers.openai_chat.client.AsyncOpenAI",
+            "modelglot.providers.openai_chat.client.AsyncOpenAI",
             return_value=client,
         ):
             instance = OpenRouterProvider(

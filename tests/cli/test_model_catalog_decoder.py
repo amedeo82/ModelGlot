@@ -1,9 +1,9 @@
 import pytest
 
-from free_claude_code.application.model_catalog import CatalogModel
-from free_claude_code.cli.launchers.catalog_http import catalog_models_from_response
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.model_capabilities import ModelInputModality
+from modelglot.application.model_catalog import CatalogModel
+from modelglot.cli.launchers.catalog_http import catalog_models_from_response
+from modelglot.core.json_types import JsonObject
+from modelglot.core.model_capabilities import ModelInputModality
 
 
 def test_client_models_project_nested_direct_refs_in_source_order() -> None:
@@ -186,7 +186,7 @@ def test_client_models_deduplicate_wire_slugs_deterministically() -> None:
 def test_catalog_rejects_missing_or_unroutable_default(
     default: int | str | None,
 ) -> None:
-    from free_claude_code.cli.launchers.catalog_http import model_catalog_from_response
+    from modelglot.cli.launchers.catalog_http import model_catalog_from_response
 
     payload: JsonObject = {
         "data": [{"id": "provider/model", "provider_model_ref": "provider/model"}]
@@ -198,7 +198,7 @@ def test_catalog_rejects_missing_or_unroutable_default(
 
 
 def test_http_catalog_preserves_nonblank_identity_and_selects_default_by_id() -> None:
-    from free_claude_code.cli.launchers.catalog_http import model_catalog_from_response
+    from modelglot.cli.launchers.catalog_http import model_catalog_from_response
 
     payload: JsonObject = {
         "default_model_id": "provider/padded ",

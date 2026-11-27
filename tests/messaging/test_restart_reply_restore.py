@@ -5,12 +5,12 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.messaging.models import IncomingMessage, MessageScope
-from free_claude_code.messaging.trees import MessagingStore, TreeIdentity
-from free_claude_code.messaging.trees.node import MessageNode, MessageState
-from free_claude_code.messaging.trees.runtime import MessageTree
-from free_claude_code.messaging.workflow import MessagingWorkflow
+from modelglot.core.json_types import JsonObject
+from modelglot.messaging.models import IncomingMessage, MessageScope
+from modelglot.messaging.trees import MessagingStore, TreeIdentity
+from modelglot.messaging.trees.node import MessageNode, MessageState
+from modelglot.messaging.trees.runtime import MessageTree
+from modelglot.messaging.workflow import MessagingWorkflow
 from tests.fixture_types import MessagingStoreFactory
 
 TELEGRAM_CHAT_1 = MessageScope(platform="telegram", chat_id="chat_1")

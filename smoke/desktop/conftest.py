@@ -12,7 +12,7 @@ from typing import TypedDict
 
 import pytest
 
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.json_types import JsonObject
 from tests.wire_payload import object_payload, string_payload
 
 ROOT = Path(__file__).resolve().parents[2]

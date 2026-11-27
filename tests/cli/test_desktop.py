@@ -7,10 +7,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from free_claude_code.cli.commands import ServerStatus, ServerSupervisor
-from free_claude_code.cli.desktop import DesktopController
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.interprocess_lock import InterprocessFileLock
+from modelglot.cli.commands import ServerStatus, ServerSupervisor
+from modelglot.cli.desktop import DesktopController
+from modelglot.config.settings import Settings
+from modelglot.core.interprocess_lock import InterprocessFileLock
 
 
 def _settings() -> Settings:
@@ -38,11 +38,11 @@ def test_supervisor_accepts_restart_during_scheduled_startup() -> None:
 
     with (
         patch(
-            "free_claude_code.cli.commands.load_server_settings",
+            "modelglot.cli.commands.load_server_settings",
             return_value=settings,
         ),
         patch.object(supervisor, "_run_once", return_value=False) as run_once,
-        patch("free_claude_code.cli.commands.kill_all_best_effort"),
+        patch("modelglot.cli.commands.kill_all_best_effort"),
     ):
         assert supervisor.schedule_run() is True
         initial_status = supervisor.status
@@ -220,7 +220,7 @@ def _start_desktop_from_mock(shell: MagicMock) -> None:
 
 
 def test_second_desktop_launch_opens_existing_admin_without_new_server() -> None:
-    from free_claude_code.cli import desktop
+    from modelglot.cli import desktop
 
     settings = _settings()
     instance_lock = MagicMock()
@@ -250,7 +250,7 @@ def test_second_desktop_launch_opens_existing_admin_without_new_server() -> None
 def test_automatically_started_duplicate_does_not_open_admin(
     loser: str,
 ) -> None:
-    from free_claude_code.cli import desktop
+    from modelglot.cli import desktop
 
     settings = _settings()
     instance_lock = MagicMock()
@@ -283,7 +283,7 @@ def test_automatically_started_duplicate_does_not_open_admin(
 def test_desktop_attaches_to_terminal_server_instead_of_binding_twice(
     endpoint_ready: bool,
 ) -> None:
-    from free_claude_code.cli import desktop
+    from modelglot.cli import desktop
 
     settings = _settings()
     instance_lock = MagicMock()
@@ -320,7 +320,7 @@ def test_desktop_attaches_to_terminal_server_instead_of_binding_twice(
 
 
 def test_fresh_desktop_launch_uses_console_free_supervisor() -> None:
-    from free_claude_code.cli import desktop
+    from modelglot.cli import desktop
 
     settings = _settings()
     instance_lock = MagicMock()
@@ -345,7 +345,7 @@ def test_fresh_desktop_launch_uses_console_free_supervisor() -> None:
 
 
 def test_desktop_lock_failure_closes_tray_without_starting_server() -> None:
-    from free_claude_code.cli import desktop
+    from modelglot.cli import desktop
 
     instance_lock = MagicMock()
     instance_lock.acquire.side_effect = PermissionError("locked directory")
@@ -366,7 +366,7 @@ def test_desktop_lock_failure_closes_tray_without_starting_server() -> None:
 def test_version_text_reports_installed_package_version(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from free_claude_code.cli import desktop
+    from modelglot.cli import desktop
 
     monkeypatch.setattr(desktop, "package_version", lambda: "9.8.7")
 

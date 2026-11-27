@@ -9,31 +9,31 @@ from unittest.mock import AsyncMock, MagicMock
 import httpx
 import pytest
 
-from free_claude_code.api.app import create_app
-from free_claude_code.api.ports import ApiServices
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.application.readiness import InitializationWait
-from free_claude_code.config.api_keys import normalize_api_keys
-from free_claude_code.config.loader import ManagedConfigStore
-from free_claude_code.config.paths import claude_desktop_disconnect_path
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.gateway_model_ids import desktop_model_id
-from free_claude_code.harnesses import (
+from modelglot.api.app import create_app
+from modelglot.api.ports import ApiServices
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.application.readiness import InitializationWait
+from modelglot.config.api_keys import normalize_api_keys
+from modelglot.config.loader import ManagedConfigStore
+from modelglot.config.paths import claude_desktop_disconnect_path
+from modelglot.config.settings import Settings
+from modelglot.core.gateway_model_ids import desktop_model_id
+from modelglot.harnesses import (
     claude_desktop_integration as desktop,
 )
-from free_claude_code.harnesses import (
+from modelglot.harnesses import (
     claude_integration,
     claude_onboarding,
     codex_integration,
 )
-from free_claude_code.harnesses import (
+from modelglot.harnesses import (
     jetbrains_acp_integration as jb,
 )
-from free_claude_code.providers.base import BaseProvider
-from free_claude_code.providers.runtime.runtime import ProviderRuntime
-from free_claude_code.runtime.application import ApplicationRuntime
-from free_claude_code.runtime.configuration import ConfigurationService
-from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
+from modelglot.providers.base import BaseProvider
+from modelglot.providers.runtime.runtime import ProviderRuntime
+from modelglot.runtime.application import ApplicationRuntime
+from modelglot.runtime.configuration import ConfigurationService
+from modelglot.runtime.provider_manager import ProviderRuntimeManager
 from tests.assertions import require_present
 from tests.harnesses.test_integration_refresh import OLD_CLAUDE, OLD_CODEX, TOKEN
 from tests.harnesses.test_jetbrains_acp_integration import install, write

@@ -13,28 +13,28 @@ import httpx2
 import pytest
 from openai import AsyncOpenAI
 
-from free_claude_code.application.errors import InvalidRequestError
-from free_claude_code.application.execution import ProviderExecutor
-from free_claude_code.application.routing import ProviderModelTarget
-from free_claude_code.config.provider_catalog import LMSTUDIO_DEFAULT_BASE
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.async_iterators import AsyncCloseable
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.gemini import GeminiRequest
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.openai_responses import (
+from modelglot.application.errors import InvalidRequestError
+from modelglot.application.execution import ProviderExecutor
+from modelglot.application.routing import ProviderModelTarget
+from modelglot.config.provider_catalog import LMSTUDIO_DEFAULT_BASE
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.async_iterators import AsyncCloseable
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.gemini import GeminiRequest
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.openai_responses import (
     OpenAIResponsesRequest,
 )
-from free_claude_code.core.reasoning import (
+from modelglot.core.reasoning import (
     DEFAULT_REASONING_POLICY,
     ReasoningEffort,
     ReasoningPolicy,
 )
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.core.stream_recovery import ContinuationSeed
-from free_claude_code.providers.admission import ProviderAdmissionController
-from free_claude_code.providers.base import ProviderConfig
-from free_claude_code.providers.lmstudio import LMStudioProvider
+from modelglot.core.stream_output import StreamOutput
+from modelglot.core.stream_recovery import ContinuationSeed
+from modelglot.providers.admission import ProviderAdmissionController
+from modelglot.providers.base import ProviderConfig
+from modelglot.providers.lmstudio import LMStudioProvider
 from tests.application.test_execution import (
     FakeProvider,
     ResponsesFakeProvider,
@@ -101,7 +101,7 @@ async def provider_with_http(
         http_client=httpx2.AsyncClient(transport=httpx2.MockTransport(handler)),
     )
     with patch(
-        "free_claude_code.providers.openai_chat.provider.create_chat_client",
+        "modelglot.providers.openai_chat.provider.create_chat_client",
         return_value=client,
     ):
         provider = LMStudioProvider(
@@ -220,9 +220,7 @@ def completion_response():
 
 def test_init(lmstudio_config: ProviderConfig) -> None:
     """Test provider initialization."""
-    with patch(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI"
-    ) as mock_openai:
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI") as mock_openai:
         provider = LMStudioProvider(lmstudio_config, admission=immediate_admission())
         assert provider._api_key == "lm-studio"
         assert provider._base_url == LMSTUDIO_DEFAULT_BASE
@@ -845,7 +843,7 @@ async def test_context_cache_expires_from_lookup_completion(
         return metadata_response(4096 * calls)
 
     monkeypatch.setattr(
-        "free_claude_code.providers.lmstudio.client.time",
+        "modelglot.providers.lmstudio.client.time",
         SimpleNamespace(monotonic=lambda: now),
     )
     async with provider_with_http(handler) as provider:

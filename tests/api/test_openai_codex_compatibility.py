@@ -5,17 +5,17 @@ import httpx2
 import pytest
 from fastapi.testclient import TestClient
 
-from free_claude_code.core.anthropic.stream_contracts import (
+from modelglot.core.anthropic.stream_contracts import (
     assert_anthropic_stream_contract,
     parse_sse_text,
     text_content,
 )
-from free_claude_code.providers.admission import ProviderAdmissionController
-from free_claude_code.providers.openai_codex.auth import (
+from modelglot.providers.admission import ProviderAdmissionController
+from modelglot.providers.openai_codex.auth import (
     OpenAIAccess,
     OpenAIAuthManager,
 )
-from free_claude_code.providers.openai_codex.provider import OpenAICodexProvider
+from modelglot.providers.openai_codex.provider import OpenAICodexProvider
 from tests.api.support import create_test_app
 from tests.providers.support import make_provider_config
 from tests.wire_payload import (

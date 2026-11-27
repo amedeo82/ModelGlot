@@ -1,10 +1,10 @@
 """Anthropic settings share the standard masked configuration boundary."""
 
-from free_claude_code.config.admin.manifest import FIELD_BY_KEY
-from free_claude_code.config.loader import ManagedConfigStore
-from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
-from free_claude_code.harnesses.claude import build_claude_proxy_env
-from free_claude_code.providers.runtime.config import (
+from modelglot.config.admin.manifest import FIELD_BY_KEY
+from modelglot.config.loader import ManagedConfigStore
+from modelglot.config.provider_catalog import PROVIDER_CATALOG
+from modelglot.harnesses.claude import build_claude_proxy_env
+from modelglot.providers.runtime.config import (
     build_provider_config,
     has_provider_configuration,
 )

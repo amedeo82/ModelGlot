@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
         if (status == 0) status = PyInitConfig_SetInt(config, "install_signal_handlers", 1);
         if (status == 0) status = PyInitConfig_SetStrList(config, "argv", (size_t)argc, argv);
         if (status == 0) status = PyInitConfig_SetStr(config, "run_command",
-            "from free_claude_code.cli.desktop_entrypoint import launch; launch()\n");
+            "from modelglot.cli.desktop_entrypoint import launch; launch()\n");
         if (status == 0) status = Py_InitializeFromInitConfig(config);
         if (status < 0) {
             const char *message = NULL;

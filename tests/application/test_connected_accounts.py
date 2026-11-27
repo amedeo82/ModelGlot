@@ -1,6 +1,6 @@
 """Safe connected-account capabilities preserve provider identity semantics."""
 
-from free_claude_code.application.connected_accounts import (
+from modelglot.application.connected_accounts import (
     ConnectedAccountLoginMode,
     ConnectedAccountState,
     ConnectedAccountStatus,

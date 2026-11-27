@@ -8,23 +8,23 @@ import httpx2
 import pytest
 from fastapi.responses import JSONResponse
 
-from free_claude_code.api.handlers import MessagesHandler
-from free_claude_code.application.execution import ProviderExecutor
-from free_claude_code.application.response_collection import (
+from modelglot.api.handlers import MessagesHandler
+from modelglot.application.execution import ProviderExecutor
+from modelglot.application.response_collection import (
     WireProtocol,
     collect_response,
 )
-from free_claude_code.application.routing import ModelRouter
-from free_claude_code.config.reasoning import (
+from modelglot.application.routing import ModelRouter
+from modelglot.config.reasoning import (
     FALLBACK_REASONING_PREFERENCES,
     ReasoningPreference,
 )
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.anthropic import MessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.providers.custom import CustomProvider
-from free_claude_code.providers.runtime.config import build_custom_provider_config
+from modelglot.config.settings import Settings
+from modelglot.core.anthropic import MessagesRequest
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.providers.custom import CustomProvider
+from modelglot.providers.runtime.config import build_custom_provider_config
 from tests.api.model_fallback_support import (
     ControlledFallbackProvider,
     execution_failure,

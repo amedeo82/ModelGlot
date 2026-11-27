@@ -2,13 +2,13 @@ import json
 
 import pytest
 
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.openai_responses.errors import ResponsesConversionError
-from free_claude_code.core.openai_responses.provider_input import (
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.json_types import JsonObject
+from modelglot.core.openai_responses.errors import ResponsesConversionError
+from modelglot.core.openai_responses.provider_input import (
     build_responses_provider_request,
 )
-from free_claude_code.core.reasoning import ReasoningEffort, ReasoningPolicy
+from modelglot.core.reasoning import ReasoningEffort, ReasoningPolicy
 from tests.wire_payload import object_array, string_payload
 
 _KEEP_ALL_THINKING_EDIT = {

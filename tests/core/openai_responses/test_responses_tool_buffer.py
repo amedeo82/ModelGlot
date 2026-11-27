@@ -2,9 +2,9 @@
 
 import pytest
 
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.openai_responses.tool_calls import ResponsesToolCallBuffer
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.json_types import JsonObject
+from modelglot.core.openai_responses.tool_calls import ResponsesToolCallBuffer
 from tests.wire_payload import object_payload
 
 

@@ -75,11 +75,11 @@ The endpoint is already capable of resolving titles for custom and catalog-backe
 
 Relevant code:
 
-- `src/free_claude_code/api/admin_routes.py`
-- `src/free_claude_code/api/admin_static/admin.js`
-- `src/free_claude_code/application/model_titles.py`
-- `src/free_claude_code/config/model_title_overrides.py`
-- `src/free_claude_code/providers/model_catalog_source.py`
+- `src/modelglot/api/admin_routes.py`
+- `src/modelglot/api/admin_static/admin.js`
+- `src/modelglot/application/model_titles.py`
+- `src/modelglot/config/model_title_overrides.py`
+- `src/modelglot/providers/model_catalog_source.py`
 
 ### 1.2 Model combobox value behavior
 
@@ -549,18 +549,18 @@ explanation. No custom tooltip or interactive control is nested in listbox optio
 ## Evidence Index
 
 - [`admin-model-picker-enrichment-implementation-plan.md`](admin-model-picker-enrichment-implementation-plan.md)
-- `src/free_claude_code/api/admin_static/admin.js`
-- `src/free_claude_code/api/admin_static/model_combobox.js`
-- `src/free_claude_code/api/admin_static/admin.css`
-- `src/free_claude_code/api/admin_routes.py`
-- `src/free_claude_code/application/model_catalog.py`
-- `src/free_claude_code/application/model_metadata.py`
-- `src/free_claude_code/config/model_catalog_metadata.py`
-- `src/free_claude_code/application/model_titles.py`
-- `src/free_claude_code/providers/model_catalog_source.py`
-- `src/free_claude_code/providers/model_catalog_logos.py`
-- `src/free_claude_code/config/model_catalog_mapping.py`
-- `src/free_claude_code/config/model_title_overrides.py`
+- `src/modelglot/api/admin_static/admin.js`
+- `src/modelglot/api/admin_static/model_combobox.js`
+- `src/modelglot/api/admin_static/admin.css`
+- `src/modelglot/api/admin_routes.py`
+- `src/modelglot/application/model_catalog.py`
+- `src/modelglot/application/model_metadata.py`
+- `src/modelglot/config/model_catalog_metadata.py`
+- `src/modelglot/application/model_titles.py`
+- `src/modelglot/providers/model_catalog_source.py`
+- `src/modelglot/providers/model_catalog_logos.py`
+- `src/modelglot/config/model_catalog_mapping.py`
+- `src/modelglot/config/model_title_overrides.py`
 - `tests/api/test_admin.py`
 - `tests/providers/test_model_catalog_logos.py`
 - `tests/providers/test_model_catalog_source.py`

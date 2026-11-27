@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Never, Protocol, cast
 from unittest.mock import patch
 
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.json_types import JsonObject
 
 
 class _Timer(Protocol):
@@ -24,19 +24,19 @@ _installed = False
 
 
 def _spawned_child(queue: Queue[dict[str, str | None]]):
-    import free_claude_code
+    import modelglot
 
     queue.put(
         {
             "executable": sys.executable,
             "prefix": sys.prefix,
-            "package": free_claude_code.__file__,
+            "package": modelglot.__file__,
         }
     )
 
 
 def subprocess_checks() -> JsonObject:
-    from free_claude_code.runtime.folder_picker import NativeFolderPicker
+    from modelglot.runtime.folder_picker import NativeFolderPicker
 
     expected = str(Path.home())
     os.environ["MODELGLOT_NATIVE_DIALOG_RESULT"] = expected
@@ -83,16 +83,16 @@ def install():
         patch.object(os, "execv", dialog_exec).start()
     identity = import_module("modelglot_identity_probe")
     if case == "identity":
-        from free_claude_code.cli import desktop_entrypoint
+        from modelglot.cli import desktop_entrypoint
 
         main: Callable[[], None] | None = getattr(identity, "main", None)
         if main is None:
             raise RuntimeError("The native identity probe has no main entry point")
         patch.object(desktop_entrypoint, "launch", main).start()
         return
-    from free_claude_code.cli.desktop_tray import PystrayDesktopTray
-    from free_claude_code.runtime.integration_service import IntegrationService
-    from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
+    from modelglot.cli.desktop_tray import PystrayDesktopTray
+    from modelglot.runtime.integration_service import IntegrationService
+    from modelglot.runtime.provider_manager import ProviderRuntimeManager
 
     # Keep the real tray/server lifecycle, with external discovery and harness writes disabled.
     def skip_refresh(manager: ProviderRuntimeManager) -> None:

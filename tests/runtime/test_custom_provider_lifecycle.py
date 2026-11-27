@@ -2,15 +2,15 @@ import asyncio
 
 import pytest
 
-from free_claude_code.application.model_catalog import read_model_catalog
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.config.custom_providers import CustomProviderDefinition
-from free_claude_code.config.settings import Settings
-from free_claude_code.providers.admission_policy import ProviderAdmissionLimits
-from free_claude_code.providers.admission_registry import ProviderAdmissionRegistry
-from free_claude_code.providers.custom import CustomProvider
-from free_claude_code.providers.runtime import ProviderRuntime
-from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
+from modelglot.application.model_catalog import read_model_catalog
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.config.custom_providers import CustomProviderDefinition
+from modelglot.config.settings import Settings
+from modelglot.providers.admission_policy import ProviderAdmissionLimits
+from modelglot.providers.admission_registry import ProviderAdmissionRegistry
+from modelglot.providers.custom import CustomProvider
+from modelglot.providers.runtime import ProviderRuntime
+from modelglot.runtime.provider_manager import ProviderRuntimeManager
 from tests.runtime.test_provider_manager import FakeRuntime, RuntimeFactory
 
 pytestmark = pytest.mark.asyncio

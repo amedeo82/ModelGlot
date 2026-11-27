@@ -22,7 +22,7 @@ def check(directory: Path) -> None:
         assert rebuilt.name == original.name
         with zipfile.ZipFile(original) as before, zipfile.ZipFile(rebuilt) as after:
             for architecture in ("arm64", "x86_64"):
-                name = f"free_claude_code/assets/macos/modelglot-desktop-{architecture}"
+                name = f"modelglot/assets/macos/modelglot-desktop-{architecture}"
                 assert before.read(name) and before.read(name) == after.read(name)
                 print(f"Preserved {name}: {len(after.read(name))} bytes")
             entrypoints = next(

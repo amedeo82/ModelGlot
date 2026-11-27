@@ -4,13 +4,13 @@ import json
 
 import pytest
 
-from free_claude_code.core.anthropic.sse_aggregation import (
+from modelglot.core.anthropic.sse_aggregation import (
     aggregate_anthropic_sse_to_message,
 )
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.openai_responses.streaming.event_builders import (
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.json_types import JsonObject
+from modelglot.core.openai_responses.streaming.event_builders import (
     ResponseEventBuilder,
 )
 from tests.providers.test_history_transports import _events_for, _harness

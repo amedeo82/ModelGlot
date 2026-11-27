@@ -8,17 +8,17 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 import pytest_asyncio
 
-from free_claude_code.application.model_catalog import CatalogModel
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.config.loader import ManagedConfigStore
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.json_types import load_json_value
-from free_claude_code.harnesses import vscode_chat_integration as vscode
-from free_claude_code.providers.base import BaseProvider
-from free_claude_code.providers.runtime.runtime import ProviderRuntime
-from free_claude_code.runtime.application import ApplicationRuntime
-from free_claude_code.runtime.configuration import ConfigurationService
-from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
+from modelglot.application.model_catalog import CatalogModel
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.config.loader import ManagedConfigStore
+from modelglot.config.settings import Settings
+from modelglot.core.json_types import load_json_value
+from modelglot.harnesses import vscode_chat_integration as vscode
+from modelglot.providers.base import BaseProvider
+from modelglot.providers.runtime.runtime import ProviderRuntime
+from modelglot.runtime.application import ApplicationRuntime
+from modelglot.runtime.configuration import ConfigurationService
+from modelglot.runtime.provider_manager import ProviderRuntimeManager
 from tests.runtime.catalog_support import (
     finish_discovery,
     finish_publication,

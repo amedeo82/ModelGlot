@@ -15,7 +15,7 @@ from typing import Protocol
 from PIL import Image
 from pystray import Icon, Menu, MenuItem
 
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.json_types import JsonObject
 
 
 def write_report(output: Path, report: JsonObject):
@@ -80,7 +80,7 @@ def process_report() -> JsonObject:
     ]
     for extension in extensions:
         import_module(extension)
-    from free_claude_code.cli.launchers.common import server_command
+    from modelglot.cli.launchers.common import server_command
 
     return {
         "pid": os.getpid(),

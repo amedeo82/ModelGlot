@@ -5,10 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.application.model_catalog import CatalogModel
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.model_capabilities import ModelInputModality
-from free_claude_code.harnesses.dsh_config import build_dsh_launch_config
+from modelglot.application.model_catalog import CatalogModel
+from modelglot.core.json_types import JsonObject
+from modelglot.core.model_capabilities import ModelInputModality
+from modelglot.harnesses.dsh_config import build_dsh_launch_config
 from tests.wire_payload import object_payload
 
 

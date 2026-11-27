@@ -27,7 +27,7 @@ def cmd_modelglot_version() -> list[str]:
         (
             "import sys; "
             "sys.argv = ['modelglot-server', '--version']; "
-            "from free_claude_code.cli.entrypoints import serve; serve()"
+            "from modelglot.cli.entrypoints import serve; serve()"
         ),
     ]
 

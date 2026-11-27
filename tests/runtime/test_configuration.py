@@ -8,14 +8,14 @@ from unittest.mock import patch
 
 import pytest
 
-from free_claude_code.config import loader
-from free_claude_code.config.admin.persistence import prepare_admin_update
-from free_claude_code.config.env_files import MODELGLOT_CONFIG_SCHEMA_ENV
-from free_claude_code.config.env_migrations import CONFIG_SCHEMA_VERSION
-from free_claude_code.config.loader import ManagedConfigStore
-from free_claude_code.config.paths import config_lock_path
-from free_claude_code.core.interprocess_lock import InterprocessFileLock
-from free_claude_code.runtime.configuration import ConfigurationService
+from modelglot.config import loader
+from modelglot.config.admin.persistence import prepare_admin_update
+from modelglot.config.env_files import MODELGLOT_CONFIG_SCHEMA_ENV
+from modelglot.config.env_migrations import CONFIG_SCHEMA_VERSION
+from modelglot.config.loader import ManagedConfigStore
+from modelglot.config.paths import config_lock_path
+from modelglot.core.interprocess_lock import InterprocessFileLock
+from modelglot.runtime.configuration import ConfigurationService
 
 
 def test_reads_are_fresh_read_only_snapshots() -> None:
@@ -26,7 +26,7 @@ def test_reads_are_fresh_read_only_snapshots() -> None:
             f"{MODELGLOT_CONFIG_SCHEMA_ENV}={CONFIG_SCHEMA_VERSION}\nMODELGLOT_PORT={port}\n"
         )
         with patch(
-            "free_claude_code.config.loader.consolidate_managed_config",
+            "modelglot.config.loader.consolidate_managed_config",
             side_effect=AssertionError("read migrated"),
         ):
             snapshot = store.read()
@@ -120,9 +120,7 @@ def test_cooperative_commits_are_serialized_and_leave_complete_files() -> None:
         )
 
     with (
-        patch(
-            "free_claude_code.config.loader.atomic_write_managed_config", checked_write
-        ),
+        patch("modelglot.config.loader.atomic_write_managed_config", checked_write),
         ThreadPoolExecutor(max_workers=8) as executor,
     ):
         list(executor.map(write, range(8120, 8128)))

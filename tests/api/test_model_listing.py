@@ -4,15 +4,15 @@ import pytest
 from fastapi.applications import FastAPI
 from fastapi.testclient import TestClient
 
-from free_claude_code.api.dependencies import app_services
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.application.routing import ModelRouter
-from free_claude_code.config.api_keys import normalize_api_keys
-from free_claude_code.config.custom_providers import CustomProviderDefinition
-from free_claude_code.config.model_refs import ModelFallback
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.gateway_model_ids import desktop_model_id
-from free_claude_code.core.model_capabilities import ModelInputModality
+from modelglot.api.dependencies import app_services
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.application.routing import ModelRouter
+from modelglot.config.api_keys import normalize_api_keys
+from modelglot.config.custom_providers import CustomProviderDefinition
+from modelglot.config.model_refs import ModelFallback
+from modelglot.config.settings import Settings
+from modelglot.core.gateway_model_ids import desktop_model_id
+from modelglot.core.model_capabilities import ModelInputModality
 from tests.api.support import create_test_app, provider_manager_for_app
 from tests.wire_payload import (
     array_payload,
@@ -92,9 +92,9 @@ def test_claude_shortcuts_are_exactly_four_current_versions_and_route_by_tier(
 
 @pytest.mark.parametrize("view", ["messages", "responses"])
 def test_context_fallback_round_trip_preserves_reported_capabilities(view: str) -> None:
-    from free_claude_code.application.model_catalog import read_model_catalog
-    from free_claude_code.cli.launchers.catalog_http import model_catalog_from_response
-    from free_claude_code.cli.launchers.opencode_config import build_opencode_config
+    from modelglot.application.model_catalog import read_model_catalog
+    from modelglot.cli.launchers.catalog_http import model_catalog_from_response
+    from modelglot.cli.launchers.opencode_config import build_opencode_config
 
     app = create_test_app(_settings(model_opus=None))
     manager = provider_manager_for_app(app)
@@ -742,7 +742,7 @@ def test_muse_limits_are_complete_without_changing_reported_capabilities(
     expected_context: int,
     expected_output: int,
 ) -> None:
-    from free_claude_code.application.model_catalog import read_model_catalog
+    from modelglot.application.model_catalog import read_model_catalog
 
     app = create_test_app(_settings(model_opus=None, model_haiku=None))
     manager = provider_manager_for_app(app)
@@ -789,8 +789,8 @@ def test_unknown_model_view_is_rejected() -> None:
 def test_real_json_catalog_agrees_with_application_identity_and_known_metadata(
     view: str,
 ) -> None:
-    from free_claude_code.application.model_catalog import read_model_catalog
-    from free_claude_code.cli.launchers.catalog_http import model_catalog_from_response
+    from modelglot.application.model_catalog import read_model_catalog
+    from modelglot.cli.launchers.catalog_http import model_catalog_from_response
 
     app = create_test_app(
         _settings(model="open_router/Zulu", model_opus=None, model_haiku=None)

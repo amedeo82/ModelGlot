@@ -5,16 +5,16 @@ from typing import Any
 
 import pytest
 
-from free_claude_code.core.continuation_overlap import ContinuationOverlap
-from free_claude_code.core.continuation_stream import ContinuationStream
-from free_claude_code.core.delivered_response import DeliveredResponse
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.history_replay import (
+from modelglot.core.continuation_overlap import ContinuationOverlap
+from modelglot.core.continuation_stream import ContinuationStream
+from modelglot.core.delivered_response import DeliveredResponse
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.history_replay import (
     AssociatedReplayRecord,
     ReplayOrigin,
     encode_replay,
 )
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.json_types import JsonObject
 from tests.wire_payload import (
     array_payload,
     object_array,

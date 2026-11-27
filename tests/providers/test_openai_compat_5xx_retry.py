@@ -7,9 +7,9 @@ import openai
 import pytest
 from httpx2 import Request, Response
 
-from free_claude_code.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.providers.nvidia_nim import NvidiaNimProvider
+from modelglot.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
+from modelglot.core.failures import ExecutionFailure
+from modelglot.providers.nvidia_nim import NvidiaNimProvider
 from tests.providers.request_factory import make_messages_request
 from tests.providers.support import (
     SDKStreamDouble,
@@ -148,7 +148,7 @@ async def test_nim_stream_connection_error_exhausted_emits_cause_chain() -> None
             new_callable=AsyncMock,
             side_effect=error,
         ) as mock_create,
-        patch("free_claude_code.providers.attempt_loop.loop.trace_event") as trace,
+        patch("modelglot.providers.attempt_loop.loop.trace_event") as trace,
         pytest.raises(ExecutionFailure) as exc_info,
     ):
         [

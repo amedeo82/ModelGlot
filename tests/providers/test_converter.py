@@ -2,15 +2,15 @@ import json
 
 import pytest
 
-from free_claude_code.core.anthropic import (
+from modelglot.core.anthropic import (
     AnthropicToOpenAIConverter,
     OpenAIConversionError,
     ReasoningReplayMode,
     build_base_request_body,
 )
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.json_types import JsonObject, JsonValue, load_json_value
-from free_claude_code.core.openai_chat import (
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.json_types import JsonObject, JsonValue, load_json_value
+from modelglot.core.openai_chat import (
     is_synthetic_chat_tool_turn_boundary,
 )
 from tests.wire_payload import (
@@ -722,7 +722,7 @@ def test_convert_mixed_blocks_and_types_and_roles() -> None:
 
 def test_get_block_attr_defaults() -> None:
     # Test helper directly
-    from free_claude_code.core.anthropic import get_block_attr
+    from modelglot.core.anthropic import get_block_attr
 
     assert get_block_attr({}, "missing", "default") == "default"
     assert get_block_attr(object(), "missing", "default") == "default"

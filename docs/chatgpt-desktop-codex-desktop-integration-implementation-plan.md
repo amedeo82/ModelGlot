@@ -131,7 +131,7 @@ senza creare una nuova integrazione.
 
 **File coinvolti**
 
-- `src/free_claude_code/api/admin_static/index.html:143-152`;
+- `src/modelglot/api/admin_static/index.html:143-152`;
 - `README.md:36`;
 - `README.md:452`;
 - `e2e/test_admin_integrations.py:65-157`;
@@ -194,12 +194,12 @@ client non supportato, senza esporre segreti.
 
 **File coinvolti**
 
-- `src/free_claude_code/harnesses/codex_integration.py`;
-- `src/free_claude_code/harnesses/codex_model_catalog.py`;
-- `src/free_claude_code/config/paths.py:108-111`;
-- `src/free_claude_code/runtime/integration_service.py:696-783`;
-- `src/free_claude_code/api/admin_routes.py`, se necessario per il DTO;
-- `src/free_claude_code/api/admin_static/index.html`;
+- `src/modelglot/harnesses/codex_integration.py`;
+- `src/modelglot/harnesses/codex_model_catalog.py`;
+- `src/modelglot/config/paths.py:108-111`;
+- `src/modelglot/runtime/integration_service.py:696-783`;
+- `src/modelglot/api/admin_routes.py`, se necessario per il DTO;
+- `src/modelglot/api/admin_static/index.html`;
 - `tests/harnesses/test_codex_integration.py`;
 - `tests/api/test_codex_integration_routes.py`.
 
@@ -249,8 +249,8 @@ Non esporre al client Codex capacità che il provider upstream non implementa.
 
 **File coinvolti**
 
-- `src/free_claude_code/harnesses/codex_model_catalog.py:82`;
-- `src/free_claude_code/harnesses/codex_model_catalog.py:95`;
+- `src/modelglot/harnesses/codex_model_catalog.py:82`;
+- `src/modelglot/harnesses/codex_model_catalog.py:95`;
 - modelli/capability del provider, se già esistenti;
 - `tests/harnesses/test_codex_integration.py`;
 - test del catalogo esistenti.
@@ -303,10 +303,10 @@ Dimostrare che Codex locale usa correttamente ModelGlot per testo, tool call e t
 **File coinvolti**
 
 - `tests/api/test_openai_codex_compatibility.py`;
-- `src/free_claude_code/core/openai_responses/provider_stream.py:105-109`;
-- `src/free_claude_code/core/openai_responses/tool_calls.py:103-128`;
-- `src/free_claude_code/core/openai_responses/messages_request.py:414-417`;
-- `src/free_claude_code/core/openai_responses/native.py:50-52`.
+- `src/modelglot/core/openai_responses/provider_stream.py:105-109`;
+- `src/modelglot/core/openai_responses/tool_calls.py:103-128`;
+- `src/modelglot/core/openai_responses/messages_request.py:414-417`;
+- `src/modelglot/core/openai_responses/native.py:50-52`.
 
 **Criteri di accettazione**
 
@@ -352,9 +352,9 @@ client.
 
 **File coinvolti**
 
-- `src/free_claude_code/harnesses/codex_integration.py:70-147`;
-- `src/free_claude_code/runtime/integration_service.py:696-783`;
-- `src/free_claude_code/api/admin_static/index.html`;
+- `src/modelglot/harnesses/codex_integration.py:70-147`;
+- `src/modelglot/runtime/integration_service.py:696-783`;
+- `src/modelglot/api/admin_static/index.html`;
 - `tests/harnesses/test_codex_integration.py:79-108`;
 - `tests/api/test_codex_integration_routes.py`;
 - `e2e/test_admin_integrations.py:65-157`.
@@ -401,8 +401,8 @@ Rendere il catalogo evolvibile e diagnosticabile.
 
 **File coinvolti**
 
-- `src/free_claude_code/harnesses/codex_model_catalog.py:49-101`;
-- `src/free_claude_code/harnesses/codex_integration.py`;
+- `src/modelglot/harnesses/codex_model_catalog.py:49-101`;
+- `src/modelglot/harnesses/codex_integration.py`;
 - test del catalogo;
 - `tests/harnesses/test_codex_integration.py`.
 
@@ -448,8 +448,8 @@ Garantire che la versione desktop del Codex client accetti il catalogo generato.
 
 **File coinvolti**
 
-- `src/free_claude_code/harnesses/codex_model_catalog.py`;
-- `src/free_claude_code/harnesses/codex_integration.py`;
+- `src/modelglot/harnesses/codex_model_catalog.py`;
+- `src/modelglot/harnesses/codex_integration.py`;
 - nuovi fixture di test, se necessario;
 - `tests/harnesses/test_codex_integration.py`.
 
@@ -496,7 +496,7 @@ specifici fragili.
 
 **File coinvolti**
 
-- `src/free_claude_code/harnesses/codex_integration.py`;
+- `src/modelglot/harnesses/codex_integration.py`;
 - eventuale modulo OS-specifico vicino agli altri resolver;
 - `tests/harnesses/test_codex_integration.py`.
 

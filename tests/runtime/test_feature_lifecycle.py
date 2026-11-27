@@ -3,12 +3,12 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from free_claude_code.application.code_sessions import CodeService
-from free_claude_code.application.errors import ApplicationUnavailableError
-from free_claude_code.runtime.application import ApplicationRuntime
-from free_claude_code.runtime.configuration import ConfigurationService
-from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
-from free_claude_code.runtime.sqlite_database import SQLiteDatabase
+from modelglot.application.code_sessions import CodeService
+from modelglot.application.errors import ApplicationUnavailableError
+from modelglot.runtime.application import ApplicationRuntime
+from modelglot.runtime.configuration import ConfigurationService
+from modelglot.runtime.provider_manager import ProviderRuntimeManager
+from modelglot.runtime.sqlite_database import SQLiteDatabase
 from tests.runtime.test_application_runtime import (
     TrackingFactory,
     TrackingMessagingRuntime,

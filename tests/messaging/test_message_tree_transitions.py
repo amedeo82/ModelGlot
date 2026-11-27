@@ -3,9 +3,9 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from free_claude_code.messaging.models import MessageScope
-from free_claude_code.messaging.trees.node import MessageNode, MessageState
-from free_claude_code.messaging.trees.runtime import MessageTree
+from modelglot.messaging.models import MessageScope
+from modelglot.messaging.trees.node import MessageNode, MessageState
+from modelglot.messaging.trees.runtime import MessageTree
 
 _SCOPE = MessageScope(platform="telegram", chat_id="chat")
 

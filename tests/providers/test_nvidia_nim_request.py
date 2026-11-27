@@ -6,21 +6,21 @@ from typing import Any
 
 import pytest
 
-from free_claude_code.config.constants import ANTHROPIC_DEFAULT_MAX_OUTPUT_TOKENS
-from free_claude_code.core.anthropic import set_if_not_none
-from free_claude_code.core.anthropic.models import MessagesRequest, Tool
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.reasoning import ReasoningEffort, ReasoningPolicy
-from free_claude_code.providers.nvidia_nim.request_options import (
+from modelglot.config.constants import ANTHROPIC_DEFAULT_MAX_OUTPUT_TOKENS
+from modelglot.core.anthropic import set_if_not_none
+from modelglot.core.anthropic.models import MessagesRequest, Tool
+from modelglot.core.json_types import JsonObject
+from modelglot.core.reasoning import ReasoningEffort, ReasoningPolicy
+from modelglot.providers.nvidia_nim.request_options import (
     _set_extra,
 )
-from free_claude_code.providers.nvidia_nim.request_options import (
+from modelglot.providers.nvidia_nim.request_options import (
     build_nim_request_body as build_request_body,
 )
-from free_claude_code.providers.nvidia_nim.retry import (
+from modelglot.providers.nvidia_nim.retry import (
     clone_body_without_chat_template,
 )
-from free_claude_code.providers.nvidia_nim.tool_schema import (
+from modelglot.providers.nvidia_nim.tool_schema import (
     NIM_TOOL_ARGUMENT_ALIASES_KEY,
     body_without_nim_tool_argument_aliases,
     nim_tool_argument_aliases_from_body,

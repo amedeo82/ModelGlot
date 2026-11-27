@@ -6,11 +6,11 @@ from types import SimpleNamespace
 
 import pytest
 
-from free_claude_code.config.paths import claude_desktop_disconnect_path
-from free_claude_code.core.gateway_model_ids import desktop_model_id
-from free_claude_code.core.json_types import JsonObject, JsonValue, load_json_value
-from free_claude_code.harnesses import claude_desktop_integration as desktop
-from free_claude_code.harnesses.claude_desktop_integration import (
+from modelglot.config.paths import claude_desktop_disconnect_path
+from modelglot.core.gateway_model_ids import desktop_model_id
+from modelglot.core.json_types import JsonObject, JsonValue, load_json_value
+from modelglot.harnesses import claude_desktop_integration as desktop
+from modelglot.harnesses.claude_desktop_integration import (
     check_unmanaged,
     config_root,
 )

@@ -1,27 +1,27 @@
 import re
 from pathlib import Path
 
-from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
-from free_claude_code.messaging.platforms.factory import create_messaging_components
-from free_claude_code.providers.base import BaseProvider
-from free_claude_code.providers.cloudflare import CloudflareProvider
-from free_claude_code.providers.deepseek import DeepSeekProvider
-from free_claude_code.providers.gemini import GeminiProvider
-from free_claude_code.providers.github_copilot.provider import GitHubCopilotProvider
-from free_claude_code.providers.groq import GroqProvider
-from free_claude_code.providers.kilo import KiloProvider
-from free_claude_code.providers.lmstudio import LMStudioProvider
-from free_claude_code.providers.mistral import MistralProvider
-from free_claude_code.providers.nvidia_nim import NvidiaNimProvider
-from free_claude_code.providers.open_router import OpenRouterProvider
-from free_claude_code.providers.openai_api import OpenAIAPIProvider
-from free_claude_code.providers.openai_chat import (
+from modelglot.config.provider_catalog import PROVIDER_CATALOG
+from modelglot.messaging.platforms.factory import create_messaging_components
+from modelglot.providers.base import BaseProvider
+from modelglot.providers.cloudflare import CloudflareProvider
+from modelglot.providers.deepseek import DeepSeekProvider
+from modelglot.providers.gemini import GeminiProvider
+from modelglot.providers.github_copilot.provider import GitHubCopilotProvider
+from modelglot.providers.groq import GroqProvider
+from modelglot.providers.kilo import KiloProvider
+from modelglot.providers.lmstudio import LMStudioProvider
+from modelglot.providers.mistral import MistralProvider
+from modelglot.providers.nvidia_nim import NvidiaNimProvider
+from modelglot.providers.open_router import OpenRouterProvider
+from modelglot.providers.openai_api import OpenAIAPIProvider
+from modelglot.providers.openai_chat import (
     OPENAI_CHAT_PROFILES,
     OpenAIChatProvider,
 )
-from free_claude_code.providers.openai_codex.provider import OpenAICodexProvider
-from free_claude_code.providers.opencode import OpenCodeProvider
-from free_claude_code.providers.vertex import VertexProvider
+from modelglot.providers.openai_codex.provider import OpenAICodexProvider
+from modelglot.providers.opencode import OpenCodeProvider
+from modelglot.providers.vertex import VertexProvider
 from smoke.features import FEATURE_INVENTORY
 
 
@@ -65,8 +65,8 @@ def test_product_coverage_is_not_satisfied_by_prereq_probes() -> None:
 
 
 def test_provider_and_platform_registries_include_builtins() -> None:
-    from free_claude_code.providers.alibaba_cloud import AlibabaCloudProvider
-    from free_claude_code.providers.anthropic import AnthropicProvider
+    from modelglot.providers.alibaba_cloud import AlibabaCloudProvider
+    from modelglot.providers.anthropic import AnthropicProvider
 
     specialized_provider_classes = {
         "alibaba_cloud": AlibabaCloudProvider,

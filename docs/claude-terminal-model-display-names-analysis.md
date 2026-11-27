@@ -50,17 +50,17 @@ Current status on `custom/main`:
 
 The application inventory resolves each title once and stores it in `CatalogModel`:
 
-- title and provider description: `src/free_claude_code/application/model_catalog.py:31-38`;
-- resolution order: `src/free_claude_code/application/model_titles.py:52-67`;
-- provider attribution: `src/free_claude_code/application/model_catalog.py:145-164`.
+- title and provider description: `src/modelglot/application/model_catalog.py:31-38`;
+- resolution order: `src/modelglot/application/model_titles.py:52-67`;
+- provider attribution: `src/modelglot/application/model_catalog.py:145-164`.
 
 The API then projects that inventory into client-specific views:
 
 - `claude` is the Terminal view and `claude-desktop` is the Desktop view;
 - both call `_build_claude_models_response` at
-  `src/free_claude_code/api/model_catalog.py:141-145`;
+  `src/modelglot/api/model_catalog.py:141-145`;
 - the shared builder attaches `display_name` and `description` at
-  `src/free_claude_code/api/model_catalog.py:172-203`.
+  `src/modelglot/api/model_catalog.py:172-203`.
 
 Only the advertised ID encoding differs:
 
@@ -78,14 +78,14 @@ and Desktop rows carry the same title and description.
 
 The supported `modelglot-claude` launcher prepares the Anthropic-compatible environment:
 
-- `ANTHROPIC_BASE_URL`: `src/free_claude_code/harnesses/claude.py:11-16`;
-- `ANTHROPIC_AUTH_TOKEN`: `src/free_claude_code/harnesses/claude.py:15`;
+- `ANTHROPIC_BASE_URL`: `src/modelglot/harnesses/claude.py:11-16`;
+- `ANTHROPIC_AUTH_TOKEN`: `src/modelglot/harnesses/claude.py:15`;
 - `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1`:
-  `src/free_claude_code/harnesses/claude.py:16`.
+  `src/modelglot/harnesses/claude.py:16`.
 
 Claude Code then requests `GET /v1/models?limit=1000`. ModelGlot selects the default `claude`
 view unless an explicit query or `X-ModelGlot-Model-View` header selects another view:
-`src/free_claude_code/api/routes.py:405-423`.
+`src/modelglot/api/routes.py:405-423`.
 
 The launcher test verifies the discovery environment at
 `tests/cli/test_claude_launcher.py:23-33`.
@@ -118,10 +118,10 @@ Claude Code 2.1.248 and later can send both `Authorization` and `x-api-key` on t
 request. ModelGlot currently protects `GET /v1/models` with `require_proxy_auth`, which accepts
 only Bearer authorization:
 
-- route dependency: `src/free_claude_code/api/routes.py:405-414`;
-- Bearer-only implementation: `src/free_claude_code/api/dependencies.py:47-70`;
+- route dependency: `src/modelglot/api/routes.py:405-414`;
+- Bearer-only implementation: `src/modelglot/api/dependencies.py:47-70`;
 - existing Anthropic-compatible credential implementation:
-  `src/free_claude_code/api/dependencies.py:73-109`.
+  `src/modelglot/api/dependencies.py:73-109`.
 
 A manual installation that provides only `ANTHROPIC_API_KEY` can therefore fail discovery
 with HTTP 401 even though the same credential is accepted by the Messages endpoint. This
@@ -309,16 +309,16 @@ the newest release.
 
 | Claim | Evidence |
 | --- | --- |
-| The launcher enables gateway discovery | `src/free_claude_code/harnesses/claude.py:11-16` |
-| The launcher uses Bearer authentication | `src/free_claude_code/harnesses/claude.py:15` |
-| Terminal is the default model view | `src/free_claude_code/api/routes.py:405-423` |
-| Terminal and Desktop share one builder | `src/free_claude_code/api/model_catalog.py:141-145` |
-| Shared builder emits title and description | `src/free_claude_code/api/model_catalog.py:172-203` |
-| Titles use curated, catalog, heuristic, and raw fallbacks | `src/free_claude_code/application/model_titles.py:52-67` |
+| The launcher enables gateway discovery | `src/modelglot/harnesses/claude.py:11-16` |
+| The launcher uses Bearer authentication | `src/modelglot/harnesses/claude.py:15` |
+| Terminal is the default model view | `src/modelglot/api/routes.py:405-423` |
+| Terminal and Desktop share one builder | `src/modelglot/api/model_catalog.py:141-145` |
+| Shared builder emits title and description | `src/modelglot/api/model_catalog.py:172-203` |
+| Titles use curated, catalog, heuristic, and raw fallbacks | `src/modelglot/application/model_titles.py:52-67` |
 | Terminal and Desktop labels are already compared | `tests/api/test_model_listing.py:199-208` |
 | The launcher test verifies discovery enablement | `tests/cli/test_claude_launcher.py:23-33` |
-| `/v1/models` currently requires Bearer only | `src/free_claude_code/api/dependencies.py:47-70` |
-| Anthropic-compatible auth already supports `x-api-key` | `src/free_claude_code/api/dependencies.py:73-109` |
+| `/v1/models` currently requires Bearer only | `src/modelglot/api/dependencies.py:47-70` |
+| Anthropic-compatible auth already supports `x-api-key` | `src/modelglot/api/dependencies.py:73-109` |
 | The Claude feature already exists in the smoke inventory | `smoke/features.py:53-90` |
 | Official discovery request and response contract | `https://code.claude.com/docs/en/llm-gateway-protocol#model-discovery` |
 | Official `modelPicker` behavior | `https://code.claude.com/docs/en/settings-reference#modelpicker` |

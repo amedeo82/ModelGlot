@@ -9,17 +9,17 @@ import httpx
 import pytest
 from openai.types.chat import ChatCompletionChunk
 
-from free_claude_code.application.errors import ApplicationUnavailableError
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.config.provider_catalog import CLOUDFLARE_AI_REST_ROOT
-from free_claude_code.core.anthropic.models import Message, MessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.chat_completions.request import ChatRequest
-from free_claude_code.core.chat_completions.response import ChatResponseAccumulator
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.json_types import JsonObject, JsonValue, load_json_value
-from free_claude_code.providers.base import ProviderConfig
-from free_claude_code.providers.cloudflare import (
+from modelglot.application.errors import ApplicationUnavailableError
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.config.provider_catalog import CLOUDFLARE_AI_REST_ROOT
+from modelglot.core.anthropic.models import Message, MessagesRequest
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.chat_completions.request import ChatRequest
+from modelglot.core.chat_completions.response import ChatResponseAccumulator
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.json_types import JsonObject, JsonValue, load_json_value
+from modelglot.providers.base import ProviderConfig
+from modelglot.providers.cloudflare import (
     CloudflareProvider,
     cloudflare_ai_base_url,
 )
@@ -102,9 +102,7 @@ def test_init_composes_account_scoped_openai_chat_base_url(
     cloudflare_config: ProviderConfig,
 ) -> None:
     with (
-        patch(
-            "free_claude_code.providers.openai_chat.client.AsyncOpenAI"
-        ) as mock_openai,
+        patch("modelglot.providers.openai_chat.client.AsyncOpenAI") as mock_openai,
         patch("httpx.AsyncClient") as mock_httpx_client,
     ):
         provider = CloudflareProvider(

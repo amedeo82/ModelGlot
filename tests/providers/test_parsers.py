@@ -1,6 +1,6 @@
 import pytest
 
-from free_claude_code.core.anthropic import (
+from modelglot.core.anthropic import (
     ContentType,
     ThinkTagParser,
 )

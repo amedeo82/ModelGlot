@@ -4,18 +4,18 @@ from collections.abc import Mapping, Sequence
 
 import pytest
 
-from free_claude_code.application.model_fallback import stream_model_candidates
-from free_claude_code.application.response_collection import WireProtocol
-from free_claude_code.application.routing import ProviderModelCandidate
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.core.stream_delivery import current_stream_delivery
-from free_claude_code.core.stream_recovery import ContinuationSeed
-from free_claude_code.providers.admission import ProviderAdmissionController
-from free_claude_code.providers.endpoint_types import EndpointContext
-from free_claude_code.providers.open_router import OpenRouterProvider
-from free_claude_code.providers.recovery_policy import RecoveryTiming
+from modelglot.application.model_fallback import stream_model_candidates
+from modelglot.application.response_collection import WireProtocol
+from modelglot.application.routing import ProviderModelCandidate
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.core.stream_delivery import current_stream_delivery
+from modelglot.core.stream_recovery import ContinuationSeed
+from modelglot.providers.admission import ProviderAdmissionController
+from modelglot.providers.endpoint_types import EndpointContext
+from modelglot.providers.open_router import OpenRouterProvider
+from modelglot.providers.recovery_policy import RecoveryTiming
 from tests.api.test_delivered_stream_recovery import (
     after_text,
     assert_completed,

@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from free_claude_code.core.async_rwlock import AsyncReadWriteLock
+from modelglot.core.async_rwlock import AsyncReadWriteLock
 
 
 @pytest.mark.asyncio

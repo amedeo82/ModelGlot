@@ -8,15 +8,15 @@ from unittest.mock import patch
 import pytest
 from httpx import HTTPStatusError
 
-from free_claude_code.providers import admission
-from free_claude_code.providers.admission import (
+from modelglot.providers import admission
+from modelglot.providers.admission import (
     ProviderAdmissionController,
     ProviderAttempt,
     ProviderExecution,
     ProviderExecutionState,
     ProviderOperationKind,
 )
-from free_claude_code.providers.recovery_errors import ProviderRecoveryExhausted
+from modelglot.providers.recovery_errors import ProviderRecoveryExhausted
 from tests.mock_calls import keyword_arguments
 from tests.providers.test_provider_admission import _status_error
 

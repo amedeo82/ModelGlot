@@ -6,17 +6,17 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.config import env_migrations
-from free_claude_code.config.env_files import dotenv_values_from_file
-from free_claude_code.config.env_migrations import (
+from modelglot.config import env_migrations
+from modelglot.config.env_files import dotenv_values_from_file
+from modelglot.config.env_migrations import (
     CONFIG_SCHEMA_VERSION,
     HUGGINGFACE_TOKEN_MIGRATION,
     OPENCODE_ZEN_MODEL_REF_MIGRATIONS,
     consolidate_managed_config,
     migrate_env_setting_in_text,
 )
-from free_claude_code.config.loader import ManagedConfigStore
-from free_claude_code.config.model_refs import ModelFallback, decode_model_fallbacks
+from modelglot.config.loader import ManagedConfigStore
+from modelglot.config.model_refs import ModelFallback, decode_model_fallbacks
 
 
 @pytest.mark.parametrize(

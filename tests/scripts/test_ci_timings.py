@@ -11,7 +11,7 @@ from typing import override
 
 import pytest
 
-from free_claude_code.core.json_types import JsonValue
+from modelglot.core.json_types import JsonValue
 from scripts import ci_timings as timing
 from scripts.ci_shards import RUNNERS, matrix
 

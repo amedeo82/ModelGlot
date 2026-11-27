@@ -10,77 +10,77 @@ import pytest
 from aiohttp.abc import AbstractResolver
 from fastapi.responses import JSONResponse, StreamingResponse
 
-import free_claude_code.runtime.web_tools.constants as web_tool_constants
-from free_claude_code.api.handlers import MessagesHandler
-from free_claude_code.application.errors import InvalidRequestError
-from free_claude_code.application.execution import ProviderExecutor
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.application.routing import (
+import modelglot.runtime.web_tools.constants as web_tool_constants
+from modelglot.api.handlers import MessagesHandler
+from modelglot.application.errors import InvalidRequestError
+from modelglot.application.execution import ProviderExecutor
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.application.routing import (
     ModelRouter,
     ProviderModelTarget,
     ResolvedModelRoute,
     RoutedMessagesRequest,
 )
-from free_claude_code.application.web_tools.ports import (
+from modelglot.application.web_tools.ports import (
     WebFetchEgressPolicy,
     WebFetchEgressViolation,
 )
-from free_claude_code.application.web_tools.request import (
+from modelglot.application.web_tools.request import (
     HIDDEN_WEB_SEARCH_NAME,
     is_web_server_tool_request,
     plan_automatic_web_search,
     unsupported_server_tool_error,
 )
-from free_claude_code.application.web_tools.service import WebToolService
-from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
-from free_claude_code.config.reasoning import ReasoningPreference
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.anthropic.conversion import AnthropicToOpenAIConverter
-from free_claude_code.core.anthropic.models import (
+from modelglot.application.web_tools.service import WebToolService
+from modelglot.config.provider_catalog import PROVIDER_CATALOG
+from modelglot.config.reasoning import ReasoningPreference
+from modelglot.config.settings import Settings
+from modelglot.core.anthropic.conversion import AnthropicToOpenAIConverter
+from modelglot.core.anthropic.models import (
     ContentBlockServerToolUse,
     Message,
     MessagesRequest,
     Tool,
 )
-from free_claude_code.core.anthropic.native import (
+from modelglot.core.anthropic.native import (
     NativeMessagesOptions,
     build_native_messages_request,
 )
-from free_claude_code.core.anthropic.sse_aggregation import (
+from modelglot.core.anthropic.sse_aggregation import (
     aggregate_anthropic_sse_to_message,
 )
-from free_claude_code.core.anthropic.stream_contracts import (
+from modelglot.core.anthropic.stream_contracts import (
     assert_anthropic_stream_contract,
     parse_sse_text,
     text_content,
 )
-from free_claude_code.core.anthropic.streaming import format_sse_event
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.gemini.native_request import messages_to_gemini
-from free_claude_code.core.history_replay import ReplayOrigin, prepare_history
-from free_claude_code.core.json_types import JsonObject, load_json_value
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.openai_responses.errors import ResponsesConversionError
-from free_claude_code.core.openai_responses.provider_input import (
+from modelglot.core.anthropic.streaming import format_sse_event
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.gemini.native_request import messages_to_gemini
+from modelglot.core.history_replay import ReplayOrigin, prepare_history
+from modelglot.core.json_types import JsonObject, load_json_value
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.openai_responses.errors import ResponsesConversionError
+from modelglot.core.openai_responses.provider_input import (
     build_responses_provider_request,
 )
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.core.stream_output import StreamOutput, call_references
-from free_claude_code.core.stream_recovery import ContinuationSeed
-from free_claude_code.core.version import package_version
-from free_claude_code.core.web_tools import WebFetchResult, WebSearchResult
-from free_claude_code.messaging.event_parser import parse_cli_event
-from free_claude_code.providers.gemini.stream import GeminiStream
-from free_claude_code.providers.openai_chat.stream_output import (
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.core.stream_output import StreamOutput, call_references
+from modelglot.core.stream_recovery import ContinuationSeed
+from modelglot.core.version import package_version
+from modelglot.core.web_tools import WebFetchResult, WebSearchResult
+from modelglot.messaging.event_parser import parse_cli_event
+from modelglot.providers.gemini.stream import GeminiStream
+from modelglot.providers.openai_chat.stream_output import (
     AnthropicChatStreamOutput,
 )
-from free_claude_code.runtime.web_tools import egress as web_egress
-from free_claude_code.runtime.web_tools.client import (
+from modelglot.runtime.web_tools import egress as web_egress
+from modelglot.runtime.web_tools.client import (
     HTTPWebToolsClient,
     _drain_response_body_capped,
     _read_response_body_capped,
 )
-from free_claude_code.runtime.web_tools.egress import enforce_web_fetch_egress
+from modelglot.runtime.web_tools.egress import enforce_web_fetch_egress
 from tests.mock_calls import positional_arguments
 from tests.web_tools_support import StubWebToolsClient
 from tests.wire_payload import (
@@ -2094,11 +2094,11 @@ async def test_web_fetch_pins_validated_addresses_for_every_redirect(
 
     with (
         patch(
-            "free_claude_code.runtime.web_tools.client.ClientSession",
+            "modelglot.runtime.web_tools.client.ClientSession",
             return_value=client_cm,
         ),
         patch(
-            "free_claude_code.runtime.web_tools.client.TCPConnector",
+            "modelglot.runtime.web_tools.client.TCPConnector",
             side_effect=connector,
         ),
     ):
@@ -2125,7 +2125,7 @@ async def test_run_web_fetch_follows_redirect_when_each_hop_is_allowed() -> None
     res_ok = _aiohttp_response(200, url="http://8.8.8.8/final", body=b"hello world")
     client_cm, session = _aiohttp_client_session_patch(res_redirect, res_ok)
     with patch(
-        "free_claude_code.runtime.web_tools.client.ClientSession",
+        "modelglot.runtime.web_tools.client.ClientSession",
         return_value=client_cm,
     ):
         out = await HTTPWebToolsClient().fetch(
@@ -2145,7 +2145,7 @@ async def test_run_web_fetch_truncates_large_body_to_byte_cap(
     client_cm, _ = _aiohttp_client_session_patch(res_ok)
     monkeypatch.setattr(web_tool_constants, "_MAX_WEB_FETCH_RESPONSE_BYTES", 100)
     with patch(
-        "free_claude_code.runtime.web_tools.client.ClientSession",
+        "modelglot.runtime.web_tools.client.ClientSession",
         return_value=client_cm,
     ):
         out = await HTTPWebToolsClient().fetch(
@@ -2167,7 +2167,7 @@ async def test_run_web_fetch_redirect_to_blocked_host_raises() -> None:
     client_cm, session = _aiohttp_client_session_patch(res_redirect)
     with (
         patch(
-            "free_claude_code.runtime.web_tools.client.ClientSession",
+            "modelglot.runtime.web_tools.client.ClientSession",
             return_value=client_cm,
         ),
         pytest.raises(WebFetchEgressViolation),
@@ -2183,7 +2183,7 @@ async def test_run_web_fetch_redirect_without_location_raises() -> None:
     client_cm, _ = _aiohttp_client_session_patch(res_bad)
     with (
         patch(
-            "free_claude_code.runtime.web_tools.client.ClientSession",
+            "modelglot.runtime.web_tools.client.ClientSession",
             return_value=client_cm,
         ),
         pytest.raises(WebFetchEgressViolation, match="missing Location"),
@@ -2197,11 +2197,9 @@ async def test_run_web_fetch_excess_redirects_raises() -> None:
     res2 = _aiohttp_response(302, url="http://8.8.8.8/b", location="/c", body=b"")
     client_cm, _ = _aiohttp_client_session_patch(res1, res2)
     with (
+        patch("modelglot.runtime.web_tools.constants._MAX_WEB_FETCH_REDIRECTS", 1),
         patch(
-            "free_claude_code.runtime.web_tools.constants._MAX_WEB_FETCH_REDIRECTS", 1
-        ),
-        patch(
-            "free_claude_code.runtime.web_tools.client.ClientSession",
+            "modelglot.runtime.web_tools.client.ClientSession",
             return_value=client_cm,
         ),
         pytest.raises(WebFetchEgressViolation, match="exceeded maximum redirects"),
@@ -2586,9 +2584,7 @@ async def test_streams_web_fetch_error_summary_generic_by_default(
         tool_choice={"type": "tool", "name": "web_fetch"},
     )
 
-    with patch(
-        "free_claude_code.application.web_tools.service.logger.warning"
-    ) as log_warn:
+    with patch("modelglot.application.web_tools.service.logger.warning") as log_warn:
         raw = "".join(
             [
                 event

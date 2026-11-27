@@ -8,26 +8,26 @@ from typing import override
 import httpx
 import pytest
 
-from free_claude_code.application.errors import InvalidRequestError
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.application.response_collection import collect_response
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.core.stream_delivery import current_stream_delivery
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.providers.admission import ProviderAdmissionController
-from free_claude_code.providers.anthropic_messages.request_policy import (
+from modelglot.application.errors import InvalidRequestError
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.application.response_collection import collect_response
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.json_types import JsonObject
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.core.stream_delivery import current_stream_delivery
+from modelglot.core.stream_output import StreamOutput
+from modelglot.providers.admission import ProviderAdmissionController
+from modelglot.providers.anthropic_messages.request_policy import (
     MessagesModelCapabilities,
 )
-from free_claude_code.providers.anthropic_messages.transport import (
+from modelglot.providers.anthropic_messages.transport import (
     AnthropicMessagesTransport,
 )
-from free_claude_code.providers.endpoint_types import HttpEndpoint
-from free_claude_code.providers.http import maybe_await_aclose
+from modelglot.providers.endpoint_types import HttpEndpoint
+from modelglot.providers.http import maybe_await_aclose
 from tests.providers.support import immediate_admission
 from tests.wire_payload import decode_object, int_payload, object_array, object_payload
 

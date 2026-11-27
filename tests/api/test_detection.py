@@ -2,11 +2,11 @@
 
 import pytest
 
-from free_claude_code.api.detection import (
+from modelglot.api.detection import (
     detect_safety_classifier_stop_sequence,
 )
-from free_claude_code.core.anthropic.models import Message, MessagesRequest
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.anthropic.models import Message, MessagesRequest
+from modelglot.core.json_types import JsonObject
 
 
 def _make_request(

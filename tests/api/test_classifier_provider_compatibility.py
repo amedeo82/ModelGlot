@@ -11,24 +11,24 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from openai import APIError, AsyncOpenAI, BadRequestError
 from openai.types.chat import ChatCompletionChunk
 
-from free_claude_code.api.handlers import MessagesHandler
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.config.constants import ANTHROPIC_DEFAULT_MAX_OUTPUT_TOKENS
-from free_claude_code.config.reasoning import (
+from modelglot.api.handlers import MessagesHandler
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.config.constants import ANTHROPIC_DEFAULT_MAX_OUTPUT_TOKENS
+from modelglot.config.reasoning import (
     FALLBACK_REASONING_PREFERENCES,
     ReasoningPreference,
 )
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import (
+from modelglot.config.settings import Settings
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.anthropic.stream_contracts import (
     parse_sse_text,
     text_content,
     thinking_content,
 )
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.reasoning import ReasoningCapability
-from free_claude_code.providers.gemini import GeminiProvider
-from free_claude_code.providers.open_router import OpenRouterProvider
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.reasoning import ReasoningCapability
+from modelglot.providers.gemini import GeminiProvider
+from modelglot.providers.open_router import OpenRouterProvider
 from tests.api.model_fallback_support import (
     ControlledFallbackProvider,
     execution_failure,
@@ -244,7 +244,7 @@ async def test_openrouter_numeric_sse_rejection_uses_classifier_correction(
         )
 
     with patch(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI",
+        "modelglot.providers.openai_chat.client.AsyncOpenAI",
         return_value=AsyncOpenAI(
             api_key="test",
             base_url="https://provider.invalid/v1",

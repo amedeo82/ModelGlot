@@ -2,10 +2,10 @@
 
 import pytest
 
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.anthropic import MessagesRequest
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.reasoning import (
+from modelglot.config.settings import Settings
+from modelglot.core.anthropic import MessagesRequest
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.reasoning import (
     ReasoningControl,
     ReasoningEffort,
     ReasoningPolicy,

@@ -3,11 +3,11 @@
 from typing import override
 from unittest.mock import MagicMock
 
-from free_claude_code.core.anthropic import ReasoningReplayMode
-from free_claude_code.core.anthropic.models import Message, MessagesRequest
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.reasoning import DEFAULT_REASONING_POLICY, ReasoningPolicy
-from free_claude_code.providers.openai_chat import (
+from modelglot.core.anthropic import ReasoningReplayMode
+from modelglot.core.anthropic.models import Message, MessagesRequest
+from modelglot.core.json_types import JsonObject
+from modelglot.core.reasoning import DEFAULT_REASONING_POLICY, ReasoningPolicy
+from modelglot.providers.openai_chat import (
     NO_REASONING,
     OpenAIChatBehavior,
     OpenAIChatProfile,

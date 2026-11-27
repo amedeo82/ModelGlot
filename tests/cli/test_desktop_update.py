@@ -10,7 +10,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from free_claude_code.updater import desktop as desktop_update
+from modelglot.updater import desktop as desktop_update
 
 
 class FakeMessageBox:

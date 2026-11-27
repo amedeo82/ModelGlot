@@ -13,16 +13,16 @@ from typing import cast, override
 import httpx2
 import pytest
 
-from free_claude_code.application.response_collection import collect_response
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import (
+from modelglot.application.response_collection import collect_response
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.anthropic.stream_contracts import (
     assert_anthropic_stream_contract,
     parse_sse_text,
 )
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.json_types import JsonObject, load_json_value
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.providers.github_copilot.types import CopilotEgress
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.json_types import JsonObject, load_json_value
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.providers.github_copilot.types import CopilotEgress
 from tests.providers.test_github_copilot_provider import Harness, responses_sse
 from tests.providers.test_openai_responses_transport import (
     _completed_event,

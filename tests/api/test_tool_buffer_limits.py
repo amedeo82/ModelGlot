@@ -4,8 +4,8 @@ from functools import partial
 
 import pytest
 
-from free_claude_code.core import tool_call_buffer
-from free_claude_code.core.openai_responses import tool_calls as responses_tools
+from modelglot.core import tool_call_buffer
+from modelglot.core.openai_responses import tool_calls as responses_tools
 from tests.api.test_delivered_stream_recovery import text_events
 from tests.api.test_midstream_model_fallback import delivered_candidates
 from tests.providers.test_history_transports import _harness

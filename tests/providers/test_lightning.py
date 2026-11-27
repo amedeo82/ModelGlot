@@ -6,16 +6,16 @@ import httpx2
 import pytest
 from openai import AsyncOpenAI
 
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.config.constants import ANTHROPIC_DEFAULT_MAX_OUTPUT_TOKENS
-from free_claude_code.config.provider_catalog import LIGHTNING_DEFAULT_BASE
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.model_capabilities import ModelInputModality
-from free_claude_code.core.reasoning import ReasoningEffort, ReasoningPolicy
-from free_claude_code.providers.model_listing import ModelListResponseError
-from free_claude_code.providers.openai_chat import OpenAIChatProvider
-from free_claude_code.providers.openai_chat.profiles import OPENAI_CHAT_PROFILES
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.config.constants import ANTHROPIC_DEFAULT_MAX_OUTPUT_TOKENS
+from modelglot.config.provider_catalog import LIGHTNING_DEFAULT_BASE
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.model_capabilities import ModelInputModality
+from modelglot.core.reasoning import ReasoningEffort, ReasoningPolicy
+from modelglot.providers.model_listing import ModelListResponseError
+from modelglot.providers.openai_chat import OpenAIChatProvider
+from modelglot.providers.openai_chat.profiles import OPENAI_CHAT_PROFILES
 from tests.providers.support import (
     REASONING_DEFAULT,
     REASONING_OFF,

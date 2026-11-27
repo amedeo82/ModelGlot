@@ -2,13 +2,13 @@
 
 import pytest
 
-from free_claude_code.core.anthropic.errors import (
+from modelglot.core.anthropic.errors import (
     anthropic_error_type_for_failure,
     anthropic_failure_payload,
 )
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.openai_responses.errors import (
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.json_types import JsonObject
+from modelglot.core.openai_responses.errors import (
     openai_error_type_for_failure,
     openai_failure_payload,
 )

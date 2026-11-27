@@ -6,16 +6,16 @@ from typing import override
 
 import pytest
 
-from free_claude_code.application.errors import InvalidRequestError
-from free_claude_code.application.execution import ProviderExecutor
-from free_claude_code.application.routing import ModelRouter
-from free_claude_code.application.web_tools.ports import WebFetchEgressPolicy
-from free_claude_code.application.web_tools.service import WebToolService
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.anthropic.models import Message, MessagesRequest, Tool
-from free_claude_code.core.anthropic.tokens import TokenCounter
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.core.web_tools import WebFetchResult
+from modelglot.application.errors import InvalidRequestError
+from modelglot.application.execution import ProviderExecutor
+from modelglot.application.routing import ModelRouter
+from modelglot.application.web_tools.ports import WebFetchEgressPolicy
+from modelglot.application.web_tools.service import WebToolService
+from modelglot.config.settings import Settings
+from modelglot.core.anthropic.models import Message, MessagesRequest, Tool
+from modelglot.core.anthropic.tokens import TokenCounter
+from modelglot.core.stream_output import StreamOutput
+from modelglot.core.web_tools import WebFetchResult
 from tests.web_tools_support import StubWebToolsClient
 
 

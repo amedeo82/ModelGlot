@@ -18,14 +18,14 @@ from typing import Any, NotRequired, TypedDict, override
 import httpx
 import pytest
 
-from free_claude_code.config.api_keys import first_api_key
-from free_claude_code.config.env_migrations import (
+from modelglot.config.api_keys import first_api_key
+from modelglot.config.env_migrations import (
     atomic_write_managed_config,
     settings_env_keys,
 )
-from free_claude_code.config.paths import MODELGLOT_DATABASE_FILENAME
-from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
-from free_claude_code.core.json_types import JsonObject
+from modelglot.config.paths import MODELGLOT_DATABASE_FILENAME
+from modelglot.config.provider_catalog import PROVIDER_CATALOG
+from modelglot.core.json_types import JsonObject
 from smoke.lib.child_process import run_captured_text
 from smoke.lib.config import SmokeConfig
 from smoke.lib.e2e import SmokeServerDriver

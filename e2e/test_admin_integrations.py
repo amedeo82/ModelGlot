@@ -7,7 +7,7 @@ import pytest
 from playwright.sync_api import Page, Route, expect
 
 from e2e.layout import visible_bounds
-from free_claude_code.harnesses import claude_integration, claude_onboarding
+from modelglot.harnesses import claude_integration, claude_onboarding
 from tests.wire_payload import (
     array_payload,
     decode_object,

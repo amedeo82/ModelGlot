@@ -1,12 +1,12 @@
 from collections.abc import MutableMapping
 from typing import cast
 
-from free_claude_code.config.model_refs import split_provider_model_ref
-from free_claude_code.config.model_title_overrides import (
+from modelglot.config.model_refs import split_provider_model_ref
+from modelglot.config.model_title_overrides import (
     MODEL_TITLE_OVERRIDES,
     ModelTitleOverride,
 )
-from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
+from modelglot.config.provider_catalog import PROVIDER_CATALOG
 
 
 def test_override_keys_are_valid_provider_model_pairs() -> None:

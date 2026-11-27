@@ -2,8 +2,8 @@ import asyncio
 
 import pytest
 
-from free_claude_code.messaging.models import MessageScope
-from free_claude_code.messaging.voice import (
+from modelglot.messaging.models import MessageScope
+from modelglot.messaging.voice import (
     PendingVoiceClaim,
     PendingVoiceRegistry,
     VoiceCancellationResult,

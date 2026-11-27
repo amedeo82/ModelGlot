@@ -6,8 +6,8 @@ import httpx2
 import pytest
 from openai import BadRequestError
 
-from free_claude_code.providers.endpoint_types import HttpEndpoint
-from free_claude_code.providers.history_replay import history_retry_body, replay_origin
+from modelglot.providers.endpoint_types import HttpEndpoint
+from modelglot.providers.history_replay import history_retry_body, replay_origin
 from tests.wire_payload import array_payload, object_payload, string_payload
 
 

@@ -6,27 +6,27 @@ from copy import deepcopy
 import pytest
 from pydantic import ValidationError
 
-from free_claude_code.core.anthropic.native import NativeMessagesOptions
-from free_claude_code.core.gemini import GeminiConversionError, GeminiRequest
-from free_claude_code.core.gemini.replay import (
+from modelglot.core.anthropic.native import NativeMessagesOptions
+from modelglot.core.gemini import GeminiConversionError, GeminiRequest
+from modelglot.core.gemini.replay import (
     CallReplay,
     ReplayBundle,
     apply_call_replay,
     decode_bundle,
     encode_bundle,
 )
-from free_claude_code.core.gemini.request import (
+from modelglot.core.gemini.request import (
     build_gemini_chat_request,
     build_gemini_messages_request,
     build_gemini_responses_request,
 )
-from free_claude_code.core.gemini.schema import json_schema
-from free_claude_code.core.history_replay import (
+from modelglot.core.gemini.schema import json_schema
+from modelglot.core.history_replay import (
     ReplayOrigin,
     ReplayRecord,
 )
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.reasoning import ReasoningPolicy
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.reasoning import ReasoningPolicy
 from tests.wire_payload import object_array, object_payload
 
 

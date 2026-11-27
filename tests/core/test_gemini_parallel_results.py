@@ -5,17 +5,17 @@ from typing import Any, cast
 
 import pytest
 
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.gemini.errors import GeminiConversionError
-from free_claude_code.core.gemini.native_request import messages_to_gemini
-from free_claude_code.core.history_replay import (
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.gemini.errors import GeminiConversionError
+from modelglot.core.gemini.native_request import messages_to_gemini
+from modelglot.core.history_replay import (
     HistoryMode,
     ReplayOrigin,
     ReplayRecord,
     encode_replay,
     prepare_history,
 )
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.json_types import JsonObject
 from tests.wire_payload import object_array, object_payload
 
 ORIGIN = ReplayOrigin(

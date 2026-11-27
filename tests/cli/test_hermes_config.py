@@ -4,12 +4,12 @@ import json
 
 import pytest
 
-from free_claude_code.application.model_catalog import CatalogModel
-from free_claude_code.cli.launchers.hermes_config import (
+from modelglot.application.model_catalog import CatalogModel
+from modelglot.cli.launchers.hermes_config import (
     build_hermes_managed_config,
 )
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.model_capabilities import ModelInputModality
+from modelglot.core.json_types import JsonObject
+from modelglot.core.model_capabilities import ModelInputModality
 
 
 def _models() -> tuple[CatalogModel, ...]:

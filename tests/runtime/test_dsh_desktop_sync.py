@@ -10,11 +10,11 @@ import pytest
 import pytest_asyncio
 from ruamel.yaml import YAML
 
-from free_claude_code.application.model_catalog import ModelCatalog
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.harnesses import dsh_desktop_integration as desktop
-from free_claude_code.runtime.application import ApplicationRuntime
+from modelglot.application.model_catalog import ModelCatalog
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.core.json_types import JsonObject
+from modelglot.harnesses import dsh_desktop_integration as desktop
+from modelglot.runtime.application import ApplicationRuntime
 from tests.runtime.catalog_support import (
     finish_discovery,
     finish_publication,

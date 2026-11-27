@@ -6,16 +6,16 @@ from fastapi.applications import FastAPI
 from fastapi.testclient import TestClient
 from httpx import Response
 
-from free_claude_code.config.constants import DEFAULT_MODEL
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.anthropic import ReasoningReplayMode
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.providers.nvidia_nim import NvidiaNimProvider
-from free_claude_code.providers.openai_chat import (
+from modelglot.config.constants import DEFAULT_MODEL
+from modelglot.config.settings import Settings
+from modelglot.core.anthropic import ReasoningReplayMode
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.json_types import JsonObject
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.core.stream_output import StreamOutput
+from modelglot.providers.nvidia_nim import NvidiaNimProvider
+from modelglot.providers.openai_chat import (
     NO_REASONING,
     OpenAIChatProfile,
     OpenAIChatProvider,
@@ -136,7 +136,7 @@ def client(app: FastAPI):
     """HTTP client with provider resolution stubbed; patch only for this file."""
     with (
         patch(
-            "free_claude_code.api.routes.resolve_provider",
+            "modelglot.api.routes.resolve_provider",
             return_value=mock_provider,
         ),
         TestClient(app) as test_client,
@@ -249,7 +249,7 @@ def test_create_message_ingress_error_has_request_id_without_terminal_header(
 
 def test_create_message_rejects_unportable_image_as_invalid_request() -> None:
     with patch(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI",
+        "modelglot.providers.openai_chat.client.AsyncOpenAI",
         return_value=MagicMock(),
     ):
         provider = OpenAIChatProvider(
@@ -268,7 +268,7 @@ def test_create_message_rejects_unportable_image_as_invalid_request() -> None:
         )
     test_app = create_test_app()
     with (
-        patch("free_claude_code.api.routes.resolve_provider", return_value=provider),
+        patch("modelglot.api.routes.resolve_provider", return_value=provider),
         TestClient(test_app) as test_client,
     ):
         response = test_client.post(
@@ -322,8 +322,8 @@ def test_create_message_pre_start_provider_error_returns_terminal_json(
     }
 
     with (
-        patch("free_claude_code.api.response_streams.trace_event") as trace,
-        patch("free_claude_code.application.execution.trace_event") as execution_trace,
+        patch("modelglot.api.response_streams.trace_event") as trace,
+        patch("modelglot.application.execution.trace_event") as execution_trace,
     ):
         response = client.post("/v1/messages", json=payload)
 
@@ -334,18 +334,17 @@ def test_create_message_pre_start_provider_error_returns_terminal_json(
     route_trace = next(
         call.kwargs
         for call in execution_trace.call_args_list
-        if call.kwargs.get("event") == "free_claude_code.api.route.resolved"
+        if call.kwargs.get("event") == "modelglot.api.route.resolved"
     )
     assert route_trace["request_id"] == request_id
     terminal_trace = next(
         call.kwargs
         for call in trace.call_args_list
-        if call.kwargs.get("event")
-        == "free_claude_code.api.response.terminal_execution_error"
+        if call.kwargs.get("event") == "modelglot.api.response.terminal_execution_error"
     )
     assert terminal_trace == {
         "stage": "egress",
-        "event": "free_claude_code.api.response.terminal_execution_error",
+        "event": "modelglot.api.response.terminal_execution_error",
         "source": "api",
         "wire_api": "messages",
         "request_id": request_id,

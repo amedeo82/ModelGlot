@@ -5,7 +5,7 @@ from typing import cast
 
 import pytest
 
-from free_claude_code.application.usage_events import (
+from modelglot.application.usage_events import (
     CanonicalUsage,
     FinalUsageEvent,
     NormalizedUsage,

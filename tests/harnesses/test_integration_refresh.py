@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.harnesses import claude_integration, codex_integration
+from modelglot.harnesses import claude_integration, codex_integration
 from tests.wire_payload import array_payload, decode_object, object_payload
 
 URL = "http://127.0.0.1:8000"

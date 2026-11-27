@@ -4,19 +4,19 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from free_claude_code.application.model_fallback import stream_model_candidates
-from free_claude_code.application.routing import (
+from modelglot.application.model_fallback import stream_model_candidates
+from modelglot.application.routing import (
     ProviderModelCandidate,
     ProviderModelTarget,
 )
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.stream_delivery import (
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.stream_delivery import (
     StreamDeliveryState,
     bind_stream_delivery,
     current_stream_delivery,
 )
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.core.stream_recovery import (
+from modelglot.core.stream_output import StreamOutput
+from modelglot.core.stream_recovery import (
     CompletedCall,
     ContinuationSeed,
     DeliveredPrefix,

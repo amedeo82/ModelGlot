@@ -5,8 +5,8 @@ from typing import Any, cast
 
 import pytest
 
-from free_claude_code.application.response_collection import WireProtocol
-from free_claude_code.core.history_replay import (
+from modelglot.application.response_collection import WireProtocol
+from modelglot.core.history_replay import (
     HistoryMode,
     HistoryReplayError,
     ReplayOrigin,
@@ -15,7 +15,7 @@ from free_claude_code.core.history_replay import (
     encode_replay,
     prepare_history,
 )
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.json_types import JsonObject
 
 ORIGIN = ReplayOrigin(
     "gemini",

@@ -18,7 +18,7 @@ Il profilo gateway ModelGlot creato da ModelGlot ora abilita:
   disponibili.
 
 La configurazione è scritta nel profilo ModelGlot in
-`src/free_claude_code/harnesses/claude_desktop_integration.py`. Il refresh del profilo
+`src/modelglot/harnesses/claude_desktop_integration.py`. Il refresh del profilo
 ripristina i due default ModelGlot, ma conserva eventuali marketplace aggiuntivi configurati
 dall'utente.
 
@@ -203,7 +203,7 @@ L'attivazione dovrebbe essere un'azione esplicita e reversibile, non una consegu
 silenziosa di Connect:
 
 1. Aggiungere a
-   `src/free_claude_code/harnesses/claude_desktop_integration.py` un'opzione separata
+   `src/modelglot/harnesses/claude_desktop_integration.py` un'opzione separata
    per l'import Claude.ai. Non accorpare l'opzione a `modelPrefer1mContext` o ai
    marketplace, perché attiva un flusso OAuth e trasferisce dati dell'utente.
 2. Quando l'opzione è attiva, scrivere soltanto
@@ -285,7 +285,7 @@ uv run pytest -q tests/harnesses/test_claude_desktop_integration.py tests/api/te
 Controlli statici:
 
 ```powershell
-uv run ruff format --check src/free_claude_code/harnesses/claude_desktop_integration.py src/free_claude_code/api/model_catalog.py tests/harnesses/test_claude_desktop_integration.py tests/api/test_model_listing.py
-uv run ruff check src/free_claude_code/harnesses/claude_desktop_integration.py src/free_claude_code/api/model_catalog.py tests/harnesses/test_claude_desktop_integration.py tests/api/test_model_listing.py
-uv run ty check src/free_claude_code/harnesses/claude_desktop_integration.py src/free_claude_code/api/model_catalog.py
+uv run ruff format --check src/modelglot/harnesses/claude_desktop_integration.py src/modelglot/api/model_catalog.py tests/harnesses/test_claude_desktop_integration.py tests/api/test_model_listing.py
+uv run ruff check src/modelglot/harnesses/claude_desktop_integration.py src/modelglot/api/model_catalog.py tests/harnesses/test_claude_desktop_integration.py tests/api/test_model_listing.py
+uv run ty check src/modelglot/harnesses/claude_desktop_integration.py src/modelglot/api/model_catalog.py
 ```

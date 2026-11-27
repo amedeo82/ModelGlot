@@ -5,16 +5,16 @@ from typing import cast
 
 import pytest
 
-from free_claude_code.core.anthropic.native import NativeMessagesError
-from free_claude_code.core.anthropic.native_stream import (
+from modelglot.core.anthropic.native import NativeMessagesError
+from modelglot.core.anthropic.native_stream import (
     NativeMessagesRelay,
     NativeMessagesStreamState,
 )
-from free_claude_code.core.anthropic.sse_aggregation import (
+from modelglot.core.anthropic.sse_aggregation import (
     aggregate_anthropic_sse_to_message,
 )
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_lines
-from free_claude_code.core.json_types import JsonObject, JsonValue
+from modelglot.core.anthropic.stream_contracts import parse_sse_lines
+from modelglot.core.json_types import JsonObject, JsonValue
 from tests.wire_payload import object_payload
 
 _START: JsonObject = {

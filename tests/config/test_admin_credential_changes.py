@@ -5,12 +5,12 @@ from collections.abc import Mapping
 import pytest
 from pydantic import SecretStr
 
-from free_claude_code.config.admin.persistence import (
+from modelglot.config.admin.persistence import (
     prepare_admin_update,
 )
-from free_claude_code.config.admin.values import MASKED_SECRET, load_config_response
-from free_claude_code.config.loader import ManagedConfigSnapshot, ManagedConfigStore
-from free_claude_code.config.settings import Settings
+from modelglot.config.admin.values import MASKED_SECRET, load_config_response
+from modelglot.config.loader import ManagedConfigSnapshot, ManagedConfigStore
+from modelglot.config.settings import Settings
 from tests.config.credential_support import credential_edit
 from tests.wire_payload import object_payload
 

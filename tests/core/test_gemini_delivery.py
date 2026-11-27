@@ -1,10 +1,10 @@
 """Gemini delivery evidence drives the existing recovery decisions."""
 
-from free_claude_code.core.continuation_stream import ContinuationStream
-from free_claude_code.core.delivered_response import DeliveredResponse
-from free_claude_code.core.gemini.response import GeminiResponseAccumulator
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.stream_output import CompletedCall
+from modelglot.core.continuation_stream import ContinuationStream
+from modelglot.core.delivered_response import DeliveredResponse
+from modelglot.core.gemini.response import GeminiResponseAccumulator
+from modelglot.core.json_types import JsonObject
+from modelglot.core.stream_output import CompletedCall
 from tests.wire_payload import array_payload, object_payload
 
 

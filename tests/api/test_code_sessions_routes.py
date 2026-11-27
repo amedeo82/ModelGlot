@@ -7,10 +7,10 @@ import pytest
 import pytest_asyncio
 from fastapi import FastAPI
 
-from free_claude_code.api.dependencies import app_services
-from free_claude_code.application.code_sessions import CodeService
-from free_claude_code.application.errors import ApplicationUnavailableError
-from free_claude_code.runtime.code_sessions_sqlite import SQLiteCodeStore
+from modelglot.api.dependencies import app_services
+from modelglot.application.code_sessions import CodeService
+from modelglot.application.errors import ApplicationUnavailableError
+from modelglot.runtime.code_sessions_sqlite import SQLiteCodeStore
 from tests.api.support import create_test_app, runtime_for_app
 from tests.code_sessions_support import CodexPackets, FakeHarness, close_code_database
 from tests.fixture_types import DatabaseFactory

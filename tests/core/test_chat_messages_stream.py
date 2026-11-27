@@ -1,8 +1,8 @@
 import pytest
 
-from free_claude_code.core.chat_completions.messages_stream import ChatMessagesStream
-from free_claude_code.core.history_replay import ReplayOrigin
-from free_claude_code.core.json_types import JsonObject, load_json_value
+from modelglot.core.chat_completions.messages_stream import ChatMessagesStream
+from modelglot.core.history_replay import ReplayOrigin
+from modelglot.core.json_types import JsonObject, load_json_value
 from tests.wire_payload import array_payload, object_payload
 
 

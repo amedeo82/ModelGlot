@@ -5,12 +5,12 @@ from copy import deepcopy
 import httpx
 import pytest
 
-from free_claude_code.config.provider_catalog import GEMINI_DEFAULT_BASE
-from free_claude_code.core.gemini.models import ThinkingConfig
-from free_claude_code.core.gemini.native_request import apply_reasoning
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.reasoning import ReasoningEffort, ReasoningPolicy
-from free_claude_code.providers.gemini import GeminiProvider
+from modelglot.config.provider_catalog import GEMINI_DEFAULT_BASE
+from modelglot.core.gemini.models import ThinkingConfig
+from modelglot.core.gemini.native_request import apply_reasoning
+from modelglot.core.json_types import JsonObject
+from modelglot.core.reasoning import ReasoningEffort, ReasoningPolicy
+from modelglot.providers.gemini import GeminiProvider
 from tests.providers.support import (
     immediate_admission,
     make_provider_config,

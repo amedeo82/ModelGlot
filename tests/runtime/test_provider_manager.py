@@ -8,21 +8,21 @@ import httpx2
 import pytest
 from pydantic import ValidationError
 
-from free_claude_code.application.errors import ApplicationUnavailableError
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.application.ports import ModelCatalogPort
-from free_claude_code.config.api_keys import normalize_api_keys
-from free_claude_code.config.model_catalog_metadata import ModelCatalogMetadata
-from free_claude_code.config.settings import Settings
-from free_claude_code.providers.base import BaseProvider
-from free_claude_code.providers.model_catalog_logos import ModelCatalogLogoStore
-from free_claude_code.providers.model_catalog_source import (
+from modelglot.application.errors import ApplicationUnavailableError
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.application.ports import ModelCatalogPort
+from modelglot.config.api_keys import normalize_api_keys
+from modelglot.config.model_catalog_metadata import ModelCatalogMetadata
+from modelglot.config.settings import Settings
+from modelglot.providers.base import BaseProvider
+from modelglot.providers.model_catalog_logos import ModelCatalogLogoStore
+from modelglot.providers.model_catalog_source import (
     ModelCatalogCache,
     ModelCatalogSource,
 )
-from free_claude_code.providers.nvidia_nim import NvidiaNimProvider
-from free_claude_code.providers.runtime import ProviderRuntime
-from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
+from modelglot.providers.nvidia_nim import NvidiaNimProvider
+from modelglot.providers.runtime import ProviderRuntime
+from modelglot.runtime.provider_manager import ProviderRuntimeManager
 from tests.mock_calls import keyword_arguments, positional_arguments
 from tests.runtime.catalog_support import finish_discovery, finish_publication
 
@@ -131,9 +131,7 @@ async def test_discovery_error_follows_attempt_and_generation_without_losing_cac
     manager.cache_model_infos("nvidia_nim", {ProviderModelInfo("one")})
     provider.list_model_infos.side_effect = httpx2.ProxyError("secret-canary")
     try:
-        with patch(
-            "free_claude_code.runtime.provider_manager.logger.warning"
-        ) as warning:
+        with patch("modelglot.runtime.provider_manager.logger.warning") as warning:
             result = await manager.refresh_model_list_cache()
         message = result.failure_messages["nvidia_nim"]
         assert "proxy" in message
@@ -400,7 +398,7 @@ async def test_catalog_publication_failure_is_warning_only_and_secret_safe() -> 
         model_catalog_publisher=publisher,
     )
 
-    with patch("free_claude_code.runtime.provider_manager.logger.warning") as warning:
+    with patch("modelglot.runtime.provider_manager.logger.warning") as warning:
         await manager.refresh_model_list_cache()
         await finish_publication(manager)
         manager.cache_model_infos(
@@ -471,7 +469,7 @@ async def test_hot_replacement_shares_admission_and_retires_clients() -> None:
         return client
 
     with patch(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI",
+        "modelglot.providers.openai_chat.client.AsyncOpenAI",
         side_effect=create_client,
     ):
         manager = ProviderRuntimeManager(first_settings)
@@ -1017,7 +1015,7 @@ async def test_replacement_prunes_and_rejects_removed_remote_provider_cache() ->
 async def test_generation_lifecycle_traces_contain_minimal_correlation_fields() -> None:
     factory = RuntimeFactory()
 
-    with patch("free_claude_code.runtime.provider_manager.trace_event") as trace:
+    with patch("modelglot.runtime.provider_manager.trace_event") as trace:
         manager = ProviderRuntimeManager(
             _settings("nvidia_nim/one"),
             runtime_factory=factory,

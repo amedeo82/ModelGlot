@@ -4,10 +4,10 @@ import httpx2
 import pytest
 from openai import BadRequestError
 
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.reasoning import ReasoningCapability, ReasoningPolicy
-from free_claude_code.providers.reasoning_compatibility import (
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.core.json_types import JsonObject
+from modelglot.core.reasoning import ReasoningCapability, ReasoningPolicy
+from modelglot.providers.reasoning_compatibility import (
     ReasoningCorrection,
     prepare_messages_reasoning,
 )

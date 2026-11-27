@@ -4,17 +4,17 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.harnesses import (
+from modelglot.core.json_types import JsonObject
+from modelglot.harnesses import (
     claude_desktop_integration as desktop,
 )
-from free_claude_code.harnesses import (
+from modelglot.harnesses import (
     claude_integration as claude,
 )
-from free_claude_code.harnesses import (
+from modelglot.harnesses import (
     jetbrains_acp_integration as jetbrains,
 )
-from free_claude_code.harnesses import (
+from modelglot.harnesses import (
     vscode_chat_integration as vscode,
 )
 from tests.fixture_parameters import fixture_parameter

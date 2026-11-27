@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import override
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-_PACKAGE_ROOT = _REPO_ROOT / "src" / "free_claude_code"
-_PACKAGE_NAME = "free_claude_code"
+_PACKAGE_ROOT = _REPO_ROOT / "src" / "modelglot"
+_PACKAGE_NAME = "modelglot"
 
 ALLOWED_PACKAGE_DEPENDENCIES: dict[str, set[str]] = {
     "updater": set(),
@@ -35,15 +35,15 @@ ALLOWED_PACKAGE_DEPENDENCIES: dict[str, set[str]] = {
 
 IMPORT_EXCEPTIONS: dict[tuple[str, str], str] = {
     (
-        "free_claude_code.cli.doctor",
-        "free_claude_code.runtime.diagnostics",
+        "modelglot.cli.doctor",
+        "modelglot.runtime.diagnostics",
     ): (
         "Owner: installed diagnostic command. "
         "Reason: read-only report composition owns provider and harness inspection."
     ),
     (
-        "free_claude_code.cli.commands",
-        "free_claude_code.runtime.bootstrap",
+        "modelglot.cli.commands",
+        "modelglot.runtime.bootstrap",
     ): (
         "Owner: installed server command. "
         "Reason: the command delegates construction to the process composition root."
@@ -51,23 +51,23 @@ IMPORT_EXCEPTIONS: dict[tuple[str, str], str] = {
 }
 
 FACADE_ONLY_BOUNDARIES = {
-    "free_claude_code.application.model_fallback",
-    "free_claude_code.core.openai_responses",
-    "free_claude_code.messaging.delivery_failures",
-    "free_claude_code.messaging.trees",
-    "free_claude_code.providers.attempt_loop",
-    "free_claude_code.providers.failure_classification",
-    "free_claude_code.providers.openai_chat",
-    "free_claude_code.providers.recovery_policy",
-    "free_claude_code.providers.request_correction",
-    "free_claude_code.providers.stream_failure_resolution",
+    "modelglot.application.model_fallback",
+    "modelglot.core.openai_responses",
+    "modelglot.messaging.delivery_failures",
+    "modelglot.messaging.trees",
+    "modelglot.providers.attempt_loop",
+    "modelglot.providers.failure_classification",
+    "modelglot.providers.openai_chat",
+    "modelglot.providers.recovery_policy",
+    "modelglot.providers.request_correction",
+    "modelglot.providers.stream_failure_resolution",
 }
 
 DEFERRED_IMPORT_OWNERS = {
-    "librosa": "free_claude_code.messaging.transcription",
-    "torch": "free_claude_code.messaging.transcription",
-    "transformers": "free_claude_code.messaging.transcription",
-    "riva": "free_claude_code.providers.nvidia_nim.voice",
+    "librosa": "modelglot.messaging.transcription",
+    "torch": "modelglot.messaging.transcription",
+    "transformers": "modelglot.messaging.transcription",
+    "riva": "modelglot.providers.nvidia_nim.voice",
 }
 
 
@@ -146,14 +146,14 @@ class _ImportVisitor(ast.NodeVisitor):
 
 def test_api_configuration_access_goes_through_runtime() -> None:
     storage_modules = {
-        "free_claude_code.config.loader",
-        "free_claude_code.config.env_files",
-        "free_claude_code.config.env_migrations",
+        "modelglot.config.loader",
+        "modelglot.config.env_files",
+        "modelglot.config.env_migrations",
     }
     offenders = [
         record.describe()
         for record in _scan_imports(_PACKAGE_ROOT)
-        if record.importer.startswith("free_claude_code.api.")
+        if record.importer.startswith("modelglot.api.")
         and record.imported in storage_modules
     ]
     assert not offenders, (
@@ -571,16 +571,15 @@ def test_provider_backchannel_detector_reports_untyped_private_access(
 
 def test_legacy_first_party_import_detector_rejects_bare_owner_names() -> None:
     record = ImportRecord(
-        importer="free_claude_code.api.routes",
+        importer="modelglot.api.routes",
         imported="core.anthropic",
-        path="free_claude_code/api/routes.py",
+        path="modelglot/api/routes.py",
         line=7,
         inside_function=False,
     )
 
     assert _legacy_first_party_import_offenders([record], {"api", "core"}) == [
-        "free_claude_code/api/routes.py:7: "
-        "free_claude_code.api.routes -> core.anthropic"
+        "modelglot/api/routes.py:7: modelglot.api.routes -> core.anthropic"
     ]
 
 
@@ -787,8 +786,8 @@ def test_core_does_not_import_provider_transport_sdks() -> None:
         record.describe()
         for record in _scan_imports(_PACKAGE_ROOT)
         if (
-            record.importer == "free_claude_code.core"
-            or record.importer.startswith("free_claude_code.core.")
+            record.importer == "modelglot.core"
+            or record.importer.startswith("modelglot.core.")
         )
         and record.imported.split(".", 1)[0] in forbidden_roots
     ]
@@ -797,8 +796,8 @@ def test_core_does_not_import_provider_transport_sdks() -> None:
 
 
 def test_web_tool_workflow_has_no_http_adapter_owner() -> None:
-    former_owner = "free_claude_code.api.web_tools"
-    application_owner = "free_claude_code.application.web_tools"
+    former_owner = "modelglot.api.web_tools"
+    application_owner = "modelglot.application.web_tools"
     forbidden_clients = {"aiohttp", "httpx", "requests", "socket"}
     offenders = [
         record.describe()
@@ -869,8 +868,8 @@ def test_runtime_imports_without_loading_transcription_dependencies() -> None:
             "            raise ModuleNotFoundError(fullname)",
             "        return None",
             "sys.meta_path.insert(0, Blocker())",
-            "import free_claude_code.runtime.bootstrap",
-            "import free_claude_code.api.app",
+            "import modelglot.runtime.bootstrap",
+            "import modelglot.api.app",
         )
     )
 
@@ -885,13 +884,13 @@ def test_runtime_imports_without_loading_transcription_dependencies() -> None:
 
 
 def test_supported_messaging_facade_is_explicit() -> None:
-    import free_claude_code.messaging as facade
-    from free_claude_code.messaging.managed_protocols import (
+    import modelglot.messaging as facade
+    from modelglot.messaging.managed_protocols import (
         ManagedClaudeSessionManagerProtocol,
         ManagedClaudeSessionProtocol,
     )
-    from free_claude_code.messaging.models import IncomingMessage, MessageScope
-    from free_claude_code.messaging.platforms.ports import OutboundMessenger
+    from modelglot.messaging.models import IncomingMessage, MessageScope
+    from modelglot.messaging.platforms.ports import OutboundMessenger
 
     expected = {
         "IncomingMessage": IncomingMessage,
@@ -906,7 +905,7 @@ def test_supported_messaging_facade_is_explicit() -> None:
 
 
 def test_message_tree_mutability_stays_behind_its_facade() -> None:
-    import free_claude_code.messaging.trees as facade
+    import modelglot.messaging.trees as facade
 
     for internal_owner in {
         "MessageNode",

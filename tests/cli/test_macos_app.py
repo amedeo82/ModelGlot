@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.cli import macos_app
-from free_claude_code.core.json_types import JsonObject
+from modelglot.cli import macos_app
+from modelglot.core.json_types import JsonObject
 
 
 def symlink_or_skip(

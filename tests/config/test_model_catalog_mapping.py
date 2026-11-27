@@ -1,7 +1,7 @@
-from free_claude_code.config.model_catalog_mapping import (
+from modelglot.config.model_catalog_mapping import (
     MODEL_CATALOG_PROVIDER_MAPPING,
 )
-from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
+from modelglot.config.provider_catalog import PROVIDER_CATALOG
 
 
 def test_every_mapped_modelglot_provider_exists() -> None:

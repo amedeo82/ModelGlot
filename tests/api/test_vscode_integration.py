@@ -4,9 +4,9 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from free_claude_code.config.settings import Settings
-from free_claude_code.harnesses import claude_integration, claude_onboarding
-from free_claude_code.runtime.application import ApplicationRuntime
+from modelglot.config.settings import Settings
+from modelglot.harnesses import claude_integration, claude_onboarding
+from modelglot.runtime.application import ApplicationRuntime
 from tests.api.support import create_test_app, runtime_for_app
 from tests.wire_payload import (
     array_payload,

@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
-from free_claude_code.config.paths import launcher_temp_dir_path
+from modelglot.config.paths import launcher_temp_dir_path
 from tests.cli.conftest import LaunchCapture
 from tests.cli.test_launcher_workflow import launch
 from tests.wire_payload import decode_object, object_payload, string_payload

@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.json_types import JsonValue
+from modelglot.config.settings import Settings
+from modelglot.core.json_types import JsonValue
 from smoke.conftest import (
     DISABLED_PROVIDER_MODEL,
     provider_model_params,

@@ -5,15 +5,15 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from free_claude_code.config.provider_catalog import (
+from modelglot.config.provider_catalog import (
     OLLAMA_CLOUD_DEFAULT_BASE,
     OLLAMA_DEFAULT_BASE,
 )
-from free_claude_code.core.anthropic.stream_contracts import (
+from modelglot.core.anthropic.stream_contracts import (
     parse_sse_text,
     thinking_content,
 )
-from free_claude_code.providers.openai_chat import OpenAIChatProvider
+from modelglot.providers.openai_chat import OpenAIChatProvider
 from tests.providers.request_factory import make_messages_request
 from tests.providers.support import (
     REASONING_OFF,
@@ -58,9 +58,7 @@ def _cloud_provider() -> OpenAIChatProvider:
     ],
 )
 def test_init_normalizes_openai_base_url(configured: str, expected: str) -> None:
-    with patch(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI"
-    ) as openai_client:
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI") as openai_client:
         provider = _provider(configured)
 
     assert provider._provider_name == "OLLAMA"
@@ -70,9 +68,7 @@ def test_init_normalizes_openai_base_url(configured: str, expected: str) -> None
 
 
 def test_cloud_init_uses_fixed_openai_endpoint_and_api_key() -> None:
-    with patch(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI"
-    ) as openai_client:
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI") as openai_client:
         provider = _cloud_provider()
 
     assert provider._provider_name == "OLLAMA_CLOUD"

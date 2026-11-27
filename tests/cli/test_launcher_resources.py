@@ -7,11 +7,11 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from free_claude_code.cli.launchers import common
-from free_claude_code.config.paths import launcher_temp_dir_path
-from free_claude_code.core.json_types import JsonValue
-from free_claude_code.harnesses import resources
-from free_claude_code.harnesses.resources import LaunchResources
+from modelglot.cli.launchers import common
+from modelglot.config.paths import launcher_temp_dir_path
+from modelglot.core.json_types import JsonValue
+from modelglot.harnesses import resources
+from modelglot.harnesses.resources import LaunchResources
 from tests.cli.conftest import LaunchCapture
 from tests.cli.test_launcher_workflow import launch, launcher
 

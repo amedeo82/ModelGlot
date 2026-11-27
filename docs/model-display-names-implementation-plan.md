@@ -86,17 +86,17 @@ provider attribution, without touching ids or routing.
 
 **Changes.**
 
-- `src/free_claude_code/application/model_metadata.py:10`–`:20` — `ProviderModelInfo`
+- `src/modelglot/application/model_metadata.py:10`–`:20` — `ProviderModelInfo`
   carries optional `display_name` and `description` fields as metadata only.
-- `src/free_claude_code/application/model_catalog.py:31`–`:43` — `CatalogModel` carries an
+- `src/modelglot/application/model_catalog.py:31`–`:43` — `CatalogModel` carries an
   optional `description` field next to `display_name`.
-- `src/free_claude_code/application/model_catalog.py:145`–`:164` — `_catalog_model` resolves
+- `src/modelglot/application/model_catalog.py:145`–`:164` — `_catalog_model` resolves
   the title through the resolver of step S1.3 and keeps the raw reference as the final
   fallback.
-- `src/free_claude_code/application/model_catalog.py:88`–`:102` — the custom provider branch keeps
+- `src/modelglot/application/model_catalog.py:88`–`:102` — the custom provider branch keeps
   its current `<custom display name>/<model id>` shape when no curated title exists and adds
   the provider attribution as description.
-- New module `src/free_claude_code/application/model_titles.py` — the single owner of title
+- New module `src/modelglot/application/model_titles.py` — the single owner of title
   resolution: curated overrides, catalog lookup, id heuristic, raw reference. It must not
   import from `providers/` or `api/`.
 
@@ -133,11 +133,11 @@ external catalog.
 
 **Changes.**
 
-- New module `src/free_claude_code/config/model_title_overrides.py` — a frozen mapping from
+- New module `src/modelglot/config/model_title_overrides.py` — a frozen mapping from
   `(provider_id, model_id)` to a title and an optional description. Seed it with the NVIDIA
   NIM Nemotron family and the MiniMax family, using the wording verified in the analysis
   (for example `Nemotron 3 Ultra 550B A55B`, `MiniMax-M3.1-Flash`).
-- `src/free_claude_code/application/model_titles.py` — consult the curated table first.
+- `src/modelglot/application/model_titles.py` — consult the curated table first.
 - README — a short section listing the models with curated titles and explaining that other
   models derive their title from the shared catalog.
 
@@ -161,7 +161,7 @@ a deterministic transformation of the id.
 
 **Changes.**
 
-- `src/free_claude_code/application/model_titles.py` — add the heuristic step: drop a known
+- `src/modelglot/application/model_titles.py` — add the heuristic step: drop a known
   vendor prefix segment, split the remaining segments on `-`, `_`, `.`, and `/`, capitalize
   each token, preserve numeric tokens and known unit tokens (`550B`, `A55B`, `M3.1`), and
   keep the vendor prefix when it is the only meaningful part.
@@ -188,11 +188,11 @@ reproducible across runs and platforms.
 
 **Changes.**
 
-- New module `src/free_claude_code/providers/model_catalog_source.py` — the single owner of
+- New module `src/modelglot/providers/model_catalog_source.py` — the single owner of
   the external catalog access: fetch `https://models.dev/api.json`, validate the payload
   shape, and reduce it to a map of `(models.dev provider id, model key) -> (name,
   description)` for the mapped providers only.
-- New module `src/free_claude_code/config/model_catalog_paths.py` (or an addition to
+- New module `src/modelglot/config/model_catalog_paths.py` (or an addition to
   `config/paths.py:114`–`:118`) — the cache file path under `~/.modelglot`, for example
   `models-dev-catalog.json`.
 - The writer reuses the atomic publish pattern of `runtime/codex_catalog.py:43`–`:62`
@@ -238,18 +238,18 @@ title is presentation only, so daily freshness is sufficient.
 
 **Changes.**
 
-- New module `src/free_claude_code/config/model_catalog_mapping.py` — an explicit, frozen
+- New module `src/modelglot/config/model_catalog_mapping.py` — an explicit, frozen
   mapping from ModelGlot provider ids to models.dev provider ids, based on the table in the
   analysis (`nvidia_nim` → `nvidia`, `open_router` → `openrouter`, `together` →
   `togetherai`, `gemini` → `google`, `novita` → `novita-ai`, `fireworks` → `fireworks-ai`,
   `github_copilot` → `github-copilot`, `azure_openai` → `azure`, `alibaba_cloud` →
   `alibaba`, `opencode_zen` and `opencode_go` → `opencode`, plus the direct matches).
-- `src/free_claude_code/application/model_titles.py` — accept an optional catalog snapshot
+- `src/modelglot/application/model_titles.py` — accept an optional catalog snapshot
   and use it between the curated table and the heuristic.
-- `src/free_claude_code/runtime/provider_manager.py:273`–`:313` — schedule the background catalog
+- `src/modelglot/runtime/provider_manager.py:273`–`:313` — schedule the background catalog
   refresh next to the existing model-list refresh pass, so the refresh never runs inside a
   request.
-- `src/free_claude_code/runtime/bootstrap.py:70` — wire the catalog source into the runtime
+- `src/modelglot/runtime/bootstrap.py:70` — wire the catalog source into the runtime
   construction.
 
 **Tests.**
@@ -276,7 +276,7 @@ title is presentation only, so daily freshness is sufficient.
 
 **Changes.**
 
-- `src/free_claude_code/config/settings.py` — add settings with the project prefix:
+- `src/modelglot/config/settings.py` — add settings with the project prefix:
   - `MODELGLOT_MODEL_CATALOG_SOURCE` (default `models.dev`, allowed values `models.dev` and
     `none`): `none` disables the external catalog entirely and leaves curated plus
     heuristic titles;
@@ -307,14 +307,14 @@ the doctor command states whether the descriptive titles are complete, degraded,
 
 **Changes.**
 
-- `src/free_claude_code/api/model_catalog.py:57` — add an optional `description` field to
+- `src/modelglot/api/model_catalog.py:57` — add an optional `description` field to
   `ModelResponse`.
-- `src/free_claude_code/api/model_catalog.py:172`–`:210` — populate `description` for the
+- `src/modelglot/api/model_catalog.py:172`–`:210` — populate `description` for the
   provider-backed rows in the `claude` and `claude-desktop` views with the provider display
   name, and keep the existing no-thinking wording consistent with the title.
-- `src/free_claude_code/api/model_catalog.py:213`–`:269` — populate `description` in the
+- `src/modelglot/api/model_catalog.py:213`–`:269` — populate `description` in the
   `messages` and `responses` views.
-- `src/free_claude_code/api/model_catalog.py:148`–`:169` — keep the Muse envelope consistent
+- `src/modelglot/api/model_catalog.py:148`–`:169` — keep the Muse envelope consistent
   with the new description.
 - Native Anthropic passthrough rows keep their current label and description.
 
@@ -342,7 +342,7 @@ the doctor command states whether the descriptive titles are complete, degraded,
 
 **Changes.**
 
-- `src/free_claude_code/harnesses/claude_desktop_integration.py:285` — keep preserving the
+- `src/modelglot/harnesses/claude_desktop_integration.py:285` — keep preserving the
   user-authored `inferenceModels` array unchanged, including `labelOverride` entries.
 - Confirm that the Desktop profile receives the descriptive title through model discovery
   (`modelDiscoveryEnabled: True` at `:263`) rather than through a rewritten
@@ -368,13 +368,13 @@ the doctor command states whether the descriptive titles are complete, degraded,
 
 **Changes.**
 
-- `src/free_claude_code/api/admin_routes.py:517`–`:525` — the Admin API already publishes
+- `src/modelglot/api/admin_routes.py:517`–`:525` — the Admin API already publishes
   `model_labels` from the application inventory; confirm no change is needed and add a test
   that the labels carry the descriptive titles.
-- `src/free_claude_code/api/admin_static/admin.js:1792` — no change expected; the selector
+- `src/modelglot/api/admin_static/admin.js:1792` — no change expected; the selector
   consumes `model_labels` as-is. Adjust only if the longer titles overflow, and only with a
   layout change.
-- `src/free_claude_code/runtime/codex_catalog.py:23` — the Codex catalog inherits the title
+- `src/modelglot/runtime/codex_catalog.py:23` — the Codex catalog inherits the title
   from the inventory; confirm the generated file carries the descriptive titles.
 
 **Tests.**

@@ -16,12 +16,12 @@ from urllib.error import URLError
 
 import pytest
 
-from free_claude_code.cli.launchers import common
-from free_claude_code.config.paths import (
+from modelglot.cli.launchers import common
+from modelglot.config.paths import (
     server_owner_lock_path,
     server_startup_lock_path,
 )
-from free_claude_code.core.interprocess_lock import InterprocessFileLock
+from modelglot.core.interprocess_lock import InterprocessFileLock
 from tests.cli.conftest import LaunchCapture
 from tests.cli.test_launcher_workflow import launch
 

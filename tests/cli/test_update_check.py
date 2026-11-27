@@ -6,7 +6,7 @@ from typing import Protocol
 import httpx
 import pytest
 
-from free_claude_code.updater import check as update_check
+from modelglot.updater import check as update_check
 
 
 class CheckRunner(Protocol):

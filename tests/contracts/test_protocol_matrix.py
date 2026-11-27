@@ -8,23 +8,23 @@ import httpx2
 import pytest
 from openai import AsyncOpenAI
 
-from free_claude_code.core.anthropic import MessagesRequest, ReasoningReplayMode
-from free_claude_code.core.anthropic.stream_contracts import (
+from modelglot.core.anthropic import MessagesRequest, ReasoningReplayMode
+from modelglot.core.anthropic.stream_contracts import (
     assert_anthropic_stream_contract,
     parse_sse_text,
     text_content,
 )
-from free_claude_code.core.json_types import JsonObject, load_json_value
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.reasoning import DEFAULT_REASONING_POLICY
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.providers.openai_chat import (
+from modelglot.core.json_types import JsonObject, load_json_value
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.reasoning import DEFAULT_REASONING_POLICY
+from modelglot.core.stream_output import StreamOutput
+from modelglot.providers.openai_chat import (
     NO_REASONING,
     OpenAIChatProfile,
     OpenAIChatProvider,
     OpenAIChatRequestPolicy,
 )
-from free_claude_code.providers.openai_responses import OpenAIResponsesTransport
+from modelglot.providers.openai_responses import OpenAIResponsesTransport
 from tests.providers.support import (
     immediate_admission,
     make_provider_config,
@@ -283,7 +283,7 @@ async def test_chat_upstream_accepts_both_ingress_protocols_directly() -> None:
         base_url="https://provider.invalid/v1",
     )
     with patch(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI",
+        "modelglot.providers.openai_chat.client.AsyncOpenAI",
         return_value=client,
     ):
         provider = OpenAIChatProvider(
@@ -436,7 +436,7 @@ async def test_image_tool_output_remains_visual_across_all_protocol_cells() -> N
         base_url="https://provider.invalid/v1",
     )
     with patch(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI",
+        "modelglot.providers.openai_chat.client.AsyncOpenAI",
         return_value=chat_client,
     ):
         chat_provider = OpenAIChatProvider(

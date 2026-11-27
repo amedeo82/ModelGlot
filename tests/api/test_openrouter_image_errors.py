@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock, _Call, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.providers.open_router import OpenRouterProvider
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.providers.open_router import OpenRouterProvider
 from tests.api.support import create_test_app
 from tests.providers.support import (
     SDKStreamDouble,
@@ -86,9 +86,7 @@ def post(
 ):
     try:
         with (
-            patch(
-                "free_claude_code.api.routes.resolve_provider", return_value=provider
-            ),
+            patch("modelglot.api.routes.resolve_provider", return_value=provider),
             patch.object(provider._client.chat.completions, "create", create),
             TestClient(create_test_app()) as client,
         ):

@@ -7,19 +7,19 @@ from typing import Any, Literal, overload
 import httpx2
 import pytest
 
-from free_claude_code.application.response_collection import (
+from modelglot.application.response_collection import (
     collect_response,
 )
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import (
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.anthropic.stream_contracts import (
     parse_sse_text,
     text_content,
 )
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.json_types import JsonValue
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.providers.openai_api.provider import OpenAIAPIProvider
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.json_types import JsonValue
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.providers.openai_api.provider import OpenAIAPIProvider
 from tests.api.test_hidden_stream_retries import delivered
 from tests.providers.support import without_empty_reasoning
 from tests.providers.test_openai_api_provider import (

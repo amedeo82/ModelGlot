@@ -5,20 +5,20 @@ integration tests.
 
 from collections.abc import Iterable
 
-from free_claude_code.core.anthropic import (
+from modelglot.core.anthropic import (
     AnthropicStreamLedger,
     ContentType,
     ThinkTagParser,
 )
-from free_claude_code.core.anthropic.stream_contracts import (
+from modelglot.core.anthropic.stream_contracts import (
     assert_anthropic_stream_contract,
     event_names,
     parse_sse_text,
     text_content,
     thinking_content,
 )
-from free_claude_code.core.anthropic.streaming import format_sse_event
-from free_claude_code.core.anthropic.thinking import ContentChunk
+from modelglot.core.anthropic.streaming import format_sse_event
+from modelglot.core.anthropic.thinking import ContentChunk
 
 
 def test_interleaved_thinking_text_blocks_are_valid() -> None:

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.core.json_types import load_json_value
+from modelglot.core.json_types import load_json_value
 from tests.wire_payload import decode_object, object_payload, string_payload
 
 pytestmark = pytest.mark.skipif(

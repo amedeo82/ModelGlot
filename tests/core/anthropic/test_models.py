@@ -1,18 +1,18 @@
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from free_claude_code.core.anthropic.conversion import (
+from modelglot.core.anthropic.conversion import (
     OpenAIConversionError,
     build_base_request_body,
 )
-from free_claude_code.core.anthropic.models import (
+from modelglot.core.anthropic.models import (
     ContentBlockDocument,
     ContentBlockWebFetchToolResult,
     Message,
     MessagesRequest,
     TokenCountRequest,
 )
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.json_types import JsonObject
 from tests.wire_payload import object_payload
 
 

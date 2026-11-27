@@ -48,7 +48,7 @@ ModelGlot può già usare:
 - una API key OpenAI Platform;
 - altri provider OpenAI-compatible.
 
-Questo percorso riguarda `src/free_claude_code/providers/openai_codex/` e le impostazioni
+Questo percorso riguarda `src/modelglot/providers/openai_codex/` e le impostazioni
 OAuth. È indipendente dalla configurazione del client desktop OpenAI.
 
 ### 2.2 ChatGPT Desktop/Codex Desktop come client di ModelGlot
@@ -145,8 +145,8 @@ e il file configurato è `config.toml`.
 
 Riferimenti:
 
-- `src/free_claude_code/harnesses/codex_integration.py:21-23`;
-- `src/free_claude_code/harnesses/codex_integration.py:238-243`.
+- `src/modelglot/harnesses/codex_integration.py:21-23`;
+- `src/modelglot/harnesses/codex_integration.py:238-243`.
 
 La stessa configurazione è condivisa da:
 
@@ -176,22 +176,22 @@ args = ["--print-proxy-auth-token"]
 
 Riferimenti:
 
-- `src/free_claude_code/harnesses/codex.py:35-49`;
-- `src/free_claude_code/cli/launchers/codex.py:33-39`.
+- `src/modelglot/harnesses/codex.py:35-49`;
+- `src/modelglot/cli/launchers/codex.py:33-39`.
 
 Il credential helper è compatibile con il contratto OpenAI: non riceve input su stdin e
 scrive il token su stdout. Il launcher gestisce anche il flag interno
 `--print-proxy-auth-token` prima di avviare Codex:
 
-- `src/free_claude_code/cli/launchers/codex.py:42-46`.
+- `src/modelglot/cli/launchers/codex.py:42-46`.
 
 ### 5.3 Modello e catalogo
 
 Connect non modifica il valore top-level `model`, ma imposta `model_provider = "modelglot"` e
 aggiunge `model_catalog_json`. Il catalogo viene generato da:
 
-- `src/free_claude_code/harnesses/codex_model_catalog.py:49-101`;
-- `src/free_claude_code/config/paths.py:108-111`.
+- `src/modelglot/harnesses/codex_model_catalog.py:49-101`;
+- `src/modelglot/config/paths.py:108-111`.
 
 Il catalogo contiene alias, nomi visualizzati, livelli di reasoning, istruzioni base,
 capacità di input, contesto, tool e ulteriori metadata necessari al model picker Codex.
@@ -207,15 +207,15 @@ capacità di input, contesto, tool e ulteriori metadata necessari al model picke
 
 Riferimenti:
 
-- `src/free_claude_code/harnesses/codex_integration.py:70-147`.
+- `src/modelglot/harnesses/codex_integration.py:70-147`.
 
 Il runtime coordina status, connect, disconnect e refresh:
 
-- `src/free_claude_code/runtime/integration_service.py:696-783`.
+- `src/modelglot/runtime/integration_service.py:696-783`.
 
 La UI Admin espone già una card unica per VS Code e app desktop:
 
-- `src/free_claude_code/api/admin_static/index.html:143-152`.
+- `src/modelglot/api/admin_static/index.html:143-152`.
 
 ### 5.5 Copertura di test esistente
 
@@ -244,9 +244,9 @@ Il client deve usare `wire_api = "responses"` e il gateway deve accettare
 ModelGlot espone il contratto Responses, gestisce gli eventi terminali e mantiene la
 distinzione tra stream completato, incompleto e fallito:
 
-- `src/free_claude_code/core/openai_responses/provider_stream.py:105-109`;
-- `src/free_claude_code/core/openai_responses/tool_calls.py:103-128`;
-- `src/free_claude_code/core/response_collection.py:107-110`.
+- `src/modelglot/core/openai_responses/provider_stream.py:105-109`;
+- `src/modelglot/core/openai_responses/tool_calls.py:103-128`;
+- `src/modelglot/core/response_collection.py:107-110`.
 
 ### 6.2 Continuità
 
@@ -257,9 +257,9 @@ incrementale o WebSocket è attivo.
 ModelGlot accetta `previous_response_id` nel modello di richiesta e lo rimuove prima del
 chiamata upstream native, perché il proprio percorso usa input replayed:
 
-- `src/free_claude_code/core/openai_responses/models.py:25`;
-- `src/free_claude_code/core/openai_responses/messages_request.py:46-50`;
-- `src/free_claude_code/core/openai_responses/native.py:50-52`.
+- `src/modelglot/core/openai_responses/models.py:25`;
+- `src/modelglot/core/openai_responses/messages_request.py:46-50`;
+- `src/modelglot/core/openai_responses/native.py:50-52`.
 
 Questa scelta è compatibile con il contratto documentato, purché il client rimandi la
 conversazione completa.
@@ -271,9 +271,9 @@ corrispondenza tra chiamata e risultato.
 
 ModelGlot riconosce e converte questi elementi:
 
-- `src/free_claude_code/core/openai_responses/messages_request.py:414-417`;
-- `src/free_claude_code/core/openai_responses/chat_request.py:104-122`;
-- `src/free_claude_code/core/openai_responses/tool_adaptation.py:306-343`.
+- `src/modelglot/core/openai_responses/messages_request.py:414-417`;
+- `src/modelglot/core/openai_responses/chat_request.py:104-122`;
+- `src/modelglot/core/openai_responses/tool_adaptation.py:306-343`.
 
 ### 6.4 Autenticazione
 
@@ -333,8 +333,8 @@ per ogni modello.
 
 Riferimenti:
 
-- `src/free_claude_code/harnesses/codex_model_catalog.py:82`;
-- `src/free_claude_code/harnesses/codex_model_catalog.py:95`.
+- `src/modelglot/harnesses/codex_model_catalog.py:82`;
+- `src/modelglot/harnesses/codex_model_catalog.py:95`.
 
 Non tutti i provider upstream supportano il web search Responses. Il catalogo non deve
 pubblicare capacità che il provider non implementa.

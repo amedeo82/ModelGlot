@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.json_types import JsonObject
 from tests.wire_payload import object_payload, string_payload
 
 PROJECT: JsonObject = tomllib.loads(
@@ -2562,7 +2562,7 @@ def test_install_ps1_gui_icon_export_completes_before_returning(
     assert completed.returncode == 0, completed.stderr
     assert (
         destination.read_bytes()
-        == (_repo_root() / "src/free_claude_code/assets/app-icon.ico").read_bytes()
+        == (_repo_root() / "src/modelglot/assets/app-icon.ico").read_bytes()
     )
 
 
@@ -4963,9 +4963,9 @@ def test_install_ps1_preserves_running_upstream_installation(
 def test_installers_use_native_clients_and_single_python_selection() -> None:
     shell = (_repo_root() / "scripts" / "install.sh").read_text(encoding="utf-8")
     powershell = (_repo_root() / "scripts" / "install.ps1").read_text(encoding="utf-8")
-    muse_launcher = (
-        _repo_root() / "src/free_claude_code/cli/launchers/muse.py"
-    ).read_text(encoding="utf-8")
+    muse_launcher = (_repo_root() / "src/modelglot/cli/launchers/muse.py").read_text(
+        encoding="utf-8"
+    )
 
     for text in (shell, powershell):
         for command_name in MODELGLOT_COMMANDS:

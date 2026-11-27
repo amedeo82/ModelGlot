@@ -8,9 +8,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
-from free_claude_code.config import paths
-from free_claude_code.config.env_migrations import atomic_write_managed_config
-from free_claude_code.config.loader import ManagedConfigStore
+from modelglot.config import paths
+from modelglot.config.env_migrations import atomic_write_managed_config
+from modelglot.config.loader import ManagedConfigStore
 
 _CONFIG_DIR = "MODELGLOT_SMOKE_CONFIG_DIR"
 _SOURCE_DIR = "MODELGLOT_SMOKE_SOURCE_CONFIG_DIR"
@@ -73,6 +73,6 @@ def serve() -> None:
                 )
             )
 
-        from free_claude_code.cli.entrypoints import serve as run_server
+        from modelglot.cli.entrypoints import serve as run_server
 
         run_server()

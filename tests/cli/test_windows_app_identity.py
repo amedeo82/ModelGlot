@@ -7,8 +7,8 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 
-from free_claude_code.cli import windows_app_identity
-from free_claude_code.cli.desktop_notifications import DesktopIcon
+from modelglot.cli import windows_app_identity
+from modelglot.cli.desktop_notifications import DesktopIcon
 
 if sys.platform != "win32":
     pytest.skip(
@@ -275,8 +275,8 @@ def test_desktop_launcher_path_falls_back_to_the_interpreter(
 def test_notifier_repairs_the_identity_before_showing_the_first_toast(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    from free_claude_code.cli import windows_desktop_notifications
-    from free_claude_code.cli.desktop_notifications import (
+    from modelglot.cli import windows_desktop_notifications
+    from modelglot.cli.desktop_notifications import (
         DesktopNotification,
         NotificationLevel,
     )

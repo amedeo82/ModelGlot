@@ -1,6 +1,6 @@
 import os
 
-from free_claude_code.cli.managed.claude import (
+from modelglot.cli.managed.claude import (
     MANAGED_CLAUDE_MODEL_TIER,
     ManagedClaudeConfig,
     ManagedClaudeParseState,
@@ -10,8 +10,8 @@ from free_claude_code.cli.managed.claude import (
     extract_managed_claude_session_id,
     parse_managed_claude_stdout_line,
 )
-from free_claude_code.cli.managed.diagnostics import classify_managed_claude_stderr
-from free_claude_code.harnesses.claude import build_claude_proxy_env
+from modelglot.cli.managed.diagnostics import classify_managed_claude_stderr
+from modelglot.harnesses.claude import build_claude_proxy_env
 
 
 def _config(**overrides: object) -> ManagedClaudeConfig:

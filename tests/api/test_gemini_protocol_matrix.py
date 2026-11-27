@@ -8,13 +8,13 @@ import httpx2
 import pytest
 from fastapi.testclient import TestClient
 
-from free_claude_code.config.model_refs import ModelFallback
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.gemini.response import GeminiResponseAccumulator
-from free_claude_code.core.json_types import JsonObject, load_json_value
-from free_claude_code.providers.base import BaseProvider
-from free_claude_code.providers.custom import CustomProvider
-from free_claude_code.providers.runtime.config import build_custom_provider_config
+from modelglot.config.model_refs import ModelFallback
+from modelglot.config.settings import Settings
+from modelglot.core.gemini.response import GeminiResponseAccumulator
+from modelglot.core.json_types import JsonObject, load_json_value
+from modelglot.providers.base import BaseProvider
+from modelglot.providers.custom import CustomProvider
+from modelglot.providers.runtime.config import build_custom_provider_config
 from tests.api.support import create_test_app, provider_manager_for_app
 from tests.api.test_delivered_stream_recovery import text_events
 from tests.providers.support import immediate_admission

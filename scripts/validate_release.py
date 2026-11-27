@@ -11,7 +11,7 @@ from email.parser import BytesParser
 from pathlib import Path
 
 MACOS_TEMPLATES = {
-    f"src/free_claude_code/assets/macos/modelglot-desktop-{architecture}"
+    f"src/modelglot/assets/macos/modelglot-desktop-{architecture}"
     for architecture in ("arm64", "x86_64")
 }
 
@@ -50,14 +50,14 @@ def validate(directory: Path, version: str) -> None:
             "Release directory must contain only the current wheel and sdist"
         )
     tracked = subprocess.run(
-        ["git", "ls-files", "-z", "src/free_claude_code"],
+        ["git", "ls-files", "-z", "src/modelglot"],
         check=True,
         capture_output=True,
         text=True,
         encoding="utf-8",
     ).stdout
     sources = set(filter(None, tracked.split("\0")))
-    if "src/free_claude_code/__init__.py" not in sources:
+    if "src/modelglot/__init__.py" not in sources:
         raise ValueError("Missing tracked ModelGlot package sources")
     sources |= MACOS_TEMPLATES
     with zipfile.ZipFile(wheel_path) as archive:

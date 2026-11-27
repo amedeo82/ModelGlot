@@ -8,17 +8,17 @@ import httpx2
 import pytest
 from openai import AsyncOpenAI
 
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.gemini.replay import (
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.gemini.replay import (
     ReplayBundle,
     encode_bundle,
 )
-from free_claude_code.core.history_replay import ReplayOrigin, ReplayRecord
-from free_claude_code.providers.deepseek.client import _PROFILE, DeepSeekChatBehavior
-from free_claude_code.providers.google_openai.provider import GoogleChatBehavior
-from free_claude_code.providers.openai_chat import OpenAIChatTransport
-from free_claude_code.providers.openai_chat.client import OpenAIAsyncCredentialProvider
-from free_claude_code.providers.vertex.client import _PROFILE as GOOGLE_PROFILE
+from modelglot.core.history_replay import ReplayOrigin, ReplayRecord
+from modelglot.providers.deepseek.client import _PROFILE, DeepSeekChatBehavior
+from modelglot.providers.google_openai.provider import GoogleChatBehavior
+from modelglot.providers.openai_chat import OpenAIChatTransport
+from modelglot.providers.openai_chat.client import OpenAIAsyncCredentialProvider
+from modelglot.providers.vertex.client import _PROFILE as GOOGLE_PROFILE
 from tests.providers.support import immediate_admission
 from tests.providers.test_gemini_transport import chat_response, collect, gemini_request
 from tests.providers.test_lmstudio import (

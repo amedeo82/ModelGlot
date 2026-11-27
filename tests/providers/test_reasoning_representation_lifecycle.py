@@ -5,15 +5,15 @@ from copy import deepcopy
 
 import pytest
 
-from free_claude_code.application.response_collection import WireProtocol
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.history_replay import decode_replay
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.providers.kilo import KiloProvider
-from free_claude_code.providers.openai_chat.reasoning_details import (
+from modelglot.application.response_collection import WireProtocol
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.history_replay import decode_replay
+from modelglot.core.json_types import JsonObject
+from modelglot.providers.kilo import KiloProvider
+from modelglot.providers.openai_chat.reasoning_details import (
     StructuredReasoningStream,
 )
-from free_claude_code.providers.openai_chat.stream_output import (
+from modelglot.providers.openai_chat.stream_output import (
     AnthropicChatStreamOutput,
     ChatStreamUsage,
 )

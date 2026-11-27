@@ -9,17 +9,17 @@ from typing import override
 import httpx
 import pytest
 
-from free_claude_code.application.errors import InvalidRequestError
-from free_claude_code.core.anthropic.passthrough import NativeMessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.async_iterators import AsyncCloseable
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.history_replay import ReplayRecord, encode_replay
-from free_claude_code.core.json_types import JsonObject, load_json_value
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.core.stream_delivery import current_stream_delivery
-from free_claude_code.providers.anthropic.provider import AnthropicProvider
-from free_claude_code.providers.history_replay import replay_origin
+from modelglot.application.errors import InvalidRequestError
+from modelglot.core.anthropic.passthrough import NativeMessagesRequest
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.async_iterators import AsyncCloseable
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.history_replay import ReplayRecord, encode_replay
+from modelglot.core.json_types import JsonObject, load_json_value
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.core.stream_delivery import current_stream_delivery
+from modelglot.providers.anthropic.provider import AnthropicProvider
+from modelglot.providers.history_replay import replay_origin
 from tests.providers.test_anthropic_messages_transport import Wire, _events, _sse
 from tests.providers.test_anthropic_provider import native_body, provider
 from tests.wire_payload import decode_object, object_array, object_payload

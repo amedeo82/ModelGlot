@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from free_claude_code.messaging.transcription import TranscriptionService
+from modelglot.messaging.transcription import TranscriptionService
 
 
 def _service(*, api_key: str = "") -> TranscriptionService:
@@ -85,7 +85,7 @@ async def test_transcription_service_transcribes_and_reuses_its_pipeline(
             {"torch": torch, "transformers": transformers},
         ),
         patch(
-            "free_claude_code.messaging.transcription._load_audio",
+            "modelglot.messaging.transcription._load_audio",
             return_value=fake_audio,
         ),
     ):
@@ -128,7 +128,7 @@ async def test_separate_services_do_not_share_pipeline_instances(
             {"torch": torch, "transformers": transformers},
         ),
         patch(
-            "free_claude_code.messaging.transcription._load_audio",
+            "modelglot.messaging.transcription._load_audio",
             return_value={"array": [0.0], "sampling_rate": 16000},
         ),
     ):
@@ -182,7 +182,7 @@ async def test_transcription_service_close_releases_pipeline_and_is_terminal(
     with (
         patch.object(service, "_get_pipeline", return_value=pipeline),
         patch(
-            "free_claude_code.messaging.transcription._load_audio",
+            "modelglot.messaging.transcription._load_audio",
             return_value={"array": [0.0], "sampling_rate": 16000},
         ),
     ):
@@ -255,7 +255,7 @@ async def test_transcription_service_returns_no_speech_placeholder(
     with (
         patch.object(service, "_get_pipeline", return_value=pipeline),
         patch(
-            "free_claude_code.messaging.transcription._load_audio",
+            "modelglot.messaging.transcription._load_audio",
             return_value={"array": [0.0], "sampling_rate": 16000},
         ),
     ):

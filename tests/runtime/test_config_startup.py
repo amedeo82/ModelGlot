@@ -4,14 +4,14 @@ from unittest.mock import patch
 
 import pytest
 
-from free_claude_code.application.errors import ApplicationUnavailableError
-from free_claude_code.config import loader
-from free_claude_code.config.loader import ManagedConfigStore
-from free_claude_code.config.paths import config_lock_path
-from free_claude_code.core.interprocess_lock import InterprocessFileLock
-from free_claude_code.runtime.application import ApplicationRuntime
-from free_claude_code.runtime.configuration import ConfigurationService
-from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
+from modelglot.application.errors import ApplicationUnavailableError
+from modelglot.config import loader
+from modelglot.config.loader import ManagedConfigStore
+from modelglot.config.paths import config_lock_path
+from modelglot.core.interprocess_lock import InterprocessFileLock
+from modelglot.runtime.application import ApplicationRuntime
+from modelglot.runtime.configuration import ConfigurationService
+from modelglot.runtime.provider_manager import ProviderRuntimeManager
 from tests.runtime.test_application_runtime import _settings
 
 

@@ -15,23 +15,23 @@ from playwright.sync_api import Page, expect
 from e2e.artifacts import failure_artifacts_recorder as failure_artifacts_recorder
 from e2e.code_support import CodeControl
 from e2e.server_shutdown import join_server
-from free_claude_code.api.app import create_app
-from free_claude_code.api.ports import ApiServices
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.config import paths
-from free_claude_code.config.admin.credentials import CredentialSubmission
-from free_claude_code.config.env_migrations import recognized_env_keys
-from free_claude_code.config.loader import (
+from modelglot.api.app import create_app
+from modelglot.api.ports import ApiServices
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.config import paths
+from modelglot.config.admin.credentials import CredentialSubmission
+from modelglot.config.env_migrations import recognized_env_keys
+from modelglot.config.loader import (
     ManagedConfigStore,
     clear_settings_cache,
     get_settings,
 )
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.reasoning import DEFAULT_REASONING_POLICY, ReasoningPolicy
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.harnesses import (
+from modelglot.config.settings import Settings
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.reasoning import DEFAULT_REASONING_POLICY, ReasoningPolicy
+from modelglot.core.stream_output import StreamOutput
+from modelglot.harnesses import (
     claude_desktop_integration,
     claude_integration,
     claude_onboarding,
@@ -39,17 +39,17 @@ from free_claude_code.harnesses import (
     jetbrains_acp_integration,
     vscode_chat_integration,
 )
-from free_claude_code.providers.base import BaseProvider, ProviderConfig
-from free_claude_code.providers.credential_validation import (
+from modelglot.providers.base import BaseProvider, ProviderConfig
+from modelglot.providers.credential_validation import (
     CredentialCheck,
     CredentialStatus,
 )
-from free_claude_code.providers.runtime import ProviderRuntime
-from free_claude_code.runtime.application import ApplicationRuntime
-from free_claude_code.runtime.asgi import RuntimeASGIApp
-from free_claude_code.runtime.configuration import ConfigurationService
-from free_claude_code.runtime.folder_picker import NativeFolderPicker
-from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
+from modelglot.providers.runtime import ProviderRuntime
+from modelglot.runtime.application import ApplicationRuntime
+from modelglot.runtime.asgi import RuntimeASGIApp
+from modelglot.runtime.configuration import ConfigurationService
+from modelglot.runtime.folder_picker import NativeFolderPicker
+from modelglot.runtime.provider_manager import ProviderRuntimeManager
 from tests.web_tools_support import StubWebToolsClient
 
 
@@ -156,7 +156,7 @@ def provider_load_guard(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
         raise AssertionError(f"Browser fixture loaded real provider: {provider_id}")
 
     monkeypatch.setattr(
-        "free_claude_code.providers.runtime.runtime._load_constructor", forbidden
+        "modelglot.providers.runtime.runtime._load_constructor", forbidden
     )
     yield
     assert attempted == [], f"Browser fixture loaded real providers: {attempted}"
@@ -249,7 +249,7 @@ def admin_base_url(
         )
 
     monkeypatch.setattr(
-        "free_claude_code.runtime.application.check_credentials", verified_credentials
+        "modelglot.runtime.application.check_credentials", verified_credentials
     )
 
     store = ManagedConfigStore()
@@ -363,7 +363,7 @@ def admin_base_url(
         }
 
     monkeypatch.setattr(
-        "free_claude_code.api.admin_routes._check_local_provider",
+        "modelglot.api.admin_routes._check_local_provider",
         local_provider_result,
     )
 

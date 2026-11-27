@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import httpx
 import pytest
 
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.json_types import JsonObject
 from smoke.lib.local_providers import first_local_provider_model_id
 
 

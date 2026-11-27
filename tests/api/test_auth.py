@@ -4,8 +4,8 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from free_claude_code.api.dependencies import get_settings
-from free_claude_code.config.settings import Settings
+from modelglot.api.dependencies import get_settings
+from modelglot.config.settings import Settings
 from tests.api.support import create_test_app
 
 
@@ -25,9 +25,9 @@ def test_anthropic_post_routes_accept_x_api_key(app: FastAPI) -> None:
     }
 
     with (
-        patch("free_claude_code.api.routes.get_token_count", return_value=1),
+        patch("modelglot.api.routes.get_token_count", return_value=1),
         patch(
-            "free_claude_code.api.routes._create_messages_response",
+            "modelglot.api.routes._create_messages_response",
             new_callable=AsyncMock,
             return_value={"accepted": True},
         ),
@@ -91,7 +91,7 @@ def test_messages_auth_gives_authorization_precedence_over_x_api_key(
     }
 
     with patch(
-        "free_claude_code.api.routes._create_messages_response",
+        "modelglot.api.routes._create_messages_response",
         new_callable=AsyncMock,
         return_value={"accepted": True},
     ):
@@ -150,7 +150,7 @@ def test_proxy_auth_token_normalizes_configured_whitespace(app: FastAPI) -> None
         "messages": [{"role": "user", "content": "hello"}],
     }
 
-    with patch("free_claude_code.api.routes.get_token_count", return_value=3):
+    with patch("modelglot.api.routes.get_token_count", return_value=3):
         r = client.post(
             "/v1/messages/count_tokens",
             json=payload,

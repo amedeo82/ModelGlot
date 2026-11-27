@@ -10,9 +10,9 @@ from urllib.request import Request
 
 import pytest
 
-from free_claude_code.cli import local_http
-from free_claude_code.config.loader import ManagedConfigStore
-from free_claude_code.core.json_types import JsonObject
+from modelglot.cli import local_http
+from modelglot.config.loader import ManagedConfigStore
+from modelglot.core.json_types import JsonObject
 from tests.wire_payload import decode_object, object_payload
 
 
@@ -103,7 +103,7 @@ class LaunchCapture:
 
 @pytest.fixture
 def launch_capture(monkeypatch: pytest.MonkeyPatch) -> LaunchCapture:
-    from free_claude_code.cli.launchers import common
+    from modelglot.cli.launchers import common
 
     capture = LaunchCapture()
     store = ManagedConfigStore()
