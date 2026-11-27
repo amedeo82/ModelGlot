@@ -22,6 +22,7 @@ from modelglot.core.history_replay import (
     tool_history_context,
 )
 from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.openai_request_hints import OPENAI_REQUEST_HINTS
 from modelglot.core.openai_tool_names import OpenAIToolNameCodec
 
 from .errors import ResponsesConversionError
@@ -50,6 +51,7 @@ _REQUEST_FIELDS = {
     "text",
     "include",
     "truncation",
+    *OPENAI_REQUEST_HINTS,
 }
 
 
