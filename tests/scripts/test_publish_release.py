@@ -485,24 +485,89 @@ def test_bootstrap_requires_modelglot_packaging(
     assert remote.builds == 0
 
 
-@pytest.mark.parametrize("existing_release", [False, True])
-def test_bootstrap_requires_a_new_tag_and_release(
-    releases: tuple[Path, FakeRemote], existing_release: bool
+def test_bootstrap_resumes_an_existing_matching_tag(
+    releases: tuple[Path, FakeRemote],
 ) -> None:
     repo, remote = releases
     head = modelglot_major(remote)
-    if existing_release:
-        existing: Release = {
-            "id": 2,
-            "tag_name": "v7.0.0",
-            "draft": True,
-            "prerelease": False,
-            "assets": [],
-        }
-        remote.releases["v7.0.0"] = existing
-    else:
-        git(repo, "tag", "v7.0.0", head)
+    git(repo, "tag", "v7.0.0", head)
 
-    with pytest.raises(ValueError, match="already exists"):
+    remote.publisher().publish(head, bootstrap_version="7.0.0")
+
+    assert git(repo, "rev-parse", "v7.0.0") == head
+    assert not remote.releases["v7.0.0"]["draft"]
+    assert set(remote.uploaded) == set(publishing.distribution_names("7.0.0"))
+
+
+def test_bootstrap_resumes_an_existing_matching_draft(
+    releases: tuple[Path, FakeRemote],
+) -> None:
+    repo, remote = releases
+    head = modelglot_major(remote)
+    git(repo, "tag", "v7.0.0", head)
+    existing: Release = {
+        "id": 2,
+        "tag_name": "v7.0.0",
+        "draft": True,
+        "prerelease": False,
+        "assets": [],
+    }
+    remote.releases["v7.0.0"] = existing
+
+    remote.publisher().publish(head, bootstrap_version="7.0.0")
+
+    assert not remote.releases["v7.0.0"]["draft"]
+    assert set(remote.uploaded) == set(publishing.distribution_names("7.0.0"))
+
+
+def test_bootstrap_rejects_a_release_without_a_matching_tag(
+    releases: tuple[Path, FakeRemote],
+) -> None:
+    _, remote = releases
+    head = modelglot_major(remote)
+    existing: Release = {
+        "id": 2,
+        "tag_name": "v7.0.0",
+        "draft": True,
+        "prerelease": False,
+        "assets": [],
+    }
+    remote.releases["v7.0.0"] = existing
+
+    with pytest.raises(ValueError, match="no matching remote tag"):
+        remote.publisher().publish(head, bootstrap_version="7.0.0")
+    assert remote.builds == 0
+
+
+def test_bootstrap_is_a_noop_for_a_published_matching_release(
+    releases: tuple[Path, FakeRemote],
+) -> None:
+    repo, remote = releases
+    head = modelglot_major(remote)
+    git(repo, "tag", "v7.0.0", head)
+    existing: Release = {
+        "id": 2,
+        "tag_name": "v7.0.0",
+        "draft": False,
+        "prerelease": False,
+        "assets": [],
+    }
+    remote.releases["v7.0.0"] = existing
+
+    remote.publisher().publish(head, bootstrap_version="7.0.0")
+
+    assert remote.builds == 0
+    assert not remote.uploaded
+
+
+def test_bootstrap_rejects_an_existing_tag_for_another_commit(
+    releases: tuple[Path, FakeRemote],
+) -> None:
+    repo, remote = releases
+    head = modelglot_major(remote)
+    base = git(repo, "rev-parse", "HEAD^")
+    git(repo, "tag", "v7.0.0", base)
+
+    with pytest.raises(ValueError, match="different commit"):
         remote.publisher().publish(head, bootstrap_version="7.0.0")
     assert remote.builds == 0

@@ -2,6 +2,10 @@
 
 Thanks for helping improve ModelGlot. Keep changes focused, test the behavior you change, and preserve the public Claude Code and Codex workflows.
 
+## Coding Agents
+
+Coding agents and other automated contributors working in this repository must follow the root [`AGENTS.md`](AGENTS.md). It defines the project invariants, change classification, testing requirements, release-intent rules, and boundaries around publication and other external side effects.
+
 ## Before Opening A Pull Request
 
 - Standalone documentation PRs are reserved for the repository owner.
@@ -14,7 +18,7 @@ Thanks for helping improve ModelGlot. Keep changes focused, test the behavior yo
 
 Changes to `assets/`, `scripts/`, `src/`, `pyproject.toml`, or `uv.lock` require a title starting with `patch: `, `minor: `, or `major: ` followed by a description. Use exactly one space after the colon.
 
-PRs without changes to those paths must not use a release prefix. Do not edit version numbers. Publishing calculates the version after merge, creates its Git tag, and publishes to PyPI and GitHub Releases.
+PRs without changes to those paths must not use a release prefix. Do not edit version numbers. Publishing calculates the version after merge, creates its Git tag, and publishes to PyPI and GitHub Releases. Maintainers should follow the complete bootstrap, release, retry, and recovery procedure in [`docs/releasing.md`](docs/releasing.md).
 
 ## Development Setup
 
@@ -42,6 +46,8 @@ Run the complete local CI sequence before opening a pull request:
 
 Useful iteration flags are `--only`, `--skip`, and `--dry-run` on macOS/Linux, or `-Only`, `-Skip`, and `-DryRun` in PowerShell.
 
+Before repeating a full local-CI diagnosis, consult [`docs/local-ci-troubleshooting.md`](docs/local-ci-troubleshooting.md). It records the known Windows Playwright parallel-startup failure, a fast triage procedure, controlled-worker commands, CI shard replay, and artifact cleanup.
+
 Individual repair and test commands:
 
 ```bash
@@ -59,6 +65,14 @@ Pyrefly warnings fail the check. GitHub CI runs Ruff in check-only mode and also
 
 - [`docs/architecture-analysis.md`](docs/architecture-analysis.md) records the architecture map, quality findings, and the measurement snapshot.
 - [`docs/implementation-plan.md`](docs/implementation-plan.md) converts those findings into ordered implementation steps with current status, acceptance criteria, and traceability.
+
+### Release management
+
+- [`docs/releasing.md`](docs/releasing.md) documents release prerequisites, version intent, the initial ModelGlot bootstrap, ordinary releases, retries, recovery, and verification.
+
+### CI and testing
+
+- [`docs/local-ci-troubleshooting.md`](docs/local-ci-troubleshooting.md) documents fast diagnosis of local CI failures, the known Windows Playwright startup contention pattern, CI shard replay, and generated-artifact cleanup.
 
 ### Model discovery and pickers
 

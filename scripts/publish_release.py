@@ -155,8 +155,6 @@ class Publisher:
             releases = self.releases()
             version = bootstrap_version
         tag = f"v{version}"
-        if bootstrap_version is not None and (tag in tags or tag in releases):
-            raise ValueError(f"ModelGlot bootstrap tag {tag} already exists")
         if any(sha == target and name != tag for name, sha in tags.items()):
             raise ValueError("Target already has another version")
         if tag in tags and tags[tag] != target:

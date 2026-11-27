@@ -837,6 +837,7 @@ modelglot-doctor
 - [Report bugs or request features](https://github.com/amedeo82/ModelGlot/issues)
 - [Releases](https://github.com/amedeo82/ModelGlot/releases)
 - [Contributing guide](CONTRIBUTING.md)
+- [Maintainer release runbook](docs/releasing.md)
 
 ## Maintainers
 
