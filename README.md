@@ -7,67 +7,76 @@
   </picture>
 </h1>
 
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-2e7d32.svg?style=for-the-badge)](https://github.com/amedeo82/ModelGlot/blob/main/LICENSE)
-[![Python 3.14](https://img.shields.io/badge/python-3.14-3776ab.svg?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/downloads/)
-[![Package Manager: uv](assets/package-manager-uv.svg)](https://github.com/astral-sh/uv)
-[![Testing: Pytest](https://img.shields.io/badge/Testing-Pytest-ad1457.svg?style=for-the-badge)](https://github.com/pytest-dev/pytest)
-[![Type Checker: Pyrefly](https://img.shields.io/badge/Type%20Checker-pyrefly-fdd835.svg?style=for-the-badge)](https://github.com/pyrefly-org/pyrefly)
-[![Formatter: Ruff](https://img.shields.io/badge/Formatter-ruff-bf4b00.svg?style=for-the-badge)](https://github.com/astral-sh/ruff)
-[![Logging: Loguru](https://img.shields.io/badge/logging-loguru-00695c.svg?style=for-the-badge)](https://github.com/Delgan/loguru)
+<p><strong>One local control plane for your coding agents and your AI models.</strong></p>
+<p>Use Claude Code, Codex, OpenCode, VS Code and 8 other harnesses with 61 providers —
+free, paid, subscription and local — without changing how you work.</p>
 
-[Quick Start](#quick-start) · [Providers](#choose-a-provider) · [Code sessions](#code-sessions) · [Integrations](#integrations) · [API](#use-the-api-directly) · [Phone](#use-from-your-phone) · [Manage](#manage-your-installation)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-2e7d32.svg?style=for-the-badge)](LICENSE)
+[![Python 3.14](https://img.shields.io/badge/python-3.14-3776ab.svg?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/downloads/)
+![Providers: 61](https://img.shields.io/badge/providers-61-00695c.svg?style=for-the-badge)
+![API protocols: 4](https://img.shields.io/badge/API%20protocols-4-3776ab.svg?style=for-the-badge)
+![Harnesses: 12](https://img.shields.io/badge/harnesses-12-2e7d32.svg?style=for-the-badge)
+
+[Quick Start](#quick-start) · [What ModelGlot adds](#what-modelglot-adds-to-upstream) · [Providers](#choose-a-provider) · [Code sessions](#code-sessions) · [Integrations](#integrations) · [API](#use-the-api-directly) · [Phone](#use-from-your-phone) · [Manage](#manage-your-installation)
 
 </div>
 
 <p align="center">
-  <em>Independent open-source project. Not affiliated with or endorsed by Anthropic. Claude and Claude Code are trademarks of Anthropic.</em>
+  <em>Independent open-source project, based on
+  <a href="https://github.com/Alishahryar1/free-claude-code">Free Claude Code</a>.
+  Not affiliated with or endorsed by Anthropic, OpenAI or Google.
+  Claude and Claude Code are trademarks of Anthropic.</em>
 </p>
 
-## Features
+## What ModelGlot Is
 
-- Route any supported harness to models from any supported provider.
-- 12 supported harnesses: [Claude Code](https://code.claude.com/docs/en/overview), [Codex](https://github.com/openai/codex), [Pi](https://github.com/earendil-works/pi), [OpenCode](https://github.com/anomalyco/opencode), [Cline](https://github.com/cline/cline), [Hermes](https://github.com/NousResearch/hermes-agent), [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness), [Grok Build](https://github.com/xai-org/grok-build), [Muse Code](https://research.meta.ai/blog/introducing-muse-code-and-muse-spark-1-2/), [Aider](https://aider.chat/), [Antigravity CLI](https://antigravity.google/docs/getting-started/), or [VS Code Chat](https://code.visualstudio.com/).
-  - Preserved native streaming, tool use, and interleaved thinking for maximum performance.
-  - For Claude Code, route [Fable](https://www.anthropic.com/claude/fable), [Opus](https://www.anthropic.com/claude/opus), [Sonnet](https://www.anthropic.com/claude/sonnet), and [Haiku](https://www.anthropic.com/claude/haiku) to supported models.
-- Use any model through any of four APIs: [Anthropic Messages](https://platform.claude.com/docs/en/api/messages) (`/v1/messages`), [OpenAI Chat Completions](https://platform.openai.com/docs/api-reference/chat/create) (`/v1/chat/completions`), [OpenAI Responses](https://platform.openai.com/docs/api-reference/responses/create) (`/v1/responses`), or [Gemini](https://ai.google.dev/api/generate-content) (`generateContent`). See [Use The API Directly](#use-the-api-directly).
-- 61 supported providers, including free, paid, subscription, and local providers.
-  - 1.3B+ free tokens per month.
-  - ModelGlot follows provider TOS and removes integrations if they stop being allowed.
-- Use through the terminal, desktop apps ([ChatGPT Desktop](https://learn.chatgpt.com/docs/app) with local Codex, [Claude Desktop](https://claude.ai/download), and [DeepSeek Desktop](https://github.com/deepseek-ai/deepseek-harness)), IDE extensions ([VS Code](https://code.visualstudio.com/) and [JetBrains](https://www.jetbrains.com/)), [your phone](#use-from-your-phone) ([Discord](https://discord.com/) and [Telegram](https://telegram.org/)), or your browser through native Code sessions.
-  - Voice notes supported for Discord and Telegram using local [Whisper](https://github.com/openai/whisper) or [NVIDIA NIM](https://docs.nvidia.com/nim/speech/latest/asr/deploy-asr-models/whisper.html).
-- Run Claude Code's supported `web_search` and forced `web_fetch` requests through ModelGlot with SSRF-protected local web access.
-- Manage persistent Codex projects in the browser through [Code sessions](#code-sessions).
-- Up to 90% lower token usage using [RTK](https://github.com/rtk-ai/rtk) and [Headroom](https://github.com/headroomlabs-ai/headroom).
-- State-of-the-art reliability features so you can keep coding through provider outages:
-  - Automatic retries.
-  - Configurable rate limits.
-  - Configurable concurrency control.
-  - Automatic model/provider fallback.
-  - Configurable fallback across numbered API keys.
+ModelGlot runs on your computer and sits between your coding agent and the model
+provider. Your agent talks to ModelGlot, ModelGlot translates the request into the
+provider's protocol, and the answer comes back with native streaming, tool calls
+and thinking blocks intact.
 
-Free-tier availability and limits are controlled by each provider and may change.
+In practice this means:
+
+- **You keep your tools.** Claude Code, Codex, OpenCode, Cline, Pi, Hermes,
+  DeepSeek Harness, Grok Build, Muse Code, Aider, Antigravity CLI and VS Code Chat
+  all work the way they always did.
+- **You keep your workflow.** Credentials, model choice, reasoning effort, fallback
+  order and rate limits live in one local Admin UI.
+- **You choose the model.** 61 providers, including local Ollama, LM Studio and
+  llama.cpp servers, plus free and paid cloud models.
+- **You stay in control.** The proxy, the Admin UI and the local database stay on
+  your machine; you decide what is exposed to the network.
 
 <div align="center">
   <img src="assets/pic.png" alt="Claude Code running with ModelGlot" width="700">
-  <p><em>Claude Code running with ModelGlot.</em></p>
+  <p><em>Claude Code running through ModelGlot.</em></p>
 </div>
 
-<div align="center">
-  <img src="assets/browser-code-session.png" alt="Native Codex browser session in ModelGlot, showing model controls and a repository exploration" width="700">
-  <p><em>A native Codex session in ModelGlot's browser UI.</em></p>
-</div>
+## What ModelGlot Adds To Upstream
 
-## Token optimization and provider usage
+ModelGlot keeps the core of Free Claude Code — the harnesses, the provider catalog,
+the four API protocols and the routing engine — and adds its own identity, its own
+observability and a set of product improvements.
 
-Open **Admin UI → Token optimization** for a local-only, read-only dashboard with no Apply action.
+| Area | ModelGlot |
+| --- | --- |
+| **Own identity and state** | `modelglot-*` commands, `~/.modelglot` state, port `16969`, branded desktop app, tray, notifications and icons. Nothing collides with a Free Claude Code installation. |
+| **Readable model catalog** | Descriptive titles, provider logos, capability badges, context limits, release state, provenance and freshness in the picker — while every canonical model ID and route stays unchanged. |
+| **Token optimization and usage dashboard** | A read-only Admin page that shows RTK and Headroom reports, provider-observed usage per model/provider/day, and Code session context occupancy — each with its own basis, never merged into one number. |
+| **Guided desktop experience** | Check for updates from the tray, install a stable release and reopen automatically, with branded native notifications and update logs. |
+| **Claude Desktop 3P profile** | A ModelGlot-owned profile that prefers 1M context for compatible models and registers Anthropic's official plugin marketplaces. |
+| **Clearer Admin UI** | Runtime settings now explain their unit, their effect and when a restart is needed; sections adapt to your platform and your configured providers. |
+| **Cleaner interruptions** | `Ctrl+C` closes the native client and its launcher with exit code 130 and no Python traceback; the local proxy keeps running. |
+| **Safer new data paths** | Admin routes stay loopback-only with `Cache-Control: no-store`; the usage schema stores no prompts, completions, tool arguments or credentials; CSV export neutralizes formula injection. |
 
-- **RTK and Headroom remain separate.** RTK summaries and UTC daily trends come from bounded executions of `rtk gain --format json`, `rtk gain --daily --format json`, and `rtk --version`. Headroom summaries come from `headroom savings --json` and `headroom --version`. Missing tools, timeouts, invalid output, and zero reports have distinct states and do not prove tool inactivity. All values are `tool_reported`; savings are never added across tools or presented as provider usage, billing, or monetary savings.
-- **ModelGlot usage uses provider observations.** A logical client request is finalized once, using its winning terminal attempt; retries, fallback attempts, failed-attempt tokens, and pre-flight input estimates remain separate. Missing provider values stay unknown rather than becoming zero. The dashboard can group retained usage by model, provider, or UTC day over a bounded interval of at most 31 days.
-- **Context populations are not combined.** Provider-reported request input and current Code session occupancy have separate rows, averages, maxima, coverage, and stale/unknown states. Percentages appear only with a positive provider-confirmed context limit and a sample timestamp; the 200k client default is not treated as a confirmed limit.
-- **Retention and export are explicit.** Production usage metadata shares ModelGlot's SQLite database, with 30-day retention and a 50,000-row cap. Coverage and storage provenance are shown in Admin. In-memory embeddings are labeled as resetting on restart. CSV export contains the same filtered aggregate rows visible in the table (up to 5,000 rows), their basis and coverage, and no additional totals or hidden records.
-- **Only minimal metadata is retained.** No prompts, completions, tool arguments, credentials, local ledger paths, or raw subprocess output are stored or returned. Admin pages and APIs remain loopback-only and `Cache-Control: no-store`.
+> **Switching from Free Claude Code?** ModelGlot deliberately does **not** import
+> `~/.fcc` state, `fcc-*` commands or legacy environment variables. Configure your
+> providers again and point your clients at `http://127.0.0.1:16969`.
 
-Approximate cost estimation is not enabled. External tool installation and optimization policy are unchanged.
+Code sessions and local web tools (`web_search` / `web_fetch`) already existed
+upstream: ModelGlot keeps them and documents them properly
+([Code sessions](#code-sessions), [`docs/code-sessions.md`](docs/code-sessions.md),
+[`docs/web-tools.md`](docs/web-tools.md)).
 
 ## Quick Start
 
@@ -87,11 +96,16 @@ Windows PowerShell:
 & ([scriptblock]::Create((irm "https://raw.githubusercontent.com/amedeo82/ModelGlot/main/scripts/install.ps1"))) -Ref main
 ```
 
-These commands install the current commit from the `main` branch. The installed version includes the VCS build identifier; run `modelglot-server --version` to display it.
+These commands install the current commit from the `main` branch. The installed
+version includes the VCS build identifier; run `modelglot-server --version` to
+display it.
 
-When prompted, choose at least one coding agent and optionally enable [RTK](https://github.com/rtk-ai/rtk) + [Headroom](https://github.com/headroomlabs-ai/headroom) token optimization for supported agents.
+When prompted, choose at least one coding agent and optionally enable
+[RTK](https://github.com/rtk-ai/rtk) + [Headroom](https://github.com/headroomlabs-ai/headroom)
+token optimization for supported agents.
 
-The installers also accept these options:
+<details>
+<summary><strong>Installer options</strong></summary>
 
 | macOS/Linux | Windows | Effect |
 | --- | --- | --- |
@@ -101,6 +115,8 @@ The installers also accept these options:
 | `--torch-backend VALUE` | `-TorchBackend VALUE` | Select a uv PyTorch backend, such as `cu130`. Requires local voice. |
 | `--update` | `-Update` | Skip when the installed ModelGlot version is already current. |
 | `--dry-run` | `-DryRun` | Print the installation commands without changing the system. |
+
+</details>
 
 ### 2. Start ModelGlot
 
@@ -129,117 +145,68 @@ for confirmation before closing, installing it, and reopening. When using
 `modelglot-server`, keep its terminal open.
 
 > **Network exposure:** the current defaults bind the server to `0.0.0.0` and leave
-> Proxy Authentication disabled, so generation endpoints are reachable from other hosts
-> on the local network. On a shared or untrusted network, set `HOST=127.0.0.1` or enable
-> Proxy Authentication in Admin before using configured provider credentials. The Admin
-> API and UI remain restricted to loopback callers.
+> Proxy Authentication disabled, so generation endpoints are reachable from other
+> hosts on the local network. On a shared or untrusted network, set
+> `MODELGLOT_HOST=127.0.0.1` or enable Proxy Authentication in Admin before using
+> configured provider credentials. The Admin API and UI remain restricted to
+> loopback callers.
 
-<a id="nvidia-nim-provider"></a>
+### 3. Add A Provider
 
-### 3. Configure NVIDIA NIM
+1. Open the Admin UI URL from the server log.
+2. Open **Providers** and click **Add key** on the provider you want to use.
+3. Paste the key and click **Save**.
+4. Open **Model Config**, search the `MODEL` dropdown and select a model.
+5. Click **Apply**.
 
-1. Create an API key at [build.nvidia.com/settings/api-keys](https://build.nvidia.com/settings/api-keys).
-2. Open the Admin UI URL from the server log.
-3. Open NVIDIA NIM in **Providers**, click **Add key**, paste the key, and click **Save**.
-4. Leave `MODEL` on the default `nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b`, or search the model dropdown and select another model.
-5. Click **Apply** to save your model selection.
+For example, to start with NVIDIA NIM: create an API key at
+[build.nvidia.com/settings/api-keys](https://build.nvidia.com/settings/api-keys),
+then leave `MODEL` on the default
+`nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b` or pick another model from the
+dropdown.
 
 To protect the local proxy with a bearer token, enable **Proxy Authentication**
 in Admin.
 
 <div align="center">
-  <img src="assets/admin-page.png" alt="ModelGlot Admin UI" width="700">
+  <img src="assets/admin-page.png" alt="ModelGlot Admin UI with the provider catalog and runtime settings" width="620">
+  <p><em>The ModelGlot Admin UI: providers, local providers, custom providers and runtime settings.</em></p>
 </div>
 
 ### 4. Run Your Coding Agent
 
-Claude Code:
+| Agent | Command | Agent | Command |
+| --- | --- | --- | --- |
+| Claude Code | `modelglot-claude` | Hermes | `modelglot-hermes` |
+| Codex | `modelglot-codex` | DeepSeek Harness Web | `modelglot-dsh` |
+| Pi | `modelglot-pi` | Grok Build | `modelglot-grok` |
+| OpenCode 2 | `modelglot-opencode` | Muse Code | `modelglot-muse` |
+| Cline | `modelglot-cline` | Aider | `modelglot-aider` |
+| Antigravity CLI | `modelglot-agy` | VS Code Chat | [Connect](#integrations) |
 
-```bash
-modelglot-claude
-```
+Pressing `Ctrl+C` while a native client is running exits that client and its
+ModelGlot launcher cleanly, without a Python traceback. The local ModelGlot proxy
+keeps running and remains available for the next client session.
 
-Codex:
-
-```bash
-modelglot-codex
-```
-
-Pi:
-
-```bash
-modelglot-pi
-```
-
-OpenCode 2:
-
-```bash
-modelglot-opencode
-```
-
-Cline:
-
-```bash
-modelglot-cline
-```
-
-Hermes:
-
-```bash
-modelglot-hermes
-```
-
-DeepSeek Harness Web:
-
-```bash
-modelglot-dsh
-```
-
-Grok Build:
-
-```bash
-modelglot-grok
-```
-
-Muse Code:
-
-```bash
-modelglot-muse
-```
-
-Aider:
-
-```bash
-modelglot-aider
-```
-
-Antigravity CLI:
-
-```bash
-modelglot-agy
-```
-
-Pressing `Ctrl+C` while a native client is running exits that client and its ModelGlot launcher
-cleanly, without a Python traceback. The local ModelGlot proxy keeps running and remains available
-for the next client session.
-
-Other clients and SDKs can call ModelGlot directly. See [Use The API Directly](#use-the-api-directly).
+Other clients and SDKs can call ModelGlot directly.
+See [Use The API Directly](#use-the-api-directly).
 
 <a id="model-picker"></a>
 
 <div align="center">
   <img src="assets/cc-model-picker.png" alt="Claude Code model picker showing ModelGlot models" width="700">
-  <p><em>Select an ModelGlot model from Claude Code's native <code>/model</code> picker.</em></p>
+  <p><em>Select a ModelGlot model from Claude Code's native <code>/model</code> picker.</em></p>
 </div>
 
 <a id="code-sessions"></a>
 
 ## Code Sessions
 
-ModelGlot includes a browser workspace for running Codex against a local project folder. Open
-**Admin UI → Code sessions**, select **New code session**, and choose an existing folder or
-enter its absolute path. Each session persists its title, model, reasoning effort, permission
-mode, turns, and transcript in ModelGlot's local SQLite database.
+ModelGlot includes a browser workspace for running Codex against a local project
+folder. Open **Admin UI → Code sessions**, select **New code session**, and choose an
+existing folder or enter its absolute path. Each session persists its title, model,
+reasoning effort, permission mode, turns and transcript in ModelGlot's local SQLite
+database.
 
 Codex must be installed separately and available on `PATH`:
 
@@ -247,22 +214,23 @@ Codex must be installed separately and available on `PATH`:
 npm install -g @openai/codex
 ```
 
-The session controls include the provider, model, reasoning effort, and Codex permission
-mode: **Use config**, **Ask**, **Auto-review**, or **Full access**. The browser receives live
-turn and tool events over Server-Sent Events. Use **Stop** to cancel the active turn and
-**Delete** to remove both the ModelGlot session and its native Codex conversation.
+The session controls include the provider, model, reasoning effort and Codex
+permission mode: **Use config**, **Ask**, **Auto-review** or **Full access**. The
+browser receives live turn and tool events over Server-Sent Events. Use **Stop** to
+cancel the active turn and **Delete** to remove both the ModelGlot session and its
+native Codex conversation.
 
 <div align="center">
-  <img src="assets/admin-code-sessions-mockup.svg" alt="Mockup of the ModelGlot Code sessions interface" width="900">
-  <p><em>Code sessions interface mockup.</em></p>
+  <img src="assets/browser-code-session.png" alt="Native Codex browser session in ModelGlot, showing model controls and a repository exploration" width="900">
+  <p><em>A native Codex session in ModelGlot's browser UI.</em></p>
 </div>
 
-See [`docs/code-sessions.md`](docs/code-sessions.md) for the complete workflow, Admin API, and
-current limitations.
+See [`docs/code-sessions.md`](docs/code-sessions.md) for the complete workflow,
+Admin API and current limitations.
 
 ## Choose A Provider
 
-1. Open a provider link below for its key, models, or setup instructions.
+1. Open a provider link below for its key, models or setup instructions.
 2. In the Admin UI, configure the listed setting. For OpenAI / ChatGPT
    subscription access, use **Providers → OAuth providers** instead.
 3. Search the `MODEL` dropdown and select a model. If the provider cannot list
@@ -273,12 +241,17 @@ Optional: add an ordered **Fallback Models** list under **Model Config**. It
 applies to every connected client. A failed request may reach and consume usage
 from more than one provider before succeeding.
 
-Provider modals support numbered API keys. Use **Add key**, remove rows, or drag their handles to reorder them. The primary route always uses key 1; to try another key, add the same model to **Fallback Models** and select the desired key number.
+Provider modals support numbered API keys. Use **Add key**, remove rows, or drag
+their handles to reorder them. The primary route always uses key 1; to try another
+key, add the same model to **Fallback Models** and select the desired key number.
 
-For another API endpoint, open **Providers → Custom providers → Add provider**. Enter its API base URL, optional keys, and API format. Leave **Model IDs** empty to discover models automatically, or enter one upstream model ID per line. Save, then select a model in **Model Config**.
+For another API endpoint, open **Providers → Custom providers → Add provider**.
+Enter its API base URL, optional keys, and API format. Leave **Model IDs** empty to
+discover models automatically, or enter one upstream model ID per line. Save, then
+select a model in **Model Config**.
 
 <details>
-<summary><strong>Provider catalog</strong></summary>
+<summary><strong>Provider catalog (61 providers)</strong></summary>
 
 | Provider | Admin UI setting | Example `MODEL` |
 | --- | --- | --- |
@@ -325,8 +298,8 @@ For another API endpoint, open **Providers → Custom providers → Add provider
 | [Fireworks AI](https://fireworks.ai/account/api-keys) | `FIREWORKS_API_KEY` | `fireworks/accounts/fireworks/models/llama-v3p3-70b-instruct` |
 | [Novita AI](https://novita.ai/settings/key-management) | `NOVITA_API_KEY` | `novita/deepseek/deepseek-v4-flash-0731` |
 | [Cloudflare Workers AI](https://developers.cloudflare.com/workers-ai/) | `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` | `cloudflare/@cf/moonshotai/kimi-k2.6` |
-| [Z.ai Coding Plan](https://z.ai/manage-apikey/apikey-list) | `ZAI_API_KEY` | `zai/glm-5.2` |
-| [Z.ai API (pay as you go)](https://z.ai/manage-apikey/apikey-list) | `ZAI_API_KEY` | `zai_api/glm-4.7-flash` |
+| [Z.ai Coding Plan](https://z.ai/manage/apikey/apikey-list) | `ZAI_API_KEY` | `zai/glm-5.2` |
+| [Z.ai API (pay as you go)](https://z.ai/manage/apikey/apikey-list) | `ZAI_API_KEY` | `zai_api/glm-4.7-flash` |
 | [TokenRouter](https://www.tokenrouter.com/) | `TOKENROUTER_API_KEY` | `tokenrouter/moonshotai/kimi-k3-free` |
 | [NaraRoute](https://router.bynara.id/) | `NARAROUTE_API_KEY` | `nararoute/kimi-k3-free` |
 | [Poolside AI](https://platform.poolside.ai/) | `POOLSIDE_API_KEY` | `poolside/poolside/laguna-s-2.1` |
@@ -423,7 +396,7 @@ Provider cards show the checked endpoint and response time, with a useful messag
 </details>
 
 <details>
-<summary><strong>Optional model-tier routing</strong></summary>
+<summary><strong>Model tier routing and reasoning effort</strong></summary>
 
 `MODEL` is the fallback for every request. Select a model for `MODEL_FABLE`, `MODEL_OPUS`, `MODEL_SONNET`, or `MODEL_HAIKU` to override an individual Claude Code tier. Select **None** to use `MODEL`.
 
@@ -431,16 +404,7 @@ In **Admin UI → Model Config**, add **Fallback Models** in the order ModelGlot
 
 Choose a model, effort, and API key number in the bottom row, then click **+**. **Key 1**, **Key 2**, and so on refer to the current numbered keys in that provider's settings. The primary route always uses key 1, so a fallback row is required to rotate to another key. Edit the selections in place, drag the handle to change the order, or click the red trash button to remove a fallback.
 
-The Admin model picker displays a readable title, provider, optional attributed description, and the canonical provider/model reference. It saves only the canonical reference; entering an unlisted reference manually remains supported. Solid capability and token-limit badges are provider/ModelGlot-confirmed facts. Dashed badges labeled **Catalog** are provider-scoped models.dev declarations, not runtime guarantees; audio/video/PDF never appear as ModelGlot-supported runtime modalities. The selected detail card shows exact limits, source, scope, and freshness. Catalog descriptions remain editorial text and are never parsed into numeric limits.
-
-**Inherit** keeps the original request's resolved reasoning setting. **From client** uses the effort or token budget sent by your coding agent, bypassing the global or tier setting. You can select the same model with another key number.
-
-</details>
-
-<details>
-<summary><strong>Reasoning control</strong></summary>
-
-Open **Admin UI → Model Config → Model Routing** and choose an effort beside each model. **Default Effort** starts at **From client**. Fable, Opus, Sonnet, and Haiku start at **Inherit**.
+Open **Admin UI → Model Config → Model Routing** to choose an effort beside each model. **Default Effort** starts at **From client**. Fable, Opus, Sonnet, and Haiku start at **Inherit**.
 
 | Selection | Behavior |
 | --- | --- |
@@ -450,6 +414,129 @@ Open **Admin UI → Model Config → Model Routing** and choose an effort beside
 | **Inherit** | Tier overrides use Default Effort. Fallbacks keep the original request's resolved effort. |
 
 </details>
+
+## Model Names You Can Read
+
+The Admin model picker shows a readable title, the provider, an optional attributed
+description and the canonical `provider/model` reference. It saves only the canonical
+reference, so routing never depends on a display name.
+
+Titles are resolved in this order:
+
+1. Curated ModelGlot titles, such as `Nemotron 3 Ultra 550B A55B` and `MiniMax-M3.1-Flash`.
+2. The shared models.dev catalog, refreshed in the background and cached for 24 hours.
+3. A deterministic title derived from the model ID.
+4. The original provider/model reference when no readable title can be derived.
+
+Solid capability and token-limit badges are provider/ModelGlot-confirmed facts.
+Dashed badges labeled **Catalog** are provider-scoped models.dev declarations, not
+runtime guarantees. The selected detail card shows exact limits, source, scope and
+freshness.
+
+The catalog is never required to serve a model list: an offline, cold or stale cache
+degrades to curated, heuristic or raw labels, and missing provider logos fall back
+to initials. The reduced cache lives in `~/.modelglot/models-dev-catalog.json`, and
+`modelglot-doctor` reports its source, age and last refresh outcome.
+
+External catalog access can be disabled completely:
+
+```dotenv
+MODELGLOT_MODEL_CATALOG_SOURCE=none
+```
+
+`MODELGLOT_MODEL_CATALOG_URL` may point to an operator-controlled compatible
+catalog endpoint.
+
+<details>
+<summary><strong>Claude Code terminal discovery</strong></summary>
+
+Claude Code Terminal and Claude Desktop use the same ModelGlot catalog and
+descriptive-title resolver. The Terminal discovers them through `GET /v1/models`
+and uses `display_name` as the picker title and `description` as the secondary
+provider label.
+
+Launch the Terminal through `modelglot-claude` to configure the gateway URL,
+credential and `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1` automatically. For a
+manual launch, configure the same contract explicitly:
+
+```bash
+export ANTHROPIC_BASE_URL="http://127.0.0.1:16969"
+export ANTHROPIC_AUTH_TOKEN="your-modelglot-proxy-token"
+export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY="1"
+```
+
+Claude Code owns the discovered-model cache at `~/.claude/cache/gateway-models.json`
+on Unix-like systems and `%USERPROFILE%\.claude\cache\gateway-models.json` on
+Windows. Set `CLAUDE_CONFIG_DIR` to use another location. Restart Claude Code to
+refresh titles. Run `claude --debug` and inspect the `[gatewayDiscovery]` lines
+under `~/.claude/debug/` to confirm whether discovery ran.
+
+</details>
+
+## Token Optimization And Usage
+
+Open **Admin UI → Token optimization** for a local-only, read-only dashboard with
+no Apply action. It answers three different questions, and never mixes their
+answers:
+
+| Panel | What it shows | Where the data comes from |
+| --- | --- | --- |
+| **RTK and Headroom** | Reported savings and UTC daily trends per tool | The tools themselves (`rtk gain --format json`, `headroom savings --json`) |
+| **ModelGlot usage** | Requests, attempts, retries, fallbacks, tokens and cache usage, grouped by model, provider or UTC day | ModelGlot's own provider observations, up to 31 days |
+| **Context occupancy** | Current Code session context, separate from provider-reported request input | The coding agent, with the model context limit confirmed by the provider |
+
+- **RTK and Headroom stay separate.** Their ledgers have different bases and may
+  overlap, so values are never added across tools and never presented as provider
+  usage, billing or monetary savings. Missing tools, timeouts, invalid output and
+  zero reports have distinct states and do not prove tool inactivity.
+- **One logical request, one finalized result.** A client request is finalized once,
+  using its winning terminal attempt. Retries, fallback attempts, failed-attempt
+  tokens and pre-flight input estimates stay separate, and missing provider values
+  remain unknown instead of becoming zero.
+- **Context populations are not combined.** Percentages appear only with a positive
+  provider-confirmed context limit and a sample timestamp; the 200k client default
+  is not treated as a confirmed limit.
+- **Retention and export are explicit.** Usage metadata shares ModelGlot's SQLite
+  database with 30-day retention and a 50,000-row cap. CSV export contains the same
+  filtered aggregate rows visible in the table, up to 5,000 rows, with their basis
+  and coverage.
+- **Only minimal metadata is retained.** No prompts, completions, tool arguments,
+  credentials, local ledger paths or raw subprocess output are stored or returned.
+  Admin pages and APIs remain loopback-only with `Cache-Control: no-store`.
+
+Approximate cost estimation is not enabled. External tool installation and
+optimization policy are unchanged.
+
+## Web Tools
+
+ModelGlot can execute the Anthropic server-tool shapes used by Claude Code:
+
+- `web_search_20250305` for Claude Code's automatic web search;
+- `web_fetch_20250910` when the client explicitly forces a `web_fetch` tool.
+
+The feature is enabled by default and can be managed in **Admin UI → Model Config →
+Web Tools**. Automatic search currently supports Claude Code's server-tool-only
+request shape; mixed tools, automatic `web_fetch` and other Anthropic server-tool
+choices are rejected with a clear error.
+
+<div align="center">
+  <img src="assets/admin-web-tools.png" alt="ModelGlot Admin UI showing model routing and the Web Tools configuration" width="900">
+  <p><em>Model routing, fallback models and the Web Tools configuration.</em></p>
+</div>
+
+`web_fetch` is protected by an SSRF egress policy. By default it allows only `http`
+and `https`, rejects loopback, private, link-local, `.local` and `localhost`
+targets, pins DNS resolution during redirects, and bounds response size and
+redirect count. The policy can be configured with:
+
+| Variable | Default | Effect |
+| --- | --- | --- |
+| `ENABLE_WEB_SERVER_TOOLS` | `true` | Enables local web server tools. |
+| `WEB_FETCH_ALLOWED_SCHEMES` | `http,https` | Comma-separated URL schemes accepted by `web_fetch`. |
+| `WEB_FETCH_ALLOW_PRIVATE_NETWORKS` | `false` | Allows private and loopback targets. Use only in a trusted lab environment. |
+
+See [`docs/web-tools.md`](docs/web-tools.md) for supported request shapes, search
+controls, failure behavior and the complete egress policy.
 
 <a id="integrations"></a>
 <a id="connect-your-client"></a>
@@ -461,23 +548,42 @@ ModelGlot launchers automatically start the server.
 For editor and app integrations, install the client, start ModelGlot, then open
 **Admin UI → Integrations** and click **Connect** on its card.
 
-- **Claude Code in VS Code**: Install the [Claude Code extension](https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code).
-- **VS Code Chat**: Install the latest [VS Code](https://code.visualstudio.com/), connect, and select an ModelGlot model in its built-in Chat model picker.
-- **Claude Desktop**: Install [Claude Desktop](https://claude.ai/download). Fully quit it before connecting or disconnecting, then reopen it. The dedicated [ModelGlot 3P profile](docs/claude-desktop-modelglot-profile.md) adds 1M-context metadata, official Anthropic plugin marketplaces, sealed-key continuity, and preserves custom model overrides. When the ModelGlot profile is active, Disconnect removes it and returns Desktop to the normal Claude sign-in path; it does not restore a previously active native profile.
-- **Codex CLI, IDE & ChatGPT Desktop**: Install Codex CLI, the [Codex extension](https://marketplace.visualstudio.com/items?itemName=openai.chatgpt), or [ChatGPT Desktop](https://learn.chatgpt.com/docs/app), then connect. Select an ModelGlot model in the local Codex model picker and restart the client. ModelGlot routes only the local Codex workspace; Chat and cloud features continue to use OpenAI services.
-- **DeepSeek Harness Desktop**: Install and open the app once before connecting. Start a new session to use ModelGlot models.
-- **Claude Code in JetBrains ACP**: Install Claude Agent in JetBrains AI Assistant and start it once, then click **Connect** in ModelGlot. Reopen the IDE, select **Claude Code (ModelGlot)**, and start a new chat. After JetBrains updates the agent, restart ModelGlot before starting a new chat. Requires a local IDE in its standard installation locations.
+| Client | What to do |
+| --- | --- |
+| **Claude Code in VS Code** | Install the [Claude Code extension](https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code). |
+| **VS Code Chat** | Install the latest [VS Code](https://code.visualstudio.com/), connect, and select a ModelGlot model in its built-in Chat model picker. |
+| **Claude Desktop** | Install [Claude Desktop](https://claude.ai/download) and fully quit it before connecting or disconnecting, then reopen it. |
+| **Codex CLI, IDE & ChatGPT Desktop** | Install Codex CLI, the [Codex extension](https://marketplace.visualstudio.com/items?itemName=openai.chatgpt) or [ChatGPT Desktop](https://learn.chatgpt.com/docs/app), then connect. ModelGlot routes only the local Codex workspace; Chat and cloud features continue to use OpenAI services. |
+| **DeepSeek Harness Desktop** | Install and open the app once before connecting. Start a new session to use ModelGlot models. |
+| **Claude Code in JetBrains ACP** | Install Claude Agent in JetBrains AI Assistant and start it once, then click **Connect**. Reopen the IDE, select **Claude Code (ModelGlot)** and start a new chat. After JetBrains updates the agent, restart ModelGlot before starting a new chat. Requires a local IDE in its standard installation locations. |
 
-Reload VS Code or restart the app/IDE after connecting. In Codex and Claude Desktop, select a ModelGlot
-model from the model picker. Reload or restart the client when ModelGlot reports updated settings. Use
-**Disconnect** on the same card to remove the integration.
+Reload VS Code or restart the app/IDE after connecting. In Codex and Claude
+Desktop, select a ModelGlot model from the model picker. Reload or restart the
+client when ModelGlot reports updated settings. Use **Disconnect** on the same card
+to remove the integration.
 
 To complete Claude Code onboarding separately, open **Admin UI → Integrations →
 Claude Code onboarding** and click **Complete onboarding**. Connecting Claude Code
 in VS Code also completes onboarding.
 
-Run ModelGlot on the same computer and in the same user environment as the client you
-are configuring.
+Run ModelGlot on the same computer and in the same user environment as the client
+you are configuring.
+
+<details>
+<summary><strong>Claude Desktop: the ModelGlot 3P profile</strong></summary>
+
+The dedicated [ModelGlot 3P profile](docs/claude-desktop-modelglot-profile.md)
+adds 1M-context metadata for compatible models, official Anthropic plugin
+marketplaces, sealed-key continuity, and preserves your custom model overrides.
+When the ModelGlot profile is active, **Disconnect** removes it and returns
+Desktop to the normal Claude sign-in path; it does not restore a previously active
+native profile.
+
+The 1M preference exposes the larger context only when the provider catalog
+declares a context window of at least one million tokens, and only for models that
+actually support it.
+
+</details>
 
 <a id="use-the-api-directly"></a>
 
@@ -486,11 +592,25 @@ are configuring.
 Any client or SDK for these APIs can call ModelGlot. Set the base URL to
 `http://127.0.0.1:16969/v1` for OpenAI clients and `http://127.0.0.1:16969` for
 Anthropic and Gemini clients.
-Every ModelGlot model works on every endpoint. If Proxy Authentication is enabled, use its token as the client's API key and send it as `Authorization: Bearer <token>`. Anthropic Messages and token-count requests also accept `x-api-key: <token>`. Gemini endpoints accept the token through `Authorization`, `x-goog-api-key`, or the `key` query parameter. The model-list endpoint uses Bearer authentication.
 
-List the available models with `curl "http://127.0.0.1:16969/v1/models?view=messages"`. Check server liveness with `curl "http://127.0.0.1:16969/health"`.
+| Protocol | Endpoint |
+| --- | --- |
+| [Anthropic Messages](https://platform.claude.com/docs/en/api/messages) | `POST /v1/messages` |
+| [Anthropic token count](https://platform.claude.com/docs/en/api/messages-count-tokens) | `POST /v1/messages/count_tokens` |
+| [OpenAI Chat Completions](https://platform.openai.com/docs/api-reference/chat/create) | `POST /v1/chat/completions` |
+| [OpenAI Responses](https://platform.openai.com/docs/api-reference/responses/create) | `POST /v1/responses` |
+| [Gemini](https://ai.google.dev/api/generate-content) | `POST /v1/models/{model}:generateContent` |
 
-[`POST /v1/messages`](https://platform.claude.com/docs/en/api/messages):
+Every ModelGlot model works on every endpoint. If Proxy Authentication is enabled,
+use its token as the client's API key and send it as
+`Authorization: Bearer <token>`. Anthropic Messages and token-count requests also
+accept `x-api-key: <token>`. Gemini endpoints accept the token through
+`Authorization`, `x-goog-api-key`, or the `key` query parameter. The model-list
+endpoint uses Bearer authentication.
+
+List the available models with
+`curl "http://127.0.0.1:16969/v1/models?view=messages"`. Check server liveness
+with `curl "http://127.0.0.1:16969/health"`.
 
 ```bash
 curl http://127.0.0.1:16969/v1/messages \
@@ -501,6 +621,9 @@ curl http://127.0.0.1:16969/v1/messages \
     "messages": [{"role": "user", "content": "Hello!"}]
   }'
 ```
+
+<details>
+<summary><strong>More API examples</strong></summary>
 
 `POST /v1/messages/count_tokens`:
 
@@ -513,7 +636,7 @@ curl http://127.0.0.1:16969/v1/messages/count_tokens \
   }'
 ```
 
-[`POST /v1/chat/completions`](https://platform.openai.com/docs/api-reference/chat/create):
+`POST /v1/chat/completions`:
 
 ```bash
 curl http://127.0.0.1:16969/v1/chat/completions \
@@ -524,7 +647,7 @@ curl http://127.0.0.1:16969/v1/chat/completions \
   }'
 ```
 
-[`POST /v1/responses`](https://platform.openai.com/docs/api-reference/responses/create):
+`POST /v1/responses`:
 
 ```bash
 curl http://127.0.0.1:16969/v1/responses \
@@ -535,7 +658,7 @@ curl http://127.0.0.1:16969/v1/responses \
   }'
 ```
 
-[`POST /v1/models/{model}:generateContent`](https://ai.google.dev/api/generate-content):
+`POST /v1/models/{model}:generateContent`:
 
 ```bash
 curl http://127.0.0.1:16969/v1/models/nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b:generateContent \
@@ -547,38 +670,7 @@ Responses replies always stream. To stream Messages or Chat Completions replies,
 `"stream": true`. For Gemini, call `:streamGenerateContent?alt=sse` instead of
 `:generateContent`.
 
-<a id="web-tools"></a>
-
-## Web Tools
-
-ModelGlot can execute the Anthropic server-tool shapes used by Claude Code:
-
-- `web_search_20250305` for Claude Code's automatic web search;
-- `web_fetch_20250910` when the client explicitly forces a `web_fetch` tool.
-
-The feature is enabled by default and can be managed in **Admin UI → Model Config → Web
-Tools**. Automatic search currently supports Claude Code's server-tool-only request shape;
-mixed tools, automatic `web_fetch`, and other Anthropic server-tool choices are rejected
-with a clear error.
-
-<div align="center">
-  <img src="assets/admin-web-tools.png" alt="ModelGlot Admin UI showing the Web Tools configuration" width="900">
-  <p><em>Web Tools configuration in the Admin UI.</em></p>
-</div>
-
-`web_fetch` is protected by an SSRF egress policy. By default it allows only `http` and
-`https`, rejects loopback, private, link-local, `.local`, and `localhost` targets, pins DNS
-resolution during redirects, and bounds response size and redirect count. The policy can be
-configured with:
-
-| Variable | Default | Effect |
-| --- | --- | --- |
-| `ENABLE_WEB_SERVER_TOOLS` | `true` | Enables local web server tools. |
-| `WEB_FETCH_ALLOWED_SCHEMES` | `http,https` | Comma-separated URL schemes accepted by `web_fetch`. |
-| `WEB_FETCH_ALLOW_PRIVATE_NETWORKS` | `false` | Allows private and loopback targets. Use only in a trusted lab environment. |
-
-See [`docs/web-tools.md`](docs/web-tools.md) for supported request shapes, search controls,
-failure behavior, and the complete egress policy.
+</details>
 
 <a id="use-from-your-phone"></a>
 <a id="optional-integrations"></a>
@@ -587,6 +679,11 @@ failure behavior, and the complete egress policy.
 
 Run coding tasks from Discord or Telegram, and send voice notes. Configure them
 in **Admin UI → Messaging**, then click **Apply**.
+
+<div align="center">
+  <img src="assets/admin-messaging.png" alt="ModelGlot Admin UI showing the Messaging configuration" width="900">
+  <p><em>Messaging configuration in the Admin UI.</em></p>
+</div>
 
 <details>
 <summary><strong>Discord bot</strong></summary>
@@ -632,8 +729,6 @@ For local Whisper on CPU or CUDA, re-run the installer with the local voice opti
 
 macOS/Linux:
 
-Local Whisper on CPU or CUDA:
-
 ```bash
 curl -fsSL "https://raw.githubusercontent.com/amedeo82/ModelGlot/main/scripts/install.sh" | sh -s -- --ref main --voice-local
 ```
@@ -645,8 +740,6 @@ curl -fsSL "https://raw.githubusercontent.com/amedeo82/ModelGlot/main/scripts/in
 ```
 
 Windows PowerShell:
-
-Local Whisper on CPU or CUDA:
 
 ```powershell
 & ([scriptblock]::Create((irm "https://raw.githubusercontent.com/amedeo82/ModelGlot/main/scripts/install.ps1"))) -Ref main -VoiceLocal
@@ -662,68 +755,6 @@ After installing local support, restart `modelglot-server`. In **Admin UI → Me
 
 </details>
 
-## Model Display Names
-
-ModelGlot model discovery shows descriptive titles while keeping every advertised model ID and routing
-reference unchanged. Titles are resolved in this order:
-
-1. Curated ModelGlot titles, such as `Nemotron 3 Ultra 550B A55B` and `MiniMax-M3.1-Flash`.
-2. The shared models.dev catalog, refreshed in the background and cached for 24 hours.
-3. A deterministic title derived from the model ID.
-4. The original provider/model reference when no readable title can be derived.
-
-The provider name is included as secondary description text. The catalog is never required to
-serve a model list: an offline, cold, or stale cache degrades to curated, heuristic, or raw
-labels. The reduced cache is stored at `~/.modelglot/models-dev-catalog.json` and `modelglot-doctor` reports
-its source, age, and last refresh outcome. Cache schema v2 also retains bounded provider-scoped
-presentation facts; legacy caches remain readable. Validated models.dev provider/lab SVGs are
-cached under `~/.modelglot/models-dev-logos` during the same background refresh and served same-origin.
-Missing or offline logos fall back to initials and never block model selection.
-
-External catalog access can be disabled completely:
-
-```dotenv
-MODELGLOT_MODEL_CATALOG_SOURCE=none
-```
-
-`MODELGLOT_MODEL_CATALOG_URL` may point to an operator-controlled compatible catalog endpoint. See
-[`docs/model-display-names-analysis.md`](docs/model-display-names-analysis.md) for the design
-and [`docs/model-display-names-implementation-plan.md`](docs/model-display-names-implementation-plan.md)
-for the implementation contract.
-
-### Claude Code Terminal
-
-Claude Code Terminal and Claude Desktop use the same ModelGlot model catalog and descriptive-title
-resolver. The Terminal discovers them through `GET /v1/models` and uses `display_name` as the
-picker title and `description` as the secondary provider label.
-
-Launch the Terminal through `modelglot-claude` to configure the gateway URL, credential, and
-`CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1` automatically. For a manual Claude Code
-launch, configure the same contract explicitly:
-
-```bash
-export ANTHROPIC_BASE_URL="http://127.0.0.1:16969"
-export ANTHROPIC_AUTH_TOKEN="your-modelglot-proxy-token"
-export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY="1"
-```
-
-Claude Code owns the discovered-model cache at `~/.claude/cache/gateway-models.json` on
-Unix-like systems and `%USERPROFILE%\.claude\cache\gateway-models.json` on Windows. Set
-`CLAUDE_CONFIG_DIR` to use another location. Claude Code refreshes the cache at startup; a
-session that was already running when ModelGlot titles changed can continue to show the previous
-labels. Restart Claude Code to refresh it. If the cache is still stale and no other Claude
-Code session is using it, remove that cache file and start Claude Code again.
-
-Run `claude --debug` and inspect the `[gatewayDiscovery]` lines under `~/.claude/debug/` to
-confirm whether discovery ran. A user-defined `modelPicker` with
-`replaceBuiltInOptions: true` can hide gateway-discovered rows; ModelGlot does not generate or
-overwrite that setting.
-
-The Terminal discovery analysis and follow-up implementation plan are documented in
-[`docs/claude-terminal-model-display-names-analysis.md`](docs/claude-terminal-model-display-names-analysis.md)
-and
-[`docs/claude-terminal-model-display-names-implementation-plan.md`](docs/claude-terminal-model-display-names-implementation-plan.md).
-
 ## Manage Your Installation
 
 Run `modelglot-server --version` to check the installed version without starting ModelGlot.
@@ -732,9 +763,10 @@ Run `modelglot-server --version` to check the installed version without starting
 
 On Windows and macOS, select **Check for Updates** from the ModelGlot tray or
 menu-bar icon to check whether a newer stable release is available. When one is
-found, ModelGlot displays a system notification and asks whether to install it. If you
-confirm, ModelGlot closes, installs the detected release, and reopens automatically.
-Declining leaves the current installation running and lets you retry later.
+found, ModelGlot displays a system notification and asks whether to install it. If
+you confirm, ModelGlot closes, installs the detected release, and reopens
+automatically. Declining leaves the current installation running and lets you
+retry later.
 
 To check and install the latest stable release from a terminal instead, stop all
 running ModelGlot commands, then run:
@@ -806,6 +838,7 @@ modelglot-doctor
 - [Report bugs or request features](https://github.com/amedeo82/ModelGlot/issues)
 - [Releases](https://github.com/amedeo82/ModelGlot/releases)
 - [Contributing guide](CONTRIBUTING.md)
+- [Upstream project this is based on](https://github.com/Alishahryar1/free-claude-code)
 
 ## Maintainers
 
