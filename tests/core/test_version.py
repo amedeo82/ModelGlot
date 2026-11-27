@@ -2,7 +2,7 @@ from importlib.metadata import PackageNotFoundError
 
 import pytest
 
-import free_claude_code.core.version as version_module
+import modelglot.core.version as version_module
 
 
 def test_package_version_uses_installed_distribution_metadata(

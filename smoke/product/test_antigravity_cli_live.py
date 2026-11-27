@@ -19,10 +19,10 @@ from PIL import Image
 from starlette.middleware.base import RequestResponseEndpoint
 from starlette.requests import Request
 
-from free_claude_code.cli.process_registry import kill_pid_tree_best_effort
-from free_claude_code.config import env_migrations, paths
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.json_types import JsonObject, load_json_value
+from modelglot.cli.process_registry import kill_pid_tree_best_effort
+from modelglot.config import env_migrations, paths
+from modelglot.config.settings import Settings
+from modelglot.core.json_types import JsonObject, load_json_value
 from tests.api.support import create_test_app, provider_manager_for_app
 from tests.harnesses.antigravity_support import write_previous_connection
 from tests.providers.test_custom_provider import definition, event, provider

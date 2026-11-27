@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.harnesses.claude import build_claude_proxy_env
+from modelglot.harnesses.claude import build_claude_proxy_env
 from smoke.lib.child_process import (
     cmd_modelglot_server,
     run_captured_text,

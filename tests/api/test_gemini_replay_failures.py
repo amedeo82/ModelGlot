@@ -8,8 +8,8 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.json_types import JsonValue
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.json_types import JsonValue
 from tests.api.support import provider_manager_for_app
 from tests.api.test_four_protocol_matrix import ingress_request, matrix_app
 from tests.api.test_gemini_continuation_replay import native
@@ -58,7 +58,7 @@ def test_failed_signed_continuation_stops_and_releases_attempt(
             if failure == "retention":
                 # Native state fits, but the complete serialized replay does not.
                 monkeypatch.setattr(
-                    "free_claude_code.core.history_replay.RECOVERY_RETENTION_BYTES",
+                    "modelglot.core.history_replay.RECOVERY_RETENTION_BYTES",
                     500,
                 )
             events = [event]

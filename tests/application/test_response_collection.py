@@ -1,9 +1,9 @@
 import pytest
 
-from free_claude_code.application.response_collection import collect_response
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.stream_delivery import current_stream_delivery
-from free_claude_code.core.stream_output import StreamOutput
+from modelglot.application.response_collection import collect_response
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.stream_delivery import current_stream_delivery
+from modelglot.core.stream_output import StreamOutput
 
 
 @pytest.mark.asyncio

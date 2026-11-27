@@ -19,7 +19,7 @@ this backlog must satisfy.
 The analysis was performed read-only against the checkout, using:
 
 - static reading of `src/`, `tests/`, `e2e/`, `smoke/`, `scripts/`, `.github/workflows/`;
-- file and function size measurements over `src/free_claude_code`;
+- file and function size measurements over `src/modelglot`;
 - dependency-usage cross-checks between `pyproject.toml` and the actual imports;
 - inspection of the CI check inventory and of its local mirror (`scripts/ci.sh`, `scripts/ci.ps1`).
 
@@ -42,14 +42,14 @@ management.
 
 | Layer | Package | Responsibility | Rough size |
 | --- | --- | --- | --- |
-| HTTP surface | `src/free_claude_code/api/` | FastAPI app, auth, request validation, public SSE framing, Admin API | 30 modules |
-| Use cases | `src/free_claude_code/application/` | Model routing, primary→fallback→recovery loop, web tools, code sessions | 27 modules |
-| Providers | `src/free_claude_code/providers/` | Upstream clients, admission control, retry/cooldown, per-vendor transports | 137 modules |
-| Protocol core | `src/free_claude_code/core/` | Wire models, protocol translation, tool-call buffering, failure model | 99 modules |
-| Runtime | `src/free_claude_code/runtime/` | Composition root, resource ownership, SQLite persistence, web-tool egress | 31 modules |
-| Configuration | `src/free_claude_code/config/` | Validated settings, managed `.env`, provider catalog, Admin model | 29 modules |
-| Client integration | `src/free_claude_code/cli/`, `harnesses/` | Server supervisor, launchers, per-client config patching | 60 modules |
-| Messaging | `src/free_claude_code/messaging/` | Telegram/Discord front ends, transcript rendering, conversation trees | 55 modules |
+| HTTP surface | `src/modelglot/api/` | FastAPI app, auth, request validation, public SSE framing, Admin API | 30 modules |
+| Use cases | `src/modelglot/application/` | Model routing, primary→fallback→recovery loop, web tools, code sessions | 27 modules |
+| Providers | `src/modelglot/providers/` | Upstream clients, admission control, retry/cooldown, per-vendor transports | 137 modules |
+| Protocol core | `src/modelglot/core/` | Wire models, protocol translation, tool-call buffering, failure model | 99 modules |
+| Runtime | `src/modelglot/runtime/` | Composition root, resource ownership, SQLite persistence, web-tool egress | 31 modules |
+| Configuration | `src/modelglot/config/` | Validated settings, managed `.env`, provider catalog, Admin model | 29 modules |
+| Client integration | `src/modelglot/cli/`, `harnesses/` | Server supervisor, launchers, per-client config patching | 60 modules |
+| Messaging | `src/modelglot/messaging/` | Telegram/Discord front ends, transcript rendering, conversation trees | 55 modules |
 
 The composition root is single and explicit: `runtime/bootstrap.py:44` (`build_asgi_app`).
 

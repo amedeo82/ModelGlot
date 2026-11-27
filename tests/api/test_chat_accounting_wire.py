@@ -5,23 +5,23 @@ from copy import deepcopy
 
 import pytest
 
-from free_claude_code.api.response_streams import (
+from modelglot.api.response_streams import (
     ManagedStreamingResponse,
     gemini_sse_streaming_response,
 )
-from free_claude_code.application.response_collection import (
+from modelglot.application.response_collection import (
     WireProtocol,
     collect_response,
 )
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.async_iterators import AsyncCloseable
-from free_claude_code.core.chat_completions.request import ChatRequest
-from free_claude_code.core.chat_completions.response import ChatResponseAccumulator
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.gemini import GeminiRequest
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.providers.open_router.client import OpenRouterProvider
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.async_iterators import AsyncCloseable
+from modelglot.core.chat_completions.request import ChatRequest
+from modelglot.core.chat_completions.response import ChatResponseAccumulator
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.gemini import GeminiRequest
+from modelglot.core.json_types import JsonObject
+from modelglot.core.stream_output import StreamOutput
+from modelglot.providers.open_router.client import OpenRouterProvider
 from tests.api.test_native_tool_wire_contract import public_frames
 from tests.core.test_chat_accounting_trailers import accounting, terminal
 from tests.core.test_chat_tool_buffer import call, event

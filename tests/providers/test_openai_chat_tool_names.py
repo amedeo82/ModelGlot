@@ -1,11 +1,11 @@
 from copy import deepcopy
 from typing import Any
 
-from free_claude_code.core.anthropic import ReasoningReplayMode
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.providers.openai_chat.request_policy import (
+from modelglot.core.anthropic import ReasoningReplayMode
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.json_types import JsonObject
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.providers.openai_chat.request_policy import (
     OpenAIChatPostprocessor,
     OpenAIChatRequestPolicy,
     build_openai_chat_request_body,

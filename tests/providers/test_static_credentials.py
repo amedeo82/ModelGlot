@@ -10,16 +10,16 @@ import httpx
 import httpx2
 import pytest
 
-from free_claude_code.config.provider_catalog import GEMINI_DEFAULT_BASE
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.stream_delivery import (
+from modelglot.config.provider_catalog import GEMINI_DEFAULT_BASE
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.stream_delivery import (
     StreamDeliveryState,
     bind_stream_delivery,
 )
-from free_claude_code.providers.anthropic.provider import AnthropicProvider
-from free_claude_code.providers.custom import CustomProvider
-from free_claude_code.providers.gemini import GeminiProvider
+from modelglot.providers.anthropic.provider import AnthropicProvider
+from modelglot.providers.custom import CustomProvider
+from modelglot.providers.gemini import GeminiProvider
 from tests.providers import test_anthropic_provider, test_custom_provider
 from tests.providers.support import (
     MockResponse,

@@ -4,10 +4,10 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from free_claude_code.config.paths import codex_model_catalog_path
-from free_claude_code.config.settings import Settings
-from free_claude_code.harnesses import codex_integration
-from free_claude_code.runtime.application import ApplicationRuntime
+from modelglot.config.paths import codex_model_catalog_path
+from modelglot.config.settings import Settings
+from modelglot.harnesses import codex_integration
+from modelglot.runtime.application import ApplicationRuntime
 from tests.api.support import create_test_app, runtime_for_app
 
 ROOT = "/admin/api/integrations/codex"

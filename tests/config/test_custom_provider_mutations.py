@@ -5,16 +5,16 @@ from typing import Literal
 
 import pytest
 
-from free_claude_code.config.admin.custom_providers import CustomProviderMutation
-from free_claude_code.config.admin.persistence import prepare_admin_update
-from free_claude_code.config.admin.values import load_config_response
-from free_claude_code.config.custom_providers import CUSTOM_PROVIDERS_ENV
-from free_claude_code.config.loader import (
+from modelglot.config.admin.custom_providers import CustomProviderMutation
+from modelglot.config.admin.persistence import prepare_admin_update
+from modelglot.config.admin.values import load_config_response
+from modelglot.config.custom_providers import CUSTOM_PROVIDERS_ENV
+from modelglot.config.loader import (
     ManagedConfigSnapshot,
     compose_settings_snapshot,
 )
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.runtime.diagnostics import settings_report
+from modelglot.core.json_types import JsonObject
+from modelglot.runtime.diagnostics import settings_report
 from tests.config.credential_support import credential_edit
 from tests.wire_payload import object_payload
 

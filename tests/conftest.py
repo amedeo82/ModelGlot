@@ -10,13 +10,13 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 import pytest_asyncio
 
-from free_claude_code.config import paths
-from free_claude_code.config.loader import clear_settings_cache
-from free_claude_code.core.stream_delivery import (
+from modelglot.config import paths
+from modelglot.config.loader import clear_settings_cache
+from modelglot.core.stream_delivery import (
     StreamDeliveryState,
     bind_stream_delivery,
 )
-from free_claude_code.harnesses import (
+from modelglot.harnesses import (
     antigravity,
     claude_desktop_integration,
     claude_integration,
@@ -25,8 +25,8 @@ from free_claude_code.harnesses import (
     jetbrains_acp_integration,
     vscode_chat_integration,
 )
-from free_claude_code.messaging.models import IncomingMessage
-from free_claude_code.providers.base import ProviderConfig
+from modelglot.messaging.models import IncomingMessage
+from modelglot.providers.base import ProviderConfig
 from tests.fixture_types import (
     DatabaseFactory,
     IncomingMessageFactory,
@@ -136,7 +136,7 @@ def provider_config():
 
 @pytest.fixture
 def nim_provider(provider_config: ProviderConfig):
-    from free_claude_code.providers.nvidia_nim import NvidiaNimProvider
+    from modelglot.providers.nvidia_nim import NvidiaNimProvider
 
     return NvidiaNimProvider(
         provider_config,
@@ -146,14 +146,14 @@ def nim_provider(provider_config: ProviderConfig):
 
 @pytest.fixture
 def open_router_provider(provider_config: ProviderConfig):
-    from free_claude_code.providers.open_router import OpenRouterProvider
+    from modelglot.providers.open_router import OpenRouterProvider
 
     return OpenRouterProvider(provider_config, admission=immediate_admission())
 
 
 @pytest.fixture
 def lmstudio_provider(provider_config: ProviderConfig):
-    from free_claude_code.providers.lmstudio import LMStudioProvider
+    from modelglot.providers.lmstudio import LMStudioProvider
 
     lmstudio_config = make_provider_config(
         api_key="lm-studio",
@@ -170,7 +170,7 @@ def lmstudio_provider(provider_config: ProviderConfig):
 
 @pytest.fixture
 def llamacpp_provider(provider_config: object):
-    from free_claude_code.providers.openai_chat import create_openai_chat_provider
+    from modelglot.providers.openai_chat import create_openai_chat_provider
 
     llamacpp_config = make_provider_config(
         api_key="llamacpp",
@@ -191,7 +191,7 @@ def llamacpp_provider(provider_config: object):
 
 @pytest.fixture
 def mock_cli_session():
-    from free_claude_code.messaging.managed_protocols import (
+    from modelglot.messaging.managed_protocols import (
         ManagedClaudeSessionProtocol,
     )
 
@@ -203,7 +203,7 @@ def mock_cli_session():
 
 @pytest.fixture
 def mock_cli_manager():
-    from free_claude_code.messaging.managed_protocols import (
+    from modelglot.messaging.managed_protocols import (
         ManagedClaudeSessionManagerProtocol,
     )
 
@@ -218,7 +218,7 @@ def mock_cli_manager():
 
 @pytest.fixture
 def mock_platform():
-    from free_claude_code.messaging.platforms.ports import OutboundMessenger
+    from modelglot.messaging.platforms.ports import OutboundMessenger
 
     platform = MagicMock(spec=OutboundMessenger)
     platform.send_message = AsyncMock(return_value="msg_123")
@@ -243,7 +243,7 @@ def mock_platform():
 
 @pytest.fixture
 def mock_session_store():
-    from free_claude_code.messaging.trees import ConversationSnapshot, MessagingStore
+    from modelglot.messaging.trees import ConversationSnapshot, MessagingStore
 
     store = AsyncMock(spec=MessagingStore)
     tracked_message_ids: list[str] = []
@@ -299,9 +299,9 @@ async def messaging_store_factory(
     tmp_path: Path,
 ) -> AsyncIterator[MessagingStoreFactory]:
     """Real SQLite stores with fixture-owned lifetime and optional old JSON input."""
-    from free_claude_code.runtime.messaging_import import import_legacy
-    from free_claude_code.runtime.messaging_sqlite import SQLiteMessagingStore
-    from free_claude_code.runtime.sqlite_database import SQLiteDatabase
+    from modelglot.runtime.messaging_import import import_legacy
+    from modelglot.runtime.messaging_sqlite import SQLiteMessagingStore
+    from modelglot.runtime.sqlite_database import SQLiteDatabase
 
     databases: dict[Path, SQLiteDatabase] = {}
 
@@ -338,7 +338,7 @@ async def messaging_store_factory(
 @pytest_asyncio.fixture
 async def database_factory() -> AsyncIterator[DatabaseFactory]:
     """Own database resources for tests that compose individual services."""
-    from free_claude_code.runtime.sqlite_database import SQLiteDatabase
+    from modelglot.runtime.sqlite_database import SQLiteDatabase
 
     databases = []
 

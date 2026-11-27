@@ -7,9 +7,9 @@ import httpx
 import pytest
 from pydantic import SecretStr
 
-from free_claude_code.config.admin.credentials import CredentialSubmission
-from free_claude_code.config.settings import Settings
-from free_claude_code.providers import credential_validation as validation
+from modelglot.config.admin.credentials import CredentialSubmission
+from modelglot.config.settings import Settings
+from modelglot.providers import credential_validation as validation
 
 
 def mock_http(

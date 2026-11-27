@@ -9,23 +9,23 @@ import httpx
 import pytest
 import pytest_asyncio
 
-from free_claude_code.api.app import create_app
-from free_claude_code.api.ports import ApiServices
-from free_claude_code.application.code_sessions.models import CodeValidationError
-from free_claude_code.application.errors import ApplicationUnavailableError
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.application.ports import ModelCatalogPort
-from free_claude_code.application.readiness import InitializationWait
-from free_claude_code.config.loader import ManagedConfigStore
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.gateway_model_ids import no_thinking_gateway_model_id
-from free_claude_code.providers.base import BaseProvider
-from free_claude_code.providers.runtime.runtime import ProviderRuntime
-from free_claude_code.runtime.application import ApplicationRuntime
-from free_claude_code.runtime.codex_app_server import CodexHarnessFactory
-from free_claude_code.runtime.codex_catalog import CodexModelCatalogPublisher
-from free_claude_code.runtime.configuration import ConfigurationService
-from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
+from modelglot.api.app import create_app
+from modelglot.api.ports import ApiServices
+from modelglot.application.code_sessions.models import CodeValidationError
+from modelglot.application.errors import ApplicationUnavailableError
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.application.ports import ModelCatalogPort
+from modelglot.application.readiness import InitializationWait
+from modelglot.config.loader import ManagedConfigStore
+from modelglot.config.settings import Settings
+from modelglot.core.gateway_model_ids import no_thinking_gateway_model_id
+from modelglot.providers.base import BaseProvider
+from modelglot.providers.runtime.runtime import ProviderRuntime
+from modelglot.runtime.application import ApplicationRuntime
+from modelglot.runtime.codex_app_server import CodexHarnessFactory
+from modelglot.runtime.codex_catalog import CodexModelCatalogPublisher
+from modelglot.runtime.configuration import ConfigurationService
+from modelglot.runtime.provider_manager import ProviderRuntimeManager
 from tests.runtime.catalog_support import finish_discovery, finish_publication
 from tests.web_tools_support import StubWebToolsClient
 from tests.wire_payload import array_payload, object_payload, response_object
@@ -432,7 +432,7 @@ async def test_file_waiter_exit_preserves_owned_publication(
             with pytest.raises(asyncio.CancelledError):
                 await waiting
         else:
-            from free_claude_code.application.errors import ApplicationUnavailableError
+            from modelglot.application.errors import ApplicationUnavailableError
 
             with pytest.raises(ApplicationUnavailableError, match="still starting"):
                 await waiting

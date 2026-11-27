@@ -9,14 +9,14 @@ from types import SimpleNamespace
 
 import pytest
 
-from free_claude_code.config import paths
-from free_claude_code.config.env_migrations import (
+from modelglot.config import paths
+from modelglot.config.env_migrations import (
     CONFIG_SCHEMA_VERSION,
     atomic_write_managed_config,
 )
-from free_claude_code.config.loader import ManagedConfigStore, get_settings
-from free_claude_code.core.interprocess_lock import InterprocessFileLock
-from free_claude_code.core.json_types import load_json_value
+from modelglot.config.loader import ManagedConfigStore, get_settings
+from modelglot.core.interprocess_lock import InterprocessFileLock
+from modelglot.core.json_types import load_json_value
 from smoke.lib.child_process import cmd_modelglot_server
 from smoke.lib.config import SmokeConfig
 from smoke.lib.server import RunningServer, start_server
@@ -59,11 +59,11 @@ def probe_command():
     probe = textwrap.dedent("""
         import json, os
         from http.server import BaseHTTPRequestHandler, HTTPServer
-        from free_claude_code.cli import entrypoints
-        from free_claude_code.config import paths
-        from free_claude_code.config.api_keys import api_key_values
-        from free_claude_code.config.loader import get_settings
-        from free_claude_code.core.interprocess_lock import InterprocessFileLock
+        from modelglot.cli import entrypoints
+        from modelglot.config import paths
+        from modelglot.config.api_keys import api_key_values
+        from modelglot.config.loader import get_settings
+        from modelglot.core.interprocess_lock import InterprocessFileLock
 
         def serve():
             settings = get_settings()

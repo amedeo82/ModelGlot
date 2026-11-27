@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from free_claude_code.providers.stream_failure_resolution import (
+from modelglot.providers.stream_failure_resolution import (
     NextStep,
     Stage,
     can_restart,

@@ -1,6 +1,6 @@
 """Build masked credential edits for existing configuration test fixtures."""
 
-from free_claude_code.core.json_types import JsonObject, JsonValue
+from modelglot.core.json_types import JsonObject, JsonValue
 from tests.wire_payload import object_array, object_payload
 
 

@@ -9,10 +9,10 @@ from typing import Any, override
 import httpx2
 import pytest
 
-from free_claude_code.application.response_collection import WireProtocol
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.delivered_response import DeliveredResponse
-from free_claude_code.core.json_types import JsonObject
+from modelglot.application.response_collection import WireProtocol
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.delivered_response import DeliveredResponse
+from modelglot.core.json_types import JsonObject
 from tests.api.test_delivered_stream_recovery import (
     assert_completed,
     public_text,
@@ -147,7 +147,7 @@ async def test_continuation_preserves_refusal_and_completed_metadata(
 ) -> None:
     if limited:
         monkeypatch.setattr(
-            "free_claude_code.core.delivered_response.RECOVERY_RETENTION_BYTES", 600
+            "modelglot.core.delivered_response.RECOVERY_RETENTION_BYTES", 600
         )
     async with _harness(
         "responses",
@@ -256,7 +256,7 @@ async def test_handoff_snapshot_matches_published_closures(
             events = original(self)
             if self.snapshot().has_calls:
                 monkeypatch.setattr(
-                    "free_claude_code.core.delivered_response.RECOVERY_RETENTION_BYTES",
+                    "modelglot.core.delivered_response.RECOVERY_RETENTION_BYTES",
                     self._bytes + 1,
                 )
             return events

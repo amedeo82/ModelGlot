@@ -7,9 +7,9 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from free_claude_code.api import admin_routes
-from free_claude_code.config.admin.state import ConfigValueState
-from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
+from modelglot.api import admin_routes
+from modelglot.config.admin.state import ConfigValueState
+from modelglot.config.provider_catalog import PROVIDER_CATALOG
 from tests.api.support import create_test_app, runtime_for_app
 from tests.wire_payload import response_object
 

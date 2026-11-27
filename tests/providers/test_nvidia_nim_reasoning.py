@@ -4,10 +4,10 @@ from typing import Literal
 
 import pytest
 
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.reasoning import ReasoningEffort, ReasoningPolicy
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.json_types import JsonObject
+from modelglot.core.reasoning import ReasoningEffort, ReasoningPolicy
 from tests.providers.test_history_transports import _harness, _saved_reply
 from tests.providers.test_nvidia_nim import _alias_provider, _alias_request
 

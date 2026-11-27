@@ -1,6 +1,6 @@
 from unittest.mock import Mock
 
-from free_claude_code.providers.continuation import SourceRecoveryState
+from modelglot.providers.continuation import SourceRecoveryState
 
 
 def test_source_usage_merges_anthropic_snapshots_and_strips_unknown_fields():

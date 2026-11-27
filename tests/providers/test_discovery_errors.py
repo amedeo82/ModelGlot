@@ -11,15 +11,15 @@ import httpx2
 import openai
 import pytest
 
-from free_claude_code.application.errors import ApplicationUnavailableError
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.providers.admission import (
+from modelglot.application.errors import ApplicationUnavailableError
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.providers.admission import (
     ProviderAdmissionController,
     ProviderOperationKind,
 )
-from free_claude_code.providers.model_listing import ModelListResponseError
-from free_claude_code.providers.recovery_errors import ProviderRecoveryExhausted
-from free_claude_code.providers.runtime.discovery import _provider_query_failure_reason
+from modelglot.providers.model_listing import ModelListResponseError
+from modelglot.providers.recovery_errors import ProviderRecoveryExhausted
+from modelglot.providers.runtime.discovery import _provider_query_failure_reason
 
 
 @pytest.mark.parametrize(

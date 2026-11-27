@@ -2,7 +2,7 @@ from typing import cast
 
 import pytest
 
-from free_claude_code.application.model_titles import (
+from modelglot.application.model_titles import (
     CatalogTitleMap,
     disambiguate_duplicate_titles,
     heuristic_model_title,

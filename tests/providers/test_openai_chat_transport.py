@@ -9,13 +9,13 @@ import httpx2
 import pytest
 from openai import AsyncOpenAI
 
-from free_claude_code.core.anthropic import ReasoningReplayMode
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.json_types import JsonObject, load_json_value
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.providers.admission import ProviderAdmissionController
-from free_claude_code.providers.openai_chat import (
+from modelglot.core.anthropic import ReasoningReplayMode
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.json_types import JsonObject, load_json_value
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.providers.admission import ProviderAdmissionController
+from modelglot.providers.openai_chat import (
     NO_REASONING,
     OpenAIChatBehavior,
     OpenAIChatProfile,

@@ -8,10 +8,10 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from free_claude_code.config.model_refs import ModelFallback
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.providers.base import BaseProvider
+from modelglot.config.model_refs import ModelFallback
+from modelglot.config.settings import Settings
+from modelglot.core.json_types import JsonObject
+from modelglot.providers.base import BaseProvider
 from tests.api.support import create_test_app
 from tests.providers.support import without_empty_reasoning
 from tests.providers.test_anthropic_fallback_reasoning import model_metadata
@@ -106,15 +106,15 @@ def test_native_ingress_preserves_extensions_and_bypasses_local_processing() -> 
     body["model"] = "claude-sonnet-client-alias"
     with (
         patch(
-            "free_claude_code.runtime.provider_manager.ProviderGenerationLease.wait_for_token_estimation",
+            "modelglot.runtime.provider_manager.ProviderGenerationLease.wait_for_token_estimation",
             side_effect=AssertionError("native token wait"),
         ),
         patch(
-            "free_claude_code.api.routes.get_token_count",
+            "modelglot.api.routes.get_token_count",
             side_effect=AssertionError("native counting"),
         ),
         patch(
-            "free_claude_code.application.web_tools.service.WebToolService.try_stream_messages",
+            "modelglot.application.web_tools.service.WebToolService.try_stream_messages",
             side_effect=AssertionError("local tools"),
         ),
         TestClient(app) as client,
@@ -213,7 +213,7 @@ def test_compatibility_ingress_still_rejects_unknown_blocks() -> None:
 
 
 def test_leading_pings_allow_exhausted_primary_to_reach_native_fallback() -> None:
-    from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
+    from modelglot.core.anthropic.stream_contracts import parse_sse_text
     from tests.providers.test_anthropic_messages_transport import Wire, _events, _sse
 
     calls = []
@@ -256,7 +256,7 @@ def test_leading_pings_allow_exhausted_primary_to_reach_native_fallback() -> Non
 
 
 def test_stream_failure_after_metadata_exhausts_then_uses_fallback() -> None:
-    from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
+    from modelglot.core.anthropic.stream_contracts import parse_sse_text
     from tests.providers.test_anthropic_messages_transport import _events, _sse
 
     requests = []
@@ -304,8 +304,8 @@ def test_stream_failure_after_metadata_exhausts_then_uses_fallback() -> None:
 def test_native_model_catalog_does_not_advertise_ignored_thinking_variant(
     view: str, thinking: bool | None
 ) -> None:
-    from free_claude_code.application.model_metadata import ProviderModelInfo
-    from free_claude_code.core.gateway_model_ids import decode_gateway_model_id
+    from modelglot.application.model_metadata import ProviderModelInfo
+    from modelglot.core.gateway_model_ids import decode_gateway_model_id
     from tests.api.support import provider_manager_for_app
 
     app = create_test_app(Settings(MODEL="anthropic/selected", ANTHROPIC_API_KEY="key"))

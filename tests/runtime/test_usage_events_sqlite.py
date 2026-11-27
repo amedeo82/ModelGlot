@@ -4,15 +4,15 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.application.usage_events import (
+from modelglot.application.usage_events import (
     CanonicalUsage,
     RequestUsageRecord,
     UsageFilters,
     UsageObservation,
     UsageProtocol,
 )
-from free_claude_code.runtime.sqlite_database import query_rows, required_column
-from free_claude_code.runtime.usage_events_sqlite import (
+from modelglot.runtime.sqlite_database import query_rows, required_column
+from modelglot.runtime.usage_events_sqlite import (
     SQLiteUsageEventStore,
     UsageConflictError,
 )

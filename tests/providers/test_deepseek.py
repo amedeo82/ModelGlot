@@ -10,22 +10,22 @@ import httpx2
 import pytest
 from openai import BadRequestError
 
-from free_claude_code.application.errors import InvalidRequestError
-from free_claude_code.config.constants import ANTHROPIC_DEFAULT_MAX_OUTPUT_TOKENS
-from free_claude_code.config.provider_catalog import DEEPSEEK_DEFAULT_BASE
-from free_claude_code.core.anthropic.models import (
+from modelglot.application.errors import InvalidRequestError
+from modelglot.config.constants import ANTHROPIC_DEFAULT_MAX_OUTPUT_TOKENS
+from modelglot.config.provider_catalog import DEEPSEEK_DEFAULT_BASE
+from modelglot.core.anthropic.models import (
     ContentBlockDocument,
     ContentBlockImage,
     Message,
     MessagesRequest,
     Tool,
 )
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.openai_chat import is_synthetic_chat_tool_turn_boundary
-from free_claude_code.core.openai_responses.models import OpenAIResponsesRequest
-from free_claude_code.providers.base import ProviderConfig
-from free_claude_code.providers.deepseek import DeepSeekProvider
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.openai_chat import is_synthetic_chat_tool_turn_boundary
+from modelglot.core.openai_responses.models import OpenAIResponsesRequest
+from modelglot.providers.base import ProviderConfig
+from modelglot.providers.deepseek import DeepSeekProvider
 from tests.providers.support import (
     REASONING_OFF,
     REASONING_ON,
@@ -62,9 +62,7 @@ def test_default_base_url_alias() -> None:
 
 
 def test_init(deepseek_config: ProviderConfig) -> None:
-    with patch(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI"
-    ) as mock_client:
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI") as mock_client:
         provider = DeepSeekProvider(deepseek_config, admission=immediate_admission())
     assert provider._api_key == "test_deepseek_key"
     assert provider._base_url == "https://api.deepseek.com"

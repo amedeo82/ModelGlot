@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.application.token_optimization import (
+from modelglot.application.token_optimization import (
     OptimizationReportError,
     OptimizationState,
     parse_headroom_report,
@@ -17,7 +17,7 @@ from free_claude_code.application.token_optimization import (
     unavailable_rtk,
     utc_timestamp,
 )
-from free_claude_code.core.json_types import (
+from modelglot.core.json_types import (
     JsonObject,
     JsonValue,
     json_array,

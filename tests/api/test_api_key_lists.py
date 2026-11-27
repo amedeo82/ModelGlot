@@ -9,10 +9,10 @@ import pytest
 from fastapi.applications import FastAPI
 from fastapi.testclient import TestClient
 
-from free_claude_code.config.admin.credentials import CredentialSubmission
-from free_claude_code.config.loader import ManagedConfigStore
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.providers.credential_validation import (
+from modelglot.config.admin.credentials import CredentialSubmission
+from modelglot.config.loader import ManagedConfigStore
+from modelglot.core.json_types import JsonObject
+from modelglot.providers.credential_validation import (
     CredentialCheck,
     CredentialStatus,
 )
@@ -57,9 +57,7 @@ def test_rejected_inactive_key_prevents_all_writes_and_checks_keep_row_identity(
             CredentialCheck("GROQ_API_KEY", CredentialStatus.REJECTED, "Rejected", 1),
         )
     )
-    monkeypatch.setattr(
-        "free_claude_code.runtime.application.check_credentials", checks
-    )
+    monkeypatch.setattr("modelglot.runtime.application.check_credentials", checks)
     payload = {
         "values": {
             "GROQ_API_KEY": edit(
@@ -96,9 +94,7 @@ def test_stale_revision_returns_conflict_without_checking_or_writing(
     app = create_test_app()
     client = client_for(app)
     checks = AsyncMock(return_value=())
-    monkeypatch.setattr(
-        "free_claude_code.runtime.application.check_credentials", checks
-    )
+    monkeypatch.setattr("modelglot.runtime.application.check_credentials", checks)
     stale = edit(client, "OPENAI_API_KEY", [{"value": "old-draft-private"}])
     current = edit(client, "OPENAI_API_KEY", [{"value": "saved-private"}])
     assert client.post(
@@ -128,9 +124,7 @@ async def test_intervening_managed_write_during_probe_cannot_publish_or_overwrit
         await release.wait()
         return ()
 
-    monkeypatch.setattr(
-        "free_claude_code.runtime.application.check_credentials", held_checks
-    )
+    monkeypatch.setattr("modelglot.runtime.application.check_credentials", held_checks)
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app), base_url="http://127.0.0.1"
     ) as client:

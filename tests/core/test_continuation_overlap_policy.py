@@ -5,10 +5,10 @@ from typing import Literal
 
 import pytest
 
-from free_claude_code.core.continuation_overlap import ContinuationOverlap
-from free_claude_code.core.delivered_response import DeliveredResponse
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.continuation_overlap import ContinuationOverlap
+from modelglot.core.delivered_response import DeliveredResponse
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.json_types import JsonObject
 from tests.api.test_continuation_overlap import responses_parts
 from tests.wire_payload import (
     array_payload,
@@ -246,7 +246,7 @@ def test_unresolved_frames_are_bounded_and_discarded_on_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "free_claude_code.core.continuation_overlap.RECOVERY_RETENTION_BYTES", 1000
+        "modelglot.core.continuation_overlap.RECOVERY_RETENTION_BYTES", 1000
     )
     overlap = ContinuationOverlap("Hello ")
     source = responses_parts(["He"], representation="text_done")
@@ -263,7 +263,7 @@ def test_large_immediately_resolvable_snapshot_does_not_fill_the_pending_buffer(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "free_claude_code.core.continuation_overlap.RECOVERY_RETENTION_BYTES", 300
+        "modelglot.core.continuation_overlap.RECOVERY_RETENTION_BYTES", 300
     )
     overlap = ContinuationOverlap("Hello ")
     source = responses_parts(["Hello " + "x" * 10000], representation="terminal")
@@ -284,7 +284,7 @@ def test_resolved_overlap_does_not_retain_unaffected_later_items(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "free_claude_code.core.continuation_overlap.RECOVERY_RETENTION_BYTES", 400
+        "modelglot.core.continuation_overlap.RECOVERY_RETENTION_BYTES", 400
     )
     overlap = ContinuationOverlap("Hello ")
     source = responses_parts(["Hello world."], representation="text_done")

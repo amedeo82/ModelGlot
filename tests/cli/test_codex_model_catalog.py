@@ -6,12 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.cli.launchers.catalog_http import catalog_models_from_response
-from free_claude_code.harnesses.codex import codex_config_args
-from free_claude_code.harnesses.codex_model_catalog import (
+from modelglot.cli.launchers.catalog_http import catalog_models_from_response
+from modelglot.harnesses.codex import codex_config_args
+from modelglot.harnesses.codex_model_catalog import (
     build_codex_model_catalog,
 )
-from free_claude_code.runtime.codex_catalog import write_codex_model_catalog
+from modelglot.runtime.codex_catalog import write_codex_model_catalog
 from tests.harnesses.test_codex_model_catalog import _models_payload
 
 

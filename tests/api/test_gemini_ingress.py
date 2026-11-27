@@ -7,15 +7,15 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 from fastapi.testclient import TestClient
 
-from free_claude_code.api.generation_paths import generation_api
-from free_claude_code.cli.uvicorn_server import (
+from modelglot.api.generation_paths import generation_api
+from modelglot.cli.uvicorn_server import (
     QueryCredentialFilter,
     uvicorn_log_config,
 )
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.gemini.models import GeminiRequest
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.stream_output import StreamOutput
+from modelglot.config.settings import Settings
+from modelglot.core.gemini.models import GeminiRequest
+from modelglot.core.json_types import JsonObject
+from modelglot.core.stream_output import StreamOutput
 from tests.api.support import create_test_app, provider_manager_for_app
 from tests.wire_payload import object_array, object_payload, response_object
 

@@ -7,8 +7,8 @@ from pathlib import Path
 import httpx
 import pytest
 
-from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
-from free_claude_code.config.settings import Settings
+from modelglot.config.provider_catalog import PROVIDER_CATALOG
+from modelglot.config.settings import Settings
 from smoke.lib.config import SmokeConfig, redacted
 from smoke.product import test_codex_modes_product_live as codex_smoke
 

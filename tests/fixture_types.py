@@ -7,14 +7,14 @@ from typing import Protocol, TypedDict, Unpack
 
 from typing_extensions import TypedDict as ClosedTypedDict
 
-from free_claude_code.application.code_sessions.models import (
+from modelglot.application.code_sessions.models import (
     CodeItem,
     CodePrompt,
     CodeRun,
 )
-from free_claude_code.messaging.models import IncomingMessage
-from free_claude_code.runtime.messaging_sqlite import SQLiteMessagingStore
-from free_claude_code.runtime.sqlite_database import SQLiteDatabase
+from modelglot.messaging.models import IncomingMessage
+from modelglot.runtime.messaging_sqlite import SQLiteMessagingStore
+from modelglot.runtime.sqlite_database import SQLiteDatabase
 
 
 class IncomingMessageOverrides(TypedDict, total=False):

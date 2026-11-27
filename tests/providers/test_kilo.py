@@ -8,23 +8,23 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from openai.types.chat import ChatCompletionChunk
 
-from free_claude_code.application.errors import InvalidRequestError
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.application.response_collection import collect_response
-from free_claude_code.config.provider_catalog import KILO_DEFAULT_BASE
-from free_claude_code.core.anthropic.models import Message, MessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import (
+from modelglot.application.errors import InvalidRequestError
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.application.response_collection import collect_response
+from modelglot.config.provider_catalog import KILO_DEFAULT_BASE
+from modelglot.core.anthropic.models import Message, MessagesRequest
+from modelglot.core.anthropic.stream_contracts import (
     parse_sse_text,
     text_content,
     thinking_content,
 )
-from free_claude_code.core.json_types import JsonValue
-from free_claude_code.core.model_capabilities import ModelInputModality
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.providers.base import ProviderConfig
-from free_claude_code.providers.kilo import KiloProvider
-from free_claude_code.providers.model_listing import ModelListResponseError
-from free_claude_code.providers.openai_chat import OpenAIChatProvider
+from modelglot.core.json_types import JsonValue
+from modelglot.core.model_capabilities import ModelInputModality
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.providers.base import ProviderConfig
+from modelglot.providers.kilo import KiloProvider
+from modelglot.providers.model_listing import ModelListResponseError
+from modelglot.providers.openai_chat import OpenAIChatProvider
 from tests.providers.support import (
     SDKStreamDouble,
     immediate_admission,
@@ -300,7 +300,7 @@ async def test_stream_uses_reasoning_field_without_duplicating_plain_details(
     events = parse_sse_text(event_text)
     assert thinking_content(events) == "plan "
     assert text_content(events) == "done"
-    from free_claude_code.core.history_replay import decode_replay, is_replay
+    from modelglot.core.history_replay import decode_replay, is_replay
 
     records = []
     for event in events:

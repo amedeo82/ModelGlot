@@ -8,7 +8,7 @@ from typing import override
 
 import pytest
 
-from free_claude_code.cli.launchers.common import ensure_proxy_available
+from modelglot.cli.launchers.common import ensure_proxy_available
 
 
 @contextmanager

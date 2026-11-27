@@ -5,7 +5,7 @@ from playwright.sync_api import Page, Route, expect
 
 from e2e.provider_support import api_key_input, close_provider, open_provider
 from e2e.test_code_sessions import create_session
-from free_claude_code.core.json_types import JsonValue
+from modelglot.core.json_types import JsonValue
 from tests.wire_payload import (
     array_payload,
     int_payload,

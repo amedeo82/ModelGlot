@@ -4,12 +4,12 @@ from collections.abc import Callable, Coroutine
 import httpx
 import pytest
 
-from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
-from free_claude_code.core.anthropic.passthrough import NativeMessagesRequest
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.json_types import JsonObject, load_json_value
-from free_claude_code.core.stream_delivery import current_stream_delivery
-from free_claude_code.providers.anthropic import AnthropicProvider
+from modelglot.config.provider_catalog import PROVIDER_CATALOG
+from modelglot.core.anthropic.passthrough import NativeMessagesRequest
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.json_types import JsonObject, load_json_value
+from modelglot.core.stream_delivery import current_stream_delivery
+from modelglot.providers.anthropic import AnthropicProvider
 from tests.providers.support import (
     immediate_admission,
     make_provider_config,

@@ -9,14 +9,14 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from free_claude_code.application.response_collection import WireProtocol
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.anthropic.passthrough import NativeMessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import SSEEvent, parse_sse_text
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.providers.deepseek import DeepSeekProvider
-from free_claude_code.providers.recovery_errors import RetryableProviderProtocolError
-from free_claude_code.providers.request_correction import RequestCorrector
+from modelglot.application.response_collection import WireProtocol
+from modelglot.config.settings import Settings
+from modelglot.core.anthropic.passthrough import NativeMessagesRequest
+from modelglot.core.anthropic.stream_contracts import SSEEvent, parse_sse_text
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.providers.deepseek import DeepSeekProvider
+from modelglot.providers.recovery_errors import RetryableProviderProtocolError
+from modelglot.providers.request_correction import RequestCorrector
 from tests.api.support import create_test_app, provider_manager_for_app
 from tests.api.test_hidden_stream_retries import delivered, partial_tool
 from tests.api.test_tool_call_buffer import _response
@@ -563,7 +563,7 @@ async def test_retention_limit_does_not_truncate_healthy_output(
     monkeypatch: pytest.MonkeyPatch, wire: WireProtocol, complete: bool
 ) -> None:
     monkeypatch.setattr(
-        "free_claude_code.core.delivered_response.RECOVERY_RETENTION_BYTES", 100
+        "modelglot.core.delivered_response.RECOVERY_RETENTION_BYTES", 100
     )
     async with _harness(
         "chat", lambda _: (200, text_events("chat", "x" * 1000, complete=complete))
@@ -871,7 +871,7 @@ async def test_retention_limit_during_continuation_keeps_final_output_consistent
     monkeypatch: pytest.MonkeyPatch, wire: WireProtocol, echo: bool
 ) -> None:
     monkeypatch.setattr(
-        "free_claude_code.core.delivered_response.RECOVERY_RETENTION_BYTES", 1200
+        "modelglot.core.delivered_response.RECOVERY_RETENTION_BYTES", 1200
     )
     async with _harness(
         "responses",

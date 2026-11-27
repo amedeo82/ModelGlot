@@ -12,31 +12,31 @@ import pytest
 from openai import AsyncOpenAI
 from starlette.responses import JSONResponse
 
-from free_claude_code.api.response_streams import (
+from modelglot.api.response_streams import (
     ManagedStreamingResponse,
     anthropic_sse_streaming_response,
     gemini_sse_streaming_response,
 )
-from free_claude_code.core.anthropic import ReasoningReplayMode
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.providers.admission import (
+from modelglot.core.anthropic import ReasoningReplayMode
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.providers.admission import (
     ProviderAdmissionController,
     ProviderOperationKind,
 )
-from free_claude_code.providers.anthropic_messages.transport import (
+from modelglot.providers.anthropic_messages.transport import (
     AnthropicMessagesTransport,
 )
-from free_claude_code.providers.gemini.transport import GeminiTransport
-from free_claude_code.providers.history_negotiation import HistoryModeCache
-from free_claude_code.providers.openai_chat import (
+from modelglot.providers.gemini.transport import GeminiTransport
+from modelglot.providers.history_negotiation import HistoryModeCache
+from modelglot.providers.openai_chat import (
     NO_REASONING,
     OpenAIChatBehavior,
     OpenAIChatProfile,
     OpenAIChatRequestPolicy,
     OpenAIChatTransport,
 )
-from free_claude_code.providers.openai_responses import OpenAIResponsesTransport
+from modelglot.providers.openai_responses import OpenAIResponsesTransport
 from tests.providers.request_factory import make_messages_request
 from tests.providers.test_anthropic_messages_transport import Endpoint, _events, _sse
 from tests.providers.test_openai_responses_transport import (

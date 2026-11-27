@@ -6,12 +6,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from free_claude_code.application.errors import ApplicationUnavailableError
-from free_claude_code.config.loader import ManagedConfigSnapshot, ManagedConfigStore
-from free_claude_code.harnesses import claude_integration
-from free_claude_code.runtime.application import ApplicationRuntime
-from free_claude_code.runtime.configuration import ConfigurationService
-from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
+from modelglot.application.errors import ApplicationUnavailableError
+from modelglot.config.loader import ManagedConfigSnapshot, ManagedConfigStore
+from modelglot.harnesses import claude_integration
+from modelglot.runtime.application import ApplicationRuntime
+from modelglot.runtime.configuration import ConfigurationService
+from modelglot.runtime.provider_manager import ProviderRuntimeManager
 from tests.runtime.test_application_runtime import TrackingFactory, _prepared, _settings
 
 
@@ -46,7 +46,7 @@ async def test_integration_write_finishes_before_configuration_publication(
 
     monkeypatch.setattr(claude_integration, "configure", held)
     monkeypatch.setattr(
-        "free_claude_code.runtime.application.check_credentials",
+        "modelglot.runtime.application.check_credentials",
         AsyncMock(return_value=()),
     )
     writer = asyncio.create_task(runtime.integrations.connect_claude_vscode())
@@ -94,7 +94,7 @@ async def test_credential_validation_does_not_block_integrations(
         await release.wait()
         return ()
 
-    monkeypatch.setattr("free_claude_code.runtime.application.check_credentials", check)
+    monkeypatch.setattr("modelglot.runtime.application.check_credentials", check)
     apply = asyncio.create_task(runtime.apply_admin_config({}))
     try:
         await asyncio.wait_for(entered.wait(), 1)
@@ -139,7 +139,7 @@ async def test_awaitable_restart_callback_is_not_executed_under_apply_lock(
         restart_callback=callback,
     )
     with patch(
-        "free_claude_code.runtime.application.check_credentials",
+        "modelglot.runtime.application.check_credentials",
         AsyncMock(return_value=()),
     ):
         apply = asyncio.create_task(
@@ -192,7 +192,7 @@ async def test_cancelled_commit_settles_before_shutdown(
         manager, configuration=configuration, transcriber=None, restart_callback=restart
     )
     with patch(
-        "free_claude_code.runtime.application.check_credentials",
+        "modelglot.runtime.application.check_credentials",
         AsyncMock(return_value=()),
     ):
         apply = asyncio.create_task(runtime.apply_admin_config({}))
@@ -263,9 +263,7 @@ async def test_cancellation_at_finalization_handoff_prevents_persistence(
         return ()
 
     with (
-        patch(
-            "free_claude_code.runtime.application.check_credentials", check_credentials
-        ),
+        patch("modelglot.runtime.application.check_credentials", check_credentials),
         patch.object(manager, "_start_pass"),
         patch.object(store, "commit", wraps=store.commit) as commit,
     ):
@@ -302,7 +300,7 @@ async def test_cancellation_waiting_for_replacement_does_not_persist(
     )
     runtime = ApplicationRuntime(manager, configuration=configuration, transcriber=None)
     with patch(
-        "free_claude_code.runtime.application.check_credentials",
+        "modelglot.runtime.application.check_credentials",
         AsyncMock(return_value=()),
     ):
         async with manager._replace_lock:

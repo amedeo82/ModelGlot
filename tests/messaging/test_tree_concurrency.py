@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from free_claude_code.messaging.models import IncomingMessage, MessageScope
-from free_claude_code.messaging.trees import (
+from modelglot.messaging.models import IncomingMessage, MessageScope
+from modelglot.messaging.trees import (
     CancellationReason,
     CancellationUiOwner,
     NodeClaim,

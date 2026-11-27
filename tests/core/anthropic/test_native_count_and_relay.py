@@ -4,14 +4,14 @@ from copy import deepcopy
 
 import pytest
 
-from free_claude_code.core.anthropic import (
+from modelglot.core.anthropic import (
     MessagesRequest,
     NativeTokenCountRequest,
     get_token_count,
 )
-from free_claude_code.core.anthropic.native import NativeMessagesError
-from free_claude_code.core.anthropic.passthrough import NativeMessagesPassthrough
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.anthropic.native import NativeMessagesError
+from modelglot.core.anthropic.passthrough import NativeMessagesPassthrough
+from modelglot.core.json_types import JsonObject
 
 
 @pytest.mark.parametrize(

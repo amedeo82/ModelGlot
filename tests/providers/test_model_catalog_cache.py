@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.providers.model_catalog_source import (
+from modelglot.providers.model_catalog_source import (
     MODEL_CATALOG_CACHE_TTL_SECONDS,
     ModelCatalogCache,
     ModelCatalogSource,
@@ -19,7 +19,7 @@ def test_fresh_cache_is_read_without_network_access(
         pytest.fail("cache reads must not make a network request")
 
     monkeypatch.setattr(
-        "free_claude_code.providers.model_catalog_source.httpx.AsyncClient",
+        "modelglot.providers.model_catalog_source.httpx.AsyncClient",
         forbidden,
     )
     path = tmp_path / "catalog.json"
@@ -105,7 +105,7 @@ def test_failed_atomic_write_leaves_the_previous_cache_intact(
         raise PermissionError("destination is locked")
 
     monkeypatch.setattr(
-        "free_claude_code.providers.model_catalog_source.os.replace",
+        "modelglot.providers.model_catalog_source.os.replace",
         fail_replace,
     )
 

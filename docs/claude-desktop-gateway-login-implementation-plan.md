@@ -161,7 +161,7 @@ Requirements:
 
 ```powershell
 uv run pytest tests/harnesses/test_claude_desktop_integration.py tests/api/test_claude_desktop_integration.py tests/runtime/test_integration_startup.py tests/harnesses/test_integration_cleanup.py
-uv run ruff check src/free_claude_code/harnesses/claude_desktop_integration.py tests/harnesses/test_claude_desktop_integration.py tests/api/test_claude_desktop_integration.py
+uv run ruff check src/modelglot/harnesses/claude_desktop_integration.py tests/harnesses/test_claude_desktop_integration.py tests/api/test_claude_desktop_integration.py
 uv run ty check
 ```
 
@@ -245,16 +245,16 @@ configuration without storing credentials or profile contents.
 
 **Changes.**
 
-- `src/free_claude_code/config/paths.py` — add a dedicated path for the Desktop restore
+- `src/modelglot/config/paths.py` — add a dedicated path for the Desktop restore
   journal under the modelglot-owned state directory.
-- `src/free_claude_code/harnesses/claude_desktop_integration.py`:
+- `src/modelglot/harnesses/claude_desktop_integration.py`:
   - add a typed journal structure;
   - add strict parsing and validation;
   - add atomic create, read, replace, and remove operations;
   - reject unknown schema versions with a recoverable error;
   - keep the journal separate from the pending-disconnect marker because it describes the
     desired restoration target, not an in-progress cleanup.
-- `src/free_claude_code/runtime/integration_service.py` — pass the journal path to the Desktop
+- `src/modelglot/runtime/integration_service.py` — pass the journal path to the Desktop
   integration without changing startup behavior.
 
 **Tests.**
@@ -288,7 +288,7 @@ Add focused cases in `tests/harnesses/test_claude_desktop_integration.py`:
 
 **Changes.**
 
-- `src/free_claude_code/harnesses/claude_desktop_integration.py`:
+- `src/modelglot/harnesses/claude_desktop_integration.py`:
   - introduce a helper that captures the selected profile ID, `hybridPointer`, and
     `deploymentMode` from a loaded library;
   - make it preserve the distinction between an absent pointer and a present pointer;
@@ -321,7 +321,7 @@ the new reversible contract.
 
 **Changes.**
 
-- `src/free_claude_code/harnesses/claude_desktop_integration.py`:
+- `src/modelglot/harnesses/claude_desktop_integration.py`:
   - split the current `active` concept into:
     - `gateway_configured`: the ModelGlot profile is selected and contains valid modelglot-owned gateway
       fields;
@@ -365,7 +365,7 @@ Desktop into gateway-only mode by default.
 
 **Changes.**
 
-- `src/free_claude_code/harnesses/claude_desktop_integration.py`, `configure()`:
+- `src/modelglot/harnesses/claude_desktop_integration.py`, `configure()`:
   - capture the previous selected profile, `hybridPointer`, and deployment mode before any
     mutation;
   - write the restore journal before mutating `_meta.json` or `claude_desktop_config.json`;
@@ -413,7 +413,7 @@ profile and forcing `1p`.
 
 **Changes.**
 
-- `src/free_claude_code/harnesses/claude_desktop_integration.py`, `_disconnect()`:
+- `src/modelglot/harnesses/claude_desktop_integration.py`, `_disconnect()`:
   - load and validate the restore journal;
   - verify that the journal still belongs to the current root and ModelGlot ownership state;
   - if the recorded previous profile exists and remains valid, restore it as `appliedId`;
@@ -463,7 +463,7 @@ profile and forcing `1p`.
 
 **Changes.**
 
-- `src/free_claude_code/harnesses/claude_desktop_integration.py`:
+- `src/modelglot/harnesses/claude_desktop_integration.py`:
   - refresh must not reactivate the ModelGlot profile if another profile is now selected;
   - Disconnect must not restore an obsolete profile over a deliberate newer user selection;
   - define the conflict rule explicitly in code and document it;
@@ -534,7 +534,7 @@ exposing secrets.
 
 **Changes.**
 
-- `src/free_claude_code/api/admin_routes.py` — extend the Desktop integration status model
+- `src/modelglot/api/admin_routes.py` — extend the Desktop integration status model
   with non-secret fields such as:
   - `gateway_profile_configured`;
   - `gateway_profile_selected`;
@@ -571,12 +571,12 @@ exposing secrets.
 
 **Changes.**
 
-- `src/free_claude_code/api/admin_static/index.html` — update the Claude Desktop integration
+- `src/modelglot/api/admin_static/index.html` — update the Claude Desktop integration
   copy to explain:
   - the gateway profile is applied;
   - standard Claude.ai sign-in remains available;
   - account-hosted Anthropic connectors remain exclusive to standard Desktop.
-- `src/free_claude_code/api/admin_static/admin.js` — render the new status fields and offer
+- `src/modelglot/api/admin_static/admin.js` — render the new status fields and offer
   clear actions for:
   - Connect;
   - Disconnect;

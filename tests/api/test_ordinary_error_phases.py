@@ -6,16 +6,16 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from free_claude_code.api.dependencies import app_services
-from free_claude_code.application.errors import (
+from modelglot.api.dependencies import app_services
+from modelglot.application.errors import (
     ApplicationError,
     ApplicationUnavailableError,
     InvalidRequestError,
     UnknownProviderError,
 )
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.providers.open_router import OpenRouterProvider
+from modelglot.config.settings import Settings
+from modelglot.core.json_types import JsonObject
+from modelglot.providers.open_router import OpenRouterProvider
 from tests.api.support import create_test_app
 from tests.providers.support import immediate_admission, make_provider_config
 
@@ -76,9 +76,7 @@ def test_conversion_error_returns_http_400_without_generation(mode: str) -> None
         ]
         path = "/v1/messages"
     sdk = MagicMock()
-    with patch(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI", return_value=sdk
-    ):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI", return_value=sdk):
         provider = OpenRouterProvider(
             make_provider_config(
                 api_key="test", base_url="https://provider.invalid/v1"
@@ -86,7 +84,7 @@ def test_conversion_error_returns_http_400_without_generation(mode: str) -> None
             admission=immediate_admission(),
         )
     with (
-        patch("free_claude_code.api.routes.resolve_provider", return_value=provider),
+        patch("modelglot.api.routes.resolve_provider", return_value=provider),
         TestClient(create_test_app(_settings())) as client,
     ):
         response = client.post(path, json=payload)
@@ -220,7 +218,7 @@ def test_unknown_provider_is_protocol_specific_400_without_terminal_header(
 
     with (
         patch(
-            "free_claude_code.api.routes.resolve_provider",
+            "modelglot.api.routes.resolve_provider",
             side_effect=UnknownProviderError(message),
         ),
         TestClient(app) as client,
@@ -258,7 +256,7 @@ def test_startup_rejection_is_protocol_specific_400_without_terminal_header(
 
     with (
         patch(
-            "free_claude_code.api.routes.resolve_provider",
+            "modelglot.api.routes.resolve_provider",
             return_value=provider,
         ),
         TestClient(app) as client,

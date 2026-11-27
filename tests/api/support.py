@@ -7,25 +7,25 @@ from typing import override
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from free_claude_code.api.app import create_app
-from free_claude_code.api.dependencies import app_services
-from free_claude_code.api.ports import ApiServices
-from free_claude_code.application.code_sessions import CodeApplicationPort
-from free_claude_code.application.connected_accounts import ConnectedAccountPort
-from free_claude_code.application.model_metadata import ProviderModelRefreshResult
-from free_claude_code.config.loader import ManagedConfigStore
-from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.json_types import JsonValue
-from free_claude_code.providers.base import BaseProvider
-from free_claude_code.providers.runtime import ProviderRuntime
-from free_claude_code.runtime.application import ApplicationRuntime, RestartCallback
-from free_claude_code.runtime.configuration import ConfigurationService
-from free_claude_code.runtime.provider_manager import (
+from modelglot.api.app import create_app
+from modelglot.api.dependencies import app_services
+from modelglot.api.ports import ApiServices
+from modelglot.application.code_sessions import CodeApplicationPort
+from modelglot.application.connected_accounts import ConnectedAccountPort
+from modelglot.application.model_metadata import ProviderModelRefreshResult
+from modelglot.config.loader import ManagedConfigStore
+from modelglot.config.provider_catalog import PROVIDER_CATALOG
+from modelglot.config.settings import Settings
+from modelglot.core.json_types import JsonValue
+from modelglot.providers.base import BaseProvider
+from modelglot.providers.runtime import ProviderRuntime
+from modelglot.runtime.application import ApplicationRuntime, RestartCallback
+from modelglot.runtime.configuration import ConfigurationService
+from modelglot.runtime.provider_manager import (
     ProviderRuntimeManager,
     _ProviderGeneration,
 )
-from free_claude_code.runtime.token_optimization import (
+from modelglot.runtime.token_optimization import (
     ExternalTokenOptimizationCollector,
 )
 from tests.config.credential_support import credential_edit

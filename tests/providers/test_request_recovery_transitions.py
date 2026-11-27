@@ -14,36 +14,36 @@ import pytest
 from openai import AsyncOpenAI
 from starlette.responses import StreamingResponse
 
-from free_claude_code.api.response_streams import (
+from modelglot.api.response_streams import (
     anthropic_sse_streaming_response,
     openai_responses_sse_streaming_response,
 )
-from free_claude_code.application.response_collection import (
+from modelglot.application.response_collection import (
     WireProtocol,
     collect_response,
 )
-from free_claude_code.core.anthropic import ReasoningReplayMode
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.providers.admission import (
+from modelglot.core.anthropic import ReasoningReplayMode
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.providers.admission import (
     ProviderAdmissionController,
     ProviderOperationKind,
 )
-from free_claude_code.providers.anthropic_messages.transport import (
+from modelglot.providers.anthropic_messages.transport import (
     AnthropicMessagesTransport,
 )
-from free_claude_code.providers.endpoint_types import HttpEndpoint
-from free_claude_code.providers.openai_chat import (
+from modelglot.providers.endpoint_types import HttpEndpoint
+from modelglot.providers.openai_chat import (
     NamedEffortReasoning,
     OpenAIChatProfile,
     OpenAIChatProvider,
     OpenAIChatRequestPolicy,
 )
-from free_claude_code.providers.openai_responses import OpenAIResponsesTransport
+from modelglot.providers.openai_responses import OpenAIResponsesTransport
 from tests.api.test_hidden_stream_retries import delivered
 from tests.api.test_response_streams import _json_error, _serve
 from tests.providers.support import make_provider_config
@@ -410,7 +410,7 @@ async def test_mixed_recovery_keeps_one_budget_and_correction_history(
     request = _request(protocol)
     original = deepcopy(request.model_dump())
     async with _transport(protocol, respond) as (provider, endpoint, bodies, wires, _):
-        with patch("free_claude_code.providers.admission.trace_event") as trace:
+        with patch("modelglot.providers.admission.trace_event") as trace:
             if exhausted:
                 with pytest.raises(ExecutionFailure):
                     _ = [event async for event in _stream(provider, endpoint, request)]

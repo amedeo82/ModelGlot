@@ -1,8 +1,8 @@
 import pytest
 from pydantic import ValidationError
 
-from free_claude_code.config.loader import compose_settings_snapshot
-from free_claude_code.config.settings import Settings
+from modelglot.config.loader import compose_settings_snapshot
+from modelglot.config.settings import Settings
 
 
 def test_model_catalog_settings_have_safe_defaults() -> None:

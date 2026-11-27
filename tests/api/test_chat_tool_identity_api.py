@@ -8,16 +8,16 @@ import pytest
 from fastapi.testclient import TestClient
 from openai import AsyncOpenAI
 
-from free_claude_code.application.response_collection import (
+from modelglot.application.response_collection import (
     WireProtocol,
     collect_response,
 )
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.anthropic.stream_contracts import SSEEvent, parse_sse_text
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.json_types import JsonObject, JsonValue, load_json_value
-from free_claude_code.providers.google_openai import GoogleOpenAIProvider
-from free_claude_code.providers.vertex.client import _PROFILE as GOOGLE_PROFILE
+from modelglot.config.settings import Settings
+from modelglot.core.anthropic.stream_contracts import SSEEvent, parse_sse_text
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.json_types import JsonObject, JsonValue, load_json_value
+from modelglot.providers.google_openai import GoogleOpenAIProvider
+from modelglot.providers.vertex.client import _PROFILE as GOOGLE_PROFILE
 from tests.api.support import create_test_app
 from tests.api.test_hidden_stream_retries import delivered
 from tests.api.test_tool_call_buffer_transports import _tools
@@ -75,9 +75,7 @@ def google_compat_api_response(
     def callback(**_: object):
         return sdk
 
-    monkeypatch.setattr(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI", callback
-    )
+    monkeypatch.setattr("modelglot.providers.openai_chat.client.AsyncOpenAI", callback)
     provider = GoogleOpenAIProvider(
         make_provider_config(api_key="fixture", base_url="https://fixture.invalid/v1"),
         profile=GOOGLE_PROFILE,

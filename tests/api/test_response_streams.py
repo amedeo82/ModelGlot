@@ -11,19 +11,19 @@ from loguru import logger
 from starlette.responses import Response
 from starlette.types import Message, Receive, Scope, Send
 
-from free_claude_code.api.request_ids import RequestCorrelationMiddleware
-from free_claude_code.api.response_streams import (
+from modelglot.api.request_ids import RequestCorrelationMiddleware
+from modelglot.api.response_streams import (
     ManagedStreamingResponse,
     anthropic_sse_streaming_response,
     bind_response_lifetime,
     terminal_execution_error_response,
 )
-from free_claude_code.core.anthropic import (
+from modelglot.core.anthropic import (
     anthropic_error_payload,
     anthropic_failure_payload,
 )
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.failures import ExecutionFailure, FailureKind
 from tests.assertions import record_extra, require_exception_info
 from tests.stream_packets import packets
 from tests.wire_payload import decode_object, object_payload

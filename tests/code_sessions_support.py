@@ -5,7 +5,7 @@ import uuid
 from dataclasses import dataclass
 from typing import override
 
-from free_claude_code.application.code_sessions.models import (
+from modelglot.application.code_sessions.models import (
     CodeCatalog,
     CodeConflictError,
     CodeMode,
@@ -20,12 +20,12 @@ from free_claude_code.application.code_sessions.models import (
     PromptRequest,
     RunStatus,
 )
-from free_claude_code.application.code_sessions.ports import EventSink, HarnessSelection
-from free_claude_code.application.code_sessions.service import CodeService
-from free_claude_code.config.model_refs import split_provider_model_ref
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.runtime.codex_app_server import CodexAppServer
-from free_claude_code.runtime.codex_protocol import CodexProtocol
+from modelglot.application.code_sessions.ports import EventSink, HarnessSelection
+from modelglot.application.code_sessions.service import CodeService
+from modelglot.config.model_refs import split_provider_model_ref
+from modelglot.core.json_types import JsonObject
+from modelglot.runtime.codex_app_server import CodexAppServer
+from modelglot.runtime.codex_protocol import CodexProtocol
 from tests.assertions import require_present
 
 
@@ -443,7 +443,7 @@ class FakeConnection:
 
 async def close_code_database(service: CodeService):
     """Tests composing a service directly also own its injected database."""
-    from free_claude_code.runtime.code_sessions_sqlite import SQLiteCodeStore
+    from modelglot.runtime.code_sessions_sqlite import SQLiteCodeStore
 
     assert isinstance(service._store, SQLiteCodeStore)
     await service._store.database.close()

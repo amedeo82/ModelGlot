@@ -9,45 +9,45 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from free_claude_code.application.connected_accounts import (
+from modelglot.application.connected_accounts import (
     ConnectedAccountState,
     ConnectedAccountStatus,
 )
-from free_claude_code.application.errors import ApplicationUnavailableError
-from free_claude_code.application.model_catalog import CatalogModel, ModelCatalog
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.application.usage_events import (
+from modelglot.application.errors import ApplicationUnavailableError
+from modelglot.application.model_catalog import CatalogModel, ModelCatalog
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.application.usage_events import (
     CanonicalUsage,
     RequestUsageRecord,
     UsageFilters,
 )
-from free_claude_code.config.admin.credentials import CredentialSubmission
-from free_claude_code.config.admin.persistence import PreparedAdminUpdate
-from free_claude_code.config.api_keys import normalize_api_keys
-from free_claude_code.config.loader import ManagedConfigSnapshot
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.reasoning import DEFAULT_REASONING_POLICY, ReasoningPolicy
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.core.stream_recovery import ContinuationSeed
-from free_claude_code.messaging.command_context import StopOutcome
-from free_claude_code.messaging.platforms.ports import (
+from modelglot.config.admin.credentials import CredentialSubmission
+from modelglot.config.admin.persistence import PreparedAdminUpdate
+from modelglot.config.api_keys import normalize_api_keys
+from modelglot.config.loader import ManagedConfigSnapshot
+from modelglot.config.settings import Settings
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.reasoning import DEFAULT_REASONING_POLICY, ReasoningPolicy
+from modelglot.core.stream_output import StreamOutput
+from modelglot.core.stream_recovery import ContinuationSeed
+from modelglot.messaging.command_context import StopOutcome
+from modelglot.messaging.platforms.ports import (
     InboundMessageHandler,
     MessagingPlatformComponents,
     MessagingStartupNotice,
 )
-from free_claude_code.providers.admission_registry import ProviderAdmissionRegistry
-from free_claude_code.providers.base import BaseProvider
-from free_claude_code.providers.credential_validation import (
+from modelglot.providers.admission_registry import ProviderAdmissionRegistry
+from modelglot.providers.base import BaseProvider
+from modelglot.providers.credential_validation import (
     CredentialCheck,
     CredentialStatus,
 )
-from free_claude_code.providers.runtime import ProviderRuntime
-from free_claude_code.runtime.application import ApplicationRuntime
-from free_claude_code.runtime.configuration import ConfigurationService
-from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
-from free_claude_code.runtime.usage_events import CodeContextSample, UsageQueryResult
+from modelglot.providers.runtime import ProviderRuntime
+from modelglot.runtime.application import ApplicationRuntime
+from modelglot.runtime.configuration import ConfigurationService
+from modelglot.runtime.provider_manager import ProviderRuntimeManager
+from modelglot.runtime.usage_events import CodeContextSample, UsageQueryResult
 from tests.providers.support import make_provider_config
 from tests.wire_payload import array_payload, object_payload
 
@@ -575,7 +575,7 @@ async def test_credential_checks_gate_both_apply_paths(
             return_value=prepared,
         ),
         patch(
-            "free_claude_code.runtime.application.check_credentials",
+            "modelglot.runtime.application.check_credentials",
             AsyncMock(return_value=checks),
         ) as check,
         patch.object(
@@ -622,7 +622,7 @@ async def test_cancelled_credential_check_never_commits(tmp_path: Path) -> None:
             return_value=prepared,
         ),
         patch(
-            "free_claude_code.runtime.application.check_credentials",
+            "modelglot.runtime.application.check_credentials",
             AsyncMock(side_effect=asyncio.CancelledError),
         ),
         patch.object(runtime._configuration, "commit") as commit,
@@ -705,7 +705,7 @@ async def test_usage_delegates_and_adds_separate_context_populations() -> None:
     )
     filters = UsageFilters(start=now - timedelta(days=1), end=now)
     with patch(
-        "free_claude_code.runtime.application.read_model_catalog",
+        "modelglot.runtime.application.read_model_catalog",
         return_value=catalog,
     ):
         payload = await runtime.usage(filters)
@@ -1169,7 +1169,7 @@ async def test_public_start_retries_transient_partial_messaging_cleanup() -> Non
     with (
         patch.object(manager, "start_model_list_refresh"),
         patch(
-            "free_claude_code.runtime.messaging_service.messaging_platform_factory.create_messaging_components",
+            "modelglot.runtime.messaging_service.messaging_platform_factory.create_messaging_components",
             return_value=components,
         ),
         patch.object(
@@ -1237,7 +1237,7 @@ async def test_public_start_retains_persistently_unclean_partial_messaging_graph
     with (
         patch.object(manager, "start_model_list_refresh"),
         patch(
-            "free_claude_code.runtime.messaging_service.messaging_platform_factory.create_messaging_components",
+            "modelglot.runtime.messaging_service.messaging_platform_factory.create_messaging_components",
             return_value=components,
         ),
         patch.object(
@@ -1286,7 +1286,7 @@ async def test_messaging_start_failure_is_nonfatal_after_complete_cleanup() -> N
 
     with (
         patch(
-            "free_claude_code.runtime.messaging_service.messaging_platform_factory.create_messaging_components",
+            "modelglot.runtime.messaging_service.messaging_platform_factory.create_messaging_components",
             side_effect=RuntimeError("messaging unavailable"),
         ),
         patch.object(
@@ -1309,7 +1309,7 @@ async def test_messaging_start_failure_fails_closed_when_cleanup_is_incomplete()
 
     with (
         patch(
-            "free_claude_code.runtime.messaging_service.messaging_platform_factory.create_messaging_components",
+            "modelglot.runtime.messaging_service.messaging_platform_factory.create_messaging_components",
             side_effect=RuntimeError("messaging unavailable"),
         ),
         patch.object(
@@ -1339,7 +1339,7 @@ async def test_composition_records_runtime_before_workspace_setup() -> None:
 
     with (
         patch(
-            "free_claude_code.runtime.messaging_service.os.makedirs",
+            "modelglot.runtime.messaging_service.os.makedirs",
             side_effect=OSError("workspace failed"),
         ),
         pytest.raises(OSError, match="workspace failed"),
@@ -1388,12 +1388,12 @@ async def test_composition_publishes_startup_notice_after_runtime_and_repair() -
 
     with (
         patch(
-            "free_claude_code.cli.managed.ManagedClaudeSessionManager",
+            "modelglot.cli.managed.ManagedClaudeSessionManager",
             return_value=cli_manager,
         ) as manager_constructor,
         patch.object(runtime._messaging, "_messaging_store", AsyncMock()),
         patch(
-            "free_claude_code.messaging.workflow.MessagingWorkflow",
+            "modelglot.messaging.workflow.MessagingWorkflow",
             return_value=workflow,
         ),
     ):
@@ -1422,7 +1422,7 @@ async def test_folder_picker_is_stopped_before_http_shutdown_drains(
 ) -> None:
     import uvicorn
 
-    from free_claude_code.cli.uvicorn_server import RuntimeServer
+    from modelglot.cli.uvicorn_server import RuntimeServer
 
     runtime, _manager = _runtime_with_admin_provider(AdminModelProvider())
     started = asyncio.Event()

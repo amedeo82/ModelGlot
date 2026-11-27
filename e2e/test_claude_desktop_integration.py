@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from playwright.sync_api import Page, Route, expect
 
-from free_claude_code.harnesses import claude_desktop_integration as desktop
+from modelglot.harnesses import claude_desktop_integration as desktop
 from tests.wire_payload import object_payload, response_object
 
 

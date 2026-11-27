@@ -5,8 +5,8 @@ from collections.abc import Mapping
 
 import pytest
 
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.providers.stream_read import read_stream_event
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.providers.stream_read import read_stream_event
 
 pytestmark = pytest.mark.asyncio
 

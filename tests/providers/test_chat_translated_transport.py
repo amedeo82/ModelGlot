@@ -6,17 +6,17 @@ from typing import Any
 
 import pytest
 
-from free_claude_code.core.anthropic.stream_contracts import SSEEvent, parse_sse_text
-from free_claude_code.core.chat_completions.request import ChatRequest
-from free_claude_code.core.chat_completions.response import ChatResponseAccumulator
-from free_claude_code.core.json_types import JsonValue
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.providers.anthropic_messages.transport import (
+from modelglot.core.anthropic.stream_contracts import SSEEvent, parse_sse_text
+from modelglot.core.chat_completions.request import ChatRequest
+from modelglot.core.chat_completions.response import ChatResponseAccumulator
+from modelglot.core.json_types import JsonValue
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.core.stream_output import StreamOutput
+from modelglot.providers.anthropic_messages.transport import (
     AnthropicMessagesTransport,
 )
-from free_claude_code.providers.openai_chat.provider import OpenAIChatProvider
-from free_claude_code.providers.openai_responses.transport import (
+from modelglot.providers.openai_chat.provider import OpenAIChatProvider
+from modelglot.providers.openai_responses.transport import (
     OpenAIResponsesTransport,
 )
 from tests.providers.test_anthropic_messages_transport import Endpoint, _events

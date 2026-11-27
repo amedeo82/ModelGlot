@@ -10,8 +10,8 @@ from typing import TypedDict, cast
 
 import pytest
 
-from free_claude_code.runtime import token_optimization as runtime_module
-from free_claude_code.runtime.token_optimization import (
+from modelglot.runtime import token_optimization as runtime_module
+from modelglot.runtime.token_optimization import (
     ExternalTokenOptimizationCollector,
     OutputLimitExceeded,
     ProcessResult,

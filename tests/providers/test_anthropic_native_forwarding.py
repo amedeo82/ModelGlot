@@ -16,16 +16,16 @@ from loguru import logger
 if TYPE_CHECKING:
     from loguru import Message
 
-from free_claude_code.core.anthropic.passthrough import NativeMessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.stream_delivery import (
+from modelglot.core.anthropic.passthrough import NativeMessagesRequest
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.json_types import JsonObject
+from modelglot.core.stream_delivery import (
     StreamDeliveryState,
     bind_stream_delivery,
 )
-from free_claude_code.core.trace import TRACE_PAYLOAD_BINDING
-from free_claude_code.providers.anthropic.provider import AnthropicProvider
+from modelglot.core.trace import TRACE_PAYLOAD_BINDING
+from modelglot.providers.anthropic.provider import AnthropicProvider
 from tests.providers.test_anthropic_messages_transport import Wire, _events, _sse
 from tests.providers.test_anthropic_provider import native_body, provider
 from tests.wire_payload import object_payload

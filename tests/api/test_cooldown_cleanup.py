@@ -8,12 +8,12 @@ import httpx
 import httpx2
 import pytest
 
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.diagnostics import ERROR_DETAIL_DISPLAY_CAP_BYTES
-from free_claude_code.providers.admission import ProviderAdmissionController
-from free_claude_code.providers.custom import CustomProvider
-from free_claude_code.providers.openai_client import OpenAIRequestClient
-from free_claude_code.providers.runtime.config import build_custom_provider_config
+from modelglot.config.settings import Settings
+from modelglot.core.diagnostics import ERROR_DETAIL_DISPLAY_CAP_BYTES
+from modelglot.providers.admission import ProviderAdmissionController
+from modelglot.providers.custom import CustomProvider
+from modelglot.providers.openai_client import OpenAIRequestClient
+from modelglot.providers.runtime.config import build_custom_provider_config
 from tests.api.support import create_test_app
 from tests.api.test_four_protocol_matrix import ingress_request
 from tests.api.test_retry_after_cooldown import cooldown_clock as cooldown_clock

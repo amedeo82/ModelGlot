@@ -9,20 +9,20 @@ from unittest.mock import Mock
 import httpx2
 import pytest
 
-from free_claude_code.application.response_collection import WireProtocol
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.gemini.replay import decode_bundle
-from free_claude_code.core.history_replay import (
+from modelglot.application.response_collection import WireProtocol
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.gemini.replay import decode_bundle
+from modelglot.core.history_replay import (
     responses_reasoning_blocks,
 )
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.providers.anthropic_messages.transport import (
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.core.stream_output import StreamOutput
+from modelglot.providers.anthropic_messages.transport import (
     AnthropicMessagesTransport,
 )
-from free_claude_code.providers.continuation import SourceRecoveryState
-from free_claude_code.providers.openai_responses.transport import (
+from modelglot.providers.continuation import SourceRecoveryState
+from modelglot.providers.openai_responses.transport import (
     OpenAIResponsesTransport,
 )
 from tests.providers.test_anthropic_messages_transport import Endpoint

@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from free_claude_code.providers.github_copilot import login
+from modelglot.providers.github_copilot import login
 
 
 class Pipe(asyncio.StreamReader):

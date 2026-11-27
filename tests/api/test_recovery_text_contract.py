@@ -8,18 +8,18 @@ import pytest
 from openai import AsyncOpenAI
 from pydantic import BaseModel, ConfigDict
 
-from free_claude_code.application.response_collection import WireProtocol
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.anthropic.passthrough import NativeMessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.providers.anthropic_messages.transport import (
+from modelglot.application.response_collection import WireProtocol
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.anthropic.passthrough import NativeMessagesRequest
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.providers.anthropic_messages.transport import (
     AnthropicMessagesTransport,
 )
-from free_claude_code.providers.openai_chat.provider import OpenAIChatProvider
-from free_claude_code.providers.openai_responses.transport import (
+from modelglot.providers.openai_chat.provider import OpenAIChatProvider
+from modelglot.providers.openai_responses.transport import (
     OpenAIResponsesTransport,
 )
 from tests.api.test_delivered_stream_recovery import (

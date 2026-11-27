@@ -1,6 +1,6 @@
 import pytest
 
-from free_claude_code.config.loader import compose_settings_snapshot
+from modelglot.config.loader import compose_settings_snapshot
 
 
 @pytest.mark.parametrize(

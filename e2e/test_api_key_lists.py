@@ -8,10 +8,10 @@ import pytest
 from playwright.sync_api import Locator, Page, expect
 
 from e2e.provider_support import close_provider, open_provider
-from free_claude_code.config.admin.credentials import CredentialSubmission
-from free_claude_code.config.env_files import dotenv_values_from_file
-from free_claude_code.core.json_types import load_json_value
-from free_claude_code.providers.credential_validation import (
+from modelglot.config.admin.credentials import CredentialSubmission
+from modelglot.config.env_files import dotenv_values_from_file
+from modelglot.core.json_types import load_json_value
+from modelglot.providers.credential_validation import (
     CredentialCheck,
     CredentialStatus,
 )
@@ -164,9 +164,7 @@ def test_warning_save_refreshes_masks_and_is_clean_then_rechecks_retained_rows(
             for index, _ in enumerate(submission.credentials)
         )
 
-    monkeypatch.setattr(
-        "free_claude_code.runtime.application.check_credentials", warnings
-    )
+    monkeypatch.setattr("modelglot.runtime.application.check_credentials", warnings)
     page.goto(admin_base_url + "/admin")
     page.locator("#field-HTTP_READ_TIMEOUT").fill("181")
     dialog = open_provider(page, "nvidia_nim")
@@ -319,9 +317,7 @@ def test_custom_warning_save_and_rename_retain_masked_rows(
             for index, _ in enumerate(submission.credentials)
         )
 
-    monkeypatch.setattr(
-        "free_claude_code.runtime.application.check_credentials", unavailable
-    )
+    monkeypatch.setattr("modelglot.runtime.application.check_credentials", unavailable)
     page.goto(admin_base_url + "/admin")
     page.get_by_role("button", name="Add provider", exact=True).click()
     dialog = page.locator("#providerDialog")
@@ -368,9 +364,7 @@ def test_saved_warning_followed_by_reload_failure_requires_fresh_masks(
             for index, _ in enumerate(submission.credentials)
         )
 
-    monkeypatch.setattr(
-        "free_claude_code.runtime.application.check_credentials", unavailable
-    )
+    monkeypatch.setattr("modelglot.runtime.application.check_credentials", unavailable)
     page.goto(admin_base_url + "/admin")
     dialog = open_provider(page, "nvidia_nim")
     add_key(dialog, "saved-before-reload-failed")

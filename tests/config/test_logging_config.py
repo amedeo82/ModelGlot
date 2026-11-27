@@ -9,9 +9,9 @@ from unittest.mock import patch
 import pytest
 from loguru import logger
 
-from free_claude_code.config import logging_config
-from free_claude_code.config.logging_config import configure_logging
-from free_claude_code.core.json_types import load_json_value
+from modelglot.config import logging_config
+from modelglot.config.logging_config import configure_logging
+from modelglot.core.json_types import load_json_value
 from tests.wire_payload import decode_object, object_payload, string_payload
 
 
@@ -119,7 +119,7 @@ def test_logging_preserves_records_across_process_restarts(tmp_path: Path) -> No
     script = """
 import sys
 from loguru import logger
-from free_claude_code.config.logging_config import configure_logging
+from modelglot.config.logging_config import configure_logging
 configure_logging(sys.argv[1])
 logger.info(sys.argv[2])
 logger.complete()

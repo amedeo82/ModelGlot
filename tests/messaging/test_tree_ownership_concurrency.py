@@ -8,10 +8,10 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from free_claude_code.messaging.models import IncomingMessage, MessageScope
-from free_claude_code.messaging.trees import manager as manager_module
-from free_claude_code.messaging.trees.manager import TreeQueueManager
-from free_claude_code.messaging.trees.transitions import (
+from modelglot.messaging.models import IncomingMessage, MessageScope
+from modelglot.messaging.trees import manager as manager_module
+from modelglot.messaging.trees.manager import TreeQueueManager
+from modelglot.messaging.trees.transitions import (
     AdmissionRejection,
     CancellationReason,
     CancellationResult,

@@ -1,4 +1,4 @@
-from free_claude_code.harnesses.environment import with_local_proxy_bypass
+from modelglot.harnesses.environment import with_local_proxy_bypass
 
 
 def test_child_proxy_bypass_preserves_existing_proxy_policy() -> None:

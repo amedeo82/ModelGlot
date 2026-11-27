@@ -1,6 +1,6 @@
 from typing import cast
 
-from free_claude_code.core.request_outcomes import (
+from modelglot.core.request_outcomes import (
     RequestOutcome,
     current_request_outcome,
     finalize_request_outcome,

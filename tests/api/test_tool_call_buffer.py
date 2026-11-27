@@ -7,15 +7,15 @@ from typing import Any
 
 import pytest
 
-from free_claude_code.api.response_streams import (
+from modelglot.api.response_streams import (
     ManagedStreamingResponse,
     anthropic_sse_streaming_response,
     openai_responses_sse_streaming_response,
 )
-from free_claude_code.api.stream_delivery import PublicResponseStream
-from free_claude_code.api.stream_publication import PacketPublication
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.stream_output import StreamOutput, completed_output
+from modelglot.api.stream_delivery import PublicResponseStream
+from modelglot.api.stream_publication import PacketPublication
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.stream_output import StreamOutput, completed_output
 from tests.api.test_response_streams import _json_error
 
 

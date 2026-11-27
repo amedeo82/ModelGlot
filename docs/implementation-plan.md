@@ -78,7 +78,7 @@ codebase.
 **Changes.** No source change. Run and record in `docs/implementation-plan.md` (or a
 companion table):
 
-- `uv run pytest --cov=src/free_claude_code --cov-report=term-missing --cov-report=xml`
+- `uv run pytest --cov=src/modelglot --cov-report=term-missing --cov-report=xml`
   → total coverage and the per-module table for the uncovered modules listed in F-02;
 - `uv run pytest --durations=25` → slowest tests (input for the sharding review);
 - `uv run ruff check --statistics` and `uv run ty check` → current warning counts;
@@ -111,18 +111,18 @@ through explicit configuration.
 
 **Changes.**
 
-- `src/free_claude_code/config/settings.py:750` — change the `host` default to `127.0.0.1`.
-- `src/free_claude_code/config/settings.py:753`–`:760` — add a model validator that rejects
+- `src/modelglot/config/settings.py:750` — change the `host` default to `127.0.0.1`.
+- `src/modelglot/config/settings.py:753`–`:760` — add a model validator that rejects
   the combination "non-loopback host + authentication disabled" unless
   `MODELGLOT_ALLOW_UNAUTHENTICATED_BINDING=1` is present; reject a default token (`modelglot`) when
   authentication is enabled unless the operator explicitly accepts it
   (e.g. `MODELGLOT_ALLOW_DEFAULT_AUTH_TOKEN=1`).
-- `src/free_claude_code/cli/commands.py:332`–`:339` — log the effective exposure at startup:
+- `src/modelglot/cli/commands.py:332`–`:339` — log the effective exposure at startup:
   bind address, whether authentication is enabled, and a warning when the port is reachable
   from non-loopback interfaces.
-- `src/free_claude_code/cli/doctor.py` — extend the diagnostic output with the same three
+- `src/modelglot/cli/doctor.py` — extend the diagnostic output with the same three
   facts so `modelglot-doctor` can surface an insecure setup.
-- `src/free_claude_code/config/paths.py` / `config/loader.py` — no change expected; only
+- `src/modelglot/config/paths.py` / `config/loader.py` — no change expected; only
   register the new settings if they are not already covered by the managed-config schema.
 - `README.md` — new "Network exposure and authentication" section stating the defaults, the
   refusal behavior, and how to opt out.
@@ -166,7 +166,7 @@ with a release-note entry.
 - `pyproject.toml` — add:
   ```toml
   [tool.coverage.run]
-  source = ["src/free_claude_code"]
+  source = ["src/modelglot"]
   branch = true
   omit = [
     "*/admin_static/*",
@@ -185,7 +185,7 @@ with a release-note entry.
   ]
   ```
 - `scripts/ci.sh` — add a `coverage` check id after `pytest`:
-  `uv run pytest --cov=src/free_claude_code --cov-report=term-missing --cov-report=xml`.
+  `uv run pytest --cov=src/modelglot --cov-report=term-missing --cov-report=xml`.
   Update `CHECK_ORDER` (`:4`), the usage text (`:18`–`:26`), `valid_check_id` (`:73`),
   and `run_check` (`:173`–`:188`).
 - `scripts/ci.ps1` — mirror the same check id and command; update the id list (`:19`–`:20`),
@@ -235,7 +235,7 @@ tripling runtime.
 - `.github/workflows/tests.yml` — new job `security`:
   - dependency vulnerability scan: `uvx pip-audit` (or `uvx osv-scanner`) against
     `uv.lock`, failing the PR on high/critical findings;
-  - static analysis: `uvx bandit -r src/free_claude_code -c pyproject.toml` with a
+  - static analysis: `uvx bandit -r src/modelglot -c pyproject.toml` with a
     configuration that matches the project's intentional patterns (FastAPI `Depends`,
     binding to `0.0.0.0` after S1.1, subprocess usage in the CLI layer);
   - optional: GitHub CodeQL for Python on the same workflow.

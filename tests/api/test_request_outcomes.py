@@ -12,25 +12,25 @@ from fastapi.testclient import TestClient
 from loguru import logger
 from starlette.types import Message, Receive, Scope, Send
 
-from free_claude_code.api.request_ids import RequestCorrelationMiddleware
-from free_claude_code.api.request_outcomes import RequestOutcomeMiddleware
-from free_claude_code.application.usage_events import (
+from modelglot.api.request_ids import RequestCorrelationMiddleware
+from modelglot.api.request_outcomes import RequestOutcomeMiddleware
+from modelglot.application.usage_events import (
     CanonicalUsage,
     RequestUsageRecord,
     UsageObservation,
     UsageProtocol,
 )
-from free_claude_code.config.model_refs import ModelFallback
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.request_outcomes import (
+from modelglot.config.model_refs import ModelFallback
+from modelglot.config.settings import Settings
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.json_types import JsonObject
+from modelglot.core.request_outcomes import (
     current_request_outcome,
     record_request_gateway_model,
     record_request_observation,
     record_request_route,
 )
-from free_claude_code.core.stream_output import StreamOutput
+from modelglot.core.stream_output import StreamOutput
 from tests.api.support import create_test_app
 from tests.api.test_request_lifetime import _http_scope
 
@@ -133,7 +133,7 @@ def test_one_final_outcome_for_streamed_inference(
         payload["input"] = "private input"
     with (
         patch(
-            "free_claude_code.api.routes.resolve_provider",
+            "modelglot.api.routes.resolve_provider",
             return_value=OutcomeProvider(result),
         ),
         TestClient(create_test_app(Settings())) as client,
@@ -180,7 +180,7 @@ def test_fallback_records_selected_provider_without_logging_failed_attempt(
 
     with (
         patch(
-            "free_claude_code.api.routes.resolve_provider",
+            "modelglot.api.routes.resolve_provider",
             side_effect=resolve_provider_2,
         ),
         TestClient(create_test_app(settings)) as client,
@@ -215,13 +215,11 @@ def test_non_streaming_messages_have_one_outcome(
 ) -> None:
     with (
         patch(
-            "free_claude_code.api.routes.resolve_provider",
+            "modelglot.api.routes.resolve_provider",
             return_value=OutcomeProvider(result),
         ),
         TestClient(create_test_app(Settings())) as client,
-        patch(
-            "free_claude_code.api.request_outcomes.monotonic", side_effect=[10.0, 12.5]
-        ),
+        patch("modelglot.api.request_outcomes.monotonic", side_effect=[10.0, 12.5]),
     ):
         response = client.post(
             "/v1/messages",
@@ -283,7 +281,7 @@ async def test_disconnect_logs_cancellation_after_cleanup(
     async def send(message: Message):
         sent.append(message)
 
-    with patch("free_claude_code.api.routes.resolve_provider", return_value=provider):
+    with patch("modelglot.api.routes.resolve_provider", return_value=provider):
         app = create_test_app(Settings())
         scope = _http_scope(f"/v1/{wire_api}")
         scope["headers"] = [(b"content-type", b"application/json")]
@@ -590,7 +588,7 @@ async def test_successful_named_events_skip_json_decoding(
         pass
 
     with patch(
-        "free_claude_code.core.anthropic.stream_contracts.json.loads", wraps=json.loads
+        "modelglot.core.anthropic.stream_contracts.json.loads", wraps=json.loads
     ) as loads:
         await RequestCorrelationMiddleware(RequestOutcomeMiddleware(app))(
             _http_scope("/v1/responses"), receive, send

@@ -10,14 +10,14 @@ from unittest.mock import Mock
 
 import pytest
 
-from free_claude_code.cli.commands import ServerStatus
-from free_claude_code.cli.desktop_notifications import DesktopIcon, DesktopNotifier
-from free_claude_code.updater.check import UpdateCheckResult, UpdateStatus
+from modelglot.cli.commands import ServerStatus
+from modelglot.cli.desktop_notifications import DesktopIcon, DesktopNotifier
+from modelglot.updater.check import UpdateCheckResult, UpdateStatus
 
 if TYPE_CHECKING:
-    from free_claude_code.cli import desktop_tray
+    from modelglot.cli import desktop_tray
 else:
-    desktop_tray = pytest.importorskip("free_claude_code.cli.desktop_tray")
+    desktop_tray = pytest.importorskip("modelglot.cli.desktop_tray")
 
 
 class FakeIcon(DesktopIcon):

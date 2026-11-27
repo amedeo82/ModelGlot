@@ -1,8 +1,8 @@
 import pytest
 from typing_extensions import TypedDict
 
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.providers.model_listing import (
+from modelglot.core.json_types import JsonObject
+from modelglot.providers.model_listing import (
     extract_openai_model_infos,
     extract_tool_capable_model_infos,
 )

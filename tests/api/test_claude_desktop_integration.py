@@ -5,11 +5,11 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 
-from free_claude_code.application.errors import InvalidRequestError
-from free_claude_code.application.routing import ModelRouter
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.gateway_model_ids import desktop_model_id
-from free_claude_code.harnesses import claude_desktop_integration as desktop
+from modelglot.application.errors import InvalidRequestError
+from modelglot.application.routing import ModelRouter
+from modelglot.config.settings import Settings
+from modelglot.core.gateway_model_ids import desktop_model_id
+from modelglot.harnesses import claude_desktop_integration as desktop
 from tests.api.support import create_test_app
 from tests.wire_payload import (
     array_payload,
@@ -206,8 +206,8 @@ def test_desktop_token_count_routes_to_original_provider(no_thinking: bool) -> N
     app = create_test_app(Settings(proxy_auth_enabled=False))
     with (
         TestClient(app) as client,
-        patch("free_claude_code.api.routes.get_token_count", return_value=7),
-        patch("free_claude_code.api.handlers.token_count.trace_event") as trace,
+        patch("modelglot.api.routes.get_token_count", return_value=7),
+        patch("modelglot.api.handlers.token_count.trace_event") as trace,
     ):
         response = client.post(
             "/v1/messages/count_tokens",

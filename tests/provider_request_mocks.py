@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock
 
-from free_claude_code.core.anthropic.models import Message
+from modelglot.core.anthropic.models import Message
 
 
 def make_openai_compat_stream_request(

@@ -7,7 +7,7 @@ import httpx
 import pytest
 from anyio import to_thread
 
-from free_claude_code.config.loader import ManagedConfigStore
+from modelglot.config.loader import ManagedConfigStore
 from tests.api.support import create_test_app
 
 
@@ -51,7 +51,7 @@ async def test_admin_storage_wait_allows_health_and_authenticated_requests(
             with (
                 patch.object(ManagedConfigStore, "read", blocked_read),
                 patch(
-                    "free_claude_code.api.admin_routes._check_local_provider",
+                    "modelglot.api.admin_routes._check_local_provider",
                     AsyncMock(return_value={}),
                 ),
             ):

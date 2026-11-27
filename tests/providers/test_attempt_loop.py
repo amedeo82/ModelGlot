@@ -13,42 +13,42 @@ from loguru import logger
 if TYPE_CHECKING:
     from loguru import Message
 
-from free_claude_code.application.usage_events import UsageObservation
-from free_claude_code.core.continuation_request import ContinuationRequest
-from free_claude_code.core.diagnostics import attach_upstream_error_body
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.request_outcomes import (
+from modelglot.application.usage_events import UsageObservation
+from modelglot.core.continuation_request import ContinuationRequest
+from modelglot.core.diagnostics import attach_upstream_error_body
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.json_types import JsonObject
+from modelglot.core.request_outcomes import (
     RequestOutcome,
     current_request_outcome,
 )
-from free_claude_code.core.stream_delivery import (
+from modelglot.core.stream_delivery import (
     StreamDeliveryState,
     bind_stream_delivery,
 )
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.core.stream_recovery import (
+from modelglot.core.stream_output import StreamOutput
+from modelglot.core.stream_recovery import (
     ContinuationSeed,
     DeliveredPrefix,
     SourceRecoverySnapshot,
     StreamFailureContext,
 )
-from free_claude_code.core.trace import TRACE_PAYLOAD_BINDING
-from free_claude_code.providers.admission import (
+from modelglot.core.trace import TRACE_PAYLOAD_BINDING
+from modelglot.providers.admission import (
     ProviderExecution,
     ProviderOperationKind,
 )
-from free_claude_code.providers.attempt_loop import (
+from modelglot.providers.attempt_loop import (
     AttemptContext,
     AttemptPlan,
     FailureReporting,
     TransportAttempt,
     run_attempts,
 )
-from free_claude_code.providers.attempt_loop import loop as loop_module
-from free_claude_code.providers.continuation import PublicRecovery
-from free_claude_code.providers.http import ProviderAttemptScope
-from free_claude_code.providers.request_correction import (
+from modelglot.providers.attempt_loop import loop as loop_module
+from modelglot.providers.continuation import PublicRecovery
+from modelglot.providers.http import ProviderAttemptScope
+from modelglot.providers.request_correction import (
     CorrectionStep,
     Proposal,
     Rejection,

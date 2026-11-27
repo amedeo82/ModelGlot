@@ -4,10 +4,10 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from free_claude_code.config.provider_catalog import GEMINI_DEFAULT_BASE
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.providers.gemini import GeminiProvider
+from modelglot.config.provider_catalog import GEMINI_DEFAULT_BASE
+from modelglot.config.settings import Settings
+from modelglot.core.json_types import JsonObject
+from modelglot.providers.gemini import GeminiProvider
 from tests.api.support import create_test_app
 from tests.providers.support import immediate_admission, make_provider_config
 from tests.providers.test_gemini import _sse

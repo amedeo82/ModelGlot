@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.core.json_types import load_json_value
+from modelglot.core.json_types import load_json_value
 from tests.cli.conftest import LaunchCapture
 from tests.cli.test_launcher_workflow import launch
 from tests.wire_payload import (

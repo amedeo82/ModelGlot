@@ -4,9 +4,9 @@ from contextlib import nullcontext
 
 import pytest
 
-from free_claude_code.application.routing import ModelRouter
-from free_claude_code.config.loader import clear_settings_cache, get_settings
-from free_claude_code.config.reasoning import ReasoningPreference
+from modelglot.application.routing import ModelRouter
+from modelglot.config.loader import clear_settings_cache, get_settings
+from modelglot.config.reasoning import ReasoningPreference
 from smoke.lib.config import ProviderModel, SmokeConfig
 from smoke.lib.e2e import SmokeServerDriver
 from smoke.product.test_provider_product_live import _server_for_provider

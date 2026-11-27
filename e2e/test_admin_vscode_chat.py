@@ -3,8 +3,8 @@ import json
 import pytest
 from playwright.sync_api import Page, Route, expect
 
-from free_claude_code.core.json_types import JsonObject, load_json_value
-from free_claude_code.harnesses import vscode_chat_integration as vscode
+from modelglot.core.json_types import JsonObject, load_json_value
+from modelglot.harnesses import vscode_chat_integration as vscode
 from tests.wire_payload import (
     array_payload,
     object_array,

@@ -8,20 +8,20 @@ from typing import Any
 import httpx
 import pytest
 
-from free_claude_code.application.response_collection import collected_frames
-from free_claude_code.config.provider_catalog import GEMINI_DEFAULT_BASE
-from free_claude_code.core.anthropic import aggregate_anthropic_sse_to_message
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.chat_completions.request import ChatRequest
-from free_claude_code.core.chat_completions.response import ChatResponseAccumulator
-from free_claude_code.core.gemini import GeminiRequest
-from free_claude_code.core.gemini.response import GeminiResponseAccumulator
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.reasoning import ReasoningEffort, ReasoningPolicy
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.providers.gemini import GeminiProvider
+from modelglot.application.response_collection import collected_frames
+from modelglot.config.provider_catalog import GEMINI_DEFAULT_BASE
+from modelglot.core.anthropic import aggregate_anthropic_sse_to_message
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.chat_completions.request import ChatRequest
+from modelglot.core.chat_completions.response import ChatResponseAccumulator
+from modelglot.core.gemini import GeminiRequest
+from modelglot.core.gemini.response import GeminiResponseAccumulator
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.reasoning import ReasoningEffort, ReasoningPolicy
+from modelglot.core.stream_output import StreamOutput
+from modelglot.providers.gemini import GeminiProvider
 from tests.providers.support import (
     immediate_admission,
     make_provider_config,
@@ -421,7 +421,7 @@ async def test_explicit_off_hides_native_thoughts_but_keeps_signed_replay(
 
 @pytest.mark.asyncio
 async def test_explicit_off_rejection_does_not_relax_caller_control() -> None:
-    from free_claude_code.core.failures import ExecutionFailure
+    from modelglot.core.failures import ExecutionFailure
 
     bodies = []
 
@@ -608,7 +608,7 @@ async def test_native_empty_signed_part_does_not_emit_empty_text_block() -> None
 async def test_native_inband_error_preserves_retry_semantics_without_history_probes(
     code: int,
 ) -> None:
-    from free_claude_code.core.failures import ExecutionFailure
+    from modelglot.core.failures import ExecutionFailure
 
     bodies = []
 

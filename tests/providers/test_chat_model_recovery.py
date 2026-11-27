@@ -2,11 +2,11 @@
 
 import pytest
 
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.providers.admission import ProviderAdmissionController
-from free_claude_code.providers.groq import GroqProvider
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.providers.admission import ProviderAdmissionController
+from modelglot.providers.groq import GroqProvider
 from tests.api.test_delivered_stream_recovery import text_events
 from tests.providers.request_factory import make_messages_request
 from tests.providers.support import make_provider_config

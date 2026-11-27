@@ -5,14 +5,14 @@ import asyncio
 import httpx
 import pytest
 
-from free_claude_code.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
-from free_claude_code.config.settings import Settings
-from free_claude_code.providers.admission import ProviderOperationKind
-from free_claude_code.providers.admission_policy import ProviderAdmissionLimits
-from free_claude_code.providers.admission_registry import ProviderAdmissionRegistry
-from free_claude_code.providers.groq import GroqProvider
-from free_claude_code.providers.recovery_errors import ProviderRecoveryExhausted
-from free_claude_code.providers.runtime import ProviderRuntime
+from modelglot.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
+from modelglot.config.settings import Settings
+from modelglot.providers.admission import ProviderOperationKind
+from modelglot.providers.admission_policy import ProviderAdmissionLimits
+from modelglot.providers.admission_registry import ProviderAdmissionRegistry
+from modelglot.providers.groq import GroqProvider
+from modelglot.providers.recovery_errors import ProviderRecoveryExhausted
+from modelglot.providers.runtime import ProviderRuntime
 
 
 @pytest.mark.asyncio

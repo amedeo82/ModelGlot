@@ -10,12 +10,12 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from free_claude_code.application.routing import ModelRouter
-from free_claude_code.config.model_refs import ModelFallback
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.anthropic import get_token_count
-from free_claude_code.core.anthropic.tokens import CountMessages
-from free_claude_code.core.json_types import JsonObject
+from modelglot.application.routing import ModelRouter
+from modelglot.config.model_refs import ModelFallback
+from modelglot.config.settings import Settings
+from modelglot.core.anthropic import get_token_count
+from modelglot.core.anthropic.tokens import CountMessages
+from modelglot.core.json_types import JsonObject
 from tests.api.support import create_test_app, provider_manager_for_app
 from tests.wire_payload import (
     array_payload,
@@ -70,7 +70,7 @@ def test_native_count_accepts_and_estimates_opaque_payload_without_provider(
     original = deepcopy(body)
     with (
         patch(
-            "free_claude_code.runtime.provider_manager.ProviderGenerationLease.resolve_provider",
+            "modelglot.runtime.provider_manager.ProviderGenerationLease.resolve_provider",
             side_effect=AssertionError("Counting must not resolve a provider"),
         ),
         TestClient(app) as client,
@@ -155,10 +155,10 @@ def test_native_count_proxy_auth_and_local_estimator_failure_release() -> None:
         )
         with (
             patch(
-                "free_claude_code.api.routes.get_token_count",
+                "modelglot.api.routes.get_token_count",
                 side_effect=RuntimeError("private-estimate-token"),
             ),
-            patch("free_claude_code.api.request_errors.logger.error") as error_log,
+            patch("modelglot.api.request_errors.logger.error") as error_log,
         ):
             failed = client.post(
                 "/v1/messages/count_tokens",
@@ -175,7 +175,7 @@ def test_native_count_proxy_auth_and_local_estimator_failure_release() -> None:
 def test_native_count_estimator_receives_payload_without_mutation_and_traces_alias() -> (
     None
 ):
-    from free_claude_code.application.routing import ModelRouter
+    from modelglot.application.routing import ModelRouter
 
     body = count_body()
     object_array(body["tools"])[0]["api_key"] = "private-tool-option"
@@ -206,8 +206,8 @@ def test_native_count_estimator_receives_payload_without_mutation_and_traces_ali
     app = create_test_app(Settings(MODEL="anthropic/selected"))
     with (
         patch.object(ModelRouter, "resolve", record_resolve),
-        patch("free_claude_code.api.routes.get_token_count", count),
-        patch("free_claude_code.api.handlers.token_count.trace_event") as trace,
+        patch("modelglot.api.routes.get_token_count", count),
+        patch("modelglot.api.handlers.token_count.trace_event") as trace,
         TestClient(app) as client,
     ):
         response = client.post("/v1/messages/count_tokens", json=body)
@@ -234,7 +234,7 @@ def test_native_count_estimator_receives_payload_without_mutation_and_traces_ali
 async def test_native_count_retains_generation_while_waiting_for_encoder(
     cancel: bool,
 ) -> None:
-    from free_claude_code.runtime.provider_manager import ProviderGenerationLease
+    from modelglot.runtime.provider_manager import ProviderGenerationLease
 
     entered = asyncio.Event()
     proceed = asyncio.Event()

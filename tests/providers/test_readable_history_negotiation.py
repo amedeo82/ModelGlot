@@ -8,22 +8,22 @@ from typing import Any, cast
 import httpx
 import pytest
 
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.history_replay import (
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.history_replay import (
     HistoryMode,
     ReplayOrigin,
     ReplayRecord,
     encode_replay,
 )
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.providers.anthropic_messages.transport import (
+from modelglot.core.json_types import JsonObject
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.providers.anthropic_messages.transport import (
     AnthropicMessagesTransport,
 )
-from free_claude_code.providers.deepseek import DeepSeekProvider
-from free_claude_code.providers.endpoint_types import HttpEndpoint
-from free_claude_code.providers.history_negotiation import (
+from modelglot.providers.deepseek import DeepSeekProvider
+from modelglot.providers.endpoint_types import HttpEndpoint
+from modelglot.providers.history_negotiation import (
     HistoryModeCache,
     HistoryNegotiation,
     RequestHistory,
@@ -583,8 +583,8 @@ async def test_native_messages_negotiates_stream_and_json_and_reuses_cache(
 
 
 def test_precise_native_repair_keeps_other_records_in_same_carrier() -> None:
-    from free_claude_code.core.history_replay import ReplayRecord, encode_replay
-    from free_claude_code.providers.request_correction import (
+    from modelglot.core.history_replay import ReplayRecord, encode_replay
+    from modelglot.providers.request_correction import (
         Correction,
         Rejection,
         RequestCorrector,

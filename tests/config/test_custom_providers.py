@@ -3,13 +3,13 @@ import json
 import pytest
 from pydantic import ValidationError
 
-from free_claude_code.application.errors import UnknownProviderError
-from free_claude_code.application.routing import ModelRouter
-from free_claude_code.config.custom_providers import (
+from modelglot.application.errors import UnknownProviderError
+from modelglot.application.routing import ModelRouter
+from modelglot.config.custom_providers import (
     CustomProviderDefinition,
     encode_custom_providers,
 )
-from free_claude_code.config.settings import Settings
+from modelglot.config.settings import Settings
 
 ID = "custom_" + "a" * 32
 

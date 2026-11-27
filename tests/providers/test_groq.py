@@ -4,11 +4,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.config.provider_catalog import GROQ_DEFAULT_BASE
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.providers.base import ProviderConfig
-from free_claude_code.providers.groq import GroqProvider
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.config.provider_catalog import GROQ_DEFAULT_BASE
+from modelglot.core.json_types import JsonObject
+from modelglot.providers.base import ProviderConfig
+from modelglot.providers.groq import GroqProvider
 from tests.providers.request_factory import make_messages_request
 from tests.providers.support import (
     SDKStreamDouble,
@@ -38,9 +38,7 @@ def groq_provider(groq_config: ProviderConfig):
 
 def test_init(groq_config: ProviderConfig) -> None:
     """Test provider initialization."""
-    with patch(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI"
-    ) as mock_openai:
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI") as mock_openai:
         provider = GroqProvider(groq_config, admission=immediate_admission())
         assert provider._api_key == "test_groq_key"
         assert provider._base_url == GROQ_DEFAULT_BASE
@@ -172,7 +170,7 @@ def test_build_request_body_sanitizes_and_remaps_via_mock_converter(
     groq_provider: GroqProvider,
 ) -> None:
     with patch(
-        "free_claude_code.providers.openai_chat.request_policy.build_base_request_body"
+        "modelglot.providers.openai_chat.request_policy.build_base_request_body"
     ) as mock_convert:
         converted: JsonObject = {
             "model": "llama-3.3-70b-versatile",
@@ -211,7 +209,7 @@ def test_build_request_body_prefers_existing_max_completion_tokens(
     groq_provider: GroqProvider,
 ) -> None:
     with patch(
-        "free_claude_code.providers.openai_chat.request_policy.build_base_request_body"
+        "modelglot.providers.openai_chat.request_policy.build_base_request_body"
     ) as mock_convert:
         mock_convert.return_value = {
             "model": "llama-3.3-70b-versatile",

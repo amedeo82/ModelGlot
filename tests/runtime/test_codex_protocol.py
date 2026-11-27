@@ -1,8 +1,8 @@
 import pytest
 
-from free_claude_code.application.code_sessions import CodeValidationError
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.runtime.codex_protocol import CodexProtocol, NativePrompt
+from modelglot.application.code_sessions import CodeValidationError
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.runtime.codex_protocol import CodexProtocol, NativePrompt
 from tests.assertions import require_present
 from tests.wire_payload import object_payload
 

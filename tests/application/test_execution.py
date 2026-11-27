@@ -7,10 +7,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from free_claude_code.application.errors import InvalidRequestError
-from free_claude_code.application.execution import ProviderExecutor
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.application.routing import (
+from modelglot.application.errors import InvalidRequestError
+from modelglot.application.execution import ProviderExecutor
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.application.routing import (
     ProviderModelCandidate,
     ProviderModelTarget,
     ResolvedModelRoute,
@@ -19,18 +19,18 @@ from free_claude_code.application.routing import (
     RoutedMessagesRequest,
     RoutedResponsesRequest,
 )
-from free_claude_code.config.reasoning import ReasoningPreference
-from free_claude_code.core.anthropic.models import Message, MessagesRequest
-from free_claude_code.core.anthropic.passthrough import NativeMessagesRequest
-from free_claude_code.core.async_iterators import AsyncCloseable
-from free_claude_code.core.chat_completions.request import ChatRequest
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.gemini import GeminiRequest
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.reasoning import ReasoningCapability, ReasoningPolicy
-from free_claude_code.core.stream_delivery import current_stream_delivery
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.core.stream_recovery import ContinuationSeed
+from modelglot.config.reasoning import ReasoningPreference
+from modelglot.core.anthropic.models import Message, MessagesRequest
+from modelglot.core.anthropic.passthrough import NativeMessagesRequest
+from modelglot.core.async_iterators import AsyncCloseable
+from modelglot.core.chat_completions.request import ChatRequest
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.gemini import GeminiRequest
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.reasoning import ReasoningCapability, ReasoningPolicy
+from modelglot.core.stream_delivery import current_stream_delivery
+from modelglot.core.stream_output import StreamOutput
+from modelglot.core.stream_recovery import ContinuationSeed
 from tests.assertions import record_extra, require_exception_info
 
 
@@ -691,9 +691,7 @@ async def test_retryable_preframe_failure_selects_fallback_after_closing_primary
     )
     routed = _routed_request(_target("fallback", "fallback-model"))
 
-    with patch(
-        "free_claude_code.application.model_fallback.traces.trace_event"
-    ) as trace_mock:
+    with patch("modelglot.application.model_fallback.traces.trace_event") as trace_mock:
         chunks = [
             chunk
             async for chunk in executor.stream_messages(
@@ -721,11 +719,11 @@ async def test_retryable_preframe_failure_selects_fallback_after_closing_primary
     started = next(
         event
         for event in events
-        if event.get("event") == "free_claude_code.model_fallback.started"
+        if event.get("event") == "modelglot.model_fallback.started"
     )
     assert started == {
         "stage": "execution",
-        "event": "free_claude_code.model_fallback.started",
+        "event": "modelglot.model_fallback.started",
         "source": "application",
         "request_id": "req_fallback",
         "wire_api": "messages",
@@ -745,7 +743,7 @@ async def test_retryable_preframe_failure_selects_fallback_after_closing_primary
     selected = next(
         event
         for event in events
-        if event.get("event") == "free_claude_code.model_fallback.selected"
+        if event.get("event") == "modelglot.model_fallback.selected"
     )
     assert selected["selected_provider_model_ref"] == "fallback/fallback-model"
     assert selected["candidate_index"] == 2
@@ -905,9 +903,7 @@ async def test_nonretryable_provider_failure_selects_fallback_before_first_frame
         request_id="req_rejected",
     )
 
-    with patch(
-        "free_claude_code.application.model_fallback.traces.trace_event"
-    ) as trace_mock:
+    with patch("modelglot.application.model_fallback.traces.trace_event") as trace_mock:
         chunks = [chunk async for chunk in stream]
 
     assert chunks == [StreamOutput(("fallback-frame",))]
@@ -915,7 +911,7 @@ async def test_nonretryable_provider_failure_selects_fallback_before_first_frame
     fallback_started = next(
         call.kwargs
         for call in trace_mock.call_args_list
-        if call.kwargs.get("event") == "free_claude_code.model_fallback.started"
+        if call.kwargs.get("event") == "modelglot.model_fallback.started"
     )
     assert fallback_started["failure_kind"] == failure_kind.value
     assert fallback_started["provider_retryable"] is False

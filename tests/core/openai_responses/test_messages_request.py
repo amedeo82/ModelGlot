@@ -4,15 +4,15 @@ from collections.abc import Mapping
 
 import pytest
 
-from free_claude_code.core.anthropic.native import NativeMessagesOptions
-from free_claude_code.core.history_replay import (
+from modelglot.core.anthropic.native import NativeMessagesOptions
+from modelglot.core.history_replay import (
     ReplayOrigin,
     ReplayRecord,
     encode_replay,
     prepare_history,
 )
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.openai_responses import (
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.openai_responses import (
     OpenAIResponsesRequest,
     ResponsesConversionError,
     ResponsesMessagesRequest,

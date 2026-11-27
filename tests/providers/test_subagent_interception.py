@@ -2,16 +2,16 @@ import json
 
 import pytest
 
-from free_claude_code.core.anthropic import ReasoningReplayMode
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.chat_completions.tool_calls import (
+from modelglot.core.anthropic import ReasoningReplayMode
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.chat_completions.tool_calls import (
     restore_tool_argument_aliases,
 )
-from free_claude_code.core.openai_responses import (
+from modelglot.core.openai_responses import (
     OpenAIResponsesRequest,
     build_responses_chat_request,
 )
-from free_claude_code.providers.openai_chat.stream_output import (
+from modelglot.providers.openai_chat.stream_output import (
     AnthropicChatStreamOutput,
     ChatStreamOutput,
     ChatStreamUsage,

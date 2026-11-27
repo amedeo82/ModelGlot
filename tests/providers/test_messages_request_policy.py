@@ -4,14 +4,14 @@ from typing import Literal
 
 import pytest
 
-from free_claude_code.core.anthropic.models import ThinkingConfig
-from free_claude_code.core.anthropic.native import NativeMessagesError
-from free_claude_code.core.reasoning import (
+from modelglot.core.anthropic.models import ThinkingConfig
+from modelglot.core.anthropic.native import NativeMessagesError
+from modelglot.core.reasoning import (
     ReasoningControl,
     ReasoningEffort,
     ReasoningPolicy,
 )
-from free_claude_code.providers.anthropic_messages.request_policy import (
+from modelglot.providers.anthropic_messages.request_policy import (
     MessagesModelCapabilities,
     resolve_messages_options,
 )

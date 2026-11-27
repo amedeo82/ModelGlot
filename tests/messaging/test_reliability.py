@@ -3,15 +3,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from telegram.error import NetworkError, RetryAfter, TelegramError
 
-from free_claude_code.messaging.limiter import MessagingRateLimiter
-from free_claude_code.messaging.platforms.telegram import TelegramRuntime
+from modelglot.messaging.limiter import MessagingRateLimiter
+from modelglot.messaging.platforms.telegram import TelegramRuntime
 
 
 @pytest.fixture
 def telegram_platform():
-    with patch(
-        "free_claude_code.messaging.platforms.telegram.TELEGRAM_AVAILABLE", True
-    ):
+    with patch("modelglot.messaging.platforms.telegram.TELEGRAM_AVAILABLE", True):
         platform = TelegramRuntime(
             bot_token="test_token",
             allowed_user_id="12345",
@@ -90,14 +88,14 @@ async def test_telegram_no_retry_on_bad_request(
 
 def test_handler_build_message_hardening() -> None:
     # Formatting hardening now lives in TranscriptBuffer rendering.
-    from free_claude_code.messaging.rendering.telegram_markdown import (
+    from modelglot.messaging.rendering.telegram_markdown import (
         escape_md_v2,
         escape_md_v2_code,
         mdv2_bold,
         mdv2_code_inline,
         render_markdown_to_mdv2,
     )
-    from free_claude_code.messaging.transcript import RenderCtx, TranscriptBuffer
+    from modelglot.messaging.transcript import RenderCtx, TranscriptBuffer
 
     ctx = RenderCtx(
         bold=mdv2_bold,
@@ -126,14 +124,14 @@ def test_handler_build_message_hardening() -> None:
 
 def test_render_output_never_exceeds_4096() -> None:
     """Transcript render with various status lengths never exceeds Telegram 4096 limit."""
-    from free_claude_code.messaging.rendering.telegram_markdown import (
+    from modelglot.messaging.rendering.telegram_markdown import (
         escape_md_v2,
         escape_md_v2_code,
         mdv2_bold,
         mdv2_code_inline,
         render_markdown_to_mdv2,
     )
-    from free_claude_code.messaging.transcript import RenderCtx, TranscriptBuffer
+    from modelglot.messaging.transcript import RenderCtx, TranscriptBuffer
 
     ctx = RenderCtx(
         bold=mdv2_bold,

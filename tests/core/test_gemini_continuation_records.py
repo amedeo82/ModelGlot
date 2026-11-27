@@ -8,8 +8,8 @@ from dataclasses import replace
 
 import pytest
 
-from free_claude_code.core.continuation_request import ContinuationRequest
-from free_claude_code.core.history_replay import (
+from modelglot.core.continuation_request import ContinuationRequest
+from modelglot.core.history_replay import (
     ContinuationReplay,
     HistoryMode,
     HistoryReplayError,
@@ -19,8 +19,8 @@ from free_claude_code.core.history_replay import (
     encode_replay,
     prepare_history,
 )
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.stream_recovery import ContinuationSeed
+from modelglot.core.json_types import JsonObject
+from modelglot.core.stream_recovery import ContinuationSeed
 from tests.core.test_native_gemini_history import ORIGIN
 from tests.wire_payload import array_payload, object_array
 
@@ -146,7 +146,7 @@ def test_complete_encoded_record_is_bounded(monkeypatch: pytest.MonkeyPatch) -> 
     record = recovered()
     size = len(encode_replay(record))
     monkeypatch.setattr(
-        "free_claude_code.core.history_replay.RECOVERY_RETENTION_BYTES", size - 1
+        "modelglot.core.history_replay.RECOVERY_RETENTION_BYTES", size - 1
     )
     with pytest.raises(HistoryReplayError, match="retention"):
         encode_replay(record)
@@ -281,7 +281,7 @@ def test_replay_works_in_a_fresh_process() -> None:
     record = recovered()
     script = """
 import json, sys
-from free_claude_code.core.history_replay import decode_replay, prepare_history
+from modelglot.core.history_replay import decode_replay, prepare_history
 body=json.load(sys.stdin)
 record=decode_replay(body['contents'][1]['parts'][1]['thoughtSignature'])
 print(json.dumps(prepare_history(body,record.origin)))

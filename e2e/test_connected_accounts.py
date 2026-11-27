@@ -6,12 +6,12 @@ import pytest
 from playwright.sync_api import Dialog, Page, Route, expect
 
 from e2e.provider_support import api_key_input, open_provider
-from free_claude_code.application.connected_accounts import (
+from modelglot.application.connected_accounts import (
     ConnectedAccountLoginMode,
     ConnectedAccountState,
     ConnectedAccountStatus,
 )
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.json_types import JsonObject
 from tests.wire_payload import object_payload, response_object
 
 

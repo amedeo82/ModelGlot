@@ -8,16 +8,16 @@ from typing import cast
 import pytest
 from pydantic import ValidationError
 
-from free_claude_code.core.continuation_request import ContinuationRequest
-from free_claude_code.core.history_replay import (
+from modelglot.core.continuation_request import ContinuationRequest
+from modelglot.core.history_replay import (
     HistoryReplayError,
     decode_gemini_replay,
     encode_gemini_replay,
     encode_replay,
     prepare_history,
 )
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.stream_recovery import ContinuationSeed
+from modelglot.core.json_types import JsonObject
+from modelglot.core.stream_recovery import ContinuationSeed
 from tests.core.test_gemini_continuation_records import recovered, request
 from tests.core.test_native_gemini_history import ORIGIN
 from tests.wire_payload import object_array
@@ -78,7 +78,7 @@ def test_final_wrapped_size_is_bounded_on_encode_and_decode(
     inner = encode_replay(record)
     wrapped = encode_gemini_replay(record)
     monkeypatch.setattr(
-        "free_claude_code.core.history_replay.RECOVERY_RETENTION_BYTES",
+        "modelglot.core.history_replay.RECOVERY_RETENTION_BYTES",
         len(wrapped) - 1,
     )
     assert encode_replay(record) == inner

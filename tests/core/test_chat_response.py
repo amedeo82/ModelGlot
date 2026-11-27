@@ -1,10 +1,10 @@
 import pytest
 
-from free_claude_code.core.chat_completions.response import (
+from modelglot.core.chat_completions.response import (
     ChatResponseAccumulator,
     NativeChatRelay,
 )
-from free_claude_code.core.json_types import JsonObject, load_json_value
+from modelglot.core.json_types import JsonObject, load_json_value
 from tests.wire_payload import array_payload, object_payload
 
 
@@ -65,7 +65,7 @@ def test_chat_json_keeps_late_usage_and_both_choices() -> None:
 
 
 def test_native_gemini_json_preserves_metadata_and_late_usage() -> None:
-    from free_claude_code.core.gemini.response import GeminiResponseAccumulator
+    from modelglot.core.gemini.response import GeminiResponseAccumulator
 
     accumulator = GeminiResponseAccumulator()
     accumulator.feed(

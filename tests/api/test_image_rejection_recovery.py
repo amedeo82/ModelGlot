@@ -10,10 +10,10 @@ import pytest
 from fastapi.testclient import TestClient
 from openai import AsyncOpenAI
 
-from free_claude_code.config.provider_catalog import NVIDIA_NIM_DEFAULT_BASE
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.providers.nvidia_nim import NvidiaNimProvider
+from modelglot.config.provider_catalog import NVIDIA_NIM_DEFAULT_BASE
+from modelglot.config.settings import Settings
+from modelglot.core.json_types import JsonObject
+from modelglot.providers.nvidia_nim import NvidiaNimProvider
 from tests.api.support import create_test_app
 from tests.api.test_delivered_stream_recovery import text_events
 from tests.providers.support import immediate_admission, make_provider_config
@@ -137,7 +137,7 @@ def nim_app(reply: Callable[[httpx2.Request], httpx2.Response]):
         http_client=httpx2.AsyncClient(transport=httpx2.MockTransport(reply)),
     )
     with patch(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI",
+        "modelglot.providers.openai_chat.client.AsyncOpenAI",
         return_value=client,
     ):
         provider = NvidiaNimProvider(

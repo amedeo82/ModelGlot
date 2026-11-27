@@ -7,18 +7,18 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
-from free_claude_code.application.errors import InvalidRequestError
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.config.model_refs import ModelFallback
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.anthropic import MessagesRequest
-from free_claude_code.core.anthropic.streaming import format_sse_event
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.core.stream_recovery import ContinuationSeed
+from modelglot.application.errors import InvalidRequestError
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.config.model_refs import ModelFallback
+from modelglot.config.settings import Settings
+from modelglot.core.anthropic import MessagesRequest
+from modelglot.core.anthropic.streaming import format_sse_event
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.json_types import JsonObject
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.core.stream_output import StreamOutput
+from modelglot.core.stream_recovery import ContinuationSeed
 from tests.api.support import create_test_app
 
 
@@ -303,7 +303,7 @@ def fallback_client(
 
     with (
         patch(
-            "free_claude_code.api.routes.resolve_provider",
+            "modelglot.api.routes.resolve_provider",
             side_effect=resolve,
         ),
         TestClient(app) as client,

@@ -6,14 +6,14 @@ from typing import Any, cast
 
 import pytest
 
-from free_claude_code.core.chat_completions.request import (
+from modelglot.core.chat_completions.request import (
     ChatConversionError,
     ChatRequest,
     chat_messages_body,
     chat_responses_body,
 )
-from free_claude_code.core.gemini.native_request import chat_to_gemini
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.gemini.native_request import chat_to_gemini
+from modelglot.core.json_types import JsonObject
 from tests.wire_payload import object_array
 
 

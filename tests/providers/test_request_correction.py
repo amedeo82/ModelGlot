@@ -11,19 +11,19 @@ from typing import Any
 import httpx
 import pytest
 
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.history_replay import (
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.history_replay import (
     ReplayOrigin,
     ReplayRecord,
     encode_replay,
 )
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.providers.history_negotiation import (
+from modelglot.core.json_types import JsonObject
+from modelglot.providers.history_negotiation import (
     HistoryModeCache,
     RequestHistory,
 )
-from free_claude_code.providers.reasoning_compatibility import ReasoningCorrection
-from free_claude_code.providers.request_correction import (
+from modelglot.providers.reasoning_compatibility import ReasoningCorrection
+from modelglot.providers.request_correction import (
     Correction,
     CorrectionStep,
     NextHistoryMode,

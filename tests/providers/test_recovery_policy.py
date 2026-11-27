@@ -5,7 +5,7 @@ from email.utils import format_datetime
 
 import pytest
 
-from free_claude_code.providers.recovery_policy import (
+from modelglot.providers.recovery_policy import (
     EpisodeView,
     Exhaust,
     FailedAttempt,
@@ -20,7 +20,7 @@ from free_claude_code.providers.recovery_policy import (
     retry_after_seconds,
     retry_delay,
 )
-from free_claude_code.providers.recovery_policy.decision import Transition
+from modelglot.providers.recovery_policy.decision import Transition
 
 TIMING = RecoveryTiming(base_delay=2.0, max_delay=60.0, jitter=1.0)
 NOW = 100.0

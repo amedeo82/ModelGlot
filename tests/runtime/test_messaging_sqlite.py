@@ -11,16 +11,16 @@ import pytest
 import pytest_asyncio
 from sqlalchemy.pool import QueuePool
 
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.messaging.models import IncomingMessage, MessageScope
-from free_claude_code.messaging.trees import MessagingStorageError, TreeQueueManager
-from free_claude_code.messaging.trees.snapshot import TreeSnapshot
-from free_claude_code.messaging.trees.transitions import FailureResult, NodeClaim
-from free_claude_code.messaging.workflow import MessagingWorkflow
-from free_claude_code.runtime.code_sessions_sqlite import SQLiteCodeStore
-from free_claude_code.runtime.messaging_import import import_legacy
-from free_claude_code.runtime.messaging_sqlite import SQLiteMessagingStore
-from free_claude_code.runtime.sqlite_database import (
+from modelglot.core.json_types import JsonObject
+from modelglot.messaging.models import IncomingMessage, MessageScope
+from modelglot.messaging.trees import MessagingStorageError, TreeQueueManager
+from modelglot.messaging.trees.snapshot import TreeSnapshot
+from modelglot.messaging.trees.transitions import FailureResult, NodeClaim
+from modelglot.messaging.workflow import MessagingWorkflow
+from modelglot.runtime.code_sessions_sqlite import SQLiteCodeStore
+from modelglot.runtime.messaging_import import import_legacy
+from modelglot.runtime.messaging_sqlite import SQLiteMessagingStore
+from modelglot.runtime.sqlite_database import (
     SQLiteDatabase,
     query_rows,
     required_column,
@@ -240,7 +240,7 @@ async def test_invalid_graph_and_invalid_log_entry_do_not_discard_good_records(
 async def test_failed_import_transaction_keeps_source_and_allows_retry(
     storage: SQLiteMessagingStore, tmp_path: Path
 ) -> None:
-    from free_claude_code.runtime.messaging_sqlite import write_tree
+    from modelglot.runtime.messaging_sqlite import write_tree
 
     source = tmp_path / "sessions.json"
     source.write_text(
@@ -254,7 +254,7 @@ async def test_failed_import_transaction_keeps_source_and_allows_retry(
 
     with (
         patch(
-            "free_claude_code.runtime.messaging_import.write_tree",
+            "modelglot.runtime.messaging_import.write_tree",
             side_effect=fail_second_tree,
         ),
         pytest.raises(sqlite3.OperationalError),
@@ -551,11 +551,11 @@ async def test_import_outer_failure_rolls_back_released_units(
 async def test_startup_partial_import_preserves_links_scopes_and_code(
     storage: SQLiteMessagingStore, tmp_path: Path, platform: str
 ) -> None:
-    from free_claude_code.application.code_sessions.models import CodeSession
-    from free_claude_code.config.settings import Settings
-    from free_claude_code.runtime.application import ApplicationRuntime
-    from free_claude_code.runtime.configuration import ConfigurationService
-    from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
+    from modelglot.application.code_sessions.models import CodeSession
+    from modelglot.config.settings import Settings
+    from modelglot.runtime.application import ApplicationRuntime
+    from modelglot.runtime.configuration import ConfigurationService
+    from modelglot.runtime.provider_manager import ProviderRuntimeManager
 
     code = SQLiteCodeStore(storage.database)
     await code.start()
@@ -610,7 +610,7 @@ async def test_startup_partial_import_preserves_links_scopes_and_code(
     )
     try:
         with patch(
-            "free_claude_code.runtime.messaging_service.messaging_state_dir_path",
+            "modelglot.runtime.messaging_service.messaging_state_dir_path",
             return_value=str(tmp_path),
         ):
             await runtime._messaging._initialize_messaging_storage()
@@ -996,7 +996,7 @@ async def test_gated_tree_can_be_cleared_and_replaced_before_old_cleanup_finishe
     storage: SQLiteMessagingStore, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(
-        "free_claude_code.messaging.trees.manager.CANCEL_TASK_DRAIN_TIMEOUT_S", 0.01
+        "modelglot.messaging.trees.manager.CANCEL_TASK_DRAIN_TIMEOUT_S", 0.01
     )
     faulted, cleanup_release = asyncio.Event(), asyncio.Event()
     new_started, new_release = asyncio.Event(), asyncio.Event()

@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.config.model_catalog_metadata import ModelCatalogMetadata
-from free_claude_code.providers.model_catalog_logos import (
+from modelglot.config.model_catalog_metadata import ModelCatalogMetadata
+from modelglot.providers.model_catalog_logos import (
     ModelCatalogLogoError,
     ModelCatalogLogoStore,
     validate_catalog_svg,
@@ -84,7 +84,7 @@ async def test_logo_refresh_publishes_valid_assets_and_preserves_stale_on_error(
         return client
 
     monkeypatch.setattr(
-        "free_claude_code.providers.model_catalog_logos.httpx.AsyncClient",
+        "modelglot.providers.model_catalog_logos.httpx.AsyncClient",
         client_factory,
     )
     store = ModelCatalogLogoStore(tmp_path / "logos")
@@ -147,7 +147,7 @@ async def test_logo_refresh_rejects_wrong_content_type_and_oversize_stream(
         return Client()
 
     monkeypatch.setattr(
-        "free_claude_code.providers.model_catalog_logos.httpx.AsyncClient",
+        "modelglot.providers.model_catalog_logos.httpx.AsyncClient",
         client_factory,
     )
     store = ModelCatalogLogoStore(tmp_path / "logos")

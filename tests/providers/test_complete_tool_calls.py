@@ -4,15 +4,15 @@ from copy import deepcopy
 
 import pytest
 
-from free_claude_code.api.response_streams import (
+from modelglot.api.response_streams import (
     ManagedStreamingResponse,
     chat_sse_streaming_response,
     gemini_sse_streaming_response,
 )
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.chat_completions.request import ChatRequest
-from free_claude_code.core.gemini import GeminiRequest
-from free_claude_code.core.reasoning import ReasoningPolicy
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.chat_completions.request import ChatRequest
+from modelglot.core.gemini import GeminiRequest
+from modelglot.core.reasoning import ReasoningPolicy
 from tests.api.test_tool_call_buffer import _response
 from tests.providers.test_chat_translated_transport import _tool_names
 from tests.providers.test_history_transports import _events_for, _harness

@@ -11,30 +11,30 @@ import httpx2
 import pytest
 from openai import AsyncOpenAI
 
-from free_claude_code.application.errors import InvalidRequestError
-from free_claude_code.application.response_collection import collect_response
-from free_claude_code.core.anthropic import ReasoningReplayMode
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import (
+from modelglot.application.errors import InvalidRequestError
+from modelglot.application.response_collection import collect_response
+from modelglot.core.anthropic import ReasoningReplayMode
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.anthropic.stream_contracts import (
     assert_anthropic_stream_contract,
     parse_sse_text,
     text_content,
     thinking_content,
 )
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.json_types import JsonObject, load_json_value
-from free_claude_code.core.openai_responses import (
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.json_types import JsonObject, load_json_value
+from modelglot.core.openai_responses import (
     OpenAIResponsesRequest,
     ResponsesToolPolicy,
     build_responses_chat_request,
 )
-from free_claude_code.core.reasoning import DEFAULT_REASONING_POLICY, ReasoningPolicy
-from free_claude_code.providers.openai_chat.stream_output import (
+from modelglot.core.reasoning import DEFAULT_REASONING_POLICY, ReasoningPolicy
+from modelglot.providers.openai_chat.stream_output import (
     ChatStreamUsage,
     CompletedToolCall,
     ResponsesChatStreamOutput,
 )
-from free_claude_code.providers.openai_responses import OpenAIResponsesTransport
+from modelglot.providers.openai_responses import OpenAIResponsesTransport
 from tests.core.openai_responses.test_client_tool_discovery import AGENTS, SEARCH
 from tests.providers.support import (
     REASONING_ON,

@@ -9,11 +9,11 @@ from unittest.mock import MagicMock
 import httpx
 import pytest
 
-from free_claude_code.config import paths
-from free_claude_code.config.env_migrations import atomic_write_managed_config
-from free_claude_code.config.loader import ManagedConfigStore
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.json_types import JsonObject
+from modelglot.config import paths
+from modelglot.config.env_migrations import atomic_write_managed_config
+from modelglot.config.loader import ManagedConfigStore
+from modelglot.config.settings import Settings
+from modelglot.core.json_types import JsonObject
 from smoke.lib import child_process
 from smoke.lib import e2e as smoke_e2e
 from smoke.lib import http as smoke_http

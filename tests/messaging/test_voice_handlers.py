@@ -5,13 +5,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from free_claude_code.messaging.models import IncomingMessage
-from free_claude_code.messaging.platforms.discord import (
+from modelglot.messaging.models import IncomingMessage
+from modelglot.messaging.platforms.discord import (
     DISCORD_AVAILABLE,
     DiscordRuntime,
 )
-from free_claude_code.messaging.platforms.discord_inbound import get_audio_attachment
-from free_claude_code.messaging.platforms.telegram import TelegramRuntime
+from modelglot.messaging.platforms.discord_inbound import get_audio_attachment
+from modelglot.messaging.platforms.telegram import TelegramRuntime
 
 
 @pytest.fixture
@@ -19,9 +19,7 @@ def telegram_platform():
     transcriber = MagicMock()
     transcriber.transcribe = AsyncMock(return_value="Hello from voice")
     transcriber.close = AsyncMock()
-    with patch(
-        "free_claude_code.messaging.platforms.telegram.TELEGRAM_AVAILABLE", True
-    ):
+    with patch("modelglot.messaging.platforms.telegram.TELEGRAM_AVAILABLE", True):
         platform = TelegramRuntime(
             bot_token="test_token",
             allowed_user_id="12345",
@@ -34,9 +32,7 @@ def telegram_platform():
 @pytest.mark.asyncio
 async def test_telegram_voice_disabled_sends_reply() -> None:
     """When voice_note_enabled is False, reply with disabled message."""
-    with patch(
-        "free_claude_code.messaging.platforms.telegram.TELEGRAM_AVAILABLE", True
-    ):
+    with patch("modelglot.messaging.platforms.telegram.TELEGRAM_AVAILABLE", True):
         telegram_platform = TelegramRuntime(
             bot_token="test_token",
             allowed_user_id="12345",

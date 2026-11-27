@@ -16,8 +16,8 @@ from typing import Any, TypedDict
 import httpx
 import pytest
 
-from free_claude_code.config.provider_catalog import SUPPORTED_PROVIDER_IDS
-from free_claude_code.core.anthropic.stream_contracts import (
+from modelglot.config.provider_catalog import SUPPORTED_PROVIDER_IDS
+from modelglot.core.anthropic.stream_contracts import (
     SSEEvent,
     assert_anthropic_stream_contract,
     event_index,
@@ -25,13 +25,13 @@ from free_claude_code.core.anthropic.stream_contracts import (
     parse_sse_lines,
     text_content,
 )
-from free_claude_code.core.json_types import JsonObject, JsonValue, load_json_value
-from free_claude_code.harnesses.claude import build_claude_proxy_env
-from free_claude_code.messaging.models import IncomingMessage, MessageScope
-from free_claude_code.messaging.voice import VoiceCancellationResult
-from free_claude_code.messaging.workflow import MessagingWorkflow
-from free_claude_code.runtime.messaging_sqlite import SQLiteMessagingStore
-from free_claude_code.runtime.sqlite_database import SQLiteDatabase
+from modelglot.core.json_types import JsonObject, JsonValue, load_json_value
+from modelglot.harnesses.claude import build_claude_proxy_env
+from modelglot.messaging.models import IncomingMessage, MessageScope
+from modelglot.messaging.voice import VoiceCancellationResult
+from modelglot.messaging.workflow import MessagingWorkflow
+from modelglot.runtime.messaging_sqlite import SQLiteMessagingStore
+from modelglot.runtime.sqlite_database import SQLiteDatabase
 from smoke.lib.child_process import run_captured_text
 from smoke.lib.config import ProviderModel, SmokeConfig, auth_headers
 from smoke.lib.http import conversation_headers

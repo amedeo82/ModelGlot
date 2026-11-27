@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 import httpx
 import pytest
 
-from free_claude_code.providers.openai_chat import openai_v1_base_url
+from modelglot.providers.openai_chat import openai_v1_base_url
 from tests.wire_payload import response_object
 
 LOCAL_PROVIDER_PROBE_TIMEOUT_S = 1.5

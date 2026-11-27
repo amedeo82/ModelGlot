@@ -3,18 +3,18 @@
 import subprocess
 import sys
 
-from free_claude_code.core.anthropic import (
+from modelglot.core.anthropic import (
     MessagesRequest as PublicMessagesRequest,
 )
-from free_claude_code.core.anthropic import (
+from modelglot.core.anthropic import (
     MessagesResponse,
     TokenCountResponse,
 )
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.openai_responses import (
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.openai_responses import (
     OpenAIResponsesRequest as PublicOpenAIResponsesRequest,
 )
-from free_claude_code.core.openai_responses.models import OpenAIResponsesRequest
+from modelglot.core.openai_responses.models import OpenAIResponsesRequest
 
 
 def test_anthropic_request_model_is_core_owned_and_permissive() -> None:
@@ -26,7 +26,7 @@ def test_anthropic_request_model_is_core_owned_and_permissive() -> None:
         }
     )
 
-    assert MessagesRequest.__module__ == "free_claude_code.core.anthropic.models"
+    assert MessagesRequest.__module__ == "modelglot.core.anthropic.models"
     assert PublicMessagesRequest is MessagesRequest
     assert request.model_extra == {"provider_extension": {"enabled": True}}
 
@@ -40,28 +40,25 @@ def test_responses_request_model_is_core_owned_and_permissive() -> None:
         }
     )
 
-    assert (
-        OpenAIResponsesRequest.__module__
-        == "free_claude_code.core.openai_responses.models"
-    )
+    assert OpenAIResponsesRequest.__module__ == "modelglot.core.openai_responses.models"
     assert PublicOpenAIResponsesRequest is OpenAIResponsesRequest
     assert request.model_extra == {"provider_extension": {"enabled": True}}
 
 
 def test_anthropic_response_models_are_protocol_owned() -> None:
-    assert MessagesResponse.__module__ == "free_claude_code.core.anthropic.models"
-    assert TokenCountResponse.__module__ == "free_claude_code.core.anthropic.models"
+    assert MessagesResponse.__module__ == "modelglot.core.anthropic.models"
+    assert TokenCountResponse.__module__ == "modelglot.core.anthropic.models"
 
 
 def test_protocol_facades_are_import_order_independent() -> None:
     import_orders = (
         (
-            "free_claude_code.core.anthropic",
-            "free_claude_code.core.openai_responses",
+            "modelglot.core.anthropic",
+            "modelglot.core.openai_responses",
         ),
         (
-            "free_claude_code.core.openai_responses",
-            "free_claude_code.core.anthropic",
+            "modelglot.core.openai_responses",
+            "modelglot.core.anthropic",
         ),
     )
 

@@ -17,13 +17,13 @@ import pytest
 import uvicorn
 from fastapi import FastAPI
 
-from free_claude_code.cli import commands
-from free_claude_code.cli.desktop import DesktopController
-from free_claude_code.cli.server_socket import ServerSockets
-from free_claude_code.cli.uvicorn_server import RuntimeServer
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.interprocess_lock import InterprocessFileLock
-from free_claude_code.core.json_types import JsonObject
+from modelglot.cli import commands
+from modelglot.cli.desktop import DesktopController
+from modelglot.cli.server_socket import ServerSockets
+from modelglot.cli.uvicorn_server import RuntimeServer
+from modelglot.config.settings import Settings
+from modelglot.core.interprocess_lock import InterprocessFileLock
+from modelglot.core.json_types import JsonObject
 from tests.assertions import record_extra
 
 
@@ -57,7 +57,7 @@ def test_listeners_remain_exclusive_until_owner_closes() -> None:
 def test_partial_address_failure_closes_every_reserved_socket(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from free_claude_code.cli import server_socket
+    from modelglot.cli import server_socket
 
     listeners = [MagicMock(), MagicMock()]
     listeners[1].bind.side_effect = OSError(errno.EADDRINUSE, "busy")
@@ -209,13 +209,13 @@ def test_browser_warning_retains_owning_instance_after_server_exit(
                 assert not tray.is_alive()
             assert entered.wait(2)
 
-    monkeypatch.setattr("free_claude_code.runtime.bootstrap.build_asgi_app", build)
+    monkeypatch.setattr("modelglot.runtime.bootstrap.build_asgi_app", build)
 
     def replace_Config(*args: object, **kwargs: object):
         return None
 
     monkeypatch.setattr(uvicorn, "Config", replace_Config)
-    monkeypatch.setattr("free_claude_code.cli.uvicorn_server.RuntimeServer", Server)
+    monkeypatch.setattr("modelglot.cli.uvicorn_server.RuntimeServer", Server)
     monkeypatch.setattr(commands.webbrowser, "open", browser)
     try:
         for _ in range(2):
@@ -384,9 +384,9 @@ def _run_browser_shutdown_probe(
     mode: str, outcome: str, directory: str, setup_delay: str = "0"
 ):
     """Run real ModelGlot lifecycle owners with only OS/browser/server dependencies faked."""
-    from free_claude_code.cli import desktop, uvicorn_server
-    from free_claude_code.config import paths
-    from free_claude_code.runtime import bootstrap
+    from modelglot.cli import desktop, uvicorn_server
+    from modelglot.config import paths
+    from modelglot.runtime import bootstrap
 
     print("probe: setup", flush=True)
     entered = threading.Event()
@@ -477,7 +477,7 @@ def _run_browser_shutdown_probe(
         assert supervisor.status is commands.ServerStatus.STOPPED
     else:
         # Keep a real existing listener and (for desktop reuse) its singleton lock.
-        from free_claude_code.core.interprocess_lock import InterprocessFileLock
+        from modelglot.core.interprocess_lock import InterprocessFileLock
 
         with ServerSockets.reserve("127.0.0.1", 0) as owner:
             settings = Settings.model_validate(

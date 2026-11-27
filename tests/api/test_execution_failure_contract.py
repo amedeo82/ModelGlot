@@ -11,22 +11,22 @@ import pytest
 from fastapi.testclient import TestClient
 from openai import AsyncOpenAI
 
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.config.loader import compose_settings_snapshot
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.anthropic import ReasoningReplayMode
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.anthropic.streaming import format_sse_event
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.openai_responses import (
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.config.loader import compose_settings_snapshot
+from modelglot.config.settings import Settings
+from modelglot.core.anthropic import ReasoningReplayMode
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.anthropic.streaming import format_sse_event
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.json_types import JsonObject
+from modelglot.core.openai_responses import (
     OpenAIResponsesRequest,
     openai_error_from_failure,
 )
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.core.stream_recovery import ContinuationSeed
-from free_claude_code.providers.openai_chat import (
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.core.stream_output import StreamOutput
+from modelglot.core.stream_recovery import ContinuationSeed
+from modelglot.providers.openai_chat import (
     NO_REASONING,
     OpenAIChatProfile,
     OpenAIChatProvider,
@@ -270,7 +270,7 @@ def _client_for(
 ):
     app = create_test_app(settings)
     return (
-        patch("free_claude_code.api.routes.resolve_provider", return_value=provider),
+        patch("modelglot.api.routes.resolve_provider", return_value=provider),
         TestClient(app),
     )
 
@@ -443,7 +443,7 @@ def _terminal_trace(trace_mock: MagicMock) -> dict[str, Any]:
             call.kwargs
             for call in trace_mock.call_args_list
             if call.kwargs.get("event")
-            == "free_claude_code.api.response.terminal_execution_error"
+            == "modelglot.api.response.terminal_execution_error"
         )
     )
 
@@ -486,7 +486,7 @@ def test_grouped_pre_start_execution_failure_keeps_canonical_wire_error(
 
     with (
         resolver_patch,
-        patch("free_claude_code.api.response_streams.trace_event") as trace_mock,
+        patch("modelglot.api.response_streams.trace_event") as trace_mock,
         client,
     ):
         response = client.post(path, json=payload)
@@ -521,7 +521,7 @@ def test_grouped_post_start_execution_failure_keeps_canonical_terminal_event(
 
     with (
         resolver_patch,
-        patch("free_claude_code.api.response_streams.trace_event") as trace_mock,
+        patch("modelglot.api.response_streams.trace_event") as trace_mock,
         client,
     ):
         response = client.post(path, json=payload)
@@ -554,7 +554,7 @@ def test_grouped_stream_false_execution_failure_discards_partial_content() -> No
 
     with (
         resolver_patch,
-        patch("free_claude_code.api.response_streams.trace_event") as trace_mock,
+        patch("modelglot.api.response_streams.trace_event") as trace_mock,
         client,
     ):
         response = client.post("/v1/messages", json=_messages_payload(stream=False))
@@ -625,7 +625,7 @@ def test_pre_start_permission_failure_preserves_403_without_client_retry(
 
     with (
         resolver_patch,
-        patch("free_claude_code.api.response_streams.trace_event") as trace_mock,
+        patch("modelglot.api.response_streams.trace_event") as trace_mock,
         client,
     ):
         response = client.post(path, json=payload)
@@ -700,7 +700,7 @@ def test_messages_context_window_failure_triggers_client_compaction() -> None:
 
     with (
         resolver_patch,
-        patch("free_claude_code.api.response_streams.trace_event") as trace_mock,
+        patch("modelglot.api.response_streams.trace_event") as trace_mock,
         client,
     ):
         response = client.post("/v1/messages", json=_messages_payload(stream=True))
@@ -795,7 +795,7 @@ def test_messages_post_start_execution_failure_follows_closed_block() -> None:
 
     with (
         resolver_patch,
-        patch("free_claude_code.api.response_streams.trace_event") as trace_mock,
+        patch("modelglot.api.response_streams.trace_event") as trace_mock,
         client,
     ):
         response = client.post("/v1/messages", json=_messages_payload(stream=True))
@@ -818,7 +818,7 @@ def test_messages_post_start_execution_failure_follows_closed_block() -> None:
     assert "message_stop" not in response.text
     assert _terminal_trace(trace_mock) == {
         "stage": "egress",
-        "event": "free_claude_code.api.response.terminal_execution_error",
+        "event": "modelglot.api.response.terminal_execution_error",
         "source": "api",
         "wire_api": "messages",
         "request_id": request_id,
@@ -843,7 +843,7 @@ def test_responses_post_start_execution_failure_retains_id_after_block_close() -
 
     with (
         resolver_patch,
-        patch("free_claude_code.api.response_streams.trace_event") as trace_mock,
+        patch("modelglot.api.response_streams.trace_event") as trace_mock,
         client,
     ):
         response = client.post("/v1/responses", json=_responses_payload())
@@ -934,7 +934,7 @@ def test_pre_start_provider_timeout_is_terminal_504(
 
     with (
         resolver_patch,
-        patch("free_claude_code.api.response_streams.trace_event") as trace_mock,
+        patch("modelglot.api.response_streams.trace_event") as trace_mock,
         client,
     ):
         response = client.post(path, json=payload)
@@ -973,7 +973,7 @@ def test_post_start_provider_timeout_is_terminal_protocol_event(path: str) -> No
 
     with (
         resolver_patch,
-        patch("free_claude_code.api.response_streams.trace_event") as trace_mock,
+        patch("modelglot.api.response_streams.trace_event") as trace_mock,
         client,
     ):
         response = client.post(path, json=payload)
@@ -1028,7 +1028,7 @@ def test_responses_provider_timeout_closes_committed_lifecycle() -> None:
 
     with (
         resolver_patch,
-        patch("free_claude_code.api.response_streams.trace_event") as trace_mock,
+        patch("modelglot.api.response_streams.trace_event") as trace_mock,
         client,
     ):
         response = client.post("/v1/responses", json=_responses_payload())
@@ -1053,7 +1053,7 @@ def test_responses_provider_timeout_closes_committed_lifecycle() -> None:
     assert provider.close_calls == 1
     assert _terminal_trace(trace_mock) == {
         "stage": "egress",
-        "event": "free_claude_code.api.response.terminal_execution_error",
+        "event": "modelglot.api.response.terminal_execution_error",
         "source": "api",
         "wire_api": "responses",
         "request_id": request_id,

@@ -5,12 +5,12 @@ from unittest.mock import patch
 
 import pytest
 
-from free_claude_code.core.anthropic.streaming import (
+from modelglot.core.anthropic.streaming import (
     AnthropicStreamLedger,
     StreamBlockLedger,
     map_stop_reason,
 )
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.json_types import JsonObject
 from tests.wire_payload import object_payload
 
 
@@ -110,7 +110,7 @@ def test_output_token_estimate_combines_shared_estimates_and_block_overhead() ->
     ledger.emit_tool_delta(0, "{}")
 
     with patch(
-        "free_claude_code.core.anthropic.streaming.ledger.estimate_text_tokens",
+        "modelglot.core.anthropic.streaming.ledger.estimate_text_tokens",
         side_effect=len,
     ):
         assert ledger.estimate_output_tokens() == 40

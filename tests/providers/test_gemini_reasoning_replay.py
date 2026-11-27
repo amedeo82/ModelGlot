@@ -6,10 +6,10 @@ import httpx2
 import pytest
 from openai import AsyncOpenAI
 
-from free_claude_code.core.gemini.replay import decode_bundle
-from free_claude_code.core.history_replay import readable_reasoning
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.providers.deepseek.client import _PROFILE, DeepSeekChatBehavior
+from modelglot.core.gemini.replay import decode_bundle
+from modelglot.core.history_replay import readable_reasoning
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.providers.deepseek.client import _PROFILE, DeepSeekChatBehavior
 from tests.providers.test_gemini_review_regressions import transport
 from tests.providers.test_gemini_transport import chat_response, collect, gemini_request
 

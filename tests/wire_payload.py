@@ -2,7 +2,7 @@
 
 from typing import Protocol, TypeGuard
 
-from free_claude_code.core.json_types import (
+from modelglot.core.json_types import (
     JsonObject,
     JsonTree,
     JsonValue,

@@ -6,8 +6,8 @@ from urllib.error import URLError
 
 import pytest
 
-from free_claude_code.cli.launchers import common, runner
-from free_claude_code.core.json_types import JsonValue
+from modelglot.cli.launchers import common, runner
+from modelglot.core.json_types import JsonValue
 from tests.cli.conftest import LaunchCapture
 from tests.cli.test_launcher_workflow import HARNESSES, launch, launcher
 from tests.wire_payload import object_payload

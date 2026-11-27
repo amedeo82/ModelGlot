@@ -5,16 +5,16 @@ from collections.abc import AsyncIterator
 
 import pytest
 
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.anthropic.native import (
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.anthropic.native import (
     NativeMessagesError,
     NativeMessagesOptions,
     build_native_messages_request,
 )
-from free_claude_code.core.anthropic.sse_aggregation import (
+from modelglot.core.anthropic.sse_aggregation import (
     aggregate_anthropic_sse_to_message,
 )
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.json_types import JsonObject
 
 
 def test_native_body_rejects_nonfinite_json_before_http_serialization() -> None:

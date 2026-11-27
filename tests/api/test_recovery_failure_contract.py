@@ -5,16 +5,16 @@ from itertools import pairwise
 
 import pytest
 
-from free_claude_code.api.request_outcomes import _observe_event
-from free_claude_code.application.response_collection import WireProtocol
-from free_claude_code.core.anthropic.stream_contracts import SSEEvent, parse_sse_text
-from free_claude_code.core.continuation_stream import ContinuationStream
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.request_outcomes import (
+from modelglot.api.request_outcomes import _observe_event
+from modelglot.application.response_collection import WireProtocol
+from modelglot.core.anthropic.stream_contracts import SSEEvent, parse_sse_text
+from modelglot.core.continuation_stream import ContinuationStream
+from modelglot.core.json_types import JsonObject
+from modelglot.core.request_outcomes import (
     RequestOutcome,
     current_request_outcome,
 )
-from free_claude_code.providers.admission import (
+from modelglot.providers.admission import (
     ProviderAdmissionController,
     ProviderExecutionState,
 )
@@ -65,7 +65,7 @@ async def test_retention_failure_does_not_claim_a_partial_final_snapshot(
     monkeypatch: pytest.MonkeyPatch, protocol: str, wire: WireProtocol, continuing: bool
 ) -> None:
     monkeypatch.setattr(
-        "free_claude_code.core.delivered_response.RECOVERY_RETENTION_BYTES", 1200
+        "modelglot.core.delivered_response.RECOVERY_RETENTION_BYTES", 1200
     )
 
     def reply(bodies: list[JsonObject]):
@@ -92,7 +92,7 @@ async def test_failed_frame_keeps_error_category_and_finishes_execution(
 ) -> None:
     if limited:
         monkeypatch.setattr(
-            "free_claude_code.core.delivered_response.RECOVERY_RETENTION_BYTES", 1200
+            "modelglot.core.delivered_response.RECOVERY_RETENTION_BYTES", 1200
         )
     executions = []
     original = ProviderAdmissionController.start_execution
@@ -191,7 +191,7 @@ async def test_cap_during_closures_does_not_turn_pure_echo_into_success(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "free_claude_code.core.delivered_response.RECOVERY_RETENTION_BYTES", 1200
+        "modelglot.core.delivered_response.RECOVERY_RETENTION_BYTES", 1200
     )
     async with _harness(
         "responses",
@@ -215,7 +215,7 @@ async def test_cap_failure_formatting_does_not_reenter_a_failed_mapper(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "free_claude_code.core.delivered_response.RECOVERY_RETENTION_BYTES", 1200
+        "modelglot.core.delivered_response.RECOVERY_RETENTION_BYTES", 1200
     )
     original = ContinuationStream.prepare
 

@@ -3,12 +3,12 @@
 from collections.abc import AsyncIterator
 from typing import Literal
 
-from free_claude_code.api.response_streams import (
+from modelglot.api.response_streams import (
     ManagedStreamingResponse,
     anthropic_sse_streaming_response,
     openai_responses_sse_streaming_response,
 )
-from free_claude_code.core.stream_output import StreamOutput
+from modelglot.core.stream_output import StreamOutput
 
 
 async def delivered(

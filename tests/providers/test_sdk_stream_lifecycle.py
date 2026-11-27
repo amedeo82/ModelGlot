@@ -13,28 +13,28 @@ from openai import AsyncOpenAI, AsyncStream
 from openai.types.chat import ChatCompletionChunk
 from starlette.responses import StreamingResponse
 
-from free_claude_code.api.response_streams import (
+from modelglot.api.response_streams import (
     anthropic_sse_streaming_response,
     openai_responses_sse_streaming_response,
 )
-from free_claude_code.core.async_iterators import AsyncCloseable
-from free_claude_code.core.chat_completions.response import chat_failure
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.reasoning import DEFAULT_REASONING_POLICY
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.providers.admission import (
+from modelglot.core.async_iterators import AsyncCloseable
+from modelglot.core.chat_completions.response import chat_failure
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.json_types import JsonObject
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.reasoning import DEFAULT_REASONING_POLICY
+from modelglot.core.stream_output import StreamOutput
+from modelglot.providers.admission import (
     ProviderAdmissionController,
     ProviderOperationKind,
 )
-from free_claude_code.providers.mistral import MistralProvider
-from free_claude_code.providers.mistral.reasoning import normalize_mistral_stream
-from free_claude_code.providers.nvidia_nim import NvidiaNimProvider
-from free_claude_code.providers.openai_chat.provider import OpenAIChatProvider
-from free_claude_code.providers.openai_responses import OpenAIResponsesTransport
-from free_claude_code.providers.openai_stream import OpenAIStreamAdapter
-from free_claude_code.providers.recovery_errors import RetryableProviderProtocolError
+from modelglot.providers.mistral import MistralProvider
+from modelglot.providers.mistral.reasoning import normalize_mistral_stream
+from modelglot.providers.nvidia_nim import NvidiaNimProvider
+from modelglot.providers.openai_chat.provider import OpenAIChatProvider
+from modelglot.providers.openai_responses import OpenAIResponsesTransport
+from modelglot.providers.openai_stream import OpenAIStreamAdapter
+from modelglot.providers.recovery_errors import RetryableProviderProtocolError
 from tests.api.test_response_streams import _json_error, _serve
 from tests.providers.request_factory import make_messages_request
 from tests.providers.support import make_provider_config, profiled_provider
@@ -247,7 +247,7 @@ async def _harness(
                 endpoint, "create", side_effect=retaining_streams(endpoint.create)
             ),
             patch(
-                "free_claude_code.providers.openai_chat.provider.create_chat_client",
+                "modelglot.providers.openai_chat.provider.create_chat_client",
                 return_value=client,
             ),
         ):
@@ -486,10 +486,10 @@ async def test_mistral_cleanup_preserves_normalization_error() -> None:
     try:
         with (
             patch(
-                "free_claude_code.providers.mistral.reasoning.normalize_mistral_chunk",
+                "modelglot.providers.mistral.reasoning.normalize_mistral_chunk",
                 side_effect=original,
             ),
-            patch("free_claude_code.providers.http.trace_event") as trace,
+            patch("modelglot.providers.http.trace_event") as trace,
             pytest.raises(ValueError) as caught,
         ):
             await anext(stream)

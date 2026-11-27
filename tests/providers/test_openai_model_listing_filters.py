@@ -2,9 +2,9 @@
 
 import pytest
 
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.core.model_capabilities import ModelInputModality
-from free_claude_code.providers.model_listing import (
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.core.model_capabilities import ModelInputModality
+from modelglot.providers.model_listing import (
     ModelListResponseError,
     RequiredPathValues,
     extract_openai_model_infos,

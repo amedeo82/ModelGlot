@@ -6,12 +6,12 @@ from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
 
-from free_claude_code.application.errors import (
+from modelglot.application.errors import (
     ApplicationUnavailableError,
     UnknownProviderError,
 )
-from free_claude_code.config.api_keys import normalize_api_keys
-from free_claude_code.config.provider_catalog import (
+from modelglot.config.api_keys import normalize_api_keys
+from modelglot.config.provider_catalog import (
     AGNES_DEFAULT_BASE,
     ATLASCLOUD_DEFAULT_BASE,
     BEDROCK_DEFAULT_BASE,
@@ -46,35 +46,35 @@ from free_claude_code.config.provider_catalog import (
     ZAI_CODING_DEFAULT_BASE,
     ZENMUX_DEFAULT_BASE,
 )
-from free_claude_code.providers.admission import ProviderAdmissionController
-from free_claude_code.providers.admission_policy import ProviderAdmissionLimits
-from free_claude_code.providers.admission_registry import ProviderAdmissionRegistry
-from free_claude_code.providers.alibaba_cloud import AlibabaCloudProvider
-from free_claude_code.providers.anthropic import AnthropicProvider
-from free_claude_code.providers.base import BaseProvider, ProviderConfig
-from free_claude_code.providers.cloudflare import CloudflareProvider
-from free_claude_code.providers.deepseek import DeepSeekProvider
-from free_claude_code.providers.gemini import GeminiProvider
-from free_claude_code.providers.github_copilot.provider import GitHubCopilotProvider
-from free_claude_code.providers.groq import GroqProvider
-from free_claude_code.providers.kilo import KiloProvider
-from free_claude_code.providers.lmstudio import LMStudioProvider
-from free_claude_code.providers.mistral import MistralProvider
-from free_claude_code.providers.nvidia_nim import NvidiaNimProvider
-from free_claude_code.providers.open_router import OpenRouterProvider
-from free_claude_code.providers.openai_api import OpenAIAPIProvider
-from free_claude_code.providers.openai_chat import (
+from modelglot.providers.admission import ProviderAdmissionController
+from modelglot.providers.admission_policy import ProviderAdmissionLimits
+from modelglot.providers.admission_registry import ProviderAdmissionRegistry
+from modelglot.providers.alibaba_cloud import AlibabaCloudProvider
+from modelglot.providers.anthropic import AnthropicProvider
+from modelglot.providers.base import BaseProvider, ProviderConfig
+from modelglot.providers.cloudflare import CloudflareProvider
+from modelglot.providers.deepseek import DeepSeekProvider
+from modelglot.providers.gemini import GeminiProvider
+from modelglot.providers.github_copilot.provider import GitHubCopilotProvider
+from modelglot.providers.groq import GroqProvider
+from modelglot.providers.kilo import KiloProvider
+from modelglot.providers.lmstudio import LMStudioProvider
+from modelglot.providers.mistral import MistralProvider
+from modelglot.providers.nvidia_nim import NvidiaNimProvider
+from modelglot.providers.open_router import OpenRouterProvider
+from modelglot.providers.openai_api import OpenAIAPIProvider
+from modelglot.providers.openai_chat import (
     OPENAI_CHAT_PROFILES,
     OpenAIChatProvider,
 )
-from free_claude_code.providers.openai_codex.provider import OpenAICodexProvider
-from free_claude_code.providers.opencode import OpenCodeProvider
-from free_claude_code.providers.runtime import (
+from modelglot.providers.openai_codex.provider import OpenAICodexProvider
+from modelglot.providers.opencode import OpenCodeProvider
+from modelglot.providers.runtime import (
     ProviderRuntime,
     build_provider_config,
     create_provider,
 )
-from free_claude_code.providers.vertex import VertexProvider
+from modelglot.providers.vertex import VertexProvider
 
 
 def _make_settings(**overrides: object):
@@ -225,8 +225,8 @@ def test_importing_runtime_does_not_eager_load_other_adapters() -> None:
     """Runtime metadata must not import every provider adapter up front."""
     code = (
         "import sys\n"
-        "import free_claude_code.providers.runtime\n"
-        "assert 'free_claude_code.providers.open_router' not in sys.modules\n"
+        "import modelglot.providers.runtime\n"
+        "assert 'modelglot.providers.open_router' not in sys.modules\n"
     )
     proc = subprocess.run(
         [sys.executable, "-c", code],
@@ -284,7 +284,7 @@ async def test_poolside_provider_config_uses_key_base_and_proxy() -> None:
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "poolside",
             settings,
@@ -313,7 +313,7 @@ async def test_llm7_provider_config_uses_key_base_and_proxy() -> None:
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "llm7",
             settings,
@@ -342,7 +342,7 @@ async def test_experiential_provider_config_uses_key_base_and_proxy() -> None:
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "experiential",
             settings,
@@ -374,7 +374,7 @@ async def test_cheaperinference_provider_config_uses_key_base_and_proxy() -> Non
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "cheaperinference",
             settings,
@@ -404,7 +404,7 @@ async def test_orcarouter_provider_config_uses_key_base_and_proxy() -> None:
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "orcarouter",
             settings,
@@ -434,7 +434,7 @@ async def test_atlascloud_provider_config_uses_key_base_and_proxy() -> None:
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "atlascloud",
             settings,
@@ -463,7 +463,7 @@ async def test_xai_provider_config_uses_key_base_and_proxy() -> None:
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "xai",
             settings,
@@ -487,7 +487,7 @@ async def test_qwencloud_provider_config_uses_key_base_and_proxy() -> None:
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "qwencloud",
             settings,
@@ -511,7 +511,7 @@ async def test_cline_pass_provider_config_uses_key_base_and_proxy() -> None:
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "cline_pass",
             settings,
@@ -539,7 +539,7 @@ async def test_qwencloud_coding_provider_config_uses_key_base_and_proxy() -> Non
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "qwencloud_coding",
             settings,
@@ -563,7 +563,7 @@ async def test_together_provider_config_uses_key_base_and_proxy() -> None:
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "together",
             settings,
@@ -587,7 +587,7 @@ async def test_deepinfra_provider_config_uses_key_base_and_proxy() -> None:
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "deepinfra",
             settings,
@@ -611,7 +611,7 @@ async def test_siliconflow_provider_config_uses_key_base_and_proxy() -> None:
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "siliconflow",
             settings,
@@ -636,7 +636,7 @@ async def test_nebius_provider_config_uses_key_base_and_proxy() -> None:
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "nebius",
             settings,
@@ -664,7 +664,7 @@ async def test_scaleway_provider_config_uses_key_base_and_proxy() -> None:
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "scaleway",
             settings,
@@ -690,7 +690,7 @@ async def test_opper_provider_config_uses_key_base_and_proxy() -> None:
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "opper",
             settings,
@@ -716,7 +716,7 @@ async def test_chutes_provider_config_uses_key_base_and_proxy() -> None:
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "chutes",
             settings,
@@ -744,7 +744,7 @@ async def test_featherless_provider_config_uses_key_base_and_proxy() -> None:
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "featherless",
             settings,
@@ -770,7 +770,7 @@ async def test_agnes_provider_config_uses_key_base_and_proxy() -> None:
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "agnes",
             settings,
@@ -795,7 +795,7 @@ async def test_zenmux_provider_config_uses_key_base_and_proxy() -> None:
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "zenmux",
             settings,
@@ -820,7 +820,7 @@ async def test_wandb_provider_config_uses_key_base_and_proxy() -> None:
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "wandb",
             settings,
@@ -907,7 +907,7 @@ async def test_local_provider_factory_resolves_catalog_static_credential(
     settings = _make_settings()
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             provider_id,
             settings,
@@ -949,7 +949,7 @@ async def test_zai_api_provider_config_uses_shared_key_general_base_and_own_prox
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "zai_api",
             settings,
@@ -1005,7 +1005,7 @@ async def test_create_cloudflare_provider_uses_account_scoped_base_url() -> None
         cloudflare_account_id="test-account",
     )
 
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "cloudflare",
             settings,
@@ -1135,7 +1135,7 @@ def test_build_provider_config_cohere_uses_api_key_and_proxy() -> None:
 
 @pytest.mark.asyncio
 async def test_create_provider_uses_openai_chat_openrouter_by_default() -> None:
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "open_router",
             _make_settings(),
@@ -1259,13 +1259,13 @@ async def test_create_provider_instantiates_each_builtin() -> None:
     }
 
     with (
-        patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"),
-        patch("free_claude_code.providers.github_copilot.provider.AsyncOpenAI"),
-        patch("free_claude_code.providers.openai_codex.provider.AsyncOpenAI"),
-        patch("free_claude_code.providers.openai_api.provider.AsyncOpenAI"),
+        patch("modelglot.providers.openai_chat.client.AsyncOpenAI"),
+        patch("modelglot.providers.github_copilot.provider.AsyncOpenAI"),
+        patch("modelglot.providers.openai_codex.provider.AsyncOpenAI"),
+        patch("modelglot.providers.openai_api.provider.AsyncOpenAI"),
         patch("httpx.AsyncClient"),
         patch(
-            "free_claude_code.providers.admission.ProviderAdmissionController",
+            "modelglot.providers.admission.ProviderAdmissionController",
             return_value=sentinel_admission,
         ) as admission_factory,
     ):
@@ -1310,7 +1310,7 @@ async def test_provider_runtime_caches_by_provider_id() -> None:
         ),
     )
 
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         first = await runtime.resolve_provider("nvidia_nim")
         second = await runtime.resolve_provider("nvidia_nim")
 
@@ -1560,7 +1560,7 @@ async def test_provider_runtime_provider_owns_one_admission_controller() -> None
         ),
     )
 
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         first = await runtime.resolve_provider("nvidia_nim")
         second = await runtime.resolve_provider("nvidia_nim")
 
@@ -1584,7 +1584,7 @@ async def test_separate_provider_runtimes_never_share_admission_controllers() ->
         ),
     )
 
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         first = await first_runtime.resolve_provider("nvidia_nim")
         second = await second_runtime.resolve_provider("nvidia_nim")
 
@@ -1603,7 +1603,7 @@ async def test_different_providers_have_independent_admission_controllers() -> N
         ),
     )
 
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         nim = await runtime.resolve_provider("nvidia_nim")
         open_router = await runtime.resolve_provider("open_router")
 
@@ -1746,7 +1746,7 @@ async def test_xkiro_provider_config_uses_key_base_and_proxy() -> None:
     )
 
     config = build_provider_config(descriptor, settings)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = await create_provider(
             "xkiro",
             settings,

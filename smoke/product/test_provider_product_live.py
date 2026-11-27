@@ -5,13 +5,13 @@ from typing import Any
 import httpx
 import pytest
 
-from free_claude_code.application.routing import ModelRouter
-from free_claude_code.config.reasoning import ReasoningPreference
-from free_claude_code.core.anthropic.stream_contracts import (
+from modelglot.application.routing import ModelRouter
+from modelglot.config.reasoning import ReasoningPreference
+from modelglot.core.anthropic.stream_contracts import (
     SSEEvent,
     parse_sse_lines,
 )
-from free_claude_code.core.history_replay import decode_replay, is_replay
+from modelglot.core.history_replay import decode_replay, is_replay
 from smoke.lib.config import ProviderModel, SmokeConfig
 from smoke.lib.e2e import (
     ConversationDriver,

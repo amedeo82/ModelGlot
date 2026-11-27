@@ -4,8 +4,8 @@ import pytest
 from playwright.sync_api import Page, Route, expect
 
 from e2e.provider_support import api_key_input, close_provider, open_provider
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.providers.credential_validation import check_credentials
+from modelglot.core.json_types import JsonObject
+from modelglot.providers.credential_validation import check_credentials
 from tests.wire_payload import object_payload, response_object
 
 
@@ -26,7 +26,7 @@ def test_saved_unverified_notice_names_the_credential_owners(
     owners: str,
 ):
     monkeypatch.setattr(
-        "free_claude_code.runtime.application.check_credentials", check_credentials
+        "modelglot.runtime.application.check_credentials", check_credentials
     )
     page.goto(f"{admin_base_url}/admin")
     dialog = open_provider(page, provider_id)

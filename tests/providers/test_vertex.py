@@ -10,24 +10,24 @@ from google.auth.credentials import Credentials
 from google.auth.exceptions import DefaultCredentialsError, TransportError
 from google.auth.transport.requests import Request
 
-from free_claude_code.application.errors import (
+from modelglot.application.errors import (
     ApplicationUnavailableError,
     InvalidRequestError,
 )
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.config.provider_catalog import VERTEX_AI_API_ROOT
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.reasoning import ReasoningEffort, ReasoningPolicy
-from free_claude_code.providers.model_listing import ModelListResponseError
-from free_claude_code.providers.vertex import VertexProvider
-from free_claude_code.providers.vertex.auth import GoogleAccessTokenProvider
-from free_claude_code.providers.vertex.endpoint import (
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.config.provider_catalog import VERTEX_AI_API_ROOT
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.json_types import JsonObject
+from modelglot.core.reasoning import ReasoningEffort, ReasoningPolicy
+from modelglot.providers.model_listing import ModelListResponseError
+from modelglot.providers.vertex import VertexProvider
+from modelglot.providers.vertex.auth import GoogleAccessTokenProvider
+from modelglot.providers.vertex.endpoint import (
     vertex_openai_base_url,
     vertex_publisher_models_url,
     vertex_service_endpoint,
 )
-from free_claude_code.providers.vertex.models import extract_vertex_model_page
+from modelglot.providers.vertex.models import extract_vertex_model_page
 from tests.providers.request_factory import make_messages_request
 from tests.providers.support import (
     immediate_admission,
@@ -229,10 +229,8 @@ async def test_transient_adc_refresh_failure_is_retryable() -> None:
 def test_vertex_provider_supplies_renewable_token_callback_to_openai() -> None:
     token_provider = _token_provider()
     with (
-        patch(
-            "free_claude_code.providers.openai_chat.client.AsyncOpenAI"
-        ) as openai_client,
-        patch("free_claude_code.providers.vertex.client.httpx.AsyncClient"),
+        patch("modelglot.providers.openai_chat.client.AsyncOpenAI") as openai_client,
+        patch("modelglot.providers.vertex.client.httpx.AsyncClient"),
     ):
         provider = _provider(token_provider=token_provider)
 

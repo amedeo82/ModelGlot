@@ -6,12 +6,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from free_claude_code.core.anthropic import get_token_count
-from free_claude_code.core.anthropic.models import (
+from modelglot.core.anthropic import get_token_count
+from modelglot.core.anthropic.models import (
     NativeTokenCountMessage,
     SystemContent,
 )
-from free_claude_code.core.json_types import JsonObject, JsonValue
+from modelglot.core.json_types import JsonObject, JsonValue
 
 
 class TestGetTokenCount:
@@ -297,7 +297,7 @@ class TestGetTokenCount:
         msg.content = [{"type": "tool_result", "tool_use_id": "t1", "content": parts}]
 
         with patch(
-            "free_claude_code.core.anthropic.tokens.estimate_text_tokens",
+            "modelglot.core.anthropic.tokens.estimate_text_tokens",
             side_effect=len,
         ):
             count = get_token_count([msg])
@@ -311,7 +311,7 @@ class TestGetTokenCount:
         msg = MagicMock()
         msg.content = user_text
         with patch(
-            "free_claude_code.core.anthropic.tokens.estimate_text_tokens",
+            "modelglot.core.anthropic.tokens.estimate_text_tokens",
             side_effect=len,
         ):
             count = get_token_count([msg], system=system_text)

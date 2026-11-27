@@ -8,22 +8,22 @@ import httpx2
 import openai
 import pytest
 
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.config.provider_catalog import GROQ_DEFAULT_BASE
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import (
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.config.provider_catalog import GROQ_DEFAULT_BASE
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.anthropic.stream_contracts import (
     parse_sse_text,
     text_content,
 )
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.reasoning import (
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.json_types import JsonObject
+from modelglot.core.reasoning import (
     ReasoningCapability,
     ReasoningEffort,
     ReasoningPolicy,
 )
-from free_claude_code.providers.groq import GroqProvider
-from free_claude_code.providers.groq.client import (
+from modelglot.providers.groq import GroqProvider
+from modelglot.providers.groq.client import (
     GroqChatBehavior,
     _parse_reasoning_vocabulary,
     _rewrite_reasoning_effort,

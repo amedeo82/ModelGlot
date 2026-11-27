@@ -7,23 +7,23 @@ from typing import Any, cast
 
 import pytest
 
-from free_claude_code.core.anthropic import ReasoningReplayMode
-from free_claude_code.core.anthropic.conversion import AnthropicToOpenAIConverter
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.history_replay import (
+from modelglot.core.anthropic import ReasoningReplayMode
+from modelglot.core.anthropic.conversion import AnthropicToOpenAIConverter
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.history_replay import (
     HistoryMode,
     ReplayOrigin,
     prepare_history,
 )
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.openai_responses.chat_request import (
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.openai_responses.chat_request import (
     build_responses_chat_request,
 )
-from free_claude_code.core.openai_responses.models import OpenAIResponsesRequest
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.providers.deepseek.client import DeepSeekProvider
-from free_claude_code.providers.deepseek.compat import finalize_deepseek_chat_body
-from free_claude_code.providers.open_router import OpenRouterProvider
+from modelglot.core.openai_responses.models import OpenAIResponsesRequest
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.providers.deepseek.client import DeepSeekProvider
+from modelglot.providers.deepseek.compat import finalize_deepseek_chat_body
+from modelglot.providers.open_router import OpenRouterProvider
 from tests.providers.support import (
     immediate_admission,
     make_provider_config,
@@ -426,7 +426,7 @@ def test_completed_native_hosted_tools_become_readable_chat_history() -> None:
 
 @pytest.mark.parametrize("wire", ["messages", "responses"])
 def test_malformed_carrier_fails_startup_before_inference(wire: str) -> None:
-    from free_claude_code.application.errors import InvalidRequestError
+    from modelglot.application.errors import InvalidRequestError
 
     provider = OpenRouterProvider(
         make_provider_config(api_key="synthetic", base_url="https://example.org/v1"),

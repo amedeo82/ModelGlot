@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from free_claude_code.application.session_events import (
+from modelglot.application.session_events import (
     EventOverflowError,
     EventPublisher,
 )

@@ -7,15 +7,15 @@ from types import SimpleNamespace
 import pytest
 from pydantic import ValidationError
 
-from free_claude_code.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
-from free_claude_code.config.settings import Settings
-from free_claude_code.providers import admission_capacity as capacity_module
-from free_claude_code.providers.admission import (
+from modelglot.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
+from modelglot.config.settings import Settings
+from modelglot.providers import admission_capacity as capacity_module
+from modelglot.providers.admission import (
     ProviderAdmissionController,
     ProviderOperationKind,
 )
-from free_claude_code.providers.admission_policy import ProviderAdmissionLimits
-from free_claude_code.providers.admission_registry import ProviderAdmissionRegistry
+from modelglot.providers.admission_policy import ProviderAdmissionLimits
+from modelglot.providers.admission_registry import ProviderAdmissionRegistry
 
 
 async def admit(controller: ProviderAdmissionController):

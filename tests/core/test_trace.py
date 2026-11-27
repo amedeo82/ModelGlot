@@ -6,9 +6,9 @@ from pathlib import Path
 import pytest
 from loguru import logger
 
-from free_claude_code.config.logging_config import configure_logging
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.trace import (
+from modelglot.config.logging_config import configure_logging
+from modelglot.core.json_types import JsonObject
+from modelglot.core.trace import (
     TRACE_PAYLOAD_BINDING,
     trace_event,
     traced_async_stream,
@@ -97,7 +97,7 @@ def test_trace_payload_excluded_from_default_info_logs(tmp_path: Path) -> None:
 
 def test_sanitize_masks_nested_api_key_strings() -> None:
     """Credential-shaped keys redact without touching normal message text."""
-    from free_claude_code.core.trace import sanitize_trace_value
+    from modelglot.core.trace import sanitize_trace_value
 
     out = sanitize_trace_value(
         {"outer": {"api_key": "secret", "text": "visible"}},
@@ -110,8 +110,8 @@ def test_sanitize_masks_nested_api_key_strings() -> None:
 
 
 def test_trace_redacts_credential_lists_and_all_catalog_aliases() -> None:
-    from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
-    from free_claude_code.core.trace import sanitize_trace_value
+    from modelglot.config.provider_catalog import PROVIDER_CATALOG
+    from modelglot.core.trace import sanitize_trace_value
 
     owners = {
         name

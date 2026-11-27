@@ -6,9 +6,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from free_claude_code.core.json_types import JsonObject, load_json_value
-from free_claude_code.harnesses import jetbrains_acp_integration as jb
-from free_claude_code.harnesses.jetbrains_acp_integration import (
+from modelglot.core.json_types import JsonObject, load_json_value
+from modelglot.harnesses import jetbrains_acp_integration as jb
+from modelglot.harnesses.jetbrains_acp_integration import (
     registry_path,
     system_root,
 )
@@ -338,7 +338,7 @@ def test_timed_out_node_leaves_config_unchanged(
 def test_failed_atomic_replace_preserves_existing_config(
     files: tuple[Path, Path, Path], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from free_claude_code.harnesses import config_file
+    from modelglot.harnesses import config_file
 
     config, registry, systems = files
     install(registry, systems)

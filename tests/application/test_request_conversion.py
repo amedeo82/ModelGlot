@@ -7,13 +7,13 @@ import httpx2
 import pytest
 from openai import AsyncOpenAI
 
-from free_claude_code.application.execution import ProviderExecutor
-from free_claude_code.application.routing import (
+from modelglot.application.execution import ProviderExecutor
+from modelglot.application.routing import (
     RoutedMessagesRequest,
     RoutedResponsesRequest,
 )
-from free_claude_code.core.anthropic import ReasoningReplayMode
-from free_claude_code.providers.openai_chat import (
+from modelglot.core.anthropic import ReasoningReplayMode
+from modelglot.providers.openai_chat import (
     NO_REASONING,
     OpenAIChatProfile,
     OpenAIChatProvider,

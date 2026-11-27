@@ -10,14 +10,14 @@ from types import ModuleType
 import pytest
 from loguru import logger
 
-from free_claude_code.config import paths
-from free_claude_code.config.loader import ManagedConfigStore
-from free_claude_code.core.interprocess_lock import InterprocessFileLock
-from free_claude_code.providers.runtime import ProviderRuntime
-from free_claude_code.runtime.application import ApplicationRuntime
-from free_claude_code.runtime.configuration import ConfigurationService
-from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
-from free_claude_code.runtime.retired_chat import remove_retired_chat_history
+from modelglot.config import paths
+from modelglot.config.loader import ManagedConfigStore
+from modelglot.core.interprocess_lock import InterprocessFileLock
+from modelglot.providers.runtime import ProviderRuntime
+from modelglot.runtime.application import ApplicationRuntime
+from modelglot.runtime.configuration import ConfigurationService
+from modelglot.runtime.provider_manager import ProviderRuntimeManager
+from modelglot.runtime.retired_chat import remove_retired_chat_history
 
 
 @pytest.fixture(autouse=True)

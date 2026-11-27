@@ -5,7 +5,7 @@ from typing import Literal
 
 import pytest
 
-from free_claude_code.providers.stream_failure_resolution import (
+from modelglot.providers.stream_failure_resolution import (
     Repair,
     Stage,
     repairs,

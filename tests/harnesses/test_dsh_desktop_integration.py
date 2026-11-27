@@ -8,10 +8,10 @@ import pytest
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq, TaggedScalar
 
-from free_claude_code.application.model_catalog import CatalogModel, ModelCatalog
-from free_claude_code.core.json_types import JsonTree
-from free_claude_code.harnesses import dsh_desktop_integration as desktop
-from free_claude_code.harnesses import dsh_files
+from modelglot.application.model_catalog import CatalogModel, ModelCatalog
+from modelglot.core.json_types import JsonTree
+from modelglot.harnesses import dsh_desktop_integration as desktop
+from modelglot.harnesses import dsh_files
 from tests.wire_payload import object_array, object_payload
 
 URL = "http://127.0.0.1:8182"

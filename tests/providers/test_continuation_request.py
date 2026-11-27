@@ -6,17 +6,17 @@ from dataclasses import replace
 
 import pytest
 
-from free_claude_code.application.response_collection import WireProtocol
-from free_claude_code.core.history_replay import (
+from modelglot.application.response_collection import WireProtocol
+from modelglot.core.history_replay import (
     HistoryMode,
     ReplayOrigin,
     ReplayRecord,
     encode_replay,
     prepare_history,
 )
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.stream_recovery import ContinuationSeed
-from free_claude_code.providers.continuation import ContinuationRequest
+from modelglot.core.json_types import JsonObject
+from modelglot.core.stream_recovery import ContinuationSeed
+from modelglot.providers.continuation import ContinuationRequest
 from tests.providers.support import assistant_history_text, continuation_seed
 from tests.wire_payload import array_payload, object_array, object_payload
 

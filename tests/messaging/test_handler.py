@@ -5,11 +5,11 @@ from unittest.mock import ANY, AsyncMock, MagicMock, Mock, call, patch
 
 import pytest
 
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.messaging.command_context import ReplyClearResult, StopOutcome
-from free_claude_code.messaging.models import MessageScope
-from free_claude_code.messaging.platforms.ports import MessagingStartupNotice
-from free_claude_code.messaging.trees import (
+from modelglot.core.json_types import JsonObject
+from modelglot.messaging.command_context import ReplyClearResult, StopOutcome
+from modelglot.messaging.models import MessageScope
+from modelglot.messaging.platforms.ports import MessagingStartupNotice
+from modelglot.messaging.trees import (
     CancellationReason,
     CancellationResult,
     CancellationUiOwner,
@@ -25,9 +25,9 @@ from free_claude_code.messaging.trees import (
     TreeQueueManager,
     TreeSnapshot,
 )
-from free_claude_code.messaging.trees.transitions import CancellationEffect
-from free_claude_code.messaging.voice import VoiceCancellationResult
-from free_claude_code.messaging.workflow import MessagingWorkflow
+from modelglot.messaging.trees.transitions import CancellationEffect
+from modelglot.messaging.voice import VoiceCancellationResult
+from modelglot.messaging.workflow import MessagingWorkflow
 from tests.fixture_types import IncomingMessageFactory, MessagingStoreFactory
 
 _SCOPE = MessageScope(platform="telegram", chat_id="chat_1")
@@ -121,7 +121,7 @@ async def test_handle_message_turn_trace_always_includes_full_message_text(
     incoming = incoming_message_factory(text=text)
     with (
         patch.object(workflow.turn_intake, "handle_message", new_callable=AsyncMock),
-        patch("free_claude_code.messaging.workflow.trace_event") as trace_mock,
+        patch("modelglot.messaging.workflow.trace_event") as trace_mock,
     ):
         await workflow.handle_message(incoming)
 
@@ -958,7 +958,7 @@ async def test_terminal_close_waits_past_interactive_drain_timeout(
     incoming_message_factory: IncomingMessageFactory,
 ) -> None:
     monkeypatch.setattr(
-        "free_claude_code.messaging.trees.manager.CANCEL_TASK_DRAIN_TIMEOUT_S",
+        "modelglot.messaging.trees.manager.CANCEL_TASK_DRAIN_TIMEOUT_S",
         0.01,
     )
     runner_started = asyncio.Event()
@@ -1129,7 +1129,7 @@ async def test_session_info_rejects_unregistered_real_session_without_recording_
     handler: MessagingWorkflow,
     mock_cli_manager: MagicMock,
 ) -> None:
-    from free_claude_code.messaging.node_event_pipeline import (
+    from modelglot.messaging.node_event_pipeline import (
         handle_session_info_event,
     )
 

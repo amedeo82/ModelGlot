@@ -6,17 +6,17 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from free_claude_code.config.admin.persistence import prepare_admin_update
-from free_claude_code.config.admin.values import load_config_response
-from free_claude_code.config.loader import (
+from modelglot.config.admin.persistence import prepare_admin_update
+from modelglot.config.admin.values import load_config_response
+from modelglot.config.loader import (
     ConfigSource,
     ManagedConfigSnapshot,
     compose_settings_snapshot,
 )
-from free_claude_code.config.model_refs import configured_chat_model_refs
-from free_claude_code.config.reasoning import ReasoningPreference
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.json_types import JsonValue
+from modelglot.config.model_refs import configured_chat_model_refs
+from modelglot.config.reasoning import ReasoningPreference
+from modelglot.config.settings import Settings
+from modelglot.core.json_types import JsonValue
 
 
 def _snapshot(

@@ -5,12 +5,12 @@ from copy import deepcopy
 
 import pytest
 
-from free_claude_code.core.chat_completions.tool_calls import (
+from modelglot.core.chat_completions.tool_calls import (
     AmbiguousToolCallIdentityError,
     ChatToolCallBuffer,
     CompletedChatCall,
 )
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.json_types import JsonObject
 from tests.core.test_chat_tool_buffer import event
 from tests.wire_payload import object_payload
 

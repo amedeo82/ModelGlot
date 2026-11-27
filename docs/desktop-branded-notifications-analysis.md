@@ -29,12 +29,12 @@ the icon to the desktop and Start-menu shortcuts.
 The current Windows implementation no longer sends notifications directly through
 `pystray.Icon.notify()`:
 
-- `src/free_claude_code/cli/desktop_notifications.py` defines the semantic
+- `src/modelglot/cli/desktop_notifications.py` defines the semantic
   `DesktopNotifier` contract, notification levels, and the portable fallback;
-- `src/free_claude_code/cli/windows_desktop_notifications.py` implements WinRT toasts with
+- `src/modelglot/cli/windows_desktop_notifications.py` implements WinRT toasts with
   the branded logo, a Win32 balloon fallback with `hBalloonIcon` and native severity flags,
   and registration of the stable application identity;
-- `src/free_claude_code/cli/desktop_tray.py` owns notification state and maps server,
+- `src/modelglot/cli/desktop_tray.py` owns notification state and maps server,
   version, update, and restart outcomes to semantic levels;
 - the Windows installer writes the stable application identity to both shortcuts.
 
@@ -58,11 +58,11 @@ installed dependency source, and current vendor documentation.
 
 The following areas were inspected read-only:
 
-- `src/free_claude_code/cli/desktop_tray.py`;
-- `src/free_claude_code/cli/desktop_assets.py`;
-- `src/free_claude_code/cli/desktop_entrypoint.py`;
-- `src/free_claude_code/cli/macos_app.py`;
-- `src/free_claude_code/updater/check.py`;
+- `src/modelglot/cli/desktop_tray.py`;
+- `src/modelglot/cli/desktop_assets.py`;
+- `src/modelglot/cli/desktop_entrypoint.py`;
+- `src/modelglot/cli/macos_app.py`;
+- `src/modelglot/updater/check.py`;
 - `scripts/install.ps1`;
 - `pyproject.toml`;
 - `tests/cli/test_desktop_tray.py`;
@@ -99,12 +99,12 @@ The investigation that initiated this document reported a different local state:
 That snapshot is not the current working tree. The current update-check implementation
 already constructs the two dynamic items as follows:
 
-- `src/free_claude_code/cli/desktop_tray.py:32` uses a callable for the update action's
+- `src/modelglot/cli/desktop_tray.py:32` uses a callable for the update action's
   enabled state;
-- `src/free_claude_code/cli/desktop_tray.py:37` uses a callable for the status label's
+- `src/modelglot/cli/desktop_tray.py:37` uses a callable for the status label's
   text;
-- `src/free_claude_code/cli/desktop_tray.py:86` and
-  `src/free_claude_code/cli/desktop_tray.py:122` mutate modelglot-owned state and then ask the
+- `src/modelglot/cli/desktop_tray.py:86` and
+  `src/modelglot/cli/desktop_tray.py:122` mutate modelglot-owned state and then ask the
   backend to rebuild the menu.
 
 The remaining implementation work therefore treats the immutable-`MenuItem` finding as a
@@ -150,7 +150,7 @@ adapter was implemented. The current implementation is summarized as follows:
 
 ### 3.1 Packaged assets
 
-`src/free_claude_code/cli/desktop_assets.py:6` maps native suffixes to packaged assets:
+`src/modelglot/cli/desktop_assets.py:6` maps native suffixes to packaged assets:
 
 | Suffix | Packaged file | Consumer |
 | --- | --- | --- |
@@ -170,8 +170,8 @@ The remaining implementation work should strengthen that assertion.
 ### 3.2 Tray and menu
 
 `PystrayDesktopTray` creates a `pystray.Icon` with the branded PNG at
-`src/free_claude_code/cli/desktop_tray.py:68`. The same PNG is loaded from package data
-by `_create_icon()` at `src/free_claude_code/cli/desktop_tray.py:337`.
+`src/modelglot/cli/desktop_tray.py:68`. The same PNG is loaded from package data
+by `_create_icon()` at `src/modelglot/cli/desktop_tray.py:337`.
 
 The menu currently contains:
 
@@ -184,7 +184,7 @@ The menu currently contains:
 
 Menu changes are performed by changing modelglot-owned state and calling
 `Icon.update_menu()`. On macOS, `_refresh_menu()` dispatches the rebuild to the main
-queue at `src/free_claude_code/cli/desktop_tray.py:131`, which is required because
+queue at `src/modelglot/cli/desktop_tray.py:131`, which is required because
 `pystray` creates native AppKit menu state. The current implementation uses the semantic
 notifier contract and no longer calls `Icon.notify()` directly.
 
@@ -192,8 +192,8 @@ notifier contract and no longer calls `Icon.notify()` directly.
 
 At the original baseline, the only notification calls in the desktop tray were:
 
-- server status at `src/free_claude_code/cli/desktop_tray.py:74`;
-- update result at `src/free_claude_code/cli/desktop_tray.py:118`.
+- server status at `src/modelglot/cli/desktop_tray.py:74`;
+- update result at `src/modelglot/cli/desktop_tray.py:118`.
 
 Both delegate to `Icon.notify(message, title)`. The API has no parameter for an icon,
 severity, identifier, activation data, or platform-specific native payload.
@@ -205,7 +205,7 @@ the native notification features required by ModelGlot.
 ### 3.4 Update-check integration state
 
 The shipped update-check integration introduces a useful semantic boundary in
-`src/free_claude_code/updater/check.py`:
+`src/modelglot/updater/check.py`:
 
 - `UpdateStatus.AVAILABLE`;
 - `UpdateStatus.UP_TO_DATE`;
@@ -246,12 +246,12 @@ therefore does not depend on embedding version resources into `modelglot-desktop
 The macOS bundle already establishes the required native identity:
 
 - `BUNDLE_ID` is the stable ModelGlot application bundle identifier declared in
-  `src/free_claude_code/cli/macos_app.py:19`;
+  `src/modelglot/cli/macos_app.py:19`;
 - `AppIcon.icns` is copied into `Contents/Resources` at
-  `src/free_claude_code/cli/macos_app.py:99`;
+  `src/modelglot/cli/macos_app.py:99`;
 - `CFBundleIdentifier` and `CFBundleIconFile` are written at
-  `src/free_claude_code/cli/macos_app.py:108`;
-- the bundle is ad-hoc signed at `src/free_claude_code/cli/macos_app.py:118`.
+  `src/modelglot/cli/macos_app.py:108`;
+- the bundle is ad-hoc signed at `src/modelglot/cli/macos_app.py:118`.
 
 This is a stronger foundation than the current Windows identity. The notification backend
 must, however, verify that the running process is launched from the ModelGlot bundle. A raw

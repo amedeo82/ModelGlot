@@ -80,7 +80,7 @@ These apply to every step in this plan.
 11. **No suppression shortcuts or version edits.** Follow the existing typing, import-boundary,
     feature-manifest, CI/local-parity, and release rules in `CONTRIBUTING.md`.
 12. **Preserve unrelated work.** Implementation must not overwrite pre-existing changes in
-    `e2e/test_admin_assets.py`, `src/free_claude_code/api/admin_static/index.html`,
+    `e2e/test_admin_assets.py`, `src/modelglot/api/admin_static/index.html`,
     `tests/api/test_admin.py`, or any other concurrently edited file. Rebase and merge
     surgically when a planned file is already dirty.
 
@@ -146,20 +146,20 @@ projections unchanged.
 
 **Changes.**
 
-- `src/free_claude_code/application/model_titles.py` — add a small, pure metadata resolver or
+- `src/modelglot/application/model_titles.py` — add a small, pure metadata resolver or
   lookup helper that can return both cached values. Keep `resolve_model_title()` behavior and
   its public result unchanged. Do not perform I/O or fetch models.dev from this layer.
-- `src/free_claude_code/application/model_catalog.py` — add explicit presentation fields such
+- `src/modelglot/application/model_catalog.py` — add explicit presentation fields such
   as `model_description` and `model_description_source` to `CatalogModel`; keep the existing
   `description` provider-attribution field unchanged for current consumers.
-- `src/free_claude_code/application/model_catalog.py` — derive provider label separately from
+- `src/modelglot/application/model_catalog.py` — derive provider label separately from
   model-purpose description. Custom providers use their configured display name as the provider
   label and do not invent a model description.
-- `src/free_claude_code/providers/model_catalog_source.py` — no cache-schema change is needed
+- `src/modelglot/providers/model_catalog_source.py` — no cache-schema change is needed
   for the initial release because the reduced cache already retains `name` and `description`.
   Add or adjust tests only if the current read/write compatibility behavior is not already
   covered.
-- `src/free_claude_code/config/model_title_overrides.py` — do not add MiniMax-specific context
+- `src/modelglot/config/model_title_overrides.py` — do not add MiniMax-specific context
   claims. A curated description may be added only when its wording and provenance are reviewed.
 
 **Tests.**
@@ -210,7 +210,7 @@ reference.
 
 **Changes.**
 
-- `src/free_claude_code/api/admin_routes.py` — extend `_model_options()` with a `model_details`
+- `src/modelglot/api/admin_routes.py` — extend `_model_options()` with a `model_details`
   map for both `GET /admin/api/models` and `POST /admin/api/models/refresh`.
 - Use the application inventory as the only source. Do not add provider calls or models.dev
   requests to either endpoint.
@@ -281,7 +281,7 @@ only value used for dirty-state comparison, fallback membership, and persistence
 
 **Changes.**
 
-- `src/free_claude_code/api/admin_static/model_combobox.js`:
+- `src/modelglot/api/admin_static/model_combobox.js`:
   - store canonical identity in component state and `input.dataset.canonicalValue`;
   - expose one canonical-value accessor for Admin consumers;
   - on known-model selection, set canonical state to `optionEl.dataset.value` and visible input
@@ -293,7 +293,7 @@ only value used for dirty-state comparison, fallback membership, and persistence
   - keep `optionEl.dataset.value` canonical and preserve keyboard/active-descendant behavior;
   - search across canonical reference, title, provider label, and description without changing
     the stored value.
-- `src/free_claude_code/api/admin_static/admin.js`:
+- `src/modelglot/api/admin_static/admin.js`:
   - make `readFieldValue()` use the canonical accessor for model fields;
   - keep optional `None` mapped to `null` before persistence;
   - preserve `input.dataset.original` as the canonical baseline;
@@ -379,10 +379,10 @@ control editable.
 **Changes.**
 
 - Add a focused presentation helper, preferably
-  `src/free_claude_code/api/admin_static/model_picker_details.js`, loaded before
-  `model_combobox.js`/`admin.js` from `src/free_claude_code/api/admin_static/index.html`.
+  `src/modelglot/api/admin_static/model_picker_details.js`, loaded before
+  `model_combobox.js`/`admin.js` from `src/modelglot/api/admin_static/index.html`.
   Register the new filename in `_ADMIN_ASSET_FILENAMES` in
-  `src/free_claude_code/api/admin_routes.py`; otherwise the versioned asset route will not serve
+  `src/modelglot/api/admin_routes.py`; otherwise the versioned asset route will not serve
   it. Integrate with any pre-existing index changes rather than replacing the file.
 - The helper converts `model_details` into a safe view model:
   - prominent title;
@@ -390,9 +390,9 @@ control editable.
   - optional attributed description;
   - canonical reference as secondary monospace text;
   - capability/limit badges only for authoritative, known facts.
-- `src/free_claude_code/api/admin_static/model_combobox.js` renders structured option rows using
+- `src/modelglot/api/admin_static/model_combobox.js` renders structured option rows using
   DOM nodes and `textContent`; never inject catalog text with `innerHTML`.
-- `src/free_claude_code/api/admin_static/admin.js` renders the selected-model summary adjacent
+- `src/modelglot/api/admin_static/admin.js` renders the selected-model summary adjacent
   to the combobox and refreshes it on selection, custom input, hydration, and model refresh.
 - For the MiniMax fixture:
   - show `MiniMax-M3.1-Flash` prominently;
@@ -449,7 +449,7 @@ widths.
 
 **Changes.**
 
-- `src/free_claude_code/api/admin_static/admin.css`:
+- `src/modelglot/api/admin_static/admin.css`:
   - separate title, provider badge, description, canonical reference, and capability-badge
     typography;
   - replace the current all-monospace option treatment with monospace only for the canonical
@@ -458,7 +458,7 @@ widths.
   - stack secondary content at narrow widths;
   - retain visible hover, active, focus, disabled, and locked states;
   - keep provider badges visually distinct from capability badges and never rely on color alone.
-- `src/free_claude_code/api/admin_static/model_combobox.js` and `admin.js`:
+- `src/modelglot/api/admin_static/model_combobox.js` and `admin.js`:
   - preserve a concise accessible name for the input;
   - associate canonical/description text with `aria-describedby` where useful;
   - give each option an unambiguous accessible name containing its title and canonical identity;
@@ -508,15 +508,15 @@ compatible; otherwise roll back with S3.1. Do not roll back S2.1 as part of a vi
 
 The following current behavior is the baseline for Wave 4:
 
-- `src/free_claude_code/providers/model_catalog_source.py:125-155` reduces every models.dev
+- `src/modelglot/providers/model_catalog_source.py:125-155` reduces every models.dev
   entry to `(name, description)` and discards all structured fields;
-- `src/free_claude_code/api/admin_routes.py:629-654` exposes provider attribution, editorial
+- `src/modelglot/api/admin_routes.py:629-654` exposes provider attribution, editorial
   description, reasoning, ModelGlot input modalities, context, and output through `model_details`;
-- `src/free_claude_code/api/admin_static/model_picker_details.js:22-43` creates badges only for
+- `src/modelglot/api/admin_static/model_picker_details.js:22-43` creates badges only for
   provider-confirmed reasoning, image input, context, and output;
 - tool calling, structured output, audio, video, PDF, lifecycle, open weights, logos, and
   catalog freshness have no current cache/Admin presentation contract;
-- `src/free_claude_code/api/admin_static/admin.css:672-686` constrains the dropdown to `280px`,
+- `src/modelglot/api/admin_static/admin.css:672-686` constrains the dropdown to `280px`,
   so placing every possible detail in every option would make scanning and keyboard navigation
   worse rather than better.
 
@@ -654,7 +654,7 @@ separate decision approves it.
 
 **Changes.**
 
-- `src/free_claude_code/providers/model_catalog_source.py`:
+- `src/modelglot/providers/model_catalog_source.py`:
   - continue consuming the configured v1 `api.json` endpoint through the existing background
     refresh;
   - replace the `(name, description)`-only reduction with a versioned metadata record while
@@ -666,7 +666,7 @@ separate decision approves it.
   - preserve atomic writes, stale-on-error behavior, and the existing 24-hour refresh policy;
   - do not retain benchmarks, arbitrary metadata, links, weights payloads, or pricing in this
     step.
-- `src/free_claude_code/application/model_catalog.py`:
+- `src/modelglot/application/model_catalog.py`:
   - add a separate catalog-metadata value object/field on `CatalogModel`;
   - keep all existing provider-owned fields unchanged;
   - use the existing modelglot-to-models.dev provider mapping, including `nvidia_nim -> nvidia`;
@@ -706,7 +706,7 @@ without client-side lookups or changes to existing provider-fact fields.
 
 **Changes.**
 
-- `src/free_claude_code/api/admin_routes.py`:
+- `src/modelglot/api/admin_routes.py`:
   - retain every S1.2 field and its meaning;
   - add a nested `catalog` object to each eligible `model_details` entry;
   - include `source`, `source_provider_id`, `canonical_model_id`, `fetched_at`, `last_updated`,
@@ -780,21 +780,21 @@ keyboard, refresh, and custom-model contracts.
 
 **Changes.**
 
-- `src/free_claude_code/api/admin_static/model_picker_details.js`:
+- `src/modelglot/api/admin_static/model_picker_details.js`:
   - build separate compact-option and selected-detail view models;
   - render provider/lab identity, logos with fallback, icon-and-text capability badges,
     context/output, editorial description, canonical reference, lifecycle, and source metadata;
   - render provider/ModelGlot facts as solid badges and catalog declarations as dashed badges;
   - never infer capabilities from titles/descriptions and never turn unknown into false;
   - use DOM nodes and `textContent`; external/catalog strings remain bounded plain text.
-- `src/free_claude_code/api/admin_static/model_combobox.js` and `admin.js`:
+- `src/modelglot/api/admin_static/model_combobox.js` and `admin.js`:
   - retain one canonical-value implementation and existing option `data-value` behavior;
   - keep option DOM non-interactive apart from selection; place any copy/detail controls outside
     the listbox;
   - refresh the selected detail card on hydration, selection, custom edit, and model refresh;
   - preserve search and optionally extend it to provider, lab, and explicit capability labels
     without changing filtering identity.
-- `src/free_claude_code/api/admin_static/admin.css`:
+- `src/modelglot/api/admin_static/admin.css`:
   - implement the mockup's 32px logo, compact rows, badge wrapping, two-line description,
     trailing token facts, selected-detail stats, and narrow-width stacking;
   - do not rely on color alone: dashed versus solid borders and visible provenance text are

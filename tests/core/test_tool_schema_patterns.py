@@ -6,14 +6,14 @@ from copy import deepcopy
 
 import pytest
 
-from free_claude_code.core.anthropic.conversion import build_base_request_body
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.openai_responses.provider_input import (
+from modelglot.core.anthropic.conversion import build_base_request_body
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.openai_responses.provider_input import (
     build_responses_provider_request,
 )
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.core.tool_schema_patterns import translate_tool_schema_patterns
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.core.tool_schema_patterns import translate_tool_schema_patterns
 from tests.wire_payload import (
     array_payload,
     object_array,

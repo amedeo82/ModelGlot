@@ -8,11 +8,11 @@ from pathlib import Path
 import httpx
 import pytest
 
-from free_claude_code.cli import commands
-from free_claude_code.config.settings import Settings
-from free_claude_code.runtime.application import RestartCallback
-from free_claude_code.runtime.asgi import RuntimeASGIApp
-from free_claude_code.runtime.bootstrap import build_asgi_app
+from modelglot.cli import commands
+from modelglot.config.settings import Settings
+from modelglot.runtime.application import RestartCallback
+from modelglot.runtime.asgi import RuntimeASGIApp
+from modelglot.runtime.bootstrap import build_asgi_app
 from tests.wire_payload import object_payload, response_object
 
 
@@ -56,10 +56,10 @@ async def test_supervisor_drains_admin_event_feed_without_forced_cancellation(
         return None
 
     monkeypatch.setattr(
-        "free_claude_code.runtime.bootstrap.configure_logging",
+        "modelglot.runtime.bootstrap.configure_logging",
         callback,
     )
-    monkeypatch.setattr("free_claude_code.runtime.bootstrap.build_asgi_app", create_app)
+    monkeypatch.setattr("modelglot.runtime.bootstrap.build_asgi_app", create_app)
     monkeypatch.setattr(commands, "kill_all_best_effort", lambda: None)
     monkeypatch.setattr(commands, "SERVER_GRACEFUL_SHUTDOWN_SECONDS", 0.2)
     supervisor = commands.ServerSupervisor(console_logging=False)

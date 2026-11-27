@@ -10,12 +10,12 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from free_claude_code.config.provider_catalog import GROQ_DEFAULT_BASE
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.providers.groq import GroqProvider
-from free_claude_code.providers.history_negotiation import HistoryModeCache
-from free_claude_code.providers.open_router import OpenRouterProvider
+from modelglot.config.provider_catalog import GROQ_DEFAULT_BASE
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.json_types import JsonObject
+from modelglot.providers.groq import GroqProvider
+from modelglot.providers.history_negotiation import HistoryModeCache
+from modelglot.providers.open_router import OpenRouterProvider
 from tests.providers.support import immediate_admission, make_provider_config
 from tests.providers.test_history_transports import _events_for, _harness, _saved_reply
 from tests.providers.test_openai_chat_output_cap import (

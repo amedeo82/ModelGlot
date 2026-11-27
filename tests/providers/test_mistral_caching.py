@@ -7,15 +7,15 @@ import openai
 import pytest
 from httpx2 import Request, Response
 
-from free_claude_code.config.provider_catalog import (
+from modelglot.config.provider_catalog import (
     MISTRAL_DEFAULT_BASE,
     XAI_DEFAULT_BASE,
 )
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.openai_responses.models import OpenAIResponsesRequest
-from free_claude_code.providers.base import ProviderConfig
-from free_claude_code.providers.mistral import MistralProvider
-from free_claude_code.providers.mistral.caching import (
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.openai_responses.models import OpenAIResponsesRequest
+from modelglot.providers.base import ProviderConfig
+from modelglot.providers.mistral import MistralProvider
+from modelglot.providers.mistral.caching import (
     MISTRAL_AFFINITY_HEADER,
     MISTRAL_SESSION_HEADER_NAMES,
     extract_mistral_affinity_key,

@@ -4,8 +4,8 @@ from typing import override
 
 import pytest
 
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.providers.lmstudio import tokens
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.providers.lmstudio import tokens
 
 
 def estimate(body: JsonObject):

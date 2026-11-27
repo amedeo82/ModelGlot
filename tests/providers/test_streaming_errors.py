@@ -12,28 +12,28 @@ import openai
 import pytest
 from openai.types.chat import ChatCompletionChunk
 
-from free_claude_code.api.response_streams import (
+from modelglot.api.response_streams import (
     ManagedStreamingResponse,
     _first_chunk_streaming_response,
 )
-from free_claude_code.application.response_collection import collect_response
-from free_claude_code.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import (
+from modelglot.application.response_collection import collect_response
+from modelglot.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.anthropic.stream_contracts import (
     assert_anthropic_stream_contract,
     parse_sse_text,
 )
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.openai_tool_names import OpenAIToolNameCodec
-from free_claude_code.core.reasoning import DEFAULT_REASONING_POLICY, ReasoningPolicy
-from free_claude_code.providers.admission import ProviderOperationKind
-from free_claude_code.providers.nvidia_nim import NvidiaNimProvider
-from free_claude_code.providers.openai_chat.stream_output import (
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.openai_tool_names import OpenAIToolNameCodec
+from modelglot.core.reasoning import DEFAULT_REASONING_POLICY, ReasoningPolicy
+from modelglot.providers.admission import ProviderOperationKind
+from modelglot.providers.nvidia_nim import NvidiaNimProvider
+from modelglot.providers.openai_chat.stream_output import (
     AnthropicChatStreamOutput,
 )
-from free_claude_code.providers.openai_chat.transport import (
+from modelglot.providers.openai_chat.transport import (
     _OpenAIChatStreamRunner,
     _reserved_anthropic_tool_ids,
 )
@@ -274,7 +274,7 @@ async def _collect_stream(
     reasoning: ReasoningPolicy = DEFAULT_REASONING_POLICY,
 ):
     """Collect all SSE events from a stream."""
-    from free_claude_code.application.response_collection import collect_response
+    from modelglot.application.response_collection import collect_response
 
     return list(
         await collect_response(
@@ -1729,7 +1729,7 @@ class TestStreamingExceptionHandling:
                 new_callable=AsyncMock,
                 side_effect=[*primary_streams, continuation],
             ) as create,
-            patch("free_claude_code.providers.admission.trace_event") as attempt_trace,
+            patch("modelglot.providers.admission.trace_event") as attempt_trace,
         ):
             events = await _collect_stream(provider, request)
 

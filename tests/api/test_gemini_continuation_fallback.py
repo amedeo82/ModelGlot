@@ -9,10 +9,10 @@ import pytest
 from fastapi.testclient import TestClient
 from openai import AsyncOpenAI
 
-from free_claude_code.config.model_refs import ModelFallback
-from free_claude_code.config.settings import Settings
-from free_claude_code.providers.gemini import GeminiProvider
-from free_claude_code.providers.open_router import OpenRouterProvider
+from modelglot.config.model_refs import ModelFallback
+from modelglot.config.settings import Settings
+from modelglot.providers.gemini import GeminiProvider
+from modelglot.providers.open_router import OpenRouterProvider
 from tests.api.support import create_test_app
 from tests.api.test_delivered_stream_recovery import text_events
 from tests.api.test_four_protocol_matrix import response_value
@@ -55,9 +55,7 @@ def test_fallback_into_gemini_and_followup(
         http_client=httpx2.AsyncClient(transport=httpx2.MockTransport(chat_reply)),
         max_retries=0,
     )
-    with patch(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI", return_value=sdk
-    ):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI", return_value=sdk):
         chat = OpenRouterProvider(
             make_provider_config(api_key="test", base_url="https://chat.invalid/v1"),
             admission=immediate_admission(max_attempts=1),

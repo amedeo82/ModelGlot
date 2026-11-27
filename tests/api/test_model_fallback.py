@@ -2,11 +2,11 @@
 
 import pytest
 
-from free_claude_code.application.errors import InvalidRequestError
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.anthropic.streaming import format_sse_event
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.json_types import JsonObject
+from modelglot.application.errors import InvalidRequestError
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.anthropic.streaming import format_sse_event
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.json_types import JsonObject
 from tests.api.model_fallback_support import (
     ControlledFallbackProvider,
     execution_failure,

@@ -11,21 +11,21 @@ import httpx
 import pytest
 from openai.types.chat import ChatCompletionChunk
 
-from free_claude_code.api.response_streams import bind_response_lifetime
-from free_claude_code.application.model_fallback import stream_model_candidates
-from free_claude_code.application.response_collection import WireProtocol
-from free_claude_code.application.routing import ProviderModelCandidate
-from free_claude_code.core.anthropic import aggregate_anthropic_sse_to_message
-from free_claude_code.core.anthropic.passthrough import NativeMessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.json_types import JsonObject, load_json_value
-from free_claude_code.core.stream_delivery import current_stream_delivery
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.providers.nvidia_nim import NvidiaNimProvider
-from free_claude_code.providers.nvidia_nim.client import NvidiaNimChatBehavior
-from free_claude_code.providers.openai_chat.transport import _ChatStreamPresenter
-from free_claude_code.providers.openai_stream import OpenAIStreamAdapter
-from free_claude_code.providers.recovery_errors import RetryableProviderProtocolError
+from modelglot.api.response_streams import bind_response_lifetime
+from modelglot.application.model_fallback import stream_model_candidates
+from modelglot.application.response_collection import WireProtocol
+from modelglot.application.routing import ProviderModelCandidate
+from modelglot.core.anthropic import aggregate_anthropic_sse_to_message
+from modelglot.core.anthropic.passthrough import NativeMessagesRequest
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.json_types import JsonObject, load_json_value
+from modelglot.core.stream_delivery import current_stream_delivery
+from modelglot.core.stream_output import StreamOutput
+from modelglot.providers.nvidia_nim import NvidiaNimProvider
+from modelglot.providers.nvidia_nim.client import NvidiaNimChatBehavior
+from modelglot.providers.openai_chat.transport import _ChatStreamPresenter
+from modelglot.providers.openai_stream import OpenAIStreamAdapter
+from modelglot.providers.recovery_errors import RetryableProviderProtocolError
 from tests.api.test_response_streams import _serve
 from tests.api.test_tool_call_buffer import _response
 from tests.api.test_tool_call_buffer_transports import _tools

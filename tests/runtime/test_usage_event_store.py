@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from free_claude_code.application.usage_events import (
+from modelglot.application.usage_events import (
     CanonicalUsage,
     RequestUsageRecord,
     UsageFilters,
@@ -10,7 +10,7 @@ from free_claude_code.application.usage_events import (
     UsageObservation,
     UsageProtocol,
 )
-from free_claude_code.runtime.usage_events import InMemoryUsageEventStore
+from modelglot.runtime.usage_events import InMemoryUsageEventStore
 from tests.wire_payload import (
     array_payload,
     int_payload,

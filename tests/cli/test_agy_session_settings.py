@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.harnesses import antigravity
+from modelglot.harnesses import antigravity
 from tests.cli.conftest import LaunchCapture
 from tests.cli.test_launcher_workflow import launch
 from tests.wire_payload import decode_object, object_payload, string_payload

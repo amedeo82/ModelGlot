@@ -8,16 +8,16 @@ from types import SimpleNamespace
 
 import pytest
 
-from free_claude_code.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
-from free_claude_code.providers import admission
-from free_claude_code.providers.admission import (
+from modelglot.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
+from modelglot.providers import admission
+from modelglot.providers.admission import (
     ProviderAdmissionController,
     ProviderOperationKind,
 )
-from free_claude_code.providers.admission_policy import ProviderAdmissionLimits
-from free_claude_code.providers.admission_registry import ProviderAdmissionRegistry
-from free_claude_code.providers.http import ProviderAttemptScope
-from free_claude_code.providers.recovery_errors import ProviderRecoveryExhausted
+from modelglot.providers.admission_policy import ProviderAdmissionLimits
+from modelglot.providers.admission_registry import ProviderAdmissionRegistry
+from modelglot.providers.http import ProviderAttemptScope
+from modelglot.providers.recovery_errors import ProviderRecoveryExhausted
 from tests.providers.test_provider_admission import _controller, _open, _status_error
 
 

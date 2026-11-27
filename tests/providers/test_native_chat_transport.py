@@ -2,8 +2,8 @@ import json
 
 import pytest
 
-from free_claude_code.core.chat_completions.request import ChatRequest
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.chat_completions.request import ChatRequest
+from modelglot.core.json_types import JsonObject
 from tests.providers.test_history_transports import _harness
 
 

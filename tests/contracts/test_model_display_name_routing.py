@@ -1,8 +1,8 @@
-from free_claude_code.application.model_catalog import read_model_catalog
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.application.ports import ModelCatalogSnapshot
-from free_claude_code.application.routing import ModelRouter
-from free_claude_code.config.settings import Settings
+from modelglot.application.model_catalog import read_model_catalog
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.application.ports import ModelCatalogSnapshot
+from modelglot.application.routing import ModelRouter
+from modelglot.config.settings import Settings
 
 
 def test_titles_never_change_routing_candidates_or_advertised_identity() -> None:

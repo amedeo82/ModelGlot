@@ -10,11 +10,11 @@ import pytest
     ("module", "forbidden"),
     [
         (
-            "free_claude_code.cli.desktop",
+            "modelglot.cli.desktop",
             ("uvicorn", "fastapi", "openai", "copilot", "tiktoken"),
         ),
         (
-            "free_claude_code.runtime.bootstrap",
+            "modelglot.runtime.bootstrap",
             ("openai", "copilot", "tiktoken", "telegram", "discord"),
         ),
     ],
@@ -42,11 +42,11 @@ import asyncio
 import sys
 import threading
 from unittest.mock import MagicMock
-from free_claude_code.config.settings import Settings
-from free_claude_code.providers.base import BaseProvider
-from free_claude_code.providers.runtime.runtime import create_provider
-from free_claude_code.providers.admission_policy import ProviderAdmissionLimits
-from free_claude_code.providers.admission_registry import ProviderAdmissionRegistry
+from modelglot.config.settings import Settings
+from modelglot.providers.base import BaseProvider
+from modelglot.providers.runtime.runtime import create_provider
+from modelglot.providers.admission_policy import ProviderAdmissionLimits
+from modelglot.providers.admission_registry import ProviderAdmissionRegistry
 
 async def main():
     loop = asyncio.get_running_loop()
@@ -83,7 +83,7 @@ def network_forbidden(*args, **kwargs):
 requests.get = network_forbidden
 with tempfile.TemporaryDirectory() as cache:
     os.environ["TIKTOKEN_CACHE_DIR"] = cache
-    from free_claude_code.core.token_estimation import initialize_token_estimation, estimate_text_tokens
+    from modelglot.core.token_estimation import initialize_token_estimation, estimate_text_tokens
     encoder = initialize_token_estimation()
     assert encoder is not None
     assert estimate_text_tokens("hello world") == 2

@@ -89,6 +89,6 @@ Read the relevant project documents before proposing changes to the request path
 
 - Target Python 3.14 and rely on native lazy annotations; do not add `from __future__ import annotations`.
 - Python 3.14 supports multiple exception types without parentheses, such as `except TypeError, ValueError:`.
-- Keep shared Anthropic protocol behavior under `src/free_claude_code/core/anthropic/` rather than importing utilities from another provider.
+- Keep shared Anthropic protocol behavior under `src/modelglot/core/anthropic/` rather than importing utilities from another provider.
 - Keep provider-specific configuration in the provider that owns it.
 - Remove dead compatibility code when completing migrations unless preserving a published interface is explicitly required.

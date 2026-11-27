@@ -11,18 +11,18 @@ from loguru import logger
 if TYPE_CHECKING:
     from loguru import Message
 
-from free_claude_code.application.model_fallback import stream_model_candidates
-from free_claude_code.application.routing import (
+from modelglot.application.model_fallback import stream_model_candidates
+from modelglot.application.routing import (
     ProviderModelCandidate,
     ProviderModelTarget,
 )
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.stream_delivery import (
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.stream_delivery import (
     StreamDeliveryState,
     bind_stream_delivery,
 )
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.core.stream_recovery import (
+from modelglot.core.stream_output import StreamOutput
+from modelglot.core.stream_recovery import (
     ContinuationSeed,
     DeliveredPrefix,
     SourceRecoverySnapshot,
@@ -144,11 +144,11 @@ async def _run(
         payload = message.record["extra"].get("trace_payload")
         if payload is None:
             return
-        if payload["event"] == "free_claude_code.model_fallback.started":
+        if payload["event"] == "modelglot.model_fallback.started":
             outcome.fallbacks.append(
                 (payload["recovery_action"], payload["recovery_reason"])
             )
-        elif payload["event"] == "free_claude_code.model_fallback.selected":
+        elif payload["event"] == "modelglot.model_fallback.selected":
             index: int = payload["candidate_index"]
             outcome.selected.append(index)
 

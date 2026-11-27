@@ -2,14 +2,14 @@
 
 import pytest
 
-from free_claude_code.application.model_fallback.decision import (
+from modelglot.application.model_fallback.decision import (
     CandidateFailure,
     Fail,
     Fallback,
     Handoff,
     next_step,
 )
-from free_claude_code.core.stream_recovery import (
+from modelglot.core.stream_recovery import (
     ContinuationSeed,
     DeliveredPrefix,
     RecoveryAction,

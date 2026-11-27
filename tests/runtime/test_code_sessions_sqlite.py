@@ -11,7 +11,7 @@ from typing import Literal, override
 import pytest
 import pytest_asyncio
 
-from free_claude_code.application.code_sessions.models import (
+from modelglot.application.code_sessions.models import (
     CodeConflictError,
     CodeItem,
     CodePrompt,
@@ -20,9 +20,9 @@ from free_claude_code.application.code_sessions.models import (
     CodeUnavailableError,
     Record,
 )
-from free_claude_code.runtime import code_sessions_sqlite as code_store_module
-from free_claude_code.runtime.code_sessions_sqlite import SQLiteCodeStore
-from free_claude_code.runtime.sqlite_database import SQLiteDatabase, query_rows
+from modelglot.runtime import code_sessions_sqlite as code_store_module
+from modelglot.runtime.code_sessions_sqlite import SQLiteCodeStore
+from modelglot.runtime.sqlite_database import SQLiteDatabase, query_rows
 from tests.assertions import require_present
 from tests.fixture_types import DatabaseFactory
 

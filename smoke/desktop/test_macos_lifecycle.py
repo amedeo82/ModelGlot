@@ -10,7 +10,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from free_claude_code.cli.commands import ServerStatus
+from modelglot.cli.commands import ServerStatus
 from smoke.desktop.conftest import InstalledDesktop
 from smoke.desktop.support import bundle_pids, capture, launched, wait_report
 from tests.wire_payload import (
@@ -153,7 +153,7 @@ def test_installed_native_app_lifecycle(installed_desktop: InstalledDesktop):
         [
             str(installed["python"]),
             "-c",
-            "from pathlib import Path; from free_claude_code.core.interprocess_lock import InterprocessFileLock; "
+            "from pathlib import Path; from modelglot.core.interprocess_lock import InterprocessFileLock; "
             "locks=[InterprocessFileLock(Path.home()/'.modelglot'/name) for name in ('desktop.lock','server.owner.lock')]; "
             "assert all(lock.acquire() for lock in locks); [lock.release() for lock in locks]",
         ],

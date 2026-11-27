@@ -9,16 +9,16 @@ import httpx2
 import openai
 import pytest
 
-from free_claude_code.core.diagnostics import (
+from modelglot.core.diagnostics import (
     ERROR_DETAIL_DISPLAY_CAP_BYTES,
     attach_upstream_error_body,
 )
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.providers.failure_classification import classify
-from free_claude_code.providers.failure_reporting import finalize_provider_failure
-from free_claude_code.providers.recovery_errors import ProviderRecoveryExhausted
-from free_claude_code.providers.stream_recovery import TruncatedProviderStreamError
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.json_types import JsonObject
+from modelglot.providers.failure_classification import classify
+from modelglot.providers.failure_reporting import finalize_provider_failure
+from modelglot.providers.recovery_errors import ProviderRecoveryExhausted
+from modelglot.providers.stream_recovery import TruncatedProviderStreamError
 
 
 def _retryable_mid_stream(exc: Exception) -> bool:

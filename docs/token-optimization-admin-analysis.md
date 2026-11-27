@@ -293,8 +293,8 @@ tool internals.
 - duration;
 - failure reason.
 
-Evidence: `src/free_claude_code/api/request_outcomes.py:41`–`:134` and
-`src/free_claude_code/core/request_outcomes.py:9`–`:38`.
+Evidence: `src/modelglot/api/request_outcomes.py:41`–`:134` and
+`src/modelglot/core/request_outcomes.py:9`–`:38`.
 
 The outcome is durable only in the log file. It is not written to SQLite and is
 not exposed by an Admin endpoint.
@@ -317,7 +317,7 @@ trace_event(
 )
 ```
 
-Evidence: `src/free_claude_code/providers/continuation.py:68`–`:90`.
+Evidence: `src/modelglot/providers/continuation.py:68`–`:90`.
 
 Current limitations:
 
@@ -337,7 +337,7 @@ The provider request trace already contains the missing routing identity:
 - gateway model;
 - downstream model.
 
-Evidence: `src/free_claude_code/providers/attempt_loop/loop.py:125`–`:137`.
+Evidence: `src/modelglot/providers/attempt_loop/loop.py:125`–`:137`.
 
 The implementation should enrich the usage observation at its source rather
 than reconstructing model identity later from log files.
@@ -348,8 +348,8 @@ ModelGlot estimates input tokens before provider execution for Anthropic Message
 Responses, Gemini, and Chat Completions. These estimates support client-facing
 usage and local-provider context guards; they are not provider-confirmed usage.
 
-Evidence: `src/free_claude_code/application/execution.py:139`–`:354` and
-`src/free_claude_code/api/handlers/token_count.py:56`–`:84`.
+Evidence: `src/modelglot/application/execution.py:139`–`:354` and
+`src/modelglot/api/handlers/token_count.py:56`–`:84`.
 
 The dashboard must label estimated and provider-reported values differently.
 A provider-reported token count and a pre-flight estimate must never be summed
@@ -360,9 +360,9 @@ as if they describe the same quantity.
 ModelGlot owns one SQLite database at the configured ModelGlot database path. The database
 is initialized and migrated transactionally:
 
-- `src/free_claude_code/runtime/bootstrap.py:82`–`:94`;
-- `src/free_claude_code/runtime/sqlite_database.py:139`–`:190`;
-- `src/free_claude_code/runtime/sqlite_migrations/__init__.py:1`–`:25`.
+- `src/modelglot/runtime/bootstrap.py:82`–`:94`;
+- `src/modelglot/runtime/sqlite_database.py:139`–`:190`;
+- `src/modelglot/runtime/sqlite_migrations/__init__.py:1`–`:25`.
 
 The current schema is version 5 and contains Code and messaging tables. The
 schema guard in `runtime/sqlite_database.py:24`–`:90` requires every new table
@@ -374,18 +374,18 @@ migration and a schema-guard update.
 Model context metadata is already available:
 
 - `CatalogModel.context_window_tokens` and `max_output_tokens` at
-  `src/free_claude_code/application/model_catalog.py:31`–`:43`;
+  `src/modelglot/application/model_catalog.py:31`–`:43`;
 - client-safe context resolution at
-  `src/free_claude_code/application/model_catalog.py:53`–`:58`;
+  `src/modelglot/application/model_catalog.py:53`–`:58`;
 - provider metadata projection at
-  `src/free_claude_code/application/model_catalog.py:160`–`:163`.
+  `src/modelglot/application/model_catalog.py:160`–`:163`.
 
 Codex Code sessions already persist their current cumulative context
 occupancy:
 
-- model field: `src/free_claude_code/application/code_sessions/models.py:38`;
-- protocol event: `src/free_claude_code/runtime/codex_protocol.py:60`–`:78`;
-- persistence: `src/free_claude_code/runtime/code_sessions_sqlite.py:214`–`:244`.
+- model field: `src/modelglot/application/code_sessions/models.py:38`;
+- protocol event: `src/modelglot/runtime/codex_protocol.py:60`–`:78`;
+- persistence: `src/modelglot/runtime/code_sessions_sqlite.py:214`–`:244`.
 
 This value is useful but has different semantics from request input tokens. The
 Admin view must not present it as a per-request metric.
@@ -398,16 +398,16 @@ Admin view must not present it as a per-request metric.
 
 The Admin tab list is declared in `VIEW_GROUPS`:
 
-`src/free_claude_code/api/admin_static/admin.js:41`–`:77`.
+`src/modelglot/api/admin_static/admin.js:41`–`:77`.
 
 The matching HTML views are in
-`src/free_claude_code/api/admin_static/index.html:41`–`:239`. Existing views
+`src/modelglot/api/admin_static/index.html:41`–`:239`. Existing views
 are Providers, Model Config, Messaging, Integrations, and Code sessions.
 
 `setActiveView` already owns tab activation, title changes, `aria-current`,
 integration refreshes, and hiding the global Apply bar for read-only views:
 
-`src/free_claude_code/api/admin_static/admin.js:289`–`:333`.
+`src/modelglot/api/admin_static/admin.js:289`–`:333`.
 
 A new read-only view can follow this established pattern. It does not need a
 configuration manifest entry.
@@ -421,7 +421,7 @@ The Admin page routes are local-only:
 - `GET /admin/messaging`;
 - `GET /admin/integrations`.
 
-Evidence: `src/free_claude_code/api/admin_routes.py:104`–`:125`.
+Evidence: `src/modelglot/api/admin_routes.py:104`–`:125`.
 
 All Admin APIs call `require_loopback_admin`. Existing endpoints include:
 
@@ -430,11 +430,11 @@ All Admin APIs call `require_loopback_admin`. Existing endpoints include:
 
 The runtime boundary is `AdminRuntimePort`:
 
-`src/free_claude_code/api/ports.py:20`–`:109`.
+`src/modelglot/api/ports.py:20`–`:109`.
 
 The implementation is exposed by `ApplicationRuntime`:
 
-`src/free_claude_code/runtime/application.py:460`–`:484`.
+`src/modelglot/runtime/application.py:460`–`:484`.
 
 The current `admin_status` payload contains lifecycle, provider, catalog, Code,
 messaging, integration, configuration, and cached-model status. It contains no
@@ -910,18 +910,18 @@ specified in
 | RTK and Headroom versions are pinned | `scripts/install.ps1:32`–`:36` |
 | RTK is configured in agents | `scripts/install.ps1:834`–`:855` |
 | Headroom is registered as MCP | `scripts/install.ps1:882`–`:903` |
-| Provider usage is DEBUG-only and lacks model identity | `src/free_claude_code/providers/continuation.py:68`–`:90` |
-| Provider request traces contain routing identity | `src/free_claude_code/providers/attempt_loop/loop.py:125`–`:137` |
-| Request outcomes are log-only | `src/free_claude_code/api/request_outcomes.py:115`–`:134` |
-| Model context metadata exists | `src/free_claude_code/application/model_catalog.py:31`–`:58` |
-| Code session context occupancy exists | `src/free_claude_code/application/code_sessions/models.py:38` |
-| Admin tabs are statically declared | `src/free_claude_code/api/admin_static/admin.js:41`–`:77` |
-| Admin views are separate HTML sections | `src/free_claude_code/api/admin_static/index.html:41`–`:239` |
-| Admin APIs use loopback protection | `src/free_claude_code/api/admin_routes.py:111`–`:165` |
-| Admin runtime boundary exists | `src/free_claude_code/api/ports.py:20`–`:109` |
-| Current Admin status has no usage fields | `src/free_claude_code/runtime/application.py:460`–`:484` |
-| SQLite schema requires explicit table registration | `src/free_claude_code/runtime/sqlite_database.py:24`–`:90` |
-| Current migration version is 5 | `src/free_claude_code/runtime/sqlite_migrations/__init__.py:11`–`:25` |
+| Provider usage is DEBUG-only and lacks model identity | `src/modelglot/providers/continuation.py:68`–`:90` |
+| Provider request traces contain routing identity | `src/modelglot/providers/attempt_loop/loop.py:125`–`:137` |
+| Request outcomes are log-only | `src/modelglot/api/request_outcomes.py:115`–`:134` |
+| Model context metadata exists | `src/modelglot/application/model_catalog.py:31`–`:58` |
+| Code session context occupancy exists | `src/modelglot/application/code_sessions/models.py:38` |
+| Admin tabs are statically declared | `src/modelglot/api/admin_static/admin.js:41`–`:77` |
+| Admin views are separate HTML sections | `src/modelglot/api/admin_static/index.html:41`–`:239` |
+| Admin APIs use loopback protection | `src/modelglot/api/admin_routes.py:111`–`:165` |
+| Admin runtime boundary exists | `src/modelglot/api/ports.py:20`–`:109` |
+| Current Admin status has no usage fields | `src/modelglot/runtime/application.py:460`–`:484` |
+| SQLite schema requires explicit table registration | `src/modelglot/runtime/sqlite_database.py:24`–`:90` |
+| Current migration version is 5 | `src/modelglot/runtime/sqlite_migrations/__init__.py:11`–`:25` |
 | Browser navigation coverage exists | `e2e/test_admin_assets.py:12`–`:164` |
 | RTK JSON summary shape | Live `rtk gain --format json` with RTK 0.44.2 on 2026-11-16; revalidated 2026-11-17 |
 | RTK daily JSON shape | Live `rtk gain --daily --format json` with RTK 0.44.2 on 2026-11-17 |

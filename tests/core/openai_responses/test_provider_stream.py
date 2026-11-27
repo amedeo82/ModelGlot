@@ -1,17 +1,17 @@
 import pytest
 
-from free_claude_code.core.anthropic.stream_contracts import (
+from modelglot.core.anthropic.stream_contracts import (
     assert_anthropic_stream_contract,
     parse_sse_text,
     thinking_content,
 )
-from free_claude_code.core.history_replay import ReplayOrigin, decode_replay
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.openai_responses.provider_stream import (
+from modelglot.core.history_replay import ReplayOrigin, decode_replay
+from modelglot.core.json_types import JsonObject
+from modelglot.core.openai_responses.provider_stream import (
     ResponsesProviderStream,
     ResponsesStreamFailure,
 )
-from free_claude_code.core.openai_tool_names import OpenAIToolNameCodec
+from modelglot.core.openai_tool_names import OpenAIToolNameCodec
 from tests.wire_payload import object_payload, string_payload
 
 

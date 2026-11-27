@@ -7,17 +7,27 @@ from uuid import NAMESPACE_URL, uuid5
 
 import pytest
 
-from free_claude_code.config import env_migrations, paths
-from free_claude_code.config.loader import compose_settings_snapshot
-from free_claude_code.config.settings import ENV_KEY_BY_SETTING, Settings
-from free_claude_code.harnesses import claude_desktop_integration
+from modelglot.config import env_migrations, paths
+from modelglot.config.loader import compose_settings_snapshot
+from modelglot.config.settings import ENV_KEY_BY_SETTING, Settings
+from modelglot.harnesses import claude_desktop_integration
 from tests.wire_payload import object_payload
 
 _ROOT = Path(__file__).resolve().parents[2]
+_LEGACY_NAMESPACE = "free_" + "claude_code"
+_LEGACY_OWNER = "ali" + "shahryar" + "1"
+_FORBIDDEN_IDENTITY = (
+    "f" + "cc",
+    "Free " + "Claude Code",
+    "free-" + "claude-code",
+    "Claude Code " + "Proxy",
+    _LEGACY_NAMESPACE,
+    _LEGACY_OWNER,
+)
 
 
 def _runtime_texts() -> list[tuple[str, str]]:
-    package = _ROOT / "src" / "free_claude_code"
+    package = _ROOT / "src" / "modelglot"
     return [
         (path.relative_to(package).as_posix(), path.read_text(encoding="utf-8"))
         for path in package.rglob("*")
@@ -53,18 +63,11 @@ def _repository_files() -> list[tuple[str, Path]]:
 
 
 def test_repository_has_no_legacy_identity_in_paths_or_text() -> None:
-    legacy_prefix = "f" + "cc"
-    forbidden = (
-        legacy_prefix,
-        "Free " + "Claude Code",
-        "free-" + "claude-code",
-        "Claude Code " + "Proxy",
-    )
     offenders: list[tuple[str, str]] = []
     for relative, path in _repository_files():
         offenders.extend(
             (relative, marker)
-            for marker in forbidden
+            for marker in _FORBIDDEN_IDENTITY
             if marker.casefold() in relative.casefold()
         )
         try:
@@ -73,7 +76,7 @@ def test_repository_has_no_legacy_identity_in_paths_or_text() -> None:
             continue
         offenders.extend(
             (relative, marker)
-            for marker in forbidden
+            for marker in _FORBIDDEN_IDENTITY
             if marker.casefold() in text.casefold()
         )
 
@@ -81,21 +84,23 @@ def test_repository_has_no_legacy_identity_in_paths_or_text() -> None:
 
 
 def test_runtime_and_packaging_have_no_legacy_identity() -> None:
-    legacy_prefix = "f" + "cc"
-    forbidden = (
-        legacy_prefix,
-        "Free " + "Claude Code",
-        "free-" + "claude-code",
-        "Claude Code " + "Proxy",
-    )
     offenders = [
         (name, marker)
         for name, text in [*_runtime_texts(), ("pyproject.toml", _pyproject_text())]
-        for marker in forbidden
+        for marker in _FORBIDDEN_IDENTITY
         if marker.casefold() in text.casefold()
     ]
 
     assert offenders == []
+
+
+def test_package_layout_uses_only_modelglot_namespace() -> None:
+    package = _ROOT / "src" / "modelglot"
+    legacy_package = _ROOT / "src" / _LEGACY_NAMESPACE
+
+    assert package.is_dir()
+    assert (package / "__init__.py").is_file()
+    assert not legacy_package.exists()
 
 
 def test_legacy_port_8082_does_not_return() -> None:
@@ -122,7 +127,10 @@ def test_packaging_exposes_only_modelglot_update_scripts() -> None:
     targets = object_payload(build["targets"])
     wheel = object_payload(targets["wheel"])
 
-    assert set(object_payload(metadata["scripts"])) == {
+    assert metadata["name"] == "modelglot"
+    assert wheel["packages"] == ["src/modelglot"]
+    scripts = object_payload(metadata["scripts"])
+    assert set(scripts) == {
         "modelglot-server",
         "modelglot-doctor",
         "modelglot-claude",
@@ -137,8 +145,12 @@ def test_packaging_exposes_only_modelglot_update_scripts() -> None:
         "modelglot-agy",
         "modelglot-aider",
     }
+    assert all(
+        isinstance(target, str) and target.startswith("modelglot.")
+        for target in scripts.values()
+    )
     assert object_payload(metadata["gui-scripts"]) == {
-        "modelglot-desktop": "free_claude_code.cli.desktop_entrypoint:launch"
+        "modelglot-desktop": "modelglot.cli.desktop_entrypoint:launch"
     }
     assert object_payload(wheel["shared-scripts"]) == {
         "scripts/update/modelglot-update": "modelglot-update",

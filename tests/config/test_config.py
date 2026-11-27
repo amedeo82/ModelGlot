@@ -9,33 +9,33 @@ from unittest.mock import patch
 import pytest
 from pydantic import SecretStr, ValidationError
 
-from free_claude_code.application.routing import ModelRouter
-from free_claude_code.config import loader
-from free_claude_code.config.constants import (
+from modelglot.application.routing import ModelRouter
+from modelglot.config import loader
+from modelglot.config.constants import (
     DEFAULT_MODEL,
 )
-from free_claude_code.config.env_files import dotenv_values_from_file
-from free_claude_code.config.loader import (
+from modelglot.config.env_files import dotenv_values_from_file
+from modelglot.config.loader import (
     ConfigSource,
     ManagedConfigStore,
     clear_settings_cache,
     compose_settings_snapshot,
     get_settings,
 )
-from free_claude_code.config.model_refs import (
+from modelglot.config.model_refs import (
     ModelFallback,
     configured_chat_model_refs,
     normalize_retired_model_settings,
     parse_model_name,
     parse_provider_type,
 )
-from free_claude_code.config.paths import (
+from modelglot.config.paths import (
     managed_env_path,
     messaging_state_dir_path,
     server_log_path,
 )
-from free_claude_code.config.reasoning import ReasoningPreference
-from free_claude_code.config.settings import Settings
+from modelglot.config.reasoning import ReasoningPreference
+from modelglot.config.settings import Settings
 
 _SUPER_REF = "nvidia_nim/nvidia/nemotron-3-super-120b-a12b"
 _ULTRA_REF = "nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b"

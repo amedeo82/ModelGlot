@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.core.json_types import load_json_value
+from modelglot.core.json_types import load_json_value
 from tests.wire_payload import array_payload, object_payload
 
 ROOT = Path(__file__).resolve().parents[2]

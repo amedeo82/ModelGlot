@@ -6,18 +6,18 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from free_claude_code.messaging.models import IncomingMessage
-from free_claude_code.messaging.platforms.discord import (
+from modelglot.messaging.models import IncomingMessage
+from modelglot.messaging.platforms.discord import (
     DISCORD_AVAILABLE,
     DiscordRuntime,
     _get_discord,
 )
-from free_claude_code.messaging.platforms.discord_inbound import (
+from modelglot.messaging.platforms.discord_inbound import (
     discord_text_message_from_event,
     parse_allowed_channels,
 )
-from free_claude_code.messaging.platforms.discord_io import truncate_discord_message
-from free_claude_code.messaging.voice import Transcriber
+from modelglot.messaging.platforms.discord_io import truncate_discord_message
+from modelglot.messaging.voice import Transcriber
 
 
 def _limiter_mock() -> MagicMock:
@@ -50,7 +50,7 @@ class TestGetDiscord:
     """Tests for _get_discord helper."""
 
     def test_raises_when_discord_not_available(self) -> None:
-        import free_claude_code.messaging.platforms.discord as discord_mod
+        import modelglot.messaging.platforms.discord as discord_mod
 
         with (
             patch.object(discord_mod, "DISCORD_AVAILABLE", False),
@@ -328,9 +328,7 @@ class TestDiscordRuntime:
             patch.object(
                 platform._client, "get_channel", MagicMock(return_value=mock_channel)
             ),
-            patch(
-                "free_claude_code.messaging.platforms.discord._get_discord"
-            ) as mock_get,
+            patch("modelglot.messaging.platforms.discord._get_discord") as mock_get,
         ):
             mock_discord = MagicMock()
             mock_get.return_value = mock_discord
@@ -373,9 +371,7 @@ class TestDiscordRuntime:
             patch.object(
                 platform._client, "get_channel", MagicMock(return_value=mock_channel)
             ),
-            patch(
-                "free_claude_code.messaging.platforms.discord._get_discord"
-            ) as mock_get,
+            patch("modelglot.messaging.platforms.discord._get_discord") as mock_get,
         ):
             mock_get.return_value = MagicMock()
             platform.outbound._get_discord = mock_get
@@ -637,7 +633,7 @@ def discord_sleeps(monkeypatch: pytest.MonkeyPatch):
 def _messenger(channel: MagicMock):
     import discord as discord_pkg
 
-    from free_claude_code.messaging.platforms.discord_io import DiscordMessenger
+    from modelglot.messaging.platforms.discord_io import DiscordMessenger
 
     client = MagicMock()
     client.get_channel = MagicMock(return_value=channel)
@@ -718,7 +714,7 @@ class TestDiscordDeliveryRetry:
     ) -> None:
         import aiohttp
 
-        from free_claude_code.messaging.delivery_failures import MAX_ATTEMPTS
+        from modelglot.messaging.delivery_failures import MAX_ATTEMPTS
 
         msg = AsyncMock()
         msg.edit = AsyncMock(

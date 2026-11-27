@@ -9,11 +9,11 @@ from typing import Literal
 
 import pytest
 
-from free_claude_code.application.reasoning import client_reasoning_policy
-from free_claude_code.cli.launchers.pi import pi_extension_path
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.json_types import load_json_value
-from free_claude_code.providers.github_copilot.types import CopilotEgress
+from modelglot.application.reasoning import client_reasoning_policy
+from modelglot.cli.launchers.pi import pi_extension_path
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.json_types import load_json_value
+from modelglot.providers.github_copilot.types import CopilotEgress
 from tests.providers.test_github_copilot_provider import Harness, collect
 from tests.wire_payload import decode_object, object_array, object_payload
 

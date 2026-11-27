@@ -11,11 +11,11 @@ import pytest
 from fastapi.testclient import TestClient
 from typing_extensions import TypedDict
 
-from free_claude_code.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.providers.admission import ProviderAdmissionController
-from free_claude_code.providers.admission_capacity import ProviderCapacityLimiter
+from modelglot.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
+from modelglot.config.settings import Settings
+from modelglot.core.json_types import JsonObject
+from modelglot.providers.admission import ProviderAdmissionController
+from modelglot.providers.admission_capacity import ProviderCapacityLimiter
 from tests.api.support import create_test_app
 from tests.api.test_delivered_stream_recovery import text_events
 from tests.fixture_parameters import fixture_parameter

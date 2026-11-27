@@ -16,10 +16,10 @@ import httpx2
 import openai
 import pytest
 
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.providers.failure_classification import classify
-from free_claude_code.providers.failure_reporting import finalize_provider_failure
-from free_claude_code.providers.recovery_errors import (
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.providers.failure_classification import classify
+from modelglot.providers.failure_reporting import finalize_provider_failure
+from modelglot.providers.recovery_errors import (
     ProviderRecoveryExhausted,
     RetryableProviderProtocolError,
 )

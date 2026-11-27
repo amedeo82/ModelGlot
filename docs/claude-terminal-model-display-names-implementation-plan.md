@@ -110,7 +110,7 @@ supports.
 
 **Changes.**
 
-- `src/free_claude_code/api/routes.py:405-414` — use
+- `src/modelglot/api/routes.py:405-414` — use
   `require_anthropic_proxy_auth` for `GET /v1/models`.
 - Keep `require_proxy_auth` on endpoints that are not Anthropic-compatible. Do not broaden
   the authentication contract of unrelated routes.
@@ -273,8 +273,8 @@ the descriptive Terminal presentation in its isolated cache.
   contract tests to `drop_in_claude_code_replacement`.
 - `smoke/capabilities.py` — add or refine a capability contract for Claude Terminal model
   discovery, with these declared facts:
-  - owner: `free_claude_code.api.model_catalog` for the payload and
-    `free_claude_code.harnesses.claude` for the launch environment;
+  - owner: `modelglot.api.model_catalog` for the payload and
+    `modelglot.harnesses.claude` for the launch environment;
   - input: authenticated `GET /v1/models`;
   - output: `id`, `display_name`, and `description` without routing changes;
   - failure: HTTP authentication failure or a client fallback to cached/built-in models.

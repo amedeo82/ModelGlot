@@ -9,9 +9,9 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 import pytest_asyncio
 
-from free_claude_code.application.code_sessions import CodeConflictError, CodeService
-from free_claude_code.application.code_sessions import service as service_module
-from free_claude_code.application.code_sessions.models import (
+from modelglot.application.code_sessions import CodeConflictError, CodeService
+from modelglot.application.code_sessions import service as service_module
+from modelglot.application.code_sessions.models import (
     CodeItem,
     CodeMode,
     CodeRun,
@@ -22,10 +22,10 @@ from free_claude_code.application.code_sessions.models import (
     ItemUpdate,
     PromptRequest,
 )
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.runtime.code_sessions_sqlite import SQLiteCodeStore
-from free_claude_code.runtime.codex_app_server import CodexAppServer
-from free_claude_code.runtime.codex_protocol import CodexProtocol
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.runtime.code_sessions_sqlite import SQLiteCodeStore
+from modelglot.runtime.codex_app_server import CodexAppServer
+from modelglot.runtime.codex_protocol import CodexProtocol
 from tests.assertions import record_extra, require_exception_info, require_present
 from tests.code_sessions_support import (
     CodexPackets,

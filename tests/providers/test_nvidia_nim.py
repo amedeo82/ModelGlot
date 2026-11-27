@@ -11,26 +11,26 @@ import pytest
 from httpx2 import Request, Response, Timeout
 from openai.types.chat import ChatCompletionChunk
 
-from free_claude_code.config.constants import (
+from modelglot.config.constants import (
     ANTHROPIC_DEFAULT_MAX_OUTPUT_TOKENS,
     PROVIDER_MAX_ATTEMPTS_DEFAULT,
 )
-from free_claude_code.config.provider_catalog import NVIDIA_NIM_DEFAULT_BASE
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.history_replay import (
+from modelglot.config.provider_catalog import NVIDIA_NIM_DEFAULT_BASE
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.history_replay import (
     ReplayOrigin,
     ReplayRecord,
     encode_replay,
 )
-from free_claude_code.core.json_types import JsonObject, JsonValue, load_json_value
-from free_claude_code.core.openai_responses.models import OpenAIResponsesRequest
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.providers.base import ProviderConfig
-from free_claude_code.providers.nvidia_nim import NvidiaNimProvider
-from free_claude_code.providers.nvidia_nim.client import _PROFILE as NIM_PROFILE
-from free_claude_code.providers.nvidia_nim.tool_schema import (
+from modelglot.core.json_types import JsonObject, JsonValue, load_json_value
+from modelglot.core.openai_responses.models import OpenAIResponsesRequest
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.providers.base import ProviderConfig
+from modelglot.providers.nvidia_nim import NvidiaNimProvider
+from modelglot.providers.nvidia_nim.client import _PROFILE as NIM_PROFILE
+from modelglot.providers.nvidia_nim.tool_schema import (
     NIM_TOOL_ARGUMENT_ALIASES_KEY,
 )
 from tests.providers.request_factory import make_messages_request
@@ -256,7 +256,7 @@ async def test_argument_aliases_survive_shared_history_correction(
     # Test adapter exercises the shared history path; native NIM disables details.
     def provider_factory():
         with patch(
-            "free_claude_code.providers.nvidia_nim.client._PROFILE",
+            "modelglot.providers.nvidia_nim.client._PROFILE",
             replace(NIM_PROFILE, structured_reasoning_details=True),
         ):
             return _alias_provider()
@@ -387,9 +387,7 @@ def _make_internal_server_error(message: str) -> openai.InternalServerError:
 @pytest.mark.asyncio
 async def test_init(provider_config: ProviderConfig) -> None:
     """Test provider initialization."""
-    with patch(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI"
-    ) as mock_openai:
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI") as mock_openai:
         provider = NvidiaNimProvider(
             provider_config,
             admission=immediate_admission(),
@@ -410,9 +408,7 @@ async def test_init_uses_configurable_timeouts() -> None:
         http_write_timeout=15.0,
         http_connect_timeout=5.0,
     )
-    with patch(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI"
-    ) as mock_openai:
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI") as mock_openai:
         NvidiaNimProvider(config, admission=immediate_admission())
         call_kwargs = mock_openai.call_args.kwargs
         timeout: object = call_kwargs["timeout"]

@@ -2,11 +2,11 @@
 
 import pytest
 
-from free_claude_code.messaging.models import MessageScope
-from free_claude_code.messaging.trees.graph import MessageTreeGraph
-from free_claude_code.messaging.trees.node import MessageNode, MessageState
-from free_claude_code.messaging.trees.queue import MessageNodeQueue
-from free_claude_code.messaging.trees.snapshot import (
+from modelglot.messaging.models import MessageScope
+from modelglot.messaging.trees.graph import MessageTreeGraph
+from modelglot.messaging.trees.node import MessageNode, MessageState
+from modelglot.messaging.trees.queue import MessageNodeQueue
+from modelglot.messaging.trees.snapshot import (
     TreeSnapshot,
     node_from_snapshot,
     node_to_snapshot,

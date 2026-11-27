@@ -4,15 +4,15 @@ import asyncio
 
 import pytest
 
-from free_claude_code.application.errors import ApplicationUnavailableError
-from free_claude_code.config.custom_providers import CustomProviderDefinition
-from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
-from free_claude_code.config.settings import Settings
-from free_claude_code.providers.admission_policy import ProviderAdmissionLimits
-from free_claude_code.providers.admission_registry import ProviderAdmissionRegistry
-from free_claude_code.providers.groq import GroqProvider
-from free_claude_code.providers.runtime import ProviderRuntime
-from free_claude_code.providers.runtime.config import (
+from modelglot.application.errors import ApplicationUnavailableError
+from modelglot.config.custom_providers import CustomProviderDefinition
+from modelglot.config.provider_catalog import PROVIDER_CATALOG
+from modelglot.config.settings import Settings
+from modelglot.providers.admission_policy import ProviderAdmissionLimits
+from modelglot.providers.admission_registry import ProviderAdmissionRegistry
+from modelglot.providers.groq import GroqProvider
+from modelglot.providers.runtime import ProviderRuntime
+from modelglot.providers.runtime.config import (
     build_custom_provider_config,
     build_provider_config,
 )

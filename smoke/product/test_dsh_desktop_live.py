@@ -13,9 +13,9 @@ from pathlib import Path
 import playwright
 import pytest
 
-from free_claude_code.application.model_catalog import CatalogModel, ModelCatalog
-from free_claude_code.harnesses import dsh_desktop_integration as desktop
-from free_claude_code.harnesses import dsh_files
+from modelglot.application.model_catalog import CatalogModel, ModelCatalog
+from modelglot.harnesses import dsh_desktop_integration as desktop
+from modelglot.harnesses import dsh_files
 from smoke.lib.config import SmokeConfig
 from smoke.lib.dsh_provider import DshProvider, dsh_provider
 from smoke.lib.e2e import SmokeServerDriver
@@ -156,7 +156,7 @@ try {
     python_contender = """
 import sys
 from pathlib import Path
-from free_claude_code.harnesses.dsh_files import file_lock
+from modelglot.harnesses.dsh_files import file_lock
 try:
     with file_lock(Path(sys.argv[1]), wait=0):
         sys.exit(1)

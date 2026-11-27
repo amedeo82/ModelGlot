@@ -7,13 +7,13 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from free_claude_code.application.errors import ApplicationUnavailableError
-from free_claude_code.application.model_catalog import CatalogModel
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.harnesses import claude_integration as claude
-from free_claude_code.harnesses import claude_onboarding
-from free_claude_code.harnesses import vscode_chat_integration as vscode
-from free_claude_code.runtime.application import ApplicationRuntime
+from modelglot.application.errors import ApplicationUnavailableError
+from modelglot.application.model_catalog import CatalogModel
+from modelglot.core.json_types import JsonObject
+from modelglot.harnesses import claude_integration as claude
+from modelglot.harnesses import claude_onboarding
+from modelglot.harnesses import vscode_chat_integration as vscode
+from modelglot.runtime.application import ApplicationRuntime
 from tests.runtime.catalog_support import finish_discovery
 from tests.runtime.test_integration_startup import runtime as runtime
 from tests.wire_payload import object_payload

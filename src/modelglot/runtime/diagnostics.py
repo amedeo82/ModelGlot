@@ -1,0 +1,426 @@
+"""Shareable local diagnostics, without starting or changing ModelGlot."""
+
+import importlib
+import platform
+import re
+import shutil
+import subprocess
+import time
+from typing import Any
+from urllib.parse import urlsplit
+
+import httpx
+
+from modelglot.config.loader import ManagedConfigStore
+from modelglot.config.paths import (
+    claude_desktop_disconnect_path,
+    codex_model_catalog_path,
+    model_catalog_cache_path,
+)
+from modelglot.config.provider_catalog import PROVIDER_CATALOG, ProviderAuthKind
+from modelglot.config.server_urls import local_proxy_root_url
+from modelglot.config.settings import Settings
+from modelglot.core.json_types import JsonObject, JsonValue, load_json_value
+from modelglot.core.version import package_version
+from modelglot.harnesses import (
+    claude_desktop_integration,
+    claude_integration,
+    codex_integration,
+    jetbrains_acp_integration,
+    vscode_chat_integration,
+)
+from modelglot.providers.github_copilot.auth import CopilotAuthManager
+from modelglot.providers.model_catalog_source import (
+    MODEL_CATALOG_CACHE_TTL_SECONDS,
+    ModelCatalogSource,
+)
+from modelglot.providers.openai_codex.auth import saved_connection_state
+from modelglot.providers.runtime.config import has_provider_configuration
+from modelglot.providers.runtime.discovery import (
+    referenced_provider_ids,
+    safe_discovery_failure_message,
+)
+
+RUNTIME_FIELDS = (
+    "host",
+    "port",
+    "open_admin_browser",
+    "proxy_auth_enabled",
+    "provider_rate_limit",
+    "provider_rate_window",
+    "provider_max_concurrency",
+    "provider_max_attempts",
+    "http_read_timeout",
+    "http_write_timeout",
+    "http_connect_timeout",
+    "log_level",
+    "log_raw_api_payloads",
+    "log_raw_sse_events",
+    "log_api_error_tracebacks",
+    "log_raw_messaging_content",
+    "log_raw_cli_diagnostics",
+    "log_messaging_error_details",
+    "debug_platform_edits",
+    "debug_subagent_stack",
+    "voice_note_enabled",
+    "whisper_device",
+    "whisper_model",
+    "messaging_platform",
+    "messaging_rate_limit",
+    "messaging_rate_window",
+    "max_message_log_entries_per_chat",
+    "model_catalog_source",
+    "model_catalog_url",
+)
+ROUTING_FIELDS = (
+    "model",
+    "model_fable",
+    "model_opus",
+    "model_sonnet",
+    "model_haiku",
+    "model_fallbacks",
+)
+REASONING_FIELDS = (
+    "reasoning_policy",
+    "reasoning_fable",
+    "reasoning_opus",
+    "reasoning_sonnet",
+    "reasoning_haiku",
+)
+WEB_FIELDS = (
+    "enable_web_server_tools",
+    "web_fetch_allowed_schemes",
+    "web_fetch_allow_private_networks",
+)
+EXCLUDED_FIELDS = {
+    "proxy_auth_token",
+    "telegram_bot_token",
+    "allowed_telegram_user_id",
+    "discord_bot_token",
+    "allowed_discord_channels",
+    "allowed_dir",
+    "cloudflare_account_id",
+    "anthropic_workspace_id",
+    "vertex_project_id",
+} | {d.credential_attr for d in PROVIDER_CATALOG.values() if d.credential_attr}
+URL_FIELDS = {
+    attr
+    for d in PROVIDER_CATALOG.values()
+    for attr in (d.base_url_attr, d.proxy_attr)
+    if attr
+} | {"telegram_proxy_url"}
+HARNESS_NAMES = (
+    "claude",
+    "codex",
+    "pi",
+    "opencode",
+    "cline",
+    "hermes",
+    "dsh",
+    "grok",
+    "muse",
+    "aider",
+)
+_VERSION = re.compile(
+    r"(?<![\w./\\])v?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?)(?![\w./\\+-])"
+)
+
+
+def classified_settings() -> set[str]:
+    return (
+        set(RUNTIME_FIELDS + ROUTING_FIELDS + REASONING_FIELDS + WEB_FIELDS)
+        | EXCLUDED_FIELDS
+        | URL_FIELDS
+        | {"vertex_location", "custom_providers"}
+    )
+
+
+def _url_summary(value: str | None) -> dict[str, Any]:
+    origin = None
+    if value:
+        try:
+            parsed = urlsplit(value)
+            if (
+                parsed.scheme in {"http", "https", "socks5", "socks5h", "socks4"}
+                and parsed.hostname
+            ):
+                host = parsed.hostname
+                if ":" in host:
+                    host = f"[{host}]"
+                origin = f"{parsed.scheme}://{host}"
+                if parsed.port is not None:
+                    origin += f":{parsed.port}"
+        except ValueError:
+            pass
+    return {"configured": bool(value), "origin": origin}
+
+
+def settings_report(settings: Settings, accounts: dict[str, str]) -> dict[str, Any]:
+    referenced = referenced_provider_ids(settings)
+    providers: dict[str, JsonObject] = {}
+    for name, descriptor in sorted(PROVIDER_CATALOG.items()):
+        account = accounts.get(name, "unavailable")
+        configured = has_provider_configuration(descriptor, settings)
+        if descriptor.auth_kind is ProviderAuthKind.CONNECTED_ACCOUNT:
+            configured = account == "connected" if account != "unavailable" else None
+        row: JsonObject = {"configured": configured, "referenced": name in referenced}
+        if descriptor.auth_kind is ProviderAuthKind.CONNECTED_ACCOUNT:
+            row["saved_connection"] = account or "unavailable"
+        for key, attr in (
+            ("base_url", descriptor.base_url_attr),
+            ("proxy", descriptor.proxy_attr),
+        ):
+            if attr:
+                value: object = getattr(settings, attr)
+                row[key] = _url_summary(value if isinstance(value, str) else None)
+        if name == "vertex":
+            row["location"] = settings.vertex_location
+        providers[name] = row
+    for definition in settings.custom_providers:
+        providers[definition.provider_id] = {
+            "display_name": definition.display_name,
+            "configured": True,
+            "referenced": definition.provider_id in referenced,
+            "base_url": _url_summary(definition.base_url),
+            "api_key_configured": bool(definition.api_keys),
+            "api_format": definition.api_format,
+            "reasoning_format": definition.reasoning_format,
+            "reasoning_history_format": definition.reasoning_history_format,
+            "model_ids": list(definition.model_ids),
+        }
+    runtime = {name: getattr(settings, name) for name in RUNTIME_FIELDS}
+    runtime["telegram_proxy"] = _url_summary(settings.telegram_proxy_url)
+    return {
+        "providers": providers,
+        "runtime": runtime,
+        "model_routing": settings.model_dump(mode="json", include=set(ROUTING_FIELDS)),
+        "reasoning": {name: getattr(settings, name) for name in REASONING_FIELDS},
+        "web_tools": {name: getattr(settings, name) for name in WEB_FIELDS},
+    }
+
+
+def integration_report(settings: Settings) -> dict[str, JsonObject]:
+    url, token = local_proxy_root_url(settings), settings.proxy_auth_token
+    readers = {
+        "vscode-chat": lambda: vscode_chat_integration.status(
+            vscode_chat_integration.config_path()
+        ),
+        "claude-vscode": lambda: claude_integration.configure(
+            claude_integration.settings_path(),
+            url,
+            token,
+        ),
+        "codex": lambda: codex_integration.configure(
+            codex_integration.config_path(), codex_model_catalog_path(), url
+        ),
+        "claude-desktop": lambda: claude_desktop_integration.configure(
+            claude_desktop_integration.config_root(),
+            url,
+            token,
+            disconnect_path=claude_desktop_disconnect_path(),
+        ),
+        "jetbrains-acp": lambda: jetbrains_acp_integration.configure(
+            jetbrains_acp_integration.config_path(), url, token
+        ),
+    }
+    result: dict[str, JsonObject] = {}
+    for name, read in readers.items():
+        try:
+            status = read()
+            result[name] = {"status": "available", "connected": status["connected"]}
+            if "disconnect_pending" in status:
+                result[name]["disconnect_pending"] = status["disconnect_pending"]
+        except OSError, ValueError:
+            result[name] = {"status": "unavailable", "connected": None}
+    return result
+
+
+def probe_harness(binary: str, args: tuple[str, ...]) -> dict[str, Any]:
+    path = shutil.which(binary)
+    result: JsonObject = {
+        "installed": path is not None,
+        "version": None,
+        "status": "not_installed",
+    }
+    if path is None:
+        return result
+    try:
+        probe = subprocess.run(
+            [path, *args],
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=5,
+            check=False,
+        )
+        if probe.returncode != 0:
+            result["status"] = "failed"
+            return result
+        output = probe.stdout.strip()
+        if binary == "grok":
+            payload = load_json_value(output)
+            output = (
+                payload.get("currentVersion", "") if isinstance(payload, dict) else ""
+            )
+        else:
+            output = f"{output}\n{probe.stderr}"
+        match = _VERSION.search(output) if isinstance(output, str) else None
+        result["version"] = match[1] if match else None
+        result["status"] = "available" if match else "unrecognized_version"
+    except subprocess.TimeoutExpired:
+        result["status"] = "timeout"
+    except OSError:
+        result["status"] = "unavailable"
+    except ValueError:
+        result["status"] = "unrecognized_version"
+    return result
+
+
+def harness_report() -> dict[str, Any]:
+    result = {}
+    from modelglot.cli.launchers.runner import HarnessSpec
+
+    for name in HARNESS_NAMES:
+        module = importlib.import_module(f"modelglot.cli.launchers.{name}")
+        spec: object = getattr(module, "SPEC", None)
+        if not isinstance(spec, HarnessSpec):
+            raise TypeError(f"Invalid harness specification for {name}")
+        args = (
+            tuple(spec.compatibility_check.args)
+            if spec.compatibility_check
+            else ("--version",)
+        )
+        result[name] = probe_harness(spec.binary_name, args)
+    return result
+
+
+def model_discovery_report(settings: Settings) -> dict[str, Any]:
+    """Read a safe snapshot from an existing local server without refreshing it."""
+    unavailable = {"status": "unavailable", "source": "running_server"}
+    try:
+        url = local_proxy_root_url(settings)
+        if urlsplit(url).hostname not in {"127.0.0.1", "localhost", "::1"}:
+            return unavailable
+        response = httpx.get(
+            f"{url}/admin/api/status",
+            timeout=2.0,
+            trust_env=False,
+            follow_redirects=False,
+        )
+        response.raise_for_status()
+        payload: JsonValue = response.json()
+    except httpx.HTTPError, httpx.InvalidURL, ValueError:
+        return unavailable
+    if not isinstance(payload, dict) or payload.get("status") != "running":
+        return unavailable
+    startup = payload.get("startup")
+    if not isinstance(startup, dict):
+        return unavailable
+    states, errors = startup.get("providers"), startup.get("provider_errors")
+    if not isinstance(states, dict) or not isinstance(errors, dict):
+        return unavailable
+    providers = {}
+    for provider_id, state in states.items():
+        if provider_id not in PROVIDER_CATALOG and not re.fullmatch(
+            r"custom_[a-f0-9]{32}", provider_id
+        ):
+            continue
+        if state not in ("starting", "ready", "failed", "unavailable"):
+            continue
+        row = {"state": state}
+        if state == "failed":
+            row["message"] = safe_discovery_failure_message(errors.get(provider_id))
+        providers[provider_id] = row
+    return {"status": "available", "source": "running_server", "providers": providers}
+
+
+def model_titles_report(settings: Settings) -> dict[str, Any]:
+    """Report the descriptive model-title source and local cache state."""
+    source = settings.model_catalog_source
+    if source == "none":
+        return {
+            "source": "none",
+            "cache_age_seconds": None,
+            "ttl_seconds": MODEL_CATALOG_CACHE_TTL_SECONDS,
+            "state": "disabled",
+            "last_error": None,
+        }
+    cache = ModelCatalogSource(model_catalog_cache_path()).load()
+    age = None if cache.fetched_at is None else max(0.0, time.time() - cache.fetched_at)
+    state = (
+        "absent" if cache.fetched_at is None else ("stale" if cache.stale else "fresh")
+    )
+    return {
+        "source": source,
+        "url": settings.model_catalog_url,
+        "cache_age_seconds": age,
+        "ttl_seconds": MODEL_CATALOG_CACHE_TTL_SECONDS,
+        "entries": len(cache.entries),
+        "state": state,
+        "last_error": cache.last_error,
+    }
+
+
+def collect_report() -> dict[str, Any]:
+    configuration = {
+        "source": "saved_config_with_process_overrides",
+        "status": "available",
+    }
+    errors: list[dict[str, str]] = []
+    report: JsonObject = {
+        "version": package_version(),
+        "system": {
+            "os": platform.system(),
+            "release": platform.release(),
+            "architecture": platform.machine(),
+            "python_version": platform.python_version(),
+            "python_implementation": platform.python_implementation(),
+        },
+        "configuration": configuration,
+        "providers": None,
+        "runtime": None,
+        "model_routing": None,
+        "reasoning": None,
+        "web_tools": None,
+        "integrations": None,
+        "harnesses": {},
+        "model_discovery": {"status": "unavailable", "source": "running_server"},
+        "model_titles": None,
+        "errors": errors,
+    }
+    store = ManagedConfigStore()
+    try:
+        if not store.path.is_file():
+            raise FileNotFoundError
+        settings = store.read().settings
+    except FileNotFoundError:
+        configuration["status"] = "missing"
+    except ValueError:
+        configuration["status"] = "invalid"
+    except OSError:
+        configuration["status"] = "unavailable"
+    else:
+        accounts = {"openai": saved_connection_state()}
+        copilot = CopilotAuthManager().status().state.value
+        accounts["github_copilot"] = (
+            copilot if copilot in {"connected", "disconnected"} else "unavailable"
+        )
+        report.update(settings_report(settings, accounts))
+        report["model_discovery"] = model_discovery_report(settings)
+        report["model_titles"] = model_titles_report(settings)
+        integrations = integration_report(settings)
+        report["integrations"] = integrations
+        for name, state in accounts.items():
+            if state not in {"connected", "disconnected"}:
+                errors.append({"section": f"providers.{name}", "code": "unavailable"})
+        for name, status in integrations.items():
+            if status["status"] != "available":
+                errors.append(
+                    {"section": f"integrations.{name}", "code": "unavailable"}
+                )
+    if configuration["status"] != "available":
+        errors.append({"section": "configuration", "code": configuration["status"]})
+    report["harnesses"] = harness_report()
+    return report

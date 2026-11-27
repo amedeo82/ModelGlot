@@ -8,8 +8,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from free_claude_code.cli import desktop_entrypoint
-from free_claude_code.cli.desktop_assets import app_icon_bytes, export_app_icon
+from modelglot.cli import desktop_entrypoint
+from modelglot.cli.desktop_assets import app_icon_bytes, export_app_icon
 
 
 def test_packaged_icons_have_native_container_headers() -> None:
@@ -63,7 +63,7 @@ def test_desktop_entrypoint_rejects_unknown_arguments(
 def test_macos_installer_mode_does_not_import_tray(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from free_claude_code.cli import macos_app
+    from modelglot.cli import macos_app
 
     installed = []
     monkeypatch.setattr(desktop_entrypoint.sys, "platform", "darwin")
@@ -77,7 +77,7 @@ def test_macos_installer_mode_does_not_import_tray(
         fromlist: Sequence[str] | None = (),
         level: int = 0,
     ):
-        assert name not in {"pystray", "free_claude_code.cli.desktop_tray"}
+        assert name not in {"pystray", "modelglot.cli.desktop_tray"}
         return original_import(name, globals, locals, fromlist, level)
 
     monkeypatch.setattr(builtins, "__import__", checked_import)
@@ -114,7 +114,7 @@ def test_desktop_sets_scaling_before_importing_native_tray(
         fromlist: Sequence[str] | None = (),
         level: int = 0,
     ):
-        if name == "free_claude_code.cli.desktop_tray":
+        if name == "modelglot.cli.desktop_tray":
             assert calls == ["scaling"]
 
             def launch(**kwargs: object):

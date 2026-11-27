@@ -15,10 +15,10 @@ import httpx2
 import openai
 import pytest
 
-from free_claude_code.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.providers import admission, failure_reporting
-from free_claude_code.providers.admission import (
+from modelglot.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.providers import admission, failure_reporting
+from modelglot.providers.admission import (
     ProviderAdmissionController,
     ProviderAttempt,
     ProviderCorrectionAction,
@@ -26,9 +26,9 @@ from free_claude_code.providers.admission import (
     ProviderExecutionState,
     ProviderOperationKind,
 )
-from free_claude_code.providers.http import ProviderAttemptScope
-from free_claude_code.providers.recovery_errors import ProviderRecoveryExhausted
-from free_claude_code.providers.stream_recovery import TruncatedProviderStreamError
+from modelglot.providers.http import ProviderAttemptScope
+from modelglot.providers.recovery_errors import ProviderRecoveryExhausted
+from modelglot.providers.stream_recovery import TruncatedProviderStreamError
 from tests.mock_calls import keyword_arguments
 from tests.wire_payload import string_payload
 
@@ -163,7 +163,7 @@ async def test_attempt_outcome_and_close_are_idempotent() -> None:
     execution = controller.start_execution()
     error = _status_error(400)
 
-    with patch("free_claude_code.providers.admission.trace_event") as trace:
+    with patch("modelglot.providers.admission.trace_event") as trace:
         attempt = await _open(execution)
         first = await attempt.fail(error)
         repeated = await attempt.fail(_status_error(503))
@@ -375,7 +375,7 @@ async def test_recovery_traces_keep_the_logical_request_id() -> None:
             raise _status_error(503)
         return "recovered"
 
-    with patch("free_claude_code.providers.admission.trace_event") as trace:
+    with patch("modelglot.providers.admission.trace_event") as trace:
         result = await controller.start_execution(request_id="req_trace").run_call(
             recover,
             operation_kind=ProviderOperationKind.GENERATION,
@@ -412,7 +412,7 @@ async def test_each_physical_call_has_one_correlated_trace_pair() -> None:
             raise _status_error(503)
         return "ok"
 
-    with patch("free_claude_code.providers.admission.trace_event") as trace:
+    with patch("modelglot.providers.admission.trace_event") as trace:
         assert (
             await controller.start_execution(request_id="req_attempts").run_call(
                 recover,
@@ -457,7 +457,7 @@ async def test_direct_exhaustion_trace_keeps_the_logical_request_id() -> None:
         raise error
 
     with (
-        patch("free_claude_code.providers.admission.trace_event") as trace,
+        patch("modelglot.providers.admission.trace_event") as trace,
         pytest.raises(httpx.HTTPStatusError),
     ):
         await controller.start_execution(request_id="req_terminal").run_call(
@@ -522,8 +522,8 @@ async def test_openai_413_does_not_retry_sleep_or_open_recovery() -> None:
         raise error
 
     with (
-        patch("free_claude_code.providers.admission.asyncio.sleep") as sleep,
-        patch("free_claude_code.providers.admission.trace_event") as trace,
+        patch("modelglot.providers.admission.asyncio.sleep") as sleep,
+        patch("modelglot.providers.admission.trace_event") as trace,
         pytest.raises(openai.APIStatusError),
     ):
         await controller.start_execution(request_id="req_413").run_call(

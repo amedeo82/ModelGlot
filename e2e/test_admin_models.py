@@ -7,8 +7,8 @@ import pytest
 from playwright.sync_api import Locator, Page, Route, expect
 
 from e2e.provider_support import close_provider, open_provider
-from free_claude_code.core.json_types import JsonValue, load_json_value
-from free_claude_code.core.version import package_version
+from modelglot.core.json_types import JsonValue, load_json_value
+from modelglot.core.version import package_version
 from tests.wire_payload import (
     array_payload,
     object_array,

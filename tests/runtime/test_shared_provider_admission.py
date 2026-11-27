@@ -7,13 +7,13 @@ from unittest.mock import AsyncMock, patch
 import httpx
 import pytest
 
-from free_claude_code.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
-from free_claude_code.config.settings import Settings
-from free_claude_code.providers.admission import ProviderOperationKind
-from free_claude_code.providers.admission_policy import ProviderAdmissionLimits
-from free_claude_code.providers.admission_registry import ProviderAdmissionRegistry
-from free_claude_code.providers.nvidia_nim import NvidiaNimProvider
-from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
+from modelglot.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
+from modelglot.config.settings import Settings
+from modelglot.providers.admission import ProviderOperationKind
+from modelglot.providers.admission_policy import ProviderAdmissionLimits
+from modelglot.providers.admission_registry import ProviderAdmissionRegistry
+from modelglot.providers.nvidia_nim import NvidiaNimProvider
+from modelglot.runtime.provider_manager import ProviderRuntimeManager
 from tests.providers.test_provider_admission import _open, _status_error
 from tests.runtime.test_provider_manager import RuntimeFactory
 
@@ -240,7 +240,7 @@ async def test_separate_provider_ids_and_managers_have_independent_capacity() ->
 async def test_custom_registry_entry_lives_until_retired_generation_cleanup_succeeds() -> (
     None
 ):
-    from free_claude_code.config.custom_providers import CustomProviderDefinition
+    from modelglot.config.custom_providers import CustomProviderDefinition
 
     custom_id = "custom_12345678123412341234123456789abc"
     settings = Settings(
@@ -286,8 +286,8 @@ async def test_custom_registry_entry_lives_until_retired_generation_cleanup_succ
 async def test_history_cache_survives_settings_and_key_replacement_but_clears_on_close() -> (
     None
 ):
-    from free_claude_code.core.history_replay import HistoryMode, ReplayOrigin
-    from free_claude_code.providers.history_negotiation import HistoryNegotiation
+    from modelglot.core.history_replay import HistoryMode, ReplayOrigin
+    from modelglot.providers.history_negotiation import HistoryNegotiation
 
     settings = Settings(nvidia_nim_api_keys="first-key", provider_rate_limit=1000000)
     manager = ProviderRuntimeManager(settings)
@@ -344,7 +344,7 @@ async def test_history_cache_survives_settings_and_key_replacement_but_clears_on
 async def test_exceptional_factories_retain_history_cache_across_replacement(
     kind: str,
 ) -> None:
-    from free_claude_code.core.history_replay import HistoryMode
+    from modelglot.core.history_replay import HistoryMode
     from tests.config.test_custom_providers import definition
 
     custom = definition(

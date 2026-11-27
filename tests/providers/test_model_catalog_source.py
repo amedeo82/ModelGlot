@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.config.model_catalog_metadata import ModelCatalogMetadata
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.json_types import JsonValue
-from free_claude_code.providers.model_catalog_source import (
+from modelglot.config.model_catalog_metadata import ModelCatalogMetadata
+from modelglot.config.settings import Settings
+from modelglot.core.json_types import JsonValue
+from modelglot.providers.model_catalog_source import (
     ModelCatalogCache,
     ModelCatalogSource,
     ModelCatalogSourceError,
@@ -97,7 +97,7 @@ async def test_refresh_fetches_reduces_and_publishes_the_catalog(
         return Client()
 
     monkeypatch.setattr(
-        "free_claude_code.providers.model_catalog_source.httpx.AsyncClient",
+        "modelglot.providers.model_catalog_source.httpx.AsyncClient",
         client_factory,
     )
     path = tmp_path / "catalog.json"
@@ -261,7 +261,7 @@ def test_source_none_does_not_make_a_network_request(
         pytest.fail("disabled catalog source must not make a network request")
 
     monkeypatch.setattr(
-        "free_claude_code.providers.model_catalog_source.httpx.AsyncClient", forbidden
+        "modelglot.providers.model_catalog_source.httpx.AsyncClient", forbidden
     )
     source = ModelCatalogSource(Path("unused.json"))
 

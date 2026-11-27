@@ -6,10 +6,10 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.application.model_catalog import CatalogModel
-from free_claude_code.core.json_types import load_json_value
-from free_claude_code.core.model_capabilities import ModelInputModality
-from free_claude_code.harnesses import vscode_chat_integration as vscode
+from modelglot.application.model_catalog import CatalogModel
+from modelglot.core.json_types import load_json_value
+from modelglot.core.model_capabilities import ModelInputModality
+from modelglot.harnesses import vscode_chat_integration as vscode
 from tests.wire_payload import array_payload, object_array, object_payload
 
 URL = "http://127.0.0.1:16969"
@@ -231,7 +231,7 @@ def test_native_config_paths(
     env: str | None,
     tail: str,
 ) -> None:
-    from free_claude_code.harnesses import claude_integration
+    from modelglot.harnesses import claude_integration
 
     monkeypatch.setattr(claude_integration.sys, "platform", platform)
     monkeypatch.setattr(claude_integration.Path, "home", lambda: tmp_path)
@@ -255,14 +255,14 @@ def test_native_config_paths(
 def test_native_effort_uses_shared_routing_and_provider_encoders(
     effort: str | None, preference: str, no_thinking: bool, expected: str | None
 ) -> None:
-    from free_claude_code.application.routing import ModelRouter
-    from free_claude_code.config.settings import Settings
-    from free_claude_code.core.anthropic.models import MessagesRequest
-    from free_claude_code.providers.anthropic_messages.request_policy import (
+    from modelglot.application.routing import ModelRouter
+    from modelglot.config.settings import Settings
+    from modelglot.core.anthropic.models import MessagesRequest
+    from modelglot.providers.anthropic_messages.request_policy import (
         MessagesModelCapabilities,
         resolve_messages_options,
     )
-    from free_claude_code.providers.nvidia_nim.request_options import (
+    from modelglot.providers.nvidia_nim.request_options import (
         build_nim_request_body,
     )
 

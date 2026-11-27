@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from free_claude_code.messaging.platforms.outbox import PlatformOutbox
+from modelglot.messaging.platforms.outbox import PlatformOutbox
 
 
 def _noop_outbox(
@@ -157,7 +157,7 @@ async def test_completed_background_failure_is_observed_and_released() -> None:
     async def fail() -> None:
         raise RuntimeError("background failed")
 
-    with patch("free_claude_code.messaging.platforms.outbox.logger.error") as error_log:
+    with patch("modelglot.messaging.platforms.outbox.logger.error") as error_log:
         outbox.fire_and_forget(fail())
         await asyncio.sleep(0)
         await asyncio.sleep(0)

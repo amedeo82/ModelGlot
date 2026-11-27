@@ -8,18 +8,18 @@ import httpx2
 import pytest
 from openai import AsyncOpenAI
 
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.gemini import GeminiRequest
-from free_claude_code.core.gemini.replay import decode_bundle
-from free_claude_code.core.history_replay import ReplayOrigin
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.providers.endpoint_types import HttpEndpoint
-from free_claude_code.providers.google_openai.provider import GoogleChatBehavior
-from free_claude_code.providers.google_openai.thought_signatures import (
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.gemini import GeminiRequest
+from modelglot.core.gemini.replay import decode_bundle
+from modelglot.core.history_replay import ReplayOrigin
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.providers.endpoint_types import HttpEndpoint
+from modelglot.providers.google_openai.provider import GoogleChatBehavior
+from modelglot.providers.google_openai.thought_signatures import (
     GOOGLE_SKIP_THOUGHT_SIGNATURE_VALIDATOR,
 )
-from free_claude_code.providers.history_replay import replay_origin
-from free_claude_code.providers.openai_chat.transport import OpenAIChatTransport
+from modelglot.providers.history_replay import replay_origin
+from modelglot.providers.openai_chat.transport import OpenAIChatTransport
 from tests.providers.test_gemini_review_regressions import (
     CALL,
     GOOGLE_PROFILE,

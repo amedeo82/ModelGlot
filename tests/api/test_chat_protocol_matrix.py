@@ -8,8 +8,8 @@ import httpx2
 import pytest
 from fastapi.testclient import TestClient
 
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.json_types import JsonObject, JsonValue, load_json_value
+from modelglot.config.settings import Settings
+from modelglot.core.json_types import JsonObject, JsonValue, load_json_value
 from tests.api.support import create_test_app, provider_manager_for_app
 from tests.providers.test_custom_provider import completion, definition, provider
 from tests.wire_payload import (

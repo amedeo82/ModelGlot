@@ -89,19 +89,19 @@ same API projection. Only the advertised ID encoding differs.
 
 Relevant implementation points:
 
-- `src/free_claude_code/application/model_catalog.py:31-43` owns `CatalogModel`, including the
+- `src/modelglot/application/model_catalog.py:31-43` owns `CatalogModel`, including the
   title, provider description, reasoning flag, input modalities, context window, and maximum
   output tokens;
-- `src/free_claude_code/application/model_titles.py:52-67` resolves titles through curated
+- `src/modelglot/application/model_titles.py:52-67` resolves titles through curated
   overrides, the models.dev cache, a deterministic ID heuristic, and finally the raw
   provider/model reference;
-- `src/free_claude_code/application/model_catalog.py:145-164` builds each catalog model and
+- `src/modelglot/application/model_catalog.py:145-164` builds each catalog model and
   currently sets `description` to the provider display name;
-- `src/free_claude_code/api/model_catalog.py:172-204` builds the shared Claude and Desktop
+- `src/modelglot/api/model_catalog.py:172-204` builds the shared Claude and Desktop
   response;
-- `src/free_claude_code/api/model_catalog.py:280-291` shows that the shared Claude projection
+- `src/modelglot/api/model_catalog.py:280-291` shows that the shared Claude projection
   currently emits only `id`, `display_name`, `description`, and `created_at`;
-- `src/free_claude_code/api/model_catalog.py:233-259` shows that the Messages and Responses
+- `src/modelglot/api/model_catalog.py:233-259` shows that the Messages and Responses
   projections already serialize capability facts, but those fields are not part of the Claude
   picker contract.
 
@@ -169,10 +169,10 @@ parser extracts:
 
 Relevant implementation points:
 
-- `src/free_claude_code/providers/model_listing.py:40-219` extracts provider model facts;
-- `src/free_claude_code/providers/model_listing.py:269-284` distinguishes optional, required,
+- `src/modelglot/providers/model_listing.py:40-219` extracts provider model facts;
+- `src/modelglot/providers/model_listing.py:269-284` distinguishes optional, required,
   absent, and disabled reasoning controls;
-- `src/free_claude_code/application/model_metadata.py:9-20` stores the resulting facts.
+- `src/modelglot/application/model_metadata.py:9-20` stores the resulting facts.
 
 Provider listings are authoritative for what a specific host actually serves. They are usually
 inconsistent about descriptive names and model marketing descriptions, so they remain the
@@ -543,14 +543,14 @@ The document leaves the product decisions and implementation sequence open; no m
 
 | Claim | Evidence |
 | --- | --- |
-| Claude and Desktop share the same builder | `src/free_claude_code/api/model_catalog.py:141-145` |
-| Shared Claude rows currently emit title and provider description | `src/free_claude_code/api/model_catalog.py:172-204`, `:280-291` |
-| Catalog stores reasoning, modalities, and limits | `src/free_claude_code/application/model_catalog.py:31-43` |
-| Provider facts are parsed | `src/free_claude_code/providers/model_listing.py:40-219` |
-| models.dev title and description are cached but reduced | `src/free_claude_code/providers/model_catalog_source.py:125-155` |
-| The models.dev cache currently stores name and description | `src/free_claude_code/providers/model_catalog_source.py:26-40` |
-| Direct views already serialize capability fields | `src/free_claude_code/api/model_catalog.py:233-259` |
-| Desktop preserves user-owned model pins | `src/free_claude_code/harnesses/claude_desktop_integration.py:285-295` |
+| Claude and Desktop share the same builder | `src/modelglot/api/model_catalog.py:141-145` |
+| Shared Claude rows currently emit title and provider description | `src/modelglot/api/model_catalog.py:172-204`, `:280-291` |
+| Catalog stores reasoning, modalities, and limits | `src/modelglot/application/model_catalog.py:31-43` |
+| Provider facts are parsed | `src/modelglot/providers/model_listing.py:40-219` |
+| models.dev title and description are cached but reduced | `src/modelglot/providers/model_catalog_source.py:125-155` |
+| The models.dev cache currently stores name and description | `src/modelglot/providers/model_catalog_source.py:26-40` |
+| Direct views already serialize capability fields | `src/modelglot/api/model_catalog.py:233-259` |
+| Desktop preserves user-owned model pins | `src/modelglot/harnesses/claude_desktop_integration.py:285-295` |
 | Official discovery response fields | [Claude Code gateway compatibility guide](https://code.claude.com/docs/en/llm-gateway-protocol#model-discovery) |
 | Official model picker fields and precedence | [Claude Code settings reference](https://code.claude.com/docs/en/settings-reference#modelpicker) |
 | models.dev endpoint roles and schema | [models.dev README](https://github.com/anomalyco/models.dev/blob/dev/README.md) |

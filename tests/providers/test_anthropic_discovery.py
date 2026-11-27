@@ -5,18 +5,18 @@ import asyncio
 import httpx
 import pytest
 
-from free_claude_code.application.errors import InvalidRequestError
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.reasoning import (
+from modelglot.application.errors import InvalidRequestError
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.json_types import JsonObject
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.reasoning import (
     ReasoningCapability,
     ReasoningEffort,
     ReasoningPolicy,
 )
-from free_claude_code.providers.anthropic.models import model_record
-from free_claude_code.providers.model_listing import ModelListResponseError
+from modelglot.providers.anthropic.models import model_record
+from modelglot.providers.model_listing import ModelListResponseError
 from tests.providers.test_anthropic_messages_transport import _events, _sse
 from tests.providers.test_anthropic_provider import provider
 from tests.wire_payload import decode_object, object_payload

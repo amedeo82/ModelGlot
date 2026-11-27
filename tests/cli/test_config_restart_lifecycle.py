@@ -11,23 +11,23 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from free_claude_code.api.app import create_app
-from free_claude_code.api.ports import ApiServices
-from free_claude_code.application.code_sessions import CodeService
-from free_claude_code.cli import commands, desktop
-from free_claude_code.cli.desktop import DesktopController
-from free_claude_code.cli.launchers import common
-from free_claude_code.config import paths
-from free_claude_code.config.loader import ManagedConfigSnapshot, ManagedConfigStore
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.interprocess_lock import InterprocessFileLock
-from free_claude_code.providers.runtime import ProviderRuntime
-from free_claude_code.runtime.application import ApplicationRuntime, RestartCallback
-from free_claude_code.runtime.asgi import RuntimeASGIApp
-from free_claude_code.runtime.code_sessions_sqlite import SQLiteCodeStore
-from free_claude_code.runtime.configuration import ConfigurationService
-from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
-from free_claude_code.runtime.sqlite_database import SQLiteDatabase
+from modelglot.api.app import create_app
+from modelglot.api.ports import ApiServices
+from modelglot.application.code_sessions import CodeService
+from modelglot.cli import commands, desktop
+from modelglot.cli.desktop import DesktopController
+from modelglot.cli.launchers import common
+from modelglot.config import paths
+from modelglot.config.loader import ManagedConfigSnapshot, ManagedConfigStore
+from modelglot.config.settings import Settings
+from modelglot.core.interprocess_lock import InterprocessFileLock
+from modelglot.providers.runtime import ProviderRuntime
+from modelglot.runtime.application import ApplicationRuntime, RestartCallback
+from modelglot.runtime.asgi import RuntimeASGIApp
+from modelglot.runtime.code_sessions_sqlite import SQLiteCodeStore
+from modelglot.runtime.configuration import ConfigurationService
+from modelglot.runtime.provider_manager import ProviderRuntimeManager
+from modelglot.runtime.sqlite_database import SQLiteDatabase
 from tests.code_sessions_support import FakeHarness
 from tests.web_tools_support import StubWebToolsClient
 from tests.wire_payload import object_payload, response_object
@@ -94,7 +94,7 @@ def test_harness_waits_through_owner_apply_restart(
             runtime,
         )
 
-    monkeypatch.setattr("free_claude_code.runtime.bootstrap.build_asgi_app", build)
+    monkeypatch.setattr("modelglot.runtime.bootstrap.build_asgi_app", build)
     monkeypatch.setattr(commands, "kill_all_best_effort", lambda: None)
     monkeypatch.setattr(desktop, "config_dir_path", paths.config_dir_path)
     # Exercise both installed owner paths on every host without native tray code.
@@ -285,7 +285,7 @@ def test_supervised_http_apply_finishes_and_reconnects(
             runtime,
         )
 
-    monkeypatch.setattr("free_claude_code.runtime.bootstrap.build_asgi_app", build)
+    monkeypatch.setattr("modelglot.runtime.bootstrap.build_asgi_app", build)
     monkeypatch.setattr(commands, "kill_all_best_effort", lambda: None)
     supervisor = commands.ServerSupervisor(console_logging=False)
     errors = []

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from free_claude_code.harnesses import claude_onboarding
+from modelglot.harnesses import claude_onboarding
 
 
 def test_missing_state_status_does_not_create_files(tmp_path: Path) -> None:

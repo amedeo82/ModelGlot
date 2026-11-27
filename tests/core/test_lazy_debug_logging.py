@@ -9,17 +9,17 @@ import pytest
 from loguru import logger
 from openai import AsyncOpenAI
 
-from free_claude_code.api.handlers import token_count
-from free_claude_code.application import execution
-from free_claude_code.config.settings import Settings
-from free_claude_code.core import trace
-from free_claude_code.core.anthropic import TokenCountRequest
-from free_claude_code.core.json_types import load_json_value
-from free_claude_code.core.stream_delivery import (
+from modelglot.api.handlers import token_count
+from modelglot.application import execution
+from modelglot.config.settings import Settings
+from modelglot.core import trace
+from modelglot.core.anthropic import TokenCountRequest
+from modelglot.core.json_types import load_json_value
+from modelglot.core.stream_delivery import (
     StreamDeliveryState,
     bind_stream_delivery,
 )
-from free_claude_code.providers.openai_chat import transport as chat_transport
+from modelglot.providers.openai_chat import transport as chat_transport
 from tests.application.test_execution import (
     FakeProvider,
     ResponsesFakeProvider,
@@ -141,8 +141,7 @@ async def _probe(level: str, raw: bool) -> None:
         ingress_payload = next(
             payload
             for payload in payloads
-            if object_payload(payload)["event"]
-            == "free_claude_code.api.request.received"
+            if object_payload(payload)["event"] == "modelglot.api.request.received"
         )
         assert (
             object_payload(object_payload(ingress_payload)["snapshot"])["model"]

@@ -6,21 +6,21 @@ from itertools import pairwise
 
 import pytest
 
-from free_claude_code.application.response_collection import WireProtocol
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.async_iterators import AsyncCloseable
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.reasoning import ReasoningPolicy
-from free_claude_code.core.stream_delivery import (
+from modelglot.application.response_collection import WireProtocol
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.async_iterators import AsyncCloseable
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.json_types import JsonObject
+from modelglot.core.reasoning import ReasoningPolicy
+from modelglot.core.stream_delivery import (
     StreamDeliveryState,
     bind_stream_delivery,
 )
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.core.stream_recovery import ContinuationSeed
-from free_claude_code.providers.admission import ProviderAdmissionController
-from free_claude_code.providers.endpoint_types import EndpointContext
-from free_claude_code.providers.openai_chat.provider import OpenAIChatProvider
+from modelglot.core.stream_output import StreamOutput
+from modelglot.core.stream_recovery import ContinuationSeed
+from modelglot.providers.admission import ProviderAdmissionController
+from modelglot.providers.endpoint_types import EndpointContext
+from modelglot.providers.openai_chat.provider import OpenAIChatProvider
 from tests.api.test_delivered_stream_recovery import (
     after_text,
     public_text,

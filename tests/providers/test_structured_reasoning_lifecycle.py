@@ -4,24 +4,24 @@ import json
 
 import pytest
 
-from free_claude_code.application.response_collection import WireProtocol
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import SSEEvent, parse_sse_text
-from free_claude_code.core.history_replay import (
+from modelglot.application.response_collection import WireProtocol
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.anthropic.stream_contracts import SSEEvent, parse_sse_text
+from modelglot.core.history_replay import (
     AssociatedReplayRecord,
     ReplayOrigin,
     encode_replay,
 )
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.providers.history_replay import (
+from modelglot.core.json_types import JsonObject
+from modelglot.providers.history_replay import (
     normalize_messages_history,
     replay_origin,
 )
-from free_claude_code.providers.openai_chat import CompletedToolCall
-from free_claude_code.providers.openai_chat.reasoning_details import (
+from modelglot.providers.openai_chat import CompletedToolCall
+from modelglot.providers.openai_chat.reasoning_details import (
     StructuredReasoningStream,
 )
-from free_claude_code.providers.openai_chat.stream_output import (
+from modelglot.providers.openai_chat.stream_output import (
     AnthropicChatStreamOutput,
     ChatStreamUsage,
 )

@@ -2,20 +2,20 @@ from unittest.mock import patch
 
 import pytest
 
-from free_claude_code.application.errors import UnknownProviderError
-from free_claude_code.application.routing import ModelRouter
-from free_claude_code.config.model_refs import ModelFallback
-from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
-from free_claude_code.config.reasoning import ReasoningPreference
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.anthropic.models import (
+from modelglot.application.errors import UnknownProviderError
+from modelglot.application.routing import ModelRouter
+from modelglot.config.model_refs import ModelFallback
+from modelglot.config.provider_catalog import PROVIDER_CATALOG
+from modelglot.config.reasoning import ReasoningPreference
+from modelglot.config.settings import Settings
+from modelglot.core.anthropic.models import (
     Message,
     MessagesRequest,
     TokenCountRequest,
 )
-from free_claude_code.core.gateway_model_ids import desktop_model_id
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.reasoning import ReasoningControl, ReasoningEffort
+from modelglot.core.gateway_model_ids import desktop_model_id
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.reasoning import ReasoningControl, ReasoningEffort
 
 
 @pytest.mark.parametrize(
@@ -553,7 +553,7 @@ def test_direct_gateway_route_preserves_original_and_deduplicates_canonical_targ
 
 
 def test_model_router_logs_mapping(settings: Settings) -> None:
-    with patch("free_claude_code.application.routing.logger.debug") as mock_log:
+    with patch("modelglot.application.routing.logger.debug") as mock_log:
         ModelRouter(settings).resolve("claude-2.1")
 
     mock_log.assert_called()

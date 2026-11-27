@@ -9,17 +9,17 @@ from openai.lib.streaming.responses._responses import ResponseStreamState
 from openai.types.responses import ResponseStreamEvent
 from pydantic import TypeAdapter
 
-from free_claude_code.core.anthropic import ReasoningReplayMode
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.json_types import (
+from modelglot.core.anthropic import ReasoningReplayMode
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.json_types import (
     DecimalJsonObject,
     DecimalJsonValue,
     JsonObject,
     JsonValue,
     load_json_value,
 )
-from free_claude_code.core.openai_responses import (
+from modelglot.core.openai_responses import (
     NativeResponsesRelay,
     OpenAIResponsesRequest,
     ResponsesConversionError,
@@ -27,13 +27,13 @@ from free_claude_code.core.openai_responses import (
     ResponsesToolPolicy,
     build_responses_chat_request,
 )
-from free_claude_code.core.openai_tool_names import encode_openai_chat_tool_names
-from free_claude_code.providers.openai_chat.stream_output import (
+from modelglot.core.openai_tool_names import encode_openai_chat_tool_names
+from modelglot.providers.openai_chat.stream_output import (
     ChatStreamUsage,
     CompletedToolCall,
     ResponsesChatStreamOutput,
 )
-from free_claude_code.providers.openai_responses.presentation import (
+from modelglot.providers.openai_responses.presentation import (
     NativeResponsesPresenter,
 )
 from tests.providers.test_opencode import _responses_event_stream

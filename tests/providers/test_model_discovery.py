@@ -6,30 +6,30 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from free_claude_code.application.model_catalog import read_model_catalog
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.config.api_keys import normalize_api_keys
-from free_claude_code.config.loader import compose_settings_snapshot
-from free_claude_code.config.model_refs import ModelFallback
-from free_claude_code.config.provider_catalog import (
+from modelglot.application.model_catalog import read_model_catalog
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.config.api_keys import normalize_api_keys
+from modelglot.config.loader import compose_settings_snapshot
+from modelglot.config.model_refs import ModelFallback
+from modelglot.config.provider_catalog import (
     DEEPSEEK_DEFAULT_BASE,
     NVIDIA_NIM_DEFAULT_BASE,
     OPENROUTER_DEFAULT_BASE,
     WAFER_DEFAULT_BASE,
 )
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.reasoning import DEFAULT_REASONING_POLICY, ReasoningPolicy
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.core.stream_recovery import ContinuationSeed
-from free_claude_code.providers.base import BaseProvider
-from free_claude_code.providers.deepseek import DeepSeekProvider
-from free_claude_code.providers.model_listing import ModelListResponseError
-from free_claude_code.providers.nvidia_nim import NvidiaNimProvider
-from free_claude_code.providers.open_router import OpenRouterProvider
-from free_claude_code.providers.openai_chat import OpenAIChatProvider
-from free_claude_code.providers.runtime import ProviderRuntime
-from free_claude_code.providers.runtime.model_cache import ProviderModelCache
-from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
+from modelglot.config.settings import Settings
+from modelglot.core.reasoning import DEFAULT_REASONING_POLICY, ReasoningPolicy
+from modelglot.core.stream_output import StreamOutput
+from modelglot.core.stream_recovery import ContinuationSeed
+from modelglot.providers.base import BaseProvider
+from modelglot.providers.deepseek import DeepSeekProvider
+from modelglot.providers.model_listing import ModelListResponseError
+from modelglot.providers.nvidia_nim import NvidiaNimProvider
+from modelglot.providers.open_router import OpenRouterProvider
+from modelglot.providers.openai_chat import OpenAIChatProvider
+from modelglot.providers.runtime import ProviderRuntime
+from modelglot.providers.runtime.model_cache import ProviderModelCache
+from modelglot.runtime.provider_manager import ProviderRuntimeManager
 from tests.mock_calls import positional_arguments
 from tests.providers.support import (
     immediate_admission,
@@ -111,7 +111,7 @@ def test_provider_catalog_contract_is_metadata_only() -> None:
 @pytest.mark.asyncio
 async def test_nim_lists_openai_compatible_model_infos() -> None:
     config = make_provider_config(api_key="test-key", base_url=NVIDIA_NIM_DEFAULT_BASE)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = NvidiaNimProvider(config, admission=immediate_admission())
 
     with patch.object(
@@ -137,7 +137,7 @@ async def test_nim_exclusions_apply_only_to_hosted_nim_discovery(
     provider_id: str, provider_base_url: str, filtered: bool
 ) -> None:
     config = make_provider_config(api_key="test-key", base_url=provider_base_url)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = (
             NvidiaNimProvider(config, admission=immediate_admission())
             if provider_id == "nvidia_nim"
@@ -180,7 +180,7 @@ async def test_super_migration_and_hosted_discovery_publish_ultra_catalog() -> N
     old = "nvidia/nemotron-3-super-120b-a12b"
     new = "nvidia/nemotron-3-ultra-550b-a55b"
     config = make_provider_config(api_key="test-key", base_url=NVIDIA_NIM_DEFAULT_BASE)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = NvidiaNimProvider(config, admission=immediate_admission())
     with patch.object(
         provider._client.models,
@@ -204,7 +204,7 @@ async def test_super_migration_and_hosted_discovery_publish_ultra_catalog() -> N
 @pytest.mark.asyncio
 async def test_nim_exclusions_preserve_retained_metadata() -> None:
     config = make_provider_config(api_key="test-key", base_url=NVIDIA_NIM_DEFAULT_BASE)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = NvidiaNimProvider(config, admission=immediate_admission())
     retained = ProviderModelInfo(
         "nvidia/future-chat-model",
@@ -225,7 +225,7 @@ async def test_nim_exclusions_preserve_retained_metadata() -> None:
 @pytest.mark.asyncio
 async def test_nim_exclusions_preserve_discovery_errors() -> None:
     config = make_provider_config(api_key="test-key", base_url=NVIDIA_NIM_DEFAULT_BASE)
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = NvidiaNimProvider(config, admission=immediate_admission())
     with (
         patch.object(
@@ -602,7 +602,7 @@ async def test_runtime_warm_reports_query_failures_without_blocking() -> None:
         },
     )
 
-    with patch("free_claude_code.runtime.provider_manager.logger.warning") as warning:
+    with patch("modelglot.runtime.provider_manager.logger.warning") as warning:
         result = await runtime.refresh_model_list_cache()
 
     assert result.refreshed_provider_ids == ("nvidia_nim",)

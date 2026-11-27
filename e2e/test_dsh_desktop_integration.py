@@ -10,8 +10,8 @@ import pytest
 from playwright.sync_api import Page, expect
 from ruamel.yaml import YAML
 
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.runtime.integration_service import IntegrationService
+from modelglot.core.json_types import JsonObject
+from modelglot.runtime.integration_service import IntegrationService
 
 
 def install(tmp_path: Path):
@@ -89,7 +89,7 @@ def test_superseded_connect_notice_matches_real_disconnect(
 ):
     from contextlib import asynccontextmanager
 
-    from free_claude_code.runtime.integration_service import IntegrationService
+    from modelglot.runtime.integration_service import IntegrationService
 
     home = install(tmp_path)
     page.goto(admin_base_url + "/admin/integrations")

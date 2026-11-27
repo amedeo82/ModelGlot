@@ -4,14 +4,14 @@ from collections.abc import Mapping, Sequence
 
 import pytest
 
-from free_claude_code.core.chat_completions.tool_calls import (
+from modelglot.core.chat_completions.tool_calls import (
     ChatToolCallBuffer,
     CompletedChatBatch,
     CompletedChatCall,
 )
-from free_claude_code.core.failures import ExecutionFailure
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.tool_call_buffer import RetentionBudget, ToolBufferLimitError
+from modelglot.core.failures import ExecutionFailure
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.tool_call_buffer import RetentionBudget, ToolBufferLimitError
 from tests.wire_payload import (
     array_payload,
     object_array,

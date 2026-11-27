@@ -7,10 +7,10 @@ from threading import Barrier
 
 import pytest
 
-from free_claude_code.application.model_catalog import CatalogModel, ModelCatalog
-from free_claude_code.core.json_types import JsonObject, load_json_value
-from free_claude_code.core.model_capabilities import ModelInputModality
-from free_claude_code.harnesses import antigravity
+from modelglot.application.model_catalog import CatalogModel, ModelCatalog
+from modelglot.core.json_types import JsonObject, load_json_value
+from modelglot.core.model_capabilities import ModelInputModality
+from modelglot.harnesses import antigravity
 from tests.harnesses.antigravity_support import write_previous_connection
 from tests.wire_payload import decode_object, object_payload
 

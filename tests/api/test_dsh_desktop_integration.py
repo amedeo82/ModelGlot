@@ -5,8 +5,8 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
-from free_claude_code.config.settings import Settings
-from free_claude_code.harnesses import dsh_desktop_integration as desktop
+from modelglot.config.settings import Settings
+from modelglot.harnesses import dsh_desktop_integration as desktop
 from tests.api.support import create_test_app
 from tests.wire_payload import response_object, string_payload
 

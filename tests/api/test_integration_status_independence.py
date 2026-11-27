@@ -4,8 +4,8 @@ import threading
 import httpx
 import pytest
 
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.harnesses import vscode_chat_integration as vscode
+from modelglot.core.json_types import JsonObject
+from modelglot.harnesses import vscode_chat_integration as vscode
 from tests.api.support import create_test_app, runtime_for_app
 
 

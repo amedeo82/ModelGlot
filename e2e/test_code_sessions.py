@@ -10,13 +10,13 @@ from e2e.code_support import CodeControl
 from e2e.form_support import assert_autofill_opt_out
 from e2e.layout import visible_bounds
 from e2e.provider_support import api_key_input, open_provider
-from free_claude_code.application.code_sessions.models import (
+from modelglot.application.code_sessions.models import (
     HarnessEvent,
     PromptRequest,
     RunStatus,
 )
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.runtime.codex_protocol import CodexProtocol
+from modelglot.core.json_types import JsonObject
+from modelglot.runtime.codex_protocol import CodexProtocol
 from tests.code_sessions_support import CodexPackets
 from tests.wire_payload import (
     array_payload,
@@ -33,9 +33,9 @@ def test_model_picker_uses_application_order_and_keeps_configured_selection(
     code_control: CodeControl,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    from free_claude_code.application.model_metadata import ProviderModelInfo
-    from free_claude_code.config.settings import Settings
-    from free_claude_code.runtime.codex_app_server import CodexHarnessFactory
+    from modelglot.application.model_metadata import ProviderModelInfo
+    from modelglot.config.settings import Settings
+    from modelglot.runtime.codex_app_server import CodexHarnessFactory
     from tests.runtime.test_codex_catalog import FakeRequestRuntime
 
     refs = (

@@ -4,9 +4,9 @@ from typing import Any, cast
 
 import pytest
 
-from free_claude_code.core.chat_completions.request import ChatRequest
-from free_claude_code.core.gemini.native_request import chat_to_gemini
-from free_claude_code.core.json_types import JsonObject
+from modelglot.core.chat_completions.request import ChatRequest
+from modelglot.core.gemini.native_request import chat_to_gemini
+from modelglot.core.json_types import JsonObject
 from tests.wire_payload import object_array, object_payload
 
 
@@ -48,8 +48,8 @@ def test_chat_to_gemini_keeps_thoughts_typed_and_tool_ids() -> None:
 
 
 def test_messages_auto_choice_without_tools_has_no_function_config() -> None:
-    from free_claude_code.core.anthropic.models import MessagesRequest
-    from free_claude_code.core.gemini.native_request import messages_to_gemini
+    from modelglot.core.anthropic.models import MessagesRequest
+    from modelglot.core.gemini.native_request import messages_to_gemini
 
     request = MessagesRequest(
         model="model",
@@ -60,8 +60,8 @@ def test_messages_auto_choice_without_tools_has_no_function_config() -> None:
 
 
 def test_messages_object_tool_result_retains_complete_value() -> None:
-    from free_claude_code.core.anthropic.models import MessagesRequest
-    from free_claude_code.core.gemini.native_request import messages_to_gemini
+    from modelglot.core.anthropic.models import MessagesRequest
+    from modelglot.core.gemini.native_request import messages_to_gemini
 
     request = MessagesRequest(
         model="model",
@@ -91,8 +91,8 @@ def test_messages_object_tool_result_retains_complete_value() -> None:
 
 
 def test_messages_tool_result_and_followup_remain_distinct_turns() -> None:
-    from free_claude_code.core.anthropic.models import MessagesRequest
-    from free_claude_code.core.gemini.native_request import messages_to_gemini
+    from modelglot.core.anthropic.models import MessagesRequest
+    from modelglot.core.gemini.native_request import messages_to_gemini
 
     request = MessagesRequest(
         model="model",
@@ -144,8 +144,8 @@ def test_messages_tool_result_and_followup_remain_distinct_turns() -> None:
 
 
 def test_gemini_25_effort_uses_supported_numeric_budget() -> None:
-    from free_claude_code.core.gemini.native_request import apply_reasoning
-    from free_claude_code.core.reasoning import ReasoningEffort, ReasoningPolicy
+    from modelglot.core.gemini.native_request import apply_reasoning
+    from modelglot.core.reasoning import ReasoningEffort, ReasoningPolicy
 
     for model in ("gemini-2.5-flash", "models/gemini-2.5-pro", "gemini-2.5-flash-lite"):
         for effort in ReasoningEffort:
@@ -158,8 +158,8 @@ def test_gemini_25_effort_uses_supported_numeric_budget() -> None:
 
 
 def test_messages_strict_tool_guarantee_is_rejected_for_gemini() -> None:
-    from free_claude_code.core.anthropic.models import MessagesRequest
-    from free_claude_code.core.gemini.native_request import messages_to_gemini
+    from modelglot.core.anthropic.models import MessagesRequest
+    from modelglot.core.gemini.native_request import messages_to_gemini
 
     request = MessagesRequest(
         model="model",
@@ -171,8 +171,8 @@ def test_messages_strict_tool_guarantee_is_rejected_for_gemini() -> None:
 
 
 def test_messages_noop_context_management_keeps_claude_code_compatible() -> None:
-    from free_claude_code.core.anthropic.models import MessagesRequest
-    from free_claude_code.core.gemini.native_request import messages_to_gemini
+    from modelglot.core.anthropic.models import MessagesRequest
+    from modelglot.core.gemini.native_request import messages_to_gemini
 
     request = MessagesRequest(
         model="model",

@@ -9,30 +9,30 @@ import httpx2
 import pytest
 from openai import AuthenticationError
 
-from free_claude_code.application.errors import InvalidRequestError
-from free_claude_code.application.model_metadata import ProviderModelInfo
-from free_claude_code.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
-from free_claude_code.core.anthropic.models import MessagesRequest
-from free_claude_code.core.anthropic.stream_contracts import (
+from modelglot.application.errors import InvalidRequestError
+from modelglot.application.model_metadata import ProviderModelInfo
+from modelglot.config.constants import PROVIDER_MAX_ATTEMPTS_DEFAULT
+from modelglot.core.anthropic.models import MessagesRequest
+from modelglot.core.anthropic.stream_contracts import (
     assert_anthropic_stream_contract,
     parse_sse_text,
     text_content,
 )
-from free_claude_code.core.failures import ExecutionFailure, FailureKind
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.model_capabilities import ModelInputModality
-from free_claude_code.core.openai_responses import OpenAIResponsesRequest
-from free_claude_code.core.reasoning import ReasoningEffort, ReasoningPolicy
-from free_claude_code.core.stream_output import StreamOutput
-from free_claude_code.providers.admission import ProviderAdmissionController
-from free_claude_code.providers.base import ProviderConfig
-from free_claude_code.providers.openai_codex import provider as codex_provider_module
-from free_claude_code.providers.openai_codex.auth import (
+from modelglot.core.failures import ExecutionFailure, FailureKind
+from modelglot.core.json_types import JsonObject
+from modelglot.core.model_capabilities import ModelInputModality
+from modelglot.core.openai_responses import OpenAIResponsesRequest
+from modelglot.core.reasoning import ReasoningEffort, ReasoningPolicy
+from modelglot.core.stream_output import StreamOutput
+from modelglot.providers.admission import ProviderAdmissionController
+from modelglot.providers.base import ProviderConfig
+from modelglot.providers.openai_codex import provider as codex_provider_module
+from modelglot.providers.openai_codex.auth import (
     OpenAIAccess,
     OpenAIAuthManager,
     OpenAIReconnectRequired,
 )
-from free_claude_code.providers.openai_codex.provider import OpenAICodexProvider
+from modelglot.providers.openai_codex.provider import OpenAICodexProvider
 from tests.mock_calls import keyword_arguments
 from tests.providers.support import immediate_admission, make_provider_config
 from tests.wire_payload import (
@@ -1034,7 +1034,7 @@ async def test_model_discovery_re_request_is_a_second_admitted_attempt() -> None
         _config(), auth=auth, admission=_admission(), transport=pool
     )
 
-    with patch("free_claude_code.providers.admission.trace_event") as trace:
+    with patch("modelglot.providers.admission.trace_event") as trace:
         infos = await provider.list_model_infos()
 
     assert {info.model_id for info in infos} == {"gpt-visible"}

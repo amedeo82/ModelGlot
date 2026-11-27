@@ -21,9 +21,9 @@ from telegram.error import (
     TimedOut,
 )
 
-from free_claude_code.messaging.delivery_failures import PlatformRateLimited
-from free_claude_code.messaging.limiter import MessagingRateLimiter
-from free_claude_code.messaging.platforms import telegram_io
+from modelglot.messaging.delivery_failures import PlatformRateLimited
+from modelglot.messaging.limiter import MessagingRateLimiter
+from modelglot.messaging.platforms import telegram_io
 from tests.messaging.test_telegram_edge_cases import _telegram_runtime
 
 OK = object()
@@ -40,9 +40,7 @@ async def _run(
     outcomes: Sequence[object], *, parse_mode: str | None = None, suppress: bool = True
 ):
     """Call _with_retry against scripted outcomes; return the result and calls."""
-    with patch(
-        "free_claude_code.messaging.platforms.telegram.TELEGRAM_AVAILABLE", True
-    ):
+    with patch("modelglot.messaging.platforms.telegram.TELEGRAM_AVAILABLE", True):
         messenger = _telegram_runtime(bot_token="t").outbound
     calls: list[str | None] = []
     script = iter(outcomes)

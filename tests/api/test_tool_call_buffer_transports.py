@@ -2,9 +2,9 @@
 
 import pytest
 
-from free_claude_code.core.anthropic.stream_contracts import parse_sse_text
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.providers.open_router import OpenRouterProvider
+from modelglot.core.anthropic.stream_contracts import parse_sse_text
+from modelglot.core.json_types import JsonObject
+from modelglot.providers.open_router import OpenRouterProvider
 from tests.api.test_tool_call_buffer import _response
 from tests.providers.support import immediate_admission, make_provider_config
 from tests.providers.test_history_transports import _harness

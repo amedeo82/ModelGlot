@@ -15,10 +15,10 @@ import pytest
 from anyio import to_thread
 from sqlalchemy.exc import TimeoutError as PoolTimeoutError
 
-from free_claude_code.application.code_sessions.models import CodeUnavailableError
-from free_claude_code.runtime import sqlite_database
-from free_claude_code.runtime.code_sessions_sqlite import SQLiteCodeStore
-from free_claude_code.runtime.sqlite_database import (
+from modelglot.application.code_sessions.models import CodeUnavailableError
+from modelglot.runtime import sqlite_database
+from modelglot.runtime.code_sessions_sqlite import SQLiteCodeStore
+from modelglot.runtime.sqlite_database import (
     initialize_database,
     query_rows,
     required_column,
@@ -1131,12 +1131,12 @@ def test_relocated_database_keeps_private_permissions(tmp_path: Path) -> None:
 async def test_production_startup_keeps_http_available_and_chat_cleanup_independent(
     monkeypatch: pytest.MonkeyPatch, fail_migration: bool
 ) -> None:
-    from free_claude_code.config import paths
-    from free_claude_code.config.settings import Settings
-    from free_claude_code.core.interprocess_lock import InterprocessFileLock
-    from free_claude_code.runtime import bootstrap
-    from free_claude_code.runtime.provider_manager import ProviderRuntimeManager
-    from free_claude_code.runtime.retired_chat import remove_retired_chat_history
+    from modelglot.config import paths
+    from modelglot.config.settings import Settings
+    from modelglot.core.interprocess_lock import InterprocessFileLock
+    from modelglot.runtime import bootstrap
+    from modelglot.runtime.provider_manager import ProviderRuntimeManager
+    from modelglot.runtime.retired_chat import remove_retired_chat_history
 
     old, target = paths.legacy_code_database_path(), paths.modelglot_database_path()
     historical_database(old, 3)

@@ -1,6 +1,6 @@
-from free_claude_code.core.json_types import JsonObject
-from free_claude_code.core.reasoning import ReasoningEffort, ReasoningPolicy
-from free_claude_code.providers.openai_chat.reasoning import (
+from modelglot.core.json_types import JsonObject
+from modelglot.core.reasoning import ReasoningEffort, ReasoningPolicy
+from modelglot.providers.openai_chat.reasoning import (
     ChatTemplateReasoning,
     LlamaCppReasoning,
     NamedEffortReasoning,

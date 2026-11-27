@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from free_claude_code.messaging.workflow import MessagingWorkflow
+from modelglot.messaging.workflow import MessagingWorkflow
 from tests.fixture_types import IncomingMessageFactory
 
 

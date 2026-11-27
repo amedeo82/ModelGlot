@@ -11,32 +11,32 @@ import pytest
 from fastapi.applications import FastAPI
 from fastapi.testclient import TestClient
 
-from free_claude_code.api.dependencies import app_services
-from free_claude_code.application.connected_accounts import (
+from modelglot.api.dependencies import app_services
+from modelglot.application.connected_accounts import (
     ConnectedAccountLoginMode,
     ConnectedAccountState,
     ConnectedAccountStatus,
 )
-from free_claude_code.application.model_metadata import (
+from modelglot.application.model_metadata import (
     ProviderModelInfo,
     ProviderModelRefreshResult,
 )
-from free_claude_code.application.usage_events import UsageFilters
-from free_claude_code.config.admin.values import MASKED_SECRET
-from free_claude_code.config.api_keys import normalize_api_keys
-from free_claude_code.config.env_files import (
+from modelglot.application.usage_events import UsageFilters
+from modelglot.config.admin.values import MASKED_SECRET
+from modelglot.config.api_keys import normalize_api_keys
+from modelglot.config.env_files import (
     dotenv_values_from_file,
     dotenv_values_from_text,
 )
-from free_claude_code.config.model_catalog_metadata import ModelCatalogMetadata
-from free_claude_code.config.model_refs import ModelFallback, decode_model_fallbacks
-from free_claude_code.config.provider_catalog import PROVIDER_CATALOG
-from free_claude_code.config.server_urls import local_admin_url
-from free_claude_code.config.settings import Settings
-from free_claude_code.core.json_types import JsonObject, JsonValue
-from free_claude_code.core.model_capabilities import ModelInputModality
-from free_claude_code.core.version import package_version
-from free_claude_code.providers.model_catalog_logos import ModelCatalogLogoStore
+from modelglot.config.model_catalog_metadata import ModelCatalogMetadata
+from modelglot.config.model_refs import ModelFallback, decode_model_fallbacks
+from modelglot.config.provider_catalog import PROVIDER_CATALOG
+from modelglot.config.server_urls import local_admin_url
+from modelglot.config.settings import Settings
+from modelglot.core.json_types import JsonObject, JsonValue
+from modelglot.core.model_capabilities import ModelInputModality
+from modelglot.core.version import package_version
+from modelglot.providers.model_catalog_logos import ModelCatalogLogoStore
 from tests.api.support import (
     create_test_app,
     post_config,
@@ -186,7 +186,7 @@ def test_admin_super_migration_preview_apply_and_runtime_agree(
 def _offline_credential_checks(monkeypatch: pytest.MonkeyPatch):
     """These tests exercise config persistence; probe HTTP has its own suite."""
     monkeypatch.setattr(
-        "free_claude_code.runtime.application.check_credentials",
+        "modelglot.runtime.application.check_credentials",
         AsyncMock(return_value=()),
     )
 
@@ -283,7 +283,7 @@ def test_admin_page_uses_installed_version(
 ) -> None:
     _set_home(monkeypatch, tmp_path)
     monkeypatch.setattr(
-        "free_claude_code.api.admin_routes.package_version",
+        "modelglot.api.admin_routes.package_version",
         lambda: "9.8.7",
     )
 
@@ -343,7 +343,7 @@ def test_admin_versioned_assets_serve_packaged_files(
     asset_path = (
         Path(__file__).resolve().parents[2]
         / "src"
-        / "free_claude_code"
+        / "modelglot"
         / "api"
         / "admin_static"
         / filename
@@ -396,7 +396,7 @@ def test_admin_versioned_logo_reuses_packaged_app_icon(
     asset_path = (
         Path(__file__).resolve().parents[2]
         / "src"
-        / "free_claude_code"
+        / "modelglot"
         / "assets"
         / "app-icon.svg"
     )
@@ -515,7 +515,7 @@ def test_admin_unexpected_errors_are_never_cached(
     )
 
     with patch(
-        "free_claude_code.runtime.configuration.ConfigurationService.admin_config",
+        "modelglot.runtime.configuration.ConfigurationService.admin_config",
         side_effect=RuntimeError("test error"),
     ):
         response = client.get("/admin/api/config")
@@ -536,9 +536,7 @@ def test_admin_cache_policy_does_not_match_similar_public_paths(
 
 
 def test_admin_api_fetches_bypass_browser_cache() -> None:
-    script = Path("src/free_claude_code/api/admin_static/admin.js").read_text(
-        encoding="utf-8"
-    )
+    script = Path("src/modelglot/api/admin_static/admin.js").read_text(encoding="utf-8")
 
     assert 'cache: "no-store"' in script
 
@@ -793,9 +791,7 @@ def test_admin_page_no_longer_renders_global_status_header(
 
 
 def test_admin_static_no_longer_fetches_global_status_header() -> None:
-    script = Path("src/free_claude_code/api/admin_static/admin.js").read_text(
-        encoding="utf-8"
-    )
+    script = Path("src/modelglot/api/admin_static/admin.js").read_text(encoding="utf-8")
 
     assert 'api("/admin/api/status")' not in script
     assert "updateHeader" not in script
@@ -805,9 +801,7 @@ def test_admin_static_no_longer_fetches_global_status_header() -> None:
 
 
 def test_admin_static_hides_managed_source_label() -> None:
-    script = Path("src/free_claude_code/api/admin_static/admin.js").read_text(
-        encoding="utf-8"
-    )
+    script = Path("src/modelglot/api/admin_static/admin.js").read_text(encoding="utf-8")
 
     assert 'managed_env: "",' in script
     assert "hasOwnProperty.call(labels, source)" in script
@@ -816,22 +810,18 @@ def test_admin_static_hides_managed_source_label() -> None:
 
 
 def test_admin_static_places_reasoning_fields_in_model_config() -> None:
-    script = Path("src/free_claude_code/api/admin_static/admin.js").read_text(
-        encoding="utf-8"
-    )
+    script = Path("src/modelglot/api/admin_static/admin.js").read_text(encoding="utf-8")
 
     assert 'sections: ["models", "web_tools"]' in script
     assert 'sections: ["models", "thinking", "web_tools"]' not in script
 
 
 def test_admin_static_model_combobox_owns_dropdown_and_search_behavior() -> None:
-    script = Path("src/free_claude_code/api/admin_static/admin.js").read_text(
-        encoding="utf-8"
-    )
+    script = Path("src/modelglot/api/admin_static/admin.js").read_text(encoding="utf-8")
     combobox_script = Path(
-        "src/free_claude_code/api/admin_static/model_combobox.js"
+        "src/modelglot/api/admin_static/model_combobox.js"
     ).read_text(encoding="utf-8")
-    styles = Path("src/free_claude_code/api/admin_static/admin.css").read_text(
+    styles = Path("src/modelglot/api/admin_static/admin.css").read_text(
         encoding="utf-8"
     )
 
@@ -865,9 +855,7 @@ def test_admin_static_model_combobox_owns_dropdown_and_search_behavior() -> None
 def test_admin_static_model_combobox_preserves_custom_slugs_and_none_semantics() -> (
     None
 ):
-    script = Path("src/free_claude_code/api/admin_static/admin.js").read_text(
-        encoding="utf-8"
-    )
+    script = Path("src/modelglot/api/admin_static/admin.js").read_text(encoding="utf-8")
 
     assert '? ["None", ...state.modelOptions]' in script
     assert "You can still enter a custom slug." in script
@@ -2572,7 +2560,7 @@ def test_pending_restart_survives_later_apply(
 ) -> None:
     from unittest.mock import MagicMock
 
-    from free_claude_code.config.loader import ManagedConfigStore
+    from modelglot.config.loader import ManagedConfigStore
 
     _set_home(monkeypatch, tmp_path)
     _clear_process_config(monkeypatch)
@@ -2620,7 +2608,7 @@ def test_reverting_pending_restart_restores_hot_apply(
 ) -> None:
     from unittest.mock import MagicMock
 
-    from free_claude_code.config.loader import ManagedConfigStore
+    from modelglot.config.loader import ManagedConfigStore
 
     _set_home(monkeypatch, tmp_path)
     _clear_process_config(monkeypatch)
@@ -2887,7 +2875,7 @@ def test_admin_local_provider_status_reports_reachable(
         async def get(self, url: str):
             return httpx.Response(200, json={"data": []})
 
-    with patch("free_claude_code.api.admin_routes.httpx.AsyncClient", FakeAsyncClient):
+    with patch("modelglot.api.admin_routes.httpx.AsyncClient", FakeAsyncClient):
         response = _local_client(app).get(
             f"/admin/api/providers/{provider_id}/local-status"
         )
@@ -2920,9 +2908,7 @@ def test_admin_local_provider_status_checks_only_requested_provider(
             calls += 1
             return httpx.Response(200, json={"data": []})
 
-    with patch(
-        "free_claude_code.api.admin_routes.httpx.AsyncClient", CountingAsyncClient
-    ):
+    with patch("modelglot.api.admin_routes.httpx.AsyncClient", CountingAsyncClient):
         response = _local_client(app).get("/admin/api/providers/lmstudio/local-status")
 
     assert response.status_code == 200
@@ -2975,7 +2961,7 @@ def test_admin_local_provider_failure_does_not_return_exception_text(
             )
 
     with patch(
-        "free_claude_code.api.admin_routes.httpx.AsyncClient",
+        "modelglot.api.admin_routes.httpx.AsyncClient",
         return_value=FailingAsyncClient(),
     ):
         response = _local_client(app).get("/admin/api/providers/lmstudio/local-status")

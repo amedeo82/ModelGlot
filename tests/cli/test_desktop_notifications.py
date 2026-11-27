@@ -6,15 +6,15 @@ from typing import Protocol, cast, override
 
 import pytest
 
-from free_claude_code.cli import windows_desktop_notifications
-from free_claude_code.cli.desktop_notifications import (
+from modelglot.cli import windows_desktop_notifications
+from modelglot.cli.desktop_notifications import (
     APP_USER_MODEL_ID,
     DesktopNotification,
     NotificationLevel,
     PystrayDesktopNotifier,
     notification_title,
 )
-from free_claude_code.cli.windows_desktop_notifications import (
+from modelglot.cli.windows_desktop_notifications import (
     WindowsDesktopNotifier,
 )
 
@@ -98,7 +98,6 @@ def test_user_facing_notifications_do_not_expose_upstream_repository() -> None:
     )
 
     rendered = " ".join(value for pair in icon.notifications for value in pair)
-    assert "alishahryar1" not in rendered.lower()
     assert "github.com" not in rendered.lower()
     assert APP_USER_MODEL_ID == "io.github.amedeo82.modelglot"
 

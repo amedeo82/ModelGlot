@@ -5,10 +5,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from free_claude_code.application.errors import InvalidRequestError
-from free_claude_code.config.provider_catalog import COHERE_DEFAULT_BASE
-from free_claude_code.providers.base import ProviderConfig
-from free_claude_code.providers.openai_chat import OpenAIChatProvider
+from modelglot.application.errors import InvalidRequestError
+from modelglot.config.provider_catalog import COHERE_DEFAULT_BASE
+from modelglot.providers.base import ProviderConfig
+from modelglot.providers.openai_chat import OpenAIChatProvider
 from tests.providers.request_factory import make_messages_request
 from tests.providers.support import (
     SDKStreamDouble,
@@ -43,9 +43,7 @@ def test_default_base_url_constant() -> None:
 
 
 def test_init_uses_default_base_url_and_api_key(cohere_config: ProviderConfig) -> None:
-    with patch(
-        "free_claude_code.providers.openai_chat.client.AsyncOpenAI"
-    ) as mock_openai:
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI") as mock_openai:
         provider = profiled_provider(
             "cohere", cohere_config, admission=immediate_admission()
         )
@@ -58,7 +56,7 @@ def test_init_uses_default_base_url_and_api_key(cohere_config: ProviderConfig) -
 def test_init_strips_trailing_slash(cohere_config: ProviderConfig) -> None:
     config = replace(cohere_config, base_url=f"{COHERE_DEFAULT_BASE}/")
 
-    with patch("free_claude_code.providers.openai_chat.client.AsyncOpenAI"):
+    with patch("modelglot.providers.openai_chat.client.AsyncOpenAI"):
         provider = profiled_provider("cohere", config, admission=immediate_admission())
 
     assert provider._base_url == COHERE_DEFAULT_BASE
@@ -68,7 +66,7 @@ def test_build_request_body_sanitizes_documented_unsupported_fields(
     cohere_provider: OpenAIChatProvider,
 ) -> None:
     with patch(
-        "free_claude_code.providers.openai_chat.request_policy.build_base_request_body"
+        "modelglot.providers.openai_chat.request_policy.build_base_request_body"
     ) as mock_convert:
         mock_convert.return_value = {
             "model": "command-a-plus-05-2026",
@@ -121,7 +119,7 @@ def test_build_request_body_preserves_replayed_reasoning_content(
     cohere_provider: OpenAIChatProvider,
 ) -> None:
     with patch(
-        "free_claude_code.providers.openai_chat.request_policy.build_base_request_body"
+        "modelglot.providers.openai_chat.request_policy.build_base_request_body"
     ) as mock_convert:
         mock_convert.return_value = {
             "model": "command-a-plus-05-2026",
