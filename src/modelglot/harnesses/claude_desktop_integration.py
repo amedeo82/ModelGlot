@@ -26,6 +26,9 @@ _SEALED_PREFIX = "__sealed__:"
 _OFFICIAL_MARKETPLACES: tuple[tuple[str, str], ...] = (
     ("anthropics/claude-plugins-official", "claude-plugins-official"),
     ("anthropics/knowledge-work-plugins", "knowledge-work-plugins"),
+    ("anthropics/financial-services", "claude-for-financial-services"),
+    ("anthropics/claude-for-legal", "claude-for-legal"),
+    ("anthropics/life-sciences", "life-sciences"),
 )
 
 

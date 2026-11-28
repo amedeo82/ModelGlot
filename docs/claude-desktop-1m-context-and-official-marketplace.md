@@ -1,7 +1,7 @@
 # Claude Desktop: contesto 1M e marketplace ufficiali
 
 Status: ricerca e implementazione completate
-Data: 2026-11-17
+Data: 2026-11-27
 Ambito: profilo gateway ModelGlot per Claude Desktop in modalità third-party (3P)
 
 Panoramica del profilo ModelGlot e delle altre migliorie implementate:
@@ -13,14 +13,14 @@ Il profilo gateway ModelGlot creato da ModelGlot ora abilita:
 
 - `modelPrefer1mContext: true`, così Claude Desktop preferisce la variante da un milione
   di token per i modelli che la supportano;
-- `allowedPluginMarketplaces`, con i marketplace ufficiali Anthropic
-  `anthropics/claude-plugins-official` e `anthropics/knowledge-work-plugins` registrati come
-  disponibili.
+- `allowedPluginMarketplaces`, con tutti i cinque marketplace mostrati da **Curated by
+  Anthropic** il 2026-11-27 registrati come disponibili: Claude Code, Cowork, Financial
+  Services, Legal e Life Sciences.
 
 La configurazione è scritta nel profilo ModelGlot in
 `src/modelglot/harnesses/claude_desktop_integration.py`. Il refresh del profilo
-ripristina i due default ModelGlot, ma conserva eventuali marketplace aggiuntivi configurati
-dall'utente.
+ripristina i cinque default ModelGlot, ma conserva eventuali marketplace aggiuntivi configurati
+dall'utente e le personalizzazioni dei marketplace ufficiali già presenti.
 
 ## Ricerca
 
@@ -66,18 +66,28 @@ Fonti:
 
 ### Marketplace ufficiali di plugin e skill
 
-ModelGlot registra due marketplace ufficiali Anthropic:
+ModelGlot registra tutti i marketplace raggruppati da Claude Desktop sotto **Curated by
+Anthropic** nella schermata verificata il 2026-11-27:
 
-| Repository | Nome manifest | Contenuto |
+| Voce Desktop | Repository | Nome `marketplace.json` |
 | --- | --- | --- |
-| `anthropics/claude-plugins-official` | `claude-plugins-official` | marketplace generale di plugin e skill |
-| `anthropics/knowledge-work-plugins` | `knowledge-work-plugins` | plugin per il lavoro in Cowork |
+| Claude Code plugins | `anthropics/claude-plugins-official` | `claude-plugins-official` |
+| Cowork plugins | `anthropics/knowledge-work-plugins` | `knowledge-work-plugins` |
+| Claude for Financial Services | `anthropics/financial-services` | `claude-for-financial-services` |
+| Claude for Legal | `anthropics/claude-for-legal` | `claude-for-legal` |
+| Claude for Life Sciences | `anthropics/life-sciences` | `life-sciences` |
 
-Entrambi i repository sono pubblici, usano `.claude-plugin/marketplace.json` e possono
-essere consultati con accesso anonimo. Claude Code CLI registra automaticamente il primo
-marketplace alla prima sessione terminale interattiva, salvo una policy managed. Claude
-Desktop 3P usa invece la chiave di configurazione `allowedPluginMarketplaces`. ModelGlot registra
-quindi:
+I repository sono pubblici, usano `.claude-plugin/marketplace.json` e sono stati verificati
+con accesso anonimo sul branch `main`. In particolare, il nome del marketplace Financial
+Services non coincide con il nome del repository: `expectedName` deve essere
+`claude-for-financial-services`. I marketplace **From partners**, il marketplace separato
+`anthropics/skills` e la directory Claude Marketplace su `claude.ai` non fanno parte di
+questo default.
+
+Claude Code CLI registra automaticamente `claude-plugins-official` alla prima sessione
+terminale interattiva, salvo una policy managed. Claude Desktop 3P non aggiunge invece da solo
+i marketplace Curated by Anthropic: usa la chiave `allowedPluginMarketplaces`. ModelGlot
+registra quindi:
 
 ```json
 {
@@ -97,6 +107,30 @@ quindi:
       "expectedName": "knowledge-work-plugins",
       "installationPreference": "available",
       "credentialKind": "anonymous"
+    },
+    {
+      "source": "github",
+      "repo": "anthropics/financial-services",
+      "ref": "main",
+      "expectedName": "claude-for-financial-services",
+      "installationPreference": "available",
+      "credentialKind": "anonymous"
+    },
+    {
+      "source": "github",
+      "repo": "anthropics/claude-for-legal",
+      "ref": "main",
+      "expectedName": "claude-for-legal",
+      "installationPreference": "available",
+      "credentialKind": "anonymous"
+    },
+    {
+      "source": "github",
+      "repo": "anthropics/life-sciences",
+      "ref": "main",
+      "expectedName": "life-sciences",
+      "installationPreference": "available",
+      "credentialKind": "anonymous"
     }
   ]
 }
@@ -104,35 +138,104 @@ quindi:
 
 `installationPreference: "available"` registra i cataloghi senza installare
 automaticamente tutti i plugin. L'utente può scegliere i plugin da **Customize → Plugins →
-Discover → Organization**. `available` consente di usare il branch `main`; le preferenze
-`auto_install` e `required` richiedono invece un commit SHA completo e una distribuzione
-governata con pin di revisione.
-
-Il marketplace generale contiene plugin Anthropic che possono includere skill, ad esempio
-`skill-creator`. Il marketplace `knowledge-work-plugins` raccoglie plugin dedicati ai
-flussi di lavoro di Cowork come Productività, Vendite, Finanza, Dati, Marketing, Supporto
-clienti e Gestione prodotto. Il repository `anthropics/skills` è un marketplace Anthropic
-separato, specializzato in esempi e skill; non viene registrato automaticamente da ModelGlot. La
-directory Claude Marketplace su `claude.ai` è a sua volta diversa dai marketplace Git di
-Claude Code e non viene sincronizzata continuamente nell'identità 3P.
+Discover → Organization**, sia in Cowork sia in Code. `available` consente di seguire il branch
+`main`; le preferenze `auto_install` e `required` richiedono invece un commit SHA completo di
+40 caratteri e una distribuzione governata con pin di revisione. Per questo il default
+ModelGlot non installa automaticamente codice eseguibile e non blocca gli aggiornamenti su un
+commit che richiederebbe manutenzione manuale.
 
 Desktop 3P sincronizza i plugin il cui contenuto è relativo al repository del marketplace.
 Le voci dei manifest ufficiali che puntano a un altro repository non vengono scaricate da
-questa configurazione e quindi non compaiono nella scheda Organization. La registrazione
-abilita i marketplace ufficiali senza promettere la sincronizzazione dell'intero catalogo
-di terze parti.
+questa configurazione e quindi non compaiono nella scheda Organization. Al 2026-11-27 le voci
+dei tre nuovi manifest usano sorgenti relative al rispettivo repository. La registrazione
+abilita i marketplace ufficiali senza promettere la sincronizzazione di voci esterne presenti
+in altri cataloghi o introdotte successivamente.
 
 I plugin possono eseguire hook, script, monitor e server MCP con i permessi dell'utente.
 Anche un marketplace ufficiale richiede quindi che l'utente valuti il plugin prima di
-installarlo.
+installarlo. Per i marketplace Git il dispositivo deve avere Git installato e accesso di rete a
+GitHub; il download del marketplace avviene sull'host e non dipende da
+`coworkEgressAllowedHosts`.
+
+### MCP e connettori nei profili gateway 3P
+
+La scheda **Code** di Claude Desktop incorpora Claude Code e traduce automaticamente la
+configurazione 3P del profilo per il motore Claude Code. Non bisogna copiare questi valori in
+`~/.claude/settings.json` o in `~/.claude.json`: quelle configurazioni appartengono al Claude
+Code standalone o alle impostazioni utente e non sono il meccanismo con cui ModelGlot popola il
+profilo Desktop.
+
+La documentazione ufficiale distingue tre casi:
+
+1. **Server MCP dichiarati da un plugin.** Dopo l'installazione del plugin, i server remoti del
+   suo `.mcp.json` possono essere usati nelle sessioni Cowork, Chat e Code che caricano quel
+   plugin. Non serve duplicarli in `managedMcpServers`. L'eventuale accesso OAuth resta
+   separato tra Code e il resto di Desktop.
+2. **Connettori gestiti autonomi.** Un server remoto HTTP/SSE o locale stdio che non appartiene
+   a un plugin si distribuisce con `managedMcpServers`. Le voci esterne richiedono `name` e
+   `transport`, oltre a `url` o `command`; il campo `type` usato dal `.mcp.json` di un plugin
+   non sostituisce `transport`. ModelGlot non inventa endpoint, credenziali o connettori e
+   lascia invariate eventuali voci già configurate dall'utente.
+3. **Sostituzione o autenticazione di un server del plugin.** Una voce `managedMcpServers` con
+   lo stesso nome può sostituire il server del plugin quando servono, per esempio, un headers
+   helper o una configurazione OAuth gestita. Non è un requisito generale per rendere
+   disponibili gli MCP dei marketplace.
+
+Il profilo ModelGlot non imposta `allowedPluginMcpServers` o `deniedPluginMcpServers`: una
+lista allowed vuota bloccherebbe tutti i server remoti dei plugin e, una volta impostata,
+escluderebbe anche i server locali stdio dei plugin. Non imposta nemmeno
+`isLocalDevMcpEnabled: false`, perché disabiliterebbe gli MCP locali dei plugin. I valori di
+default documentati (`allowedPluginMcpServers` assente = nessun limite,
+`isLocalDevMcpEnabled` assente = `true`) mantengono quindi utilizzabili gli MCP dei plugin
+installati senza introdurre una allowlist di rete globale. Eventuali policy già presenti nel
+profilo vengono conservate.
+
+Analogamente ModelGlot non imposta `userPluginMarketplacesEnabled: false`: quel valore
+nasconderebbe i marketplace aggiunti dall'utente, in conflitto con il contratto di
+conservazione del profilo. I cinque marketplace gestiti sono quindi garantiti, senza trasformare
+questa modifica in una restrizione delle personalizzazioni esistenti. Le policy Claude Code
+managed esterne possono avere precedenza; per combinarle con quelle generate da Desktop la
+documentazione richiede `parentSettingsBehavior: "merge"` nella policy Claude Code, non nel
+profilo ModelGlot.
+
+### Piano di implementazione aggiornato
+
+1. Estendere `_OFFICIAL_MARKETPLACES` con i tre repository e i nomi manifest verificati,
+   mantenendo l'ordine mostrato da Desktop.
+2. Continuare a generare ogni voce con `source: "github"`, `ref: "main"`,
+   `installationPreference: "available"` e `credentialKind: "anonymous"`.
+3. Riutilizzare il merge esistente: Connect/Reconnect/Refresh aggiungono solo le voci mancanti,
+   senza sovrascrivere una configurazione ufficiale personalizzata né rimuovere marketplace
+   aggiuntivi.
+4. Non aggiungere o modificare `managedMcpServers`, le allow/deny list MCP o le capability
+   degli MCP locali; preservare i valori utente già presenti.
+5. Estendere i test del profilo fresco e del refresh a tutti i cinque marketplace e aggiungere
+   un regression test per la conservazione delle configurazioni MCP.
+6. Aggiornare questo piano, la guida del profilo e il README nello stesso cambiamento.
+
+Criteri di accettazione: il JSON del profilo contiene esattamente i cinque default nell'ordine
+previsto, un secondo refresh è idempotente, un profilo esistente riceve soltanto i default
+mancanti e nessun connettore o policy MCP viene creato o cancellato. La verifica manuale
+successiva consiste nel riavviare Desktop, attendere la sincronizzazione e controllare le cinque
+sotto-schede Organization; l'installazione dei singoli plugin resta una scelta esplicita.
 
 Fonti:
 
 - <https://code.claude.com/docs/en/plugins/anthropic-marketplaces>
 - <https://code.claude.com/docs/en/plugins/overview>
+- <https://github.com/anthropics/claude-plugins-official>
 - <https://github.com/anthropics/knowledge-work-plugins>
+- <https://github.com/anthropics/financial-services>
+- <https://github.com/anthropics/claude-for-legal>
+- <https://github.com/anthropics/life-sciences>
+- <https://claude.com/docs/third-party/claude-desktop/admin-console#plugin-marketplaces>
 - <https://claude.com/docs/third-party/claude-desktop/extensions#plugin-marketplaces-admin>
+- <https://claude.com/docs/third-party/claude-desktop/extensions#remote-mcp-servers-in-plugins>
+- <https://claude.com/docs/third-party/claude-desktop/code>
 - <https://claude.com/docs/third-party/claude-desktop/configuration#allowedpluginmarketplaces>
+- <https://claude.com/docs/third-party/claude-desktop/configuration#managedmcpservers>
+- <https://claude.com/docs/third-party/claude-desktop/configuration#allowedpluginmcpservers>
+- <https://claude.com/docs/third-party/claude-desktop/configuration#islocaldevmcpenabled>
 - <https://code.claude.com/docs/en/plugins/security>
 
 ## Sincronizzazione con l'account Claude.ai
@@ -262,11 +365,12 @@ Fonti:
 
 - Connect e Reconnect creano o aggiornano il profilo ModelGlot con
   `modelPrefer1mContext: true`.
-- Connect e Reconnect garantiscono la presenza dei marketplace
-  `anthropics/claude-plugins-official` e `anthropics/knowledge-work-plugins`.
+- Connect e Reconnect garantiscono la presenza dei cinque marketplace Curated by Anthropic
+  elencati sopra.
 - Refresh ripristina `modelPrefer1mContext: true` se il profilo è stato modificato.
-- Refresh conserva marketplace aggiuntivi e una configurazione personalizzata del marketplace
-  ufficiale già presente.
+- Refresh conserva marketplace aggiuntivi, le configurazioni personalizzate dei marketplace
+  ufficiali già presenti e tutte le configurazioni MCP esistenti.
+- Il profilo non aggiunge connettori gestiti e non limita gli MCP remoti o locali dei plugin.
 - La discovery Desktop marca con `supports_1m: true` soltanto i modelli con una finestra
   provider nota e almeno 1.000.000 token.
 - La discovery CLI non cambia.
@@ -279,13 +383,13 @@ Fonti:
 Test mirati:
 
 ```powershell
-uv run pytest -q tests/harnesses/test_claude_desktop_integration.py tests/api/test_model_listing.py
+uv run --locked pytest -q tests/harnesses/test_claude_desktop_integration.py tests/api/test_model_listing.py
 ```
 
 Controlli statici:
 
 ```powershell
-uv run ruff format --check src/modelglot/harnesses/claude_desktop_integration.py src/modelglot/api/model_catalog.py tests/harnesses/test_claude_desktop_integration.py tests/api/test_model_listing.py
-uv run ruff check src/modelglot/harnesses/claude_desktop_integration.py src/modelglot/api/model_catalog.py tests/harnesses/test_claude_desktop_integration.py tests/api/test_model_listing.py
-uv run ty check src/modelglot/harnesses/claude_desktop_integration.py src/modelglot/api/model_catalog.py
+uv run --locked ruff format --check src/modelglot/harnesses/claude_desktop_integration.py src/modelglot/api/model_catalog.py tests/harnesses/test_claude_desktop_integration.py tests/api/test_model_listing.py
+uv run --locked ruff check src/modelglot/harnesses/claude_desktop_integration.py src/modelglot/api/model_catalog.py tests/harnesses/test_claude_desktop_integration.py tests/api/test_model_listing.py
+uv run --locked pyrefly check src/modelglot/harnesses/claude_desktop_integration.py src/modelglot/api/model_catalog.py
 ```

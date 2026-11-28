@@ -572,8 +572,11 @@ you are configuring.
 <summary><strong>Claude Desktop: the ModelGlot 3P profile</strong></summary>
 
 The dedicated [ModelGlot 3P profile](docs/claude-desktop-modelglot-profile.md)
-adds 1M-context metadata for compatible models, official Anthropic plugin
-marketplaces, sealed-key continuity, and preserves your custom model overrides.
+adds 1M-context metadata for compatible models, all five **Curated by Anthropic**
+plugin marketplaces (Claude Code, Cowork, Financial Services, Legal and Life Sciences),
+sealed-key continuity, and preserves your custom model overrides. Plugins remain
+available for manual installation; ModelGlot does not auto-install them or add MCP
+connectors on your behalf.
 When the ModelGlot profile is active, **Disconnect** removes it and returns
 Desktop to the normal Claude sign-in path; it does not restore a previously active
 native profile.
