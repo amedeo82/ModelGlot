@@ -222,8 +222,36 @@ def test_fresh_connection_and_disconnect_preserve_native_library(
             "installationPreference": "available",
             "credentialKind": "anonymous",
         },
+        {
+            "source": "github",
+            "repo": "anthropics/financial-services",
+            "ref": "main",
+            "expectedName": "claude-for-financial-services",
+            "installationPreference": "available",
+            "credentialKind": "anonymous",
+        },
+        {
+            "source": "github",
+            "repo": "anthropics/claude-for-legal",
+            "ref": "main",
+            "expectedName": "claude-for-legal",
+            "installationPreference": "available",
+            "credentialKind": "anonymous",
+        },
+        {
+            "source": "github",
+            "repo": "anthropics/life-sciences",
+            "ref": "main",
+            "expectedName": "life-sciences",
+            "installationPreference": "available",
+            "credentialKind": "anonymous",
+        },
     ]
     assert "inferenceModels" not in read(profile(root))
+    assert "managedMcpServers" not in read(profile(root))
+    assert "allowedPluginMcpServers" not in read(profile(root))
+    assert "deniedPluginMcpServers" not in read(profile(root))
+    assert "isLocalDevMcpEnabled" not in read(profile(root))
     assert read(profile(root))["coworkEgressAllowedHosts"] == ["*"]
     before = {p: p.read_bytes() for p in root.rglob("*.json")}
     assert (
@@ -305,7 +333,57 @@ def test_refresh_preserves_custom_marketplaces_and_restores_owned_defaults(
             "installationPreference": "available",
             "credentialKind": "anonymous",
         },
+        {
+            "source": "github",
+            "repo": "anthropics/financial-services",
+            "ref": "main",
+            "expectedName": "claude-for-financial-services",
+            "installationPreference": "available",
+            "credentialKind": "anonymous",
+        },
+        {
+            "source": "github",
+            "repo": "anthropics/claude-for-legal",
+            "ref": "main",
+            "expectedName": "claude-for-legal",
+            "installationPreference": "available",
+            "credentialKind": "anonymous",
+        },
+        {
+            "source": "github",
+            "repo": "anthropics/life-sciences",
+            "ref": "main",
+            "expectedName": "life-sciences",
+            "installationPreference": "available",
+            "credentialKind": "anonymous",
+        },
     ]
+
+
+def test_refresh_preserves_mcp_configuration(tmp_path: Path) -> None:
+    record = claude_desktop_disconnect_path()
+    desktop.configure(tmp_path, URL, TOKEN, True, disconnect_path=record)
+    mcp_configuration = {
+        "managedMcpServers": [
+            {
+                "name": "company-search",
+                "transport": "http",
+                "url": "https://mcp.example.test",
+            }
+        ],
+        "allowedPluginMcpServers": [{"serverUrl": "https://plugins.example.test/*"}],
+        "deniedPluginMcpServers": [{"serverUrl": "https://blocked.example.test/*"}],
+        "isLocalDevMcpEnabled": False,
+    }
+    config = read(profile(tmp_path))
+    config.update(mcp_configuration)
+    write(profile(tmp_path), config)
+
+    assert not desktop.refresh_connected(tmp_path, URL, TOKEN, disconnect_path=record)
+
+    refreshed = read(profile(tmp_path))
+    for key, value in mcp_configuration.items():
+        assert refreshed[key] == value
 
 
 @pytest.mark.parametrize("reconnect", [False, True])

@@ -1,7 +1,7 @@
 # Profilo ModelGlot per Claude Desktop
 
 Status: implementato
-Data: 2026-11-17
+Data: 2026-11-27
 Ambito: profilo gateway ModelGlot per Claude Desktop in modalità third-party (3P)
 
 ## Sintesi
@@ -69,20 +69,40 @@ Dettagli e fonti: [`claude-desktop-1m-context-and-official-marketplace.md`](clau
 
 ### Marketplace ufficiali Anthropic
 
-Il profilo registra i marketplace:
+Il profilo registra tutti i marketplace mostrati da **Curated by Anthropic** il 2026-11-27:
 
-- `anthropics/claude-plugins-official`;
-- `anthropics/knowledge-work-plugins`.
+- `anthropics/claude-plugins-official` — Claude Code plugins;
+- `anthropics/knowledge-work-plugins` — Cowork plugins;
+- `anthropics/financial-services` — Claude for Financial Services;
+- `anthropics/claude-for-legal` — Claude for Legal;
+- `anthropics/life-sciences` — Claude for Life Sciences.
 
 Sono configurati con `installationPreference: "available"`, quindi vengono resi disponibili
 nella scheda **Customize → Plugins → Discover → Organization** senza installare
-automaticamente tutti i plugin. Il refresh garantisce la presenza dei due marketplace
+automaticamente tutti i plugin. Il refresh garantisce la presenza dei cinque marketplace
 ufficiali, conserva i marketplace aggiuntivi e non sostituisce la configurazione
-personalizzata di un marketplace ufficiale già presente.
+personalizzata di un marketplace ufficiale già presente. Ogni voce usa il branch `main`,
+l'accesso anonimo e l'`expectedName` letto dal manifest ufficiale.
 
 La sincronizzazione periodica del marketplace ricalcola il contenuto del repository
 ufficiale. Non trasferisce l'inventario dei plugin installati, delle skill salvate, dei
 connector o degli accessi OAuth dall'account Claude.ai.
+
+### MCP e connettori nei plugin
+
+La scheda Code eredita la configurazione del profilo Desktop 3P. I server MCP dichiarati da
+un plugin installato vengono caricati con il plugin nelle sessioni supportate: non devono
+essere duplicati in `managedMcpServers`. Quest'ultima chiave resta disponibile per connettori
+gestiti autonomi o per sostituire un server del plugin con una configurazione amministrata;
+ModelGlot non crea voci proprie e conserva quelle esistenti.
+
+Il profilo non imposta `allowedPluginMcpServers`, `deniedPluginMcpServers` o
+`isLocalDevMcpEnabled`, evitando di bloccare gli MCP remoti o locali dei plugin. Non imposta
+nemmeno `userPluginMarketplacesEnabled: false`, così i marketplace aggiunti dall'utente non
+vengono nascosti. Eventuali policy MCP o di restrizione già configurate vengono preservate.
+
+Dettagli sul formato dei server, OAuth, precedenza delle policy Claude Code e fonti ufficiali:
+[`claude-desktop-1m-context-and-official-marketplace.md`](claude-desktop-1m-context-and-official-marketplace.md#mcp-e-connettori-nei-profili-gateway-3p).
 
 ### Import Claude.ai — capability verificata, non ancora attivata
 
@@ -129,6 +149,7 @@ Connect, Reconnect e refresh aggiornano soltanto i campi gestiti da ModelGlot. S
 - override dei modelli salvati dall'utente;
 - header personalizzati;
 - marketplace aggiuntivi e configurazioni personalizzate dei marketplace ufficiali;
+- connettori `managedMcpServers` e policy MCP esistenti;
 - policy di egress esistenti, inclusa una lista vuota o ristretta.
 
 Se `coworkEgressAllowedHosts` non è presente, ModelGlot imposta `["*"]` per consentire a Cowork,
@@ -207,13 +228,13 @@ questo richiede ancora il lifecycle reversibile descritto in
 Test mirati per profilo, credenziali, marketplace e discovery:
 
 ```powershell
-uv run pytest -q tests/harnesses/test_claude_desktop_integration.py tests/api/test_claude_desktop_integration.py tests/api/test_model_listing.py
+uv run --locked pytest -q tests/harnesses/test_claude_desktop_integration.py tests/api/test_claude_desktop_integration.py tests/api/test_model_listing.py
 ```
 
 Controlli statici:
 
 ```powershell
-uv run ruff format --check src/modelglot/harnesses/claude_desktop_integration.py src/modelglot/api/model_catalog.py tests/harnesses/test_claude_desktop_integration.py tests/api/test_model_listing.py
-uv run ruff check src/modelglot/harnesses/claude_desktop_integration.py src/modelglot/api/model_catalog.py tests/harnesses/test_claude_desktop_integration.py tests/api/test_model_listing.py
-uv run ty check src/modelglot/harnesses/claude_desktop_integration.py src/modelglot/api/model_catalog.py
+uv run --locked ruff format --check src/modelglot/harnesses/claude_desktop_integration.py src/modelglot/api/model_catalog.py tests/harnesses/test_claude_desktop_integration.py tests/api/test_model_listing.py
+uv run --locked ruff check src/modelglot/harnesses/claude_desktop_integration.py src/modelglot/api/model_catalog.py tests/harnesses/test_claude_desktop_integration.py tests/api/test_model_listing.py
+uv run --locked pyrefly check src/modelglot/harnesses/claude_desktop_integration.py src/modelglot/api/model_catalog.py
 ```
